@@ -64,7 +64,7 @@ public class GoBoardView extends View {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        DebugLog.enter(TAG, "onMeasure in, widthMeasureSpec=" + widthMeasureSpec + ", heightMeasureSpec=" + heightMeasureSpec);
+        DebugLog.v(TAG, "onMeasure in, widthMeasureSpec=" + widthMeasureSpec + ", heightMeasureSpec=" + heightMeasureSpec);
         int width = MeasureSpec.getSize(widthMeasureSpec);
         int height = MeasureSpec.getSize(heightMeasureSpec);
         int size = Math.min(width, height > 0 ? height : width);
@@ -73,7 +73,7 @@ public class GoBoardView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        DebugLog.enter(TAG, "onDraw in, canvas=" + canvas + ", board=" + board);
+        DebugLog.v(TAG, "onDraw in, canvas=" + canvas + ", board=" + board);
         super.onDraw(canvas);
         if (board == null) return;
         int n = board.getSize();
@@ -87,7 +87,7 @@ public class GoBoardView extends View {
     }
 
     private void drawGrid(Canvas canvas, int n) {
-        DebugLog.enter(TAG, "drawGrid in, canvas=" + canvas + ", n=" + n);
+        DebugLog.v(TAG, "drawGrid in, canvas=" + canvas + ", n=" + n);
         paint.setColor(Color.rgb(45, 45, 45));
         paint.setStrokeWidth(dp(1));
         paint.setStyle(Paint.Style.STROKE);
@@ -99,7 +99,7 @@ public class GoBoardView extends View {
     }
 
     private void drawStarPoints(Canvas canvas, int n) {
-        DebugLog.enter(TAG, "drawStarPoints in, canvas=" + canvas + ", n=" + n);
+        DebugLog.v(TAG, "drawStarPoints in, canvas=" + canvas + ", n=" + n);
         int[][] points = starPoints(n);
         paint.setColor(Color.rgb(45, 45, 45));
         paint.setStyle(Paint.Style.FILL);
@@ -108,7 +108,7 @@ public class GoBoardView extends View {
     }
 
     private int[][] starPoints(int n) {
-        DebugLog.enter(TAG, "starPoints in, n=" + n);
+        DebugLog.v(TAG, "starPoints in, n=" + n);
         if (n == 19) return grid3(3, 9, 15);
         if (n == 15) return grid3(3, 7, 11);
         if (n == 13) return grid3(3, 6, 9);
@@ -118,12 +118,12 @@ public class GoBoardView extends View {
     }
 
     private int[][] grid3(int a, int b, int c) {
-        DebugLog.enter(TAG, "grid3 in, a=" + a + ", b=" + b + ", c=" + c);
+        DebugLog.v(TAG, "grid3 in, a=" + a + ", b=" + b + ", c=" + c);
         return new int[][]{{a,a},{b,a},{c,a},{a,b},{b,b},{c,b},{a,c},{b,c},{c,c}};
     }
 
     private void drawStones(Canvas canvas, int n) {
-        DebugLog.enter(TAG, "drawStones in, canvas=" + canvas + ", n=" + n + ", lastMove=" + lastMove);
+        DebugLog.v(TAG, "drawStones in, canvas=" + canvas + ", n=" + n + ", lastMove=" + lastMove);
         float radius = cellSize * 0.45f;
         for (int y = 0; y < n; y++) {
             for (int x = 0; x < n; x++) {
@@ -154,7 +154,7 @@ public class GoBoardView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        DebugLog.enter(TAG, "onTouchEvent in, action=" + event.getAction() + ", x=" + event.getX() + ", y=" + event.getY() + ", inputEnabled=" + inputEnabled);
+        DebugLog.v(TAG, "onTouchEvent in, action=" + event.getAction() + ", x=" + event.getX() + ", y=" + event.getY() + ", inputEnabled=" + inputEnabled);
         if (!inputEnabled || listener == null || board == null) return true;
         if (event.getAction() != MotionEvent.ACTION_UP) return true;
         if (cellSize <= 0) return true;
@@ -180,7 +180,7 @@ public class GoBoardView extends View {
     }
 
     private float dp(float value) {
-        DebugLog.enter(TAG, "dp in, value=" + value);
+        DebugLog.v(TAG, "dp in, value=" + value);
         return value * getResources().getDisplayMetrics().density;
     }
 }
