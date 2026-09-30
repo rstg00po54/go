@@ -9,7 +9,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.badukai"
+        applicationId = "com.badukai.kt"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
