@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -12,8 +11,11 @@ import android.view.View;
 import com.badukai.game.GoBoard;
 import com.badukai.game.Intersection;
 import com.badukai.game.Point;
+import com.badukai.util.DebugLog;
 
 public class GoBoardView extends View {
+    private static final String TAG = "GoBoardView";
+
     public interface OnIntersectionClickListener {
         void onIntersectionClick(int x, int y);
     }
@@ -28,35 +30,41 @@ public class GoBoardView extends View {
     private float cellSize;
     private float boardPixels;
 
-    public GoBoardView(Context context) { super(context); init(); }
-    public GoBoardView(Context context, AttributeSet attrs) { super(context, attrs); init(); }
-    public GoBoardView(Context context, AttributeSet attrs, int defStyleAttr) { super(context, attrs, defStyleAttr); init(); }
+    public GoBoardView(Context context) { super(context); DebugLog.enter(TAG, "GoBoardView in, context=" + context); init(); }
+    public GoBoardView(Context context, AttributeSet attrs) { super(context, attrs); DebugLog.enter(TAG, "GoBoardView in, context=" + context + ", attrs=" + attrs); init(); }
+    public GoBoardView(Context context, AttributeSet attrs, int defStyleAttr) { super(context, attrs, defStyleAttr); DebugLog.enter(TAG, "GoBoardView in, context=" + context + ", attrs=" + attrs + ", defStyleAttr=" + defStyleAttr); init(); }
 
     private void init() {
+        DebugLog.enter(TAG, "init in");
         setBackgroundColor(Color.rgb(222, 184, 135));
         setFocusable(true);
     }
 
     public void setBoard(GoBoard board) {
+        DebugLog.enter(TAG, "setBoard in, board=" + board);
         this.board = board == null ? new GoBoard(19) : board;
         invalidate();
     }
 
     public void setLastMove(Point point) {
+        DebugLog.enter(TAG, "setLastMove in, point=" + point);
         lastMove = point;
         invalidate();
     }
 
     public void setInputEnabled(boolean enabled) {
+        DebugLog.enter(TAG, "setInputEnabled in, enabled=" + enabled);
         inputEnabled = enabled;
     }
 
     public void setOnIntersectionClickListener(OnIntersectionClickListener listener) {
+        DebugLog.enter(TAG, "setOnIntersectionClickListener in, listener=" + listener);
         this.listener = listener;
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        DebugLog.enter(TAG, "onMeasure in, widthMeasureSpec=" + widthMeasureSpec + ", heightMeasureSpec=" + heightMeasureSpec);
         int width = MeasureSpec.getSize(widthMeasureSpec);
         int height = MeasureSpec.getSize(heightMeasureSpec);
         int size = Math.min(width, height > 0 ? height : width);
@@ -65,6 +73,7 @@ public class GoBoardView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
+        DebugLog.enter(TAG, "onDraw in, canvas=" + canvas + ", board=" + board);
         super.onDraw(canvas);
         if (board == null) return;
         int n = board.getSize();
@@ -78,6 +87,7 @@ public class GoBoardView extends View {
     }
 
     private void drawGrid(Canvas canvas, int n) {
+        DebugLog.enter(TAG, "drawGrid in, canvas=" + canvas + ", n=" + n);
         paint.setColor(Color.rgb(45, 45, 45));
         paint.setStrokeWidth(dp(1));
         paint.setStyle(Paint.Style.STROKE);
@@ -89,6 +99,7 @@ public class GoBoardView extends View {
     }
 
     private void drawStarPoints(Canvas canvas, int n) {
+        DebugLog.enter(TAG, "drawStarPoints in, canvas=" + canvas + ", n=" + n);
         int[][] points = starPoints(n);
         paint.setColor(Color.rgb(45, 45, 45));
         paint.setStyle(Paint.Style.FILL);
@@ -97,6 +108,7 @@ public class GoBoardView extends View {
     }
 
     private int[][] starPoints(int n) {
+        DebugLog.enter(TAG, "starPoints in, n=" + n);
         if (n == 19) return grid3(3, 9, 15);
         if (n == 15) return grid3(3, 7, 11);
         if (n == 13) return grid3(3, 6, 9);
@@ -106,10 +118,12 @@ public class GoBoardView extends View {
     }
 
     private int[][] grid3(int a, int b, int c) {
+        DebugLog.enter(TAG, "grid3 in, a=" + a + ", b=" + b + ", c=" + c);
         return new int[][]{{a,a},{b,a},{c,a},{a,b},{b,b},{c,b},{a,c},{b,c},{c,c}};
     }
 
     private void drawStones(Canvas canvas, int n) {
+        DebugLog.enter(TAG, "drawStones in, canvas=" + canvas + ", n=" + n + ", lastMove=" + lastMove);
         float radius = cellSize * 0.45f;
         for (int y = 0; y < n; y++) {
             for (int x = 0; x < n; x++) {
@@ -140,13 +154,13 @@ public class GoBoardView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        DebugLog.enter(TAG, "onTouchEvent in, action=" + event.getAction() + ", x=" + event.getX() + ", y=" + event.getY() + ", inputEnabled=" + inputEnabled);
         if (!inputEnabled || listener == null || board == null) return true;
         if (event.getAction() != MotionEvent.ACTION_UP) return true;
         if (cellSize <= 0) return true;
         int n = board.getSize();
         int x = Math.round((event.getX() - padding) / cellSize);
         int y = Math.round((event.getY() - padding) / cellSize);
-        // Important: never clamp an outside tap into an edge coordinate.
         if (x < 0 || x >= n || y < 0 || y >= n) return true;
         float cx = padding + x * cellSize;
         float cy = padding + y * cellSize;
@@ -160,11 +174,13 @@ public class GoBoardView extends View {
 
     @Override
     public boolean performClick() {
+        DebugLog.enter(TAG, "performClick in");
         super.performClick();
         return true;
     }
 
     private float dp(float value) {
+        DebugLog.enter(TAG, "dp in, value=" + value);
         return value * getResources().getDisplayMetrics().density;
     }
 }
