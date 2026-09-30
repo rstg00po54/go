@@ -4,11 +4,16 @@ import android.util.Log;
 
 public final class DebugLog {
     public static boolean ENABLED = true;
+    public static boolean VERBOSE = false;
 
     private DebugLog() {}
 
     public static void enter(String tag, String message) {
         if (ENABLED) Log.d(tag, message);
+    }
+
+    public static void v(String tag, String message) {
+        if (ENABLED && VERBOSE) Log.d(tag, message);
     }
 
     public static void d(String tag, String message) {
