@@ -20,12 +20,14 @@ import com.badukai.game.Move;
 import com.badukai.game.Point;
 import com.badukai.game.StoneColor;
 import com.badukai.ui.GoBoardView;
+import com.badukai.util.DebugLog;
 
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
+    private static final String TAG = "MainActivity";
     private final ExecutorService engineExecutor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
@@ -50,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        DebugLog.enter(TAG, "onCreate in, savedInstanceState=" + savedInstanceState);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         engine = new KataGoEngine(getApplicationContext());
@@ -64,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void bindViews() {
+        DebugLog.enter(TAG, "bindViews in");
         boardView = findViewById(R.id.boardView);
         statusText = findViewById(R.id.statusText);
         blackCaptureText = findViewById(R.id.blackCaptureText);
@@ -75,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startEngine() {
+        DebugLog.enter(TAG, "startEngine in, engineStarting=" + engineStarting + ", engineReady=" + engineReady + ", boardSize=" + boardSize);
         if (engineStarting || engineReady) return;
         engineStarting = true;
         updateButtons();
@@ -95,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onBoardTap(int x, int y) {
+        DebugLog.enter(TAG, "onBoardTap in, x=" + x + ", y=" + y + ", engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer + ", playerColor=" + playerColor);
         if (!engineReady || thinking || currentPlayer != playerColor || board.isGameOver()) return;
         if (!board.isInside(x, y)) return;
         Point point = new Point(x, y);
@@ -120,6 +126,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void requestAiMove() {
+        DebugLog.enter(TAG, "requestAiMove in, engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer + ", playerColor=" + playerColor);
         if (!engineReady || thinking || currentPlayer == playerColor || board.isGameOver()) return;
         thinking = true;
         render("AI 思考中...");
@@ -131,6 +138,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void handleAiMove(String move, StoneColor aiColor) {
+        DebugLog.enter(TAG, "handleAiMove in, move=" + move + ", aiColor=" + aiColor);
         thinking = false;
         if (move == null || move.isEmpty()) {
             render("AI 没有返回落子");
@@ -162,6 +170,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void pass() {
+        DebugLog.enter(TAG, "pass in, engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer + ", playerColor=" + playerColor);
         if (!engineReady || thinking || currentPlayer != playerColor || board.isGameOver()) return;
         StoneColor color = currentPlayer;
         board.playMove(new Move.Pass(color));
@@ -180,6 +189,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void undo() {
+        DebugLog.enter(TAG, "undo in, engineReady=" + engineReady + ", thinking=" + thinking + ", moveCount=" + board.getMoveCount());
         if (!engineReady || thinking || board.getMoveCount() < 2) return;
         board.undo();
         board.undo();
@@ -194,6 +204,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void resign() {
+        DebugLog.enter(TAG, "resign in, thinking=" + thinking + ", moveCount=" + board.getMoveCount() + ", playerColor=" + playerColor);
         if (thinking || board.getMoveCount() == 0 || board.isGameOver()) return;
         board.playMove(new Move.Resign(playerColor));
         String winner = playerColor == StoneColor.BLACK ? "白棋" : "黑棋";
@@ -201,6 +212,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void finishByScore() {
+        DebugLog.enter(TAG, "finishByScore in");
         engineExecutor.execute(() -> {
             String score = engine.getFinalScore();
             mainHandler.post(() -> render(score == null ? "对局结束" : "对局结束：" + score));
@@ -208,6 +220,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showNewGameDialog() {
+        DebugLog.enter(TAG, "showNewGameDialog in, boardSize=" + boardSize + ", playerColor=" + playerColor);
         View content = LayoutInflater.from(this).inflate(R.layout.dialog_new_game, null, false);
         RadioGroup colorGroup = content.findViewById(R.id.colorGroup);
         Spinner sizeSpinner = content.findViewById(R.id.sizeSpinner);
@@ -229,6 +242,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startNewGame() {
+        DebugLog.enter(TAG, "startNewGame in, engineReady=" + engineReady + ", engineStarting=" + engineStarting + ", boardSize=" + boardSize + ", playerColor=" + playerColor);
         if (!engineReady) {
             render(engineStarting ? "AI 正在启动，请稍候..." : "AI 尚未启动");
             return;
@@ -253,9 +267,8 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
 
-                if (playerFirst) {
-                    render("轮到你了");
-                } else {
+                if (playerFirst) render("轮到你了");
+                else {
                     render("AI 思考中...");
                     requestAiMove();
                 }
@@ -264,10 +277,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private float komiFor(int size) {
+        DebugLog.enter(TAG, "komiFor in, size=" + size);
         return size <= 11 ? 5.5f : 7.5f;
     }
 
     private void render(String message) {
+        DebugLog.enter(TAG, "render in, message=" + message + ", engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer);
         statusText.setText(message);
         boardView.setBoard(board);
         boardView.setLastMove(lastMove);
@@ -278,6 +293,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateButtons() {
+        DebugLog.enter(TAG, "updateButtons in, engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer + ", playerColor=" + playerColor);
         boolean playerTurn = engineReady && !thinking && currentPlayer == playerColor && !board.isGameOver();
         newGameButton.setEnabled(!thinking);
         undoButton.setEnabled(playerTurn && board.getMoveCount() >= 2);
@@ -287,6 +303,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        DebugLog.enter(TAG, "onDestroy in");
         super.onDestroy();
         engineExecutor.execute(() -> engine.stop());
         engineExecutor.shutdown();
