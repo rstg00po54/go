@@ -20,8 +20,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class KataGoEngine {
     private static final String TAG = "KataGoEngine";
-    private static final String BINARY_NAME = "libkatago.so";
-    private static final String CONFIG_NAME = "gtp_static.cfg";
+    private static final String BINARY_ASSET = "engine/katago";
+    private static final String LIBCXX_ASSET = "engine/libc++_shared.so";
+    private static final String CONFIG_ASSET = "engine/default_gtp.cfg";
+    private static final String DEFAULT_MODEL_ASSET = "engine/10b.bin";
 
     public enum Model {
         HUMAN("Human", "10b.bin", "10-block"),
@@ -55,32 +57,40 @@ public class KataGoEngine {
 
     public synchronized boolean start(Model model) {
         if (running.get()) return true;
-        Log.i(TAG, "=== JAVA KATAGO ENGINE ===");
+        Log.i(TAG, "=== JAVA KATAGO ENGINE / RK3588 ===");
         try {
-            String dataDataPath = "/data/data/" + context.getPackageName();
-            File filesDir = new File(dataDataPath, "files");
-            File hexagonDir = new File(filesDir, "hexagon");
-            File appDir = new File(filesDir, "app");
-            if (!hexagonDir.exists()) hexagonDir.mkdirs();
-            if (!appDir.exists()) appDir.mkdirs();
+            File engineDir = new File(context.getFilesDir(), "engine");
+            if (!engineDir.exists() && !engineDir.mkdirs()) throw new IOException("Cannot create engine dir: " + engineDir);
 
-            File binaryFile = new File(filesDir, BINARY_NAME);
-            if (!binaryFile.exists()) copyAssetToFile(BINARY_NAME, binaryFile);
-            binaryFile.setExecutable(true);
+            File binaryFile = new File(engineDir, "katago");
+            File libcxxFile = new File(engineDir, "libc++_shared.so");
+            File configFile = new File(engineDir, "default_gtp.cfg");
+            File modelFile = new File(engineDir, model.fileName);
 
-            // Always overwrite config so editing app/src/main/assets/gtp_static.cfg takes effect after reinstall/update.
-            File configFile = new File(filesDir, CONFIG_NAME);
-            copyAssetToFile(CONFIG_NAME, configFile);
+            copyAssetToFile(BINARY_ASSET, binaryFile);
+            copyAssetToFile(LIBCXX_ASSET, libcxxFile);
+            copyAssetToFile(CONFIG_ASSET, configFile);
 
-            File modelFile = new File(appDir, model.fileName);
-            if (!modelFile.exists()) copyAssetToFile("models/" + model.fileName, modelFile);
+            String modelAsset = "engine/" + model.fileName;
+            try {
+                copyAssetToFile(modelAsset, modelFile);
+            } catch (IOException e) {
+                if (model == Model.HUMAN) throw e;
+                Log.w(TAG, modelAsset + " not bundled, falling back to 10b.bin");
+                modelFile = new File(engineDir, "10b.bin");
+                copyAssetToFile(DEFAULT_MODEL_ASSET, modelFile);
+            }
 
-            Log.i(TAG, "Model: " + modelFile.getAbsolutePath() + " exists=" + modelFile.exists() + " size=" + modelFile.length());
+            if (!binaryFile.setExecutable(true, false) && !binaryFile.canExecute()) {
+                throw new IOException("Cannot make KataGo executable: " + binaryFile);
+            }
+            libcxxFile.setExecutable(false, false);
+
+            Log.i(TAG, "Model: " + modelFile.getAbsolutePath() + " size=" + modelFile.length());
             Log.i(TAG, "Config: " + configFile.getAbsolutePath());
             Log.i(TAG, "Binary: " + binaryFile.getAbsolutePath());
 
             List<String> command = new ArrayList<>();
-            command.add("/system/bin/linker64");
             command.add(binaryFile.getAbsolutePath());
             command.add("gtp");
             command.add("-model");
@@ -89,12 +99,12 @@ public class KataGoEngine {
             command.add(configFile.getAbsolutePath());
 
             ProcessBuilder builder = new ProcessBuilder(command);
-            builder.directory(hexagonDir);
+            builder.directory(engineDir);
             Map<String, String> env = builder.environment();
             String nativeLibDir = context.getApplicationInfo().nativeLibraryDir;
-            env.put("LD_LIBRARY_PATH", nativeLibDir + ":" + hexagonDir.getAbsolutePath() + ":/vendor/lib64:/system/vendor/lib64");
-            env.put("ADSP_LIBRARY_PATH", nativeLibDir + ";" + hexagonDir.getAbsolutePath() + ";/system/lib/rfsa/adsp;/system/vendor/lib/rfsa/adsp;/dsp");
-            env.put("HOME", filesDir.getAbsolutePath());
+            env.put("LD_LIBRARY_PATH", engineDir.getAbsolutePath() + ":" + nativeLibDir);
+            env.remove("ADSP_LIBRARY_PATH");
+            env.put("HOME", context.getFilesDir().getAbsolutePath());
 
             Log.i(TAG, "Command: " + String.join(" ", command));
             process = builder.start();
@@ -105,6 +115,7 @@ public class KataGoEngine {
             Thread.sleep(2000);
             if (!process.isAlive()) {
                 Log.e(TAG, "KataGo process exited during startup");
+                stop();
                 return false;
             }
 
