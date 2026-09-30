@@ -1,16 +1,20 @@
 package com.badukai;
 
 import android.app.AlertDialog;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -36,19 +40,27 @@ public class MainActivity extends AppCompatActivity {
     private StoneColor playerColor = StoneColor.BLACK;
     private StoneColor currentPlayer = StoneColor.BLACK;
     private int boardSize = 19;
+    private int searchVisits = 20;
+    private double searchTime = 0.4;
     private boolean engineReady;
     private boolean engineStarting;
     private boolean thinking;
     private Point lastMove;
 
+    private View mainPageContainer;
+    private View gamePageContainer;
     private GoBoardView boardView;
     private TextView statusText;
     private TextView blackCaptureText;
     private TextView whiteCaptureText;
+    private TextView gameTitleText;
+    private Button aiBattleButton;
     private Button newGameButton;
+    private Button backButton;
     private Button undoButton;
     private Button passButton;
     private Button resignButton;
+    private Button moreGameButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,24 +70,34 @@ public class MainActivity extends AppCompatActivity {
         engine = new KataGoEngine(getApplicationContext());
         bindViews();
         boardView.setOnIntersectionClickListener(this::onBoardTap);
+        aiBattleButton.setOnClickListener(v -> showNewGameDialog());
         newGameButton.setOnClickListener(v -> showNewGameDialog());
+        backButton.setOnClickListener(v -> showMainPage());
         undoButton.setOnClickListener(v -> undo());
         passButton.setOnClickListener(v -> pass());
         resignButton.setOnClickListener(v -> resign());
+        moreGameButton.setOnClickListener(v -> Toast.makeText(this, "更多对局功能后面再接", Toast.LENGTH_SHORT).show());
         render("正在启动 AI...");
+        showMainPage();
         startEngine();
     }
 
     private void bindViews() {
         DebugLog.enter(TAG, "bindViews in");
+        mainPageContainer = findViewById(R.id.mainPageContainer);
+        gamePageContainer = findViewById(R.id.gamePageContainer);
         boardView = findViewById(R.id.boardView);
         statusText = findViewById(R.id.statusText);
         blackCaptureText = findViewById(R.id.blackCaptureText);
         whiteCaptureText = findViewById(R.id.whiteCaptureText);
+        gameTitleText = findViewById(R.id.gameTitleText);
+        aiBattleButton = findViewById(R.id.aiBattleButton);
         newGameButton = findViewById(R.id.newGameButton);
+        backButton = findViewById(R.id.backButton);
         undoButton = findViewById(R.id.undoButton);
         passButton = findViewById(R.id.passButton);
         resignButton = findViewById(R.id.resignButton);
+        moreGameButton = findViewById(R.id.moreGameButton);
     }
 
     private void startEngine() {
@@ -94,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
                 engineStarting = false;
                 engineReady = ok;
                 render(ok ? "准备好了" : "AI 启动失败");
-                if (ok && playerColor == StoneColor.WHITE) requestAiMove();
+                if (ok && gamePageContainer.getVisibility() == View.VISIBLE && playerColor == StoneColor.WHITE) requestAiMove();
             });
         });
     }
@@ -222,27 +244,79 @@ public class MainActivity extends AppCompatActivity {
     private void showNewGameDialog() {
         DebugLog.enter(TAG, "showNewGameDialog in, boardSize=" + boardSize + ", playerColor=" + playerColor);
         View content = LayoutInflater.from(this).inflate(R.layout.dialog_new_game, null, false);
+        RadioGroup sizeGroup = content.findViewById(R.id.sizeGroup);
         RadioGroup colorGroup = content.findViewById(R.id.colorGroup);
-        Spinner sizeSpinner = content.findViewById(R.id.sizeSpinner);
+        RadioGroup difficultyGroup = content.findViewById(R.id.difficultyGroup);
+        Spinner conditionSpinner = content.findViewById(R.id.conditionSpinner);
         Button startButton = content.findViewById(R.id.startGameButton);
-        Integer[] sizes = {9, 11, 13, 15, 19};
-        ArrayAdapter<Integer> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, sizes);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        sizeSpinner.setAdapter(adapter);
-        sizeSpinner.setSelection(4);
+        Button closeButton = content.findViewById(R.id.closeDialogButton);
+
+        ArrayAdapter<String> conditionAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{"分先", "让先", "让2子", "让3子"});
+        conditionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        conditionSpinner.setAdapter(conditionAdapter);
+
+        if (boardSize == 9) sizeGroup.check(R.id.size9Radio);
+        else if (boardSize == 11) sizeGroup.check(R.id.size11Radio);
+        else if (boardSize == 13) sizeGroup.check(R.id.size13Radio);
+        else if (boardSize == 15) sizeGroup.check(R.id.size15Radio);
+        else sizeGroup.check(R.id.size19Radio);
+        colorGroup.check(playerColor == StoneColor.WHITE ? R.id.whiteRadio : R.id.blackRadio);
 
         AlertDialog dialog = new AlertDialog.Builder(this).setView(content).create();
+        closeButton.setOnClickListener(v -> dialog.dismiss());
         startButton.setOnClickListener(v -> {
-            playerColor = colorGroup.getCheckedRadioButtonId() == R.id.whiteRadio ? StoneColor.WHITE : StoneColor.BLACK;
-            boardSize = (Integer) sizeSpinner.getSelectedItem();
+            int sizeId = sizeGroup.getCheckedRadioButtonId();
+            if (sizeId == R.id.size9Radio) boardSize = 9;
+            else if (sizeId == R.id.size11Radio) boardSize = 11;
+            else if (sizeId == R.id.size13Radio) boardSize = 13;
+            else if (sizeId == R.id.size15Radio) boardSize = 15;
+            else boardSize = 19;
+
+            int colorId = colorGroup.getCheckedRadioButtonId();
+            if (colorId == R.id.whiteRadio) playerColor = StoneColor.WHITE;
+            else if (colorId == R.id.randomRadio) playerColor = (System.nanoTime() & 1L) == 0L ? StoneColor.BLACK : StoneColor.WHITE;
+            else playerColor = StoneColor.BLACK;
+
+            int difficultyId = difficultyGroup.getCheckedRadioButtonId();
+            if (difficultyId == R.id.hardRadio) {
+                searchVisits = 500;
+                searchTime = 5.0;
+            } else if (difficultyId == R.id.normalRadio) {
+                searchVisits = 100;
+                searchTime = 1.5;
+            } else {
+                searchVisits = 20;
+                searchTime = 0.4;
+            }
+
+            showGamePage();
             startNewGame();
             dialog.dismiss();
+        });
+        dialog.setOnShowListener(ignored -> {
+            if (dialog.getWindow() != null) {
+                dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+                dialog.getWindow().setLayout((int) (getResources().getDisplayMetrics().widthPixels * 0.94f), ViewGroup.LayoutParams.WRAP_CONTENT);
+            }
         });
         dialog.show();
     }
 
+    private void showMainPage() {
+        DebugLog.enter(TAG, "showMainPage in");
+        mainPageContainer.setVisibility(View.VISIBLE);
+        gamePageContainer.setVisibility(View.GONE);
+    }
+
+    private void showGamePage() {
+        DebugLog.enter(TAG, "showGamePage in, boardSize=" + boardSize);
+        mainPageContainer.setVisibility(View.GONE);
+        gamePageContainer.setVisibility(View.VISIBLE);
+        gameTitleText.setText(boardSize + "路对局　常见问题　　第" + (board.getMoveCount() + 1) + "手");
+    }
+
     private void startNewGame() {
-        DebugLog.enter(TAG, "startNewGame in, engineReady=" + engineReady + ", engineStarting=" + engineStarting + ", boardSize=" + boardSize + ", playerColor=" + playerColor);
+        DebugLog.enter(TAG, "startNewGame in, engineReady=" + engineReady + ", engineStarting=" + engineStarting + ", boardSize=" + boardSize + ", playerColor=" + playerColor + ", visits=" + searchVisits + ", time=" + searchTime);
         if (!engineReady) {
             render(engineStarting ? "AI 正在启动，请稍候..." : "AI 尚未启动");
             return;
@@ -289,6 +363,7 @@ public class MainActivity extends AppCompatActivity {
         boardView.setInputEnabled(engineReady && !thinking && currentPlayer == playerColor && !board.isGameOver());
         blackCaptureText.setText(String.format(Locale.CHINA, "黑棋提子 %d", board.getCapturedWhite()));
         whiteCaptureText.setText(String.format(Locale.CHINA, "白棋提子 %d", board.getCapturedBlack()));
+        gameTitleText.setText(boardSize + "路对局　常见问题　　第" + (board.getMoveCount() + 1) + "手");
         updateButtons();
     }
 
@@ -299,6 +374,13 @@ public class MainActivity extends AppCompatActivity {
         undoButton.setEnabled(playerTurn && board.getMoveCount() >= 2);
         passButton.setEnabled(playerTurn);
         resignButton.setEnabled(playerTurn && board.getMoveCount() > 0);
+    }
+
+    @Override
+    public void onBackPressed() {
+        DebugLog.enter(TAG, "onBackPressed in, gameVisible=" + (gamePageContainer.getVisibility() == View.VISIBLE));
+        if (gamePageContainer.getVisibility() == View.VISIBLE) showMainPage();
+        else super.onBackPressed();
     }
 
     @Override
