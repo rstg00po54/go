@@ -14,19 +14,12 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-
-        ndk {
-            abiFilters += listOf("arm64-v8a")
-        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 
@@ -35,25 +28,17 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
-    buildFeatures {
-        compose = true
-    }
+    kotlinOptions { jvmTarget = "17" }
+    buildFeatures { compose = true }
 
     packaging {
         jniLibs {
-            useLegacyPackaging = true
-            pickFirsts += listOf(
-                "lib/arm64-v8a/libc++_shared.so"
-            )
+            excludes += setOf("**/*.so")
         }
     }
-    
+
     aaptOptions {
-        noCompress += listOf("tflite", "bin", "gz", "model", "so")
+        noCompress += listOf("bin", "gz", "model", "so")
     }
 }
 
