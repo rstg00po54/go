@@ -1,0 +1,12 @@
+LazyBaduk UI-only compatibility patch v2
+
+- Leela Zero startup disabled so the UI can run without engine/weights.
+- Modern Kivy 2.3.x padding compatibility fixes.
+- Removed overrides of Label.padding; uses Kivy built-in 2D padding.
+- Replaced deprecated padding_x rules with padding: x, y.
+- Kept coloured_button_padding as a scalar uniform canvas inset.
+- Added null guard when closing without an AI process.
+
+Run:
+  source ~/.venvs/lazybaduk/bin/activate
+  python nogo2/main.py

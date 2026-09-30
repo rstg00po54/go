@@ -1,0 +1,301 @@
+name: Build APK & Release
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      build_katago_from_source:
+        description: '从源码编译 KataGo arm64（很慢，约 20-40 分钟；否则使用预编译二进制）'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+# 发布 Release 所需权限：读取代码 + 写入 Release/Assets
+permissions:
+  contents: write
+
+env:
+  # 默认 KataGo Android ARM64 预编译二进制（来自官方 release 的再打包 / 社区构建，
+  # 用户可在仓库 Variables 中覆盖 KATAGO_BINARY_URL）。
+  # 若未配置且 build_katago_from_source=false，则 APK 仍可构建，但需用户手动指定引擎。
+  DEFAULT_KATAGO_BINARY_URL: ''
+  # Gradle 额外 JVM 参数（避免 D8/R8 合并 dex 时 OOM）
+  GRADLE_OPTS: '-Xmx2560m -XX:+UseG1GC -Dfile.encoding=UTF-8'
+
+jobs:
+
+  # ============================================================
+  # Job 1 (可选)：用 Android NDK 从源码交叉编译 KataGo arm64-v8a
+  # 仅在 tag 推送 或 手动触发 with build_katago_from_source=true 时运行。
+  # 产出：katago 二进制（上传为 Actions artifact，供 build-apk job 下载）
+  # ============================================================
+  build-katago:
+    name: Compile KataGo arm64 (NDK)
+    runs-on: ubuntu-latest
+    # 仅在手动选择「从源码编译 KataGo」时运行（约 20-40 分钟）
+    # tag 推送时不自动执行，避免 Release 构建耗时过长。
+    # 如需「安装即用」版本，请在 workflow_dispatch 中勾选 build_katago_from_source=true。
+    if: github.event.inputs.build_katago_from_source == 'true'
+    steps:
+      - name: 检出 KataGo 源码
+        uses: actions/checkout@v4
+        with:
+          repository: 'lightvector/KataGo'
+          ref: 'v1.14.1'
+          path: 'katago-src'
+          submodules: recursive
+
+      - name: 安装编译依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build build-essential zip unzip curl wget
+
+      - name: 配置 Android NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r26d
+          add-to-path: true
+          local-cache: true
+
+      - name: 下载并配置 Eigen3
+        run: |
+          set -euo pipefail
+          EIGEN_VERSION=3.4.0
+          wget -q "https://gitlab.com/libeigen/eigen/-/archive/${EIGEN_VERSION}/eigen-${EIGEN_VERSION}.tar.gz" -O eigen.tar.gz
+          tar -xzf eigen.tar.gz -C $HOME/
+          EIGEN_SRC="$HOME/eigen-${EIGEN_VERSION}"
+          echo "EIGEN_SRC=${EIGEN_SRC}" >> $GITHUB_ENV
+          # 生成 Eigen3Config.cmake 供 find_package 使用
+          mkdir -p "${EIGEN_SRC}/build"
+          cat > "${EIGEN_SRC}/build/Eigen3Config.cmake" <<EOF
+          set(EIGEN3_INCLUDE_DIRS "${EIGEN_SRC}")
+          set(EIGEN3_VERSION_STRING "${EIGEN_VERSION}")
+          add_library(Eigen3::Eigen INTERFACE IMPORTED)
+          set_target_properties(Eigen3::Eigen PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${EIGEN_SRC}")
+          EOF
+
+      - name: 编译 KataGo (arm64-v8a, CPU only, no backend/Eigen backend)
+        env:
+          NDK_ROOT: ${{ steps.setup-ndk.outputs.ndk-path }}
+        run: |
+          set -euo pipefail
+          NDK_TOOLCHAIN="${NDK_ROOT}/build/cmake/android.toolchain.cmake"
+          BUILD_DIR="$GITHUB_WORKSPACE/katago-build"
+          INSTALL_DIR="$GITHUB_WORKSPACE/katago-install"
+          mkdir -p "${BUILD_DIR}" "${INSTALL_DIR}"
+
+          cmake -S "${GITHUB_WORKSPACE}/katago-src/cpp" -B "${BUILD_DIR}" -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="${NDK_TOOLCHAIN}" \
+            -DANDROID_ABI=arm64-v8a \
+            -DANDROID_PLATFORM=android-26 \
+            -DANDROID_STL=c++_shared \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DEigen3_DIR="${EIGEN_SRC}/build" \
+            -DUSE_BACKEND=EIGEN \
+            -DBUILD_DISTRIBUTED=0 \
+            -DBUILD_TESTING=0 \
+            -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}" \
+            -DNO_GIT_REVISION=1
+
+          cmake --build "${BUILD_DIR}" --target katago -j$(nproc)
+
+          # 拷贝产物并附带 libc++_shared.so（运行时依赖）
+          mkdir -p "${INSTALL_DIR}/bin"
+          cp "${BUILD_DIR}/katago" "${INSTALL_DIR}/bin/katago"
+          cp "${NDK_ROOT}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so" \
+             "${INSTALL_DIR}/bin/libc++_shared.so" || true
+
+          chmod 755 "${INSTALL_DIR}/bin/katago"
+          ls -lh "${INSTALL_DIR}/bin/"
+
+      - name: 上传 KataGo 二进制产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: katago-arm64-binary
+          path: |
+            ${{ github.workspace }}/katago-install/bin/katago
+            ${{ github.workspace }}/katago-install/bin/libc++_shared.so
+          if-no-files-found: error
+          retention-days: 90
+
+  # ============================================================
+  # Job 2：构建 APK（注入内置 KataGo 引擎）
+  # ============================================================
+  build-apk:
+    name: Build BadukAI APK
+    runs-on: ubuntu-latest
+    needs: [ build-katago ]  # 仅当 build-katago 运行时才会等待；否则始终立即运行
+    if: always()  # 即使 build-katago 被跳过也需运行
+    steps:
+      - name: 检出本仓库代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 配置 JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # GitHub Hosted Runner 默认已在 /usr/local/lib/android/sdk 预装 Android SDK，
+      # 包含 platform-tools / build-tools 34 / platforms-34；此处仅校验并显式导出环境变量。
+      - name: 配置 Android SDK（使用 Runner 预装版本）
+        run: |
+          set -euo pipefail
+          ANDROID_SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          [ -d "${ANDROID_SDK_ROOT}" ] || { echo "❌ Android SDK not found at ${ANDROID_SDK_ROOT}"; exit 1; }
+          echo "ANDROID_HOME=${ANDROID_SDK_ROOT}" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT}" >> $GITHUB_ENV
+          echo "PATH=${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin:${ANDROID_SDK_ROOT}/platform-tools:${PATH}" >> $GITHUB_ENV
+          SDKMANAGER="${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager"
+          [ -x "$SDKMANAGER" ] || SDKMANAGER="${ANDROID_SDK_ROOT}/cmdline-tools/bin/sdkmanager"
+          echo "✅ 使用 SDK: ${ANDROID_SDK_ROOT}"
+          # 若缺少关键包则安装
+          MISSING=""
+          [ -d "${ANDROID_SDK_ROOT}/platforms/android-34" ] || MISSING="${MISSING} platforms;android-34"
+          [ -d "${ANDROID_SDK_ROOT}/build-tools/34.0.0" ] || MISSING="${MISSING} build-tools;34.0.0"
+          if [ -n "${MISSING}" ] && [ -x "$SDKMANAGER" ]; then
+            echo "📦 安装缺失的 SDK 包: ${MISSING}"
+            yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
+            "$SDKMANAGER" --install ${MISSING}
+          fi
+          echo "📋 SDK 清单:"
+          ls "${ANDROID_SDK_ROOT}/platforms/" 2>/dev/null | sed 's/^/  platforms: /'
+          ls "${ANDROID_SDK_ROOT}/build-tools/" 2>/dev/null | sed 's/^/  build-tools: /'
+
+      # ---------- 注入 KataGo 引擎二进制到 assets ----------
+      # 优先级：
+      #   1) 当前 workflow 中 build-katago job 产出（若存在）
+      #   2) Secrets / Variables 配置的 KATAGO_BINARY_URL
+      #   3) DEFAULT_KATAGO_BINARY_URL
+      #   4) 以上都没有 → 写入占位说明，APK 仍可构建但需用户手动指定引擎
+      - name: 下载 build-katago 产物（如存在）
+        id: download-built-katago
+        if: needs.build-katago.result == 'success'
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: katago-arm64-binary
+          path: /tmp/katago-built
+
+      - name: 准备 assets 目录并注入 KataGo 二进制
+        env:
+          KATAGO_URL: ${{ secrets.KATAGO_BINARY_URL || vars.KATAGO_BINARY_URL || env.DEFAULT_KATAGO_BINARY_URL }}
+        run: |
+          set -euo pipefail
+          ASSETS_DIR="app/src/main/assets/engine"
+          mkdir -p "${ASSETS_DIR}"
+
+          # 优先使用本次 job1 从源码编译的产物
+          if [ -f "/tmp/katago-built/katago" ]; then
+            echo "✅ 使用从源码编译的 KataGo 二进制"
+            cp /tmp/katago-built/katago "${ASSETS_DIR}/katago"
+            [ -f "/tmp/katago-built/libc++_shared.so" ] && cp /tmp/katago-built/libc++_shared.so "${ASSETS_DIR}/libc++_shared.so" || true
+            chmod 755 "${ASSETS_DIR}/katago"
+            ls -lh "${ASSETS_DIR}/"
+          elif [ -n "${KATAGO_URL}" ]; then
+            echo "⬇️  从 ${KATAGO_URL} 下载 KataGo 二进制…"
+            curl -fL --retry 3 --connect-timeout 15 -o "${ASSETS_DIR}/katago" "${KATAGO_URL}"
+            chmod 755 "${ASSETS_DIR}/katago"
+            ls -lh "${ASSETS_DIR}/katago"
+          else
+            echo "⚠️  未配置 KataGo 二进制来源，将构建不含引擎的 APK。"
+            echo "    用户安装后需在「设置」页手动指定引擎路径，"
+            echo "    或勾选 workflow_dispatch 的 build_katago_from_source=true 重新构建以获得“安装即用”体验。"
+            printf 'KataGo 二进制未内置。请勾选 build_katago_from_source=true 重新构建，或配置 KATAGO_BINARY_URL。\n' \
+              > "${ASSETS_DIR}/README_NO_BINARY.txt"
+          fi
+
+      - name: 配置 Gradle 缓存
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          cache-read-only: false
+
+      - name: 授予 gradlew 执行权限
+        run: chmod +x ./gradlew
+
+      - name: 构建 Debug APK
+        run: ./gradlew :app:assembleDebug --stacktrace
+
+      - name: 上传 Debug APK 产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: BadukAI-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      # ---------- 打 tag 时构建签名 Release APK ----------
+      - name: 构建签名 Release APK
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KEYSTORE_BASE64:-}" ]; then
+            echo "⚠️  未配置签名密钥 (ANDROID_KEYSTORE_BASE64)，构建未签名 Release APK"
+            ./gradlew :app:assembleRelease --stacktrace
+          else
+            echo "${KEYSTORE_BASE64}" | base64 -d > /tmp/badukai-release.jks
+            # 写入签名注入配置；注意 gradle.properties 已设 daemon=false
+            cat >> gradle.properties <<EOF
+          android.injected.signing.store.file=/tmp/badukai-release.jks
+          android.injected.signing.store.password=${KEYSTORE_PASSWORD}
+          android.injected.signing.key.alias=${KEY_ALIAS}
+          android.injected.signing.key.password=${KEY_PASSWORD}
+          EOF
+            ./gradlew :app:assembleRelease --stacktrace
+          fi
+
+      - name: 上传 Release APK 产物
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: BadukAI-release-apk
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+          retention-days: 90
+
+      # ---------- 打 tag 时发布 GitHub Release ----------
+      - name: 发布 GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/apk/debug/*.apk
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: false
+          body: |
+            ## BadukAI ${{ github.ref_name }}
+
+            安卓围棋 AI 应用，复刻 BadukAI 主要功能：
+            - 人机对弈（内置 KataGo 引擎）
+            - AI 分析复盘（胜率曲线、推荐手）
+            - 棋谱管理（SGF 导入/导出、Room 持久化）
+            - GTP 引擎对接
+
+            ### 使用方式
+            1. 下载下方 APK 安装
+            2. 首次启动按提示选择 KataGo 权重文件（.bin.gz 格式，用户自行准备）
+            3. 开始对弈或导入棋谱进行 AI 分析
+
+            ### 引擎状态
+            本 Release 是否内置 KataGo ARM64 二进制取决于构建参数。
+            若安装后提示未找到引擎，请在「设置」中指定引擎路径，
+            或使用 `build_katago_from_source=true` 参数重新构建“安装即用”版本。

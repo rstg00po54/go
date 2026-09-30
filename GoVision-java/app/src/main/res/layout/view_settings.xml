@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="16dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="KataGo 引擎配置" android:textSize="22sp" android:textStyle="bold"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="引擎可执行文件" android:layout_marginTop="16dp"/>
+        <EditText android:id="@+id/editExe" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="权重文件" android:layout_marginTop="12dp"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+            <EditText android:id="@+id/editModel" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:singleLine="true"/>
+            <Button android:id="@+id/btnPickModel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="选择"/>
+        </LinearLayout>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="配置文件" android:layout_marginTop="12dp"/>
+        <EditText android:id="@+id/editCfg" android:layout_width="match_parent" android:layout_height="wrap_content" android:singleLine="true"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="线程数" android:layout_marginTop="12dp"/>
+        <EditText android:id="@+id/editThreads" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="number" android:text="2"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Visits" android:layout_marginTop="12dp"/>
+        <EditText android:id="@+id/editVisits" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="number" android:text="800"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="16dp">
+            <Button android:id="@+id/btnSaveSettings" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="保存设置"/>
+            <Button android:id="@+id/btnTestEngine" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="测试引擎"/>
+        </LinearLayout>
+        <TextView android:id="@+id/settingsMessage" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="8dp"/>
+    </LinearLayout>
+</ScrollView>

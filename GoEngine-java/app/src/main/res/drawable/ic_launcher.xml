@@ -1,0 +1,30 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Background circle -->
+    <path
+        android:fillColor="#DEB887"
+        android:pathData="M54,54m-50,0a50,50 0,1 1,100 0a50,50 0,1 1,-100 0"/>
+    
+    <!-- Grid lines -->
+    <path
+        android:strokeColor="#000000"
+        android:strokeWidth="0.5"
+        android:pathData="M24,24L84,24M24,44L84,44M24,64L84,64M24,84L84,84M24,24L24,84M44,24L44,84M64,24L64,84M84,24L84,84"/>
+    
+    <!-- Black stone -->
+    <path
+        android:fillColor="#1A1A1A"
+        android:pathData="M44,44m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0"/>
+    
+    <!-- White stone -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#333333"
+        android:strokeWidth="0.5"
+        android:pathData="M64,64m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0"/>
+    
+</vector>

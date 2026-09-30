@@ -1,0 +1,14 @@
+LazyBaduk analysis UI demo
+
+This build does not start Leela Zero. It injects six fake analysis candidates
+so the original recommendation-marker UI can be inspected directly.
+
+Run:
+    source ~/.venvs/lazybaduk/bin/activate
+    python nogo2/main.py
+
+The circles on the board use the original LazyBaduk LzPonderingMarker code:
+- first line: win rate
+- second line: visits
+- color: relative visits, red -> green
+- blue outline: highest-visit candidate

@@ -1,0 +1,10 @@
+{
+    "java.jdt.ls.java.home": "C:\\Users\\Administrator\\.jdks\\jbr-21.0.11",
+"java.configuration.runtimes": [
+    {
+        "name": "JavaSE-21",
+        "path": "C:\\Users\\Administrator\\.jdks\\jbr-21.0.11",
+        "default": true
+    }
+]
+}
