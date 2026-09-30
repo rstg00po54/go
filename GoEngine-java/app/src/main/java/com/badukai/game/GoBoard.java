@@ -31,7 +31,7 @@ public class GoBoard {
     }
 
     public int getSize() {
-        DebugLog.enter(TAG, "getSize in, size=" + size);
+        DebugLog.v(TAG, "getSize in, size=" + size);
         return size;
     }
 
@@ -41,18 +41,18 @@ public class GoBoard {
     }
 
     public boolean isInside(int x, int y) {
-        DebugLog.enter(TAG, "isInside in, x=" + x + ", y=" + y + ", size=" + size);
+        DebugLog.v(TAG, "isInside in, x=" + x + ", y=" + y + ", size=" + size);
         return x >= 0 && x < size && y >= 0 && y < size;
     }
 
     public Intersection get(int x, int y) {
-        DebugLog.enter(TAG, "get in, x=" + x + ", y=" + y);
+        DebugLog.v(TAG, "get in, x=" + x + ", y=" + y);
         if (!isInside(x, y)) return Intersection.EMPTY;
         return board[y][x];
     }
 
     public Intersection get(Point point) {
-        DebugLog.enter(TAG, "get in, point=" + point);
+        DebugLog.v(TAG, "get in, point=" + point);
         if (point == null || !isInside(point.x, point.y)) return Intersection.EMPTY;
         return board[point.y][point.x];
     }
@@ -106,17 +106,17 @@ public class GoBoard {
     }
 
     private void placeStone(Point point, StoneColor color) {
-        DebugLog.enter(TAG, "placeStone in, point=" + point + ", color=" + color);
+        DebugLog.v(TAG, "placeStone in, point=" + point + ", color=" + color);
         board[point.y][point.x] = color == StoneColor.BLACK ? Intersection.BLACK : Intersection.WHITE;
     }
 
     private void removeStone(Point point) {
-        DebugLog.enter(TAG, "removeStone in, point=" + point);
+        DebugLog.v(TAG, "removeStone in, point=" + point);
         board[point.y][point.x] = Intersection.EMPTY;
     }
 
     private List<Point> removeDeadStones(StoneColor color) {
-        DebugLog.enter(TAG, "removeDeadStones in, color=" + color);
+        DebugLog.v(TAG, "removeDeadStones in, color=" + color);
         List<Point> removed = new ArrayList<>();
         Intersection target = color == StoneColor.BLACK ? Intersection.BLACK : Intersection.WHITE;
         Set<Point> visited = new HashSet<>();
@@ -138,7 +138,7 @@ public class GoBoard {
     }
 
     private Set<Point> getGroup(Point start) {
-        DebugLog.enter(TAG, "getGroup in, start=" + start);
+        DebugLog.v(TAG, "getGroup in, start=" + start);
         Set<Point> group = new HashSet<>();
         if (start == null || !isInside(start.x, start.y)) return group;
         Intersection color = get(start);
@@ -155,7 +155,7 @@ public class GoBoard {
     }
 
     private boolean hasLiberty(Set<Point> group) {
-        DebugLog.enter(TAG, "hasLiberty in, groupSize=" + (group == null ? -1 : group.size()));
+        DebugLog.v(TAG, "hasLiberty in, groupSize=" + (group == null ? -1 : group.size()));
         for (Point point : group) {
             for (Point neighbor : getNeighbors(point)) {
                 if (get(neighbor) == Intersection.EMPTY) return true;
@@ -165,7 +165,7 @@ public class GoBoard {
     }
 
     private int countLiberties(Set<Point> group) {
-        DebugLog.enter(TAG, "countLiberties in, groupSize=" + (group == null ? -1 : group.size()));
+        DebugLog.v(TAG, "countLiberties in, groupSize=" + (group == null ? -1 : group.size()));
         Set<Point> liberties = new HashSet<>();
         for (Point point : group) {
             for (Point neighbor : getNeighbors(point)) {
@@ -176,7 +176,7 @@ public class GoBoard {
     }
 
     private List<Point> getNeighbors(Point point) {
-        DebugLog.enter(TAG, "getNeighbors in, point=" + point);
+        DebugLog.v(TAG, "getNeighbors in, point=" + point);
         List<Point> result = new ArrayList<>(4);
         addIfInside(result, point.x - 1, point.y);
         addIfInside(result, point.x + 1, point.y);
@@ -186,7 +186,7 @@ public class GoBoard {
     }
 
     private void addIfInside(List<Point> list, int x, int y) {
-        DebugLog.enter(TAG, "addIfInside in, x=" + x + ", y=" + y);
+        DebugLog.v(TAG, "addIfInside in, x=" + x + ", y=" + y);
         if (isInside(x, y)) list.add(new Point(x, y));
     }
 
@@ -210,22 +210,22 @@ public class GoBoard {
     }
 
     private void clearBoardOnly() {
-        DebugLog.enter(TAG, "clearBoardOnly in, size=" + size);
+        DebugLog.v(TAG, "clearBoardOnly in, size=" + size);
         for (int y = 0; y < size; y++) {
             for (int x = 0; x < size; x++) board[y][x] = Intersection.EMPTY;
         }
     }
 
     private GoBoard copyPosition() {
-        DebugLog.enter(TAG, "copyPosition in, size=" + size + ", koPoint=" + koPoint);
+        DebugLog.v(TAG, "copyPosition in, size=" + size + ", koPoint=" + koPoint);
         GoBoard copy = new GoBoard(size);
         for (int y = 0; y < size; y++) System.arraycopy(board[y], 0, copy.board[y], 0, size);
         copy.koPoint = koPoint;
         return copy;
     }
 
-    public int getCapturedBlack() { DebugLog.enter(TAG, "getCapturedBlack in, capturedBlack=" + capturedBlack); return capturedBlack; }
-    public int getCapturedWhite() { DebugLog.enter(TAG, "getCapturedWhite in, capturedWhite=" + capturedWhite); return capturedWhite; }
-    public int getMoveCount() { DebugLog.enter(TAG, "getMoveCount in, moveCount=" + moveHistory.size()); return moveHistory.size(); }
-    public Move getLastMove() { DebugLog.enter(TAG, "getLastMove in, moveCount=" + moveHistory.size()); return moveHistory.isEmpty() ? null : moveHistory.get(moveHistory.size() - 1); }
+    public int getCapturedBlack() { DebugLog.v(TAG, "getCapturedBlack in, capturedBlack=" + capturedBlack); return capturedBlack; }
+    public int getCapturedWhite() { DebugLog.v(TAG, "getCapturedWhite in, capturedWhite=" + capturedWhite); return capturedWhite; }
+    public int getMoveCount() { DebugLog.v(TAG, "getMoveCount in, moveCount=" + moveHistory.size()); return moveHistory.size(); }
+    public Move getLastMove() { DebugLog.v(TAG, "getLastMove in, moveCount=" + moveHistory.size()); return moveHistory.isEmpty() ? null : moveHistory.get(moveHistory.size() - 1); }
 }
