@@ -31,12 +31,6 @@ android {
     kotlinOptions { jvmTarget = "17" }
     buildFeatures { compose = true }
 
-    packaging {
-        jniLibs {
-            excludes += setOf("**/*.so")
-        }
-    }
-
     aaptOptions {
         noCompress += listOf("bin", "gz", "model", "so")
     }
