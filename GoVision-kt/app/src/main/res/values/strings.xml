@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BadukAI</string>
+    <string name="tab_play">对弈</string>
+    <string name="tab_analysis">分析</string>
+    <string name="tab_games">棋谱</string>
+    <string name="tab_settings">设置</string>
+    <string name="action_new_game">新对局</string>
+    <string name="action_pass">虚手</string>
+    <string name="action_undo">悔棋</string>
+    <string name="action_resign">认输</string>
+    <string name="action_save">保存</string>
+    <string name="action_export_sgf">导出 SGF</string>
+    <string name="action_import_sgf">导入 SGF</string>
+    <string name="action_ai_move">AI 落子</string>
+    <string name="action_prev">上一步</string>
+    <string name="action_next">下一步</string>
+    <string name="action_first">开头</string>
+    <string name="action_last">末尾</string>
+    <string name="action_analyze">分析</string>
+    <string name="engine_not_configured">未配置 KataGo 引擎，请在设置中配置。</string>
+    <string name="engine_running">引擎运行中</string>
+    <string name="engine_stopped">引擎已停止</string>
+    <string name="settings_engine_path">引擎可执行路径</string>
+    <string name="settings_model_path">权重文件路径</string>
+    <string name="settings_visits">分析访问数</string>
+    <string name="settings_komi">贴目</string>
+    <string name="settings_board_size">棋盘大小</string>
+    <string name="settings_handicap">让子</string>
+    <string name="settings_show_coords">显示坐标</string>
+    <string name="settings_show_winrate">显示胜率</string>
+    <string name="title_play_setup">对弈设置</string>
+    <string name="black_to_move">黑方行棋</string>
+    <string name="white_to_move">白方行棋</string>
+    <string name="winrate_label">胜率</string>
+    <string name="best_move_label">推荐选点</string>
+</resources>

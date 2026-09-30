@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="8dp">
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="分析 UI（Java Canvas）" android:textStyle="bold" android:padding="8dp"/>
+    <com.badukai.java.BoardView android:id="@+id/analysisBoard" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="圆点显示：上方胜率，下方 visits。这里先用演示数据，接口已留给 KataGo 分析输出。" android:padding="8dp"/>
+</LinearLayout>

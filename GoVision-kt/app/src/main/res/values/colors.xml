@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="board_wood">#E0B870</color>
+    <color name="board_line">#3E2A12</color>
+    <color name="stone_black">#1A1A1A</color>
+    <color name="stone_white">#FAFAFA</color>
+    <color name="md_theme_primary">#5D4037</color>
+    <color name="md_theme_background">#F5F1E8</color>
+</resources>

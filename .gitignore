@@ -1,0 +1,13 @@
+**/.gradle/
+**/build/
+**/app/build/
+**/.idea/
+**/*.iml
+**/local.properties
+
+*.apk
+*.aab
+
+gradle-*.zip
+zip/
+
