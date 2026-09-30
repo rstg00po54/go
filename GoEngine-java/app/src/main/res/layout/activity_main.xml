@@ -1,115 +1,289 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#FAFAFA"
-    android:paddingStart="16dp"
-    android:paddingEnd="16dp"
-    android:paddingTop="12dp"
-    android:paddingBottom="16dp">
+    android:layout_height="match_parent">
 
     <LinearLayout
+        android:id="@+id/mainPageContainer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:layout_height="match_parent"
+        android:background="@drawable/txwq_main_bg"
+        android:orientation="vertical"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp">
 
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="82dp"
+            android:background="#DDF2E3"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
+
+            <TextView
+                android:layout_width="58dp"
+                android:layout_height="58dp"
+                android:background="#B9DCC6"
+                android:gravity="center"
+                android:text="●"
+                android:textColor="#17221C"
+                android:textSize="34sp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="安静01006"
+                    android:textColor="#286B48"
+                    android:textSize="22sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="13级  🐛"
+                    android:textColor="#286B48"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="♟ 33363"
+                android:textColor="#5E9678"
+                android:textSize="20sp" />
+
+            <TextView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="12dp"
+                android:gravity="center"
+                android:text="⌕"
+                android:textColor="#246746"
+                android:textSize="34sp" />
+        </LinearLayout>
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="#E9F6ED"
+            android:fillViewport="true"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp">
+
+                <TextView android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center" android:paddingStart="8dp" android:paddingEnd="8dp" android:text="全部" android:textColor="#286B48" android:textSize="19sp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center" android:paddingStart="8dp" android:paddingEnd="8dp" android:text="大赛直播" android:textColor="#286B48" android:textSize="19sp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center" android:paddingStart="8dp" android:paddingEnd="8dp" android:text="站内对局" android:textColor="#286B48" android:textSize="19sp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center" android:paddingStart="8dp" android:paddingEnd="8dp" android:text="关注对局" android:textColor="#286B48" android:textSize="19sp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center" android:paddingStart="8dp" android:paddingEnd="8dp" android:text="公开约战" android:textColor="#286B48" android:textSize="19sp" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
             android:layout_weight="1"
-            android:text="Badukai"
-            android:textColor="#1A1A1A"
-            android:textSize="22sp"
-            android:textStyle="bold" />
+            android:fillViewport="true"
+            android:scrollbars="none">
 
-        <Button
-            android:id="@+id/newGameButton"
-            android:layout_width="wrap_content"
-            android:layout_height="44dp"
-            android:text="新对局"
-            android:textAllCaps="false" />
-    </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/statusText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:layout_marginBottom="10dp"
-        android:gravity="center"
-        android:text="正在启动 AI..."
-        android:textColor="#666666"
-        android:textSize="15sp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="86dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/txwq_match_card"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="转播对局【中盘】\n  ⚪  绝艺指导F                         VS                         clear777  ⚫"
+                    android:textColor="#2B4436"
+                    android:textSize="17sp" />
 
-    <com.badukai.ui.GoBoardView
-        android:id="@+id/boardView"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="86dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/txwq_match_card"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="第51期日本名人战挑战赛5/7【中盘】\n  芝野虎丸                    51 : 49                    一力辽"
+                    android:textColor="#2B4436"
+                    android:textSize="17sp" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:gravity="center"
-        android:orientation="horizontal">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="86dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/txwq_match_card"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="友谊赛【中盘】\n  ⚪  叶树林                             VS                             老杨头1  ⚫"
+                    android:textColor="#2B4436"
+                    android:textSize="17sp" />
 
-        <TextView
-            android:id="@+id/blackCaptureText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="86dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/txwq_match_card"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="友谊赛【官子】\n  漠北雪飞呀                           VS                           加减标点号"
+                    android:textColor="#2B4436"
+                    android:textSize="17sp" />
+            </LinearLayout>
+        </ScrollView>
+
+        <GridLayout
+            android:layout_width="match_parent"
+            android:layout_height="216dp"
+            android:alignmentMode="alignMargins"
+            android:columnCount="3"
+            android:paddingTop="6dp"
+            android:rowCount="2"
+            android:useDefaultMargins="true">
+
+            <Button android:id="@+id/match19Button" android:layout_width="0dp" android:layout_height="96dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="19路对弈\n♟ 20502" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="18sp" />
+            <Button android:id="@+id/match913Button" android:layout_width="0dp" android:layout_height="96dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="9/13路对弈\n♟ 3749" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="18sp" />
+            <Button android:id="@+id/challengeButton" android:layout_width="0dp" android:layout_height="96dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="挑战赛\n♟ 89" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="18sp" />
+            <Button android:id="@+id/lifeDeathButton" android:layout_width="0dp" android:layout_height="96dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="死活题" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="20sp" />
+            <Button android:id="@+id/aiBattleButton" android:layout_width="0dp" android:layout_height="96dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="AI训练" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="20sp" />
+            <Button android:id="@+id/friendButton" android:layout_width="0dp" android:layout_height="96dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="约战" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="20sp" />
+        </GridLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="82dp"
+            android:background="#DDF2E3"
             android:gravity="center"
-            android:text="黑棋提子 0"
-            android:textColor="#222222"
-            android:textSize="15sp" />
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/whiteCaptureText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="白棋提子 0"
-            android:textColor="#222222"
-            android:textSize="15sp" />
+            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="🛒\n商城" android:textColor="#38765A" android:textSize="16sp" />
+            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="⊕\n棋谱" android:textColor="#38765A" android:textSize="16sp" />
+            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="📷\n拍照数子" android:textColor="#38765A" android:textSize="16sp" />
+            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="▦\n定式" android:textColor="#38765A" android:textSize="16sp" />
+            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="▤\n资讯" android:textColor="#38765A" android:textSize="16sp" />
+            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="•••\n更多" android:textColor="#38765A" android:textSize="16sp" />
+        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/gamePageContainer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:gravity="center"
-        android:orientation="horizontal">
+        android:layout_height="match_parent"
+        android:background="@drawable/txwq_game_bg"
+        android:orientation="vertical"
+        android:visibility="gone">
 
-        <Button
-            android:id="@+id/undoButton"
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_weight="1"
-            android:layout_marginEnd="5dp"
-            android:text="悔棋"
-            android:textAllCaps="false" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:background="#E6F5EF"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp">
 
-        <Button
-            android:id="@+id/passButton"
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_weight="1"
-            android:layout_marginStart="5dp"
-            android:layout_marginEnd="5dp"
-            android:text="停一手"
-            android:textAllCaps="false" />
+            <Button
+                android:id="@+id/backButton"
+                android:layout_width="52dp"
+                android:layout_height="48dp"
+                android:background="@android:color/transparent"
+                android:text="←"
+                android:textAllCaps="false"
+                android:textColor="#4B8D6B"
+                android:textSize="28sp" />
 
-        <Button
-            android:id="@+id/resignButton"
-            android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_weight="1"
-            android:layout_marginStart="5dp"
-            android:text="认输"
-            android:textAllCaps="false" />
+            <TextView
+                android:id="@+id/gameTitleText"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="19路对局　常见问题　　第1手"
+                android:textColor="#286B48"
+                android:textSize="18sp" />
+
+            <Button
+                android:id="@+id/newGameButton"
+                android:layout_width="52dp"
+                android:layout_height="48dp"
+                android:background="@android:color/transparent"
+                android:text="⚙"
+                android:textAllCaps="false"
+                android:textColor="#4B8D6B"
+                android:textSize="24sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="78dp"
+            android:background="#CFECE0"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp">
+
+            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center_vertical" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⚪  安静01006　13级" android:textColor="#286B48" android:textSize="17sp" />
+                <TextView android:id="@+id/blackCaptureText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="黑棋提子 0" android:textColor="#5B7B69" android:textSize="14sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/statusText"
+                android:layout_width="132dp"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="正在启动 AI..."
+                android:textColor="#A16B50"
+                android:textSize="15sp" />
+
+            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center_vertical|end" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="围棋精灵　⚫" android:textColor="#286B48" android:textSize="17sp" />
+                <TextView android:id="@+id/whiteCaptureText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="白棋提子 0" android:textColor="#5B7B69" android:textSize="14sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <com.badukai.ui.GoBoardView
+            android:id="@+id/boardView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="72dp"
+            android:background="#E2F4EE"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp">
+
+            <Button android:id="@+id/resignButton" android:layout_width="0dp" android:layout_height="54dp" android:layout_margin="3dp" android:layout_weight="1" android:background="@drawable/txwq_green_button" android:text="认输" android:textAllCaps="false" android:textColor="#FFF4CB" android:textSize="16sp" />
+            <Button android:id="@+id/passButton" android:layout_width="0dp" android:layout_height="54dp" android:layout_margin="3dp" android:layout_weight="1" android:background="@drawable/txwq_green_button" android:text="停一手" android:textAllCaps="false" android:textColor="#FFF4CB" android:textSize="16sp" />
+            <Button android:id="@+id/undoButton" android:layout_width="0dp" android:layout_height="54dp" android:layout_margin="3dp" android:layout_weight="1" android:background="@drawable/txwq_green_button" android:text="悔棋" android:textAllCaps="false" android:textColor="#FFF4CB" android:textSize="16sp" />
+            <Button android:id="@+id/moreGameButton" android:layout_width="0dp" android:layout_height="54dp" android:layout_margin="3dp" android:layout_weight="1" android:background="@drawable/txwq_green_button" android:text="…" android:textAllCaps="false" android:textColor="#FFF4CB" android:textSize="20sp" />
+        </LinearLayout>
     </LinearLayout>
-</LinearLayout>
+</FrameLayout>
