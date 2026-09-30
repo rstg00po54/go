@@ -26,6 +26,14 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    // RK3588 版本不再打包旧的 SNPE/QNN/HTP JNI 库。
+    // libc++_shared.so 作为 assets/engine 下的普通文件释放到 filesDir/engine。
+    packaging {
+        jniLibs {
+            excludes += setOf("**/*.so")
+        }
+    }
+
     aaptOptions {
         noCompress += listOf("bin", "gz", "model", "so")
     }
