@@ -3,6 +3,8 @@ package com.badukai.engine;
 import android.content.Context;
 import android.util.Log;
 
+import com.badukai.util.DebugLog;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -35,6 +37,7 @@ public class KataGoEngine {
         public final String description;
 
         Model(String displayName, String fileName, String description) {
+            DebugLog.enter(TAG, "Model in, displayName=" + displayName + ", fileName=" + fileName + ", description=" + description);
             this.displayName = displayName;
             this.fileName = fileName;
             this.description = description;
@@ -52,10 +55,12 @@ public class KataGoEngine {
     private Thread errorReaderThread;
 
     public KataGoEngine(Context context) {
+        DebugLog.enter(TAG, "KataGoEngine in, context=" + context);
         this.context = context.getApplicationContext();
     }
 
     public synchronized boolean start(Model model) {
+        DebugLog.enter(TAG, "start in, model=" + model + ", running=" + running.get());
         if (running.get()) return true;
         Log.i(TAG, "=== JAVA KATAGO ENGINE / RK3588 ===");
         try {
@@ -81,9 +86,7 @@ public class KataGoEngine {
                 copyAssetToFile(DEFAULT_MODEL_ASSET, modelFile);
             }
 
-            if (!binaryFile.setExecutable(true, false) && !binaryFile.canExecute()) {
-                throw new IOException("Cannot make KataGo executable: " + binaryFile);
-            }
+            if (!binaryFile.setExecutable(true, false) && !binaryFile.canExecute()) throw new IOException("Cannot make KataGo executable: " + binaryFile);
             libcxxFile.setExecutable(false, false);
 
             Log.i(TAG, "Model: " + modelFile.getAbsolutePath() + " size=" + modelFile.length());
@@ -132,6 +135,7 @@ public class KataGoEngine {
     }
 
     private void startReaderThread() {
+        DebugLog.enter(TAG, "startReaderThread in");
         readerThread = new Thread(() -> {
             StringBuilder buffer = new StringBuilder();
             try {
@@ -152,6 +156,7 @@ public class KataGoEngine {
     }
 
     private void startErrorReaderThread() {
+        DebugLog.enter(TAG, "startErrorReaderThread in");
         errorReaderThread = new Thread(() -> {
             try {
                 String line;
@@ -164,6 +169,7 @@ public class KataGoEngine {
     }
 
     public synchronized void stop() {
+        DebugLog.enter(TAG, "stop in, running=" + running.get() + ", process=" + process);
         if (!running.get() && process == null) return;
         try { sendCommandSync("quit"); } catch (Exception ignored) {}
         running.set(false);
@@ -186,10 +192,12 @@ public class KataGoEngine {
     }
 
     public boolean isReady() {
+        DebugLog.enter(TAG, "isReady in, running=" + running.get());
         return running.get();
     }
 
     public String generateMove(String color) {
+        DebugLog.enter(TAG, "generateMove in, color=" + color);
         responseQueue.clear();
         if (!sendCommandSync("genmove " + color)) return null;
         String response = waitForResponse(60000);
@@ -199,32 +207,39 @@ public class KataGoEngine {
     }
 
     public boolean playMove(String color, String move) {
+        DebugLog.enter(TAG, "playMove in, color=" + color + ", move=" + move);
         return simpleCommand("play " + color + " " + move, 5000);
     }
 
     public boolean setBoardSize(int size) {
+        DebugLog.enter(TAG, "setBoardSize in, size=" + size);
         return simpleCommand("boardsize " + size, 5000);
     }
 
     public boolean clearBoard() {
+        DebugLog.enter(TAG, "clearBoard in");
         return simpleCommand("clear_board", 5000);
     }
 
     public boolean setKomi(float komi) {
+        DebugLog.enter(TAG, "setKomi in, komi=" + komi);
         return simpleCommand("komi " + komi, 5000);
     }
 
     public boolean undo() {
+        DebugLog.enter(TAG, "undo in");
         return simpleCommand("undo", 5000);
     }
 
     public String getFinalScore() {
+        DebugLog.enter(TAG, "getFinalScore in");
         responseQueue.clear();
         if (!sendCommandSync("final_score")) return null;
         return parseGtpResponse(waitForResponse(10000));
     }
 
     private boolean simpleCommand(String command, int timeoutMs) {
+        DebugLog.enter(TAG, "simpleCommand in, command=" + command + ", timeoutMs=" + timeoutMs);
         responseQueue.clear();
         if (!sendCommandSync(command)) return false;
         String response = waitForResponse(timeoutMs);
@@ -232,6 +247,7 @@ public class KataGoEngine {
     }
 
     private synchronized boolean sendCommandSync(String command) {
+        DebugLog.enter(TAG, "sendCommandSync in, command=" + command + ", running=" + running.get());
         if (!running.get() && !"quit".equals(command)) return false;
         if (writer == null) return false;
         try {
@@ -247,6 +263,7 @@ public class KataGoEngine {
     }
 
     private String waitForResponse(int timeoutMs) {
+        DebugLog.enter(TAG, "waitForResponse in, timeoutMs=" + timeoutMs);
         try {
             String response = responseQueue.poll(timeoutMs, TimeUnit.MILLISECONDS);
             return response == null ? "" : response;
@@ -257,6 +274,7 @@ public class KataGoEngine {
     }
 
     private String parseGtpResponse(String response) {
+        DebugLog.enter(TAG, "parseGtpResponse in, response=" + response);
         if (response == null) return null;
         String trimmed = response.trim();
         if (!trimmed.startsWith("=")) return null;
@@ -266,6 +284,7 @@ public class KataGoEngine {
     }
 
     private void copyAssetToFile(String assetPath, File dest) throws IOException {
+        DebugLog.enter(TAG, "copyAssetToFile in, assetPath=" + assetPath + ", dest=" + dest);
         File parent = dest.getParentFile();
         if (parent != null && !parent.exists()) parent.mkdirs();
         try (InputStream input = context.getAssets().open(assetPath); FileOutputStream output = new FileOutputStream(dest, false)) {
