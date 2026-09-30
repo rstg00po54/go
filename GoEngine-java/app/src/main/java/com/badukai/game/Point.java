@@ -11,7 +11,7 @@ public final class Point {
     public final int y;
 
     public Point(int x, int y) {
-        DebugLog.enter(TAG, "Point in, x=" + x + ", y=" + y);
+        DebugLog.v(TAG, "Point in, x=" + x + ", y=" + y);
         this.x = x;
         this.y = y;
     }
@@ -43,7 +43,7 @@ public final class Point {
 
     @Override
     public boolean equals(Object obj) {
-        DebugLog.enter(TAG, "equals in, obj=" + obj);
+        DebugLog.v(TAG, "equals in, obj=" + obj);
         if (this == obj) return true;
         if (!(obj instanceof Point)) return false;
         Point other = (Point) obj;
@@ -52,7 +52,7 @@ public final class Point {
 
     @Override
     public int hashCode() {
-        DebugLog.enter(TAG, "hashCode in, x=" + x + ", y=" + y);
+        DebugLog.v(TAG, "hashCode in, x=" + x + ", y=" + y);
         return Objects.hash(x, y);
     }
 
