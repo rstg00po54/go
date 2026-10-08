@@ -105,86 +105,213 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="110dp"
+                    android:layout_height="104dp"
                     android:layout_marginTop="4dp"
                     android:background="@drawable/txwq_match_card"
-                    android:gravity="center_vertical"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:text="转播对局【中盘】\n  ⚪  绝艺指导F                         VS                         clear777  ⚫"
-                    android:textColor="#2B4436"
-                    android:textSize="19sp" />
+                    android:orientation="vertical"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="5dp">
+                    <TextView android:layout_width="match_parent" android:layout_height="25dp" android:ellipsize="end" android:maxLines="1" android:gravity="center_vertical" android:text="第45期日本女流本因坊挑战赛第1/5局【官子】" android:textColor="#32664C" android:textSize="16sp" />
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical" android:orientation="horizontal">
+                        <TextView android:layout_width="42dp" android:layout_height="42dp" android:layout_marginEnd="7dp" android:background="#D8E9DE" android:gravity="center" android:text="◯" android:textColor="#FAFAFA" android:textSize="27sp" />
+                        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="start|center_vertical">
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="start" android:text="藤泽里菜" android:textColor="#304739" android:textSize="17sp" />
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="start" android:text="七段 🇯🇵" android:textColor="#658E75" android:textSize="12sp" />
+                        </LinearLayout>
+                        <TextView android:layout_width="68dp" android:layout_height="match_parent" android:gravity="center" android:text="19 : 81" android:textColor="#669880" android:textSize="18sp" />
+                        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="end|center_vertical">
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="end" android:text="上野梨纱" android:textColor="#304739" android:textSize="17sp" />
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="end" android:text="四段 🇯🇵" android:textColor="#658E75" android:textSize="12sp" />
+                        </LinearLayout>
+                        <TextView android:layout_width="42dp" android:layout_height="42dp" android:layout_marginStart="7dp" android:background="#D8E9DE" android:gravity="center" android:text="●" android:textColor="#18211C" android:textSize="27sp" />
+                    </LinearLayout>
+                </LinearLayout>
 
-                <TextView
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="110dp"
+                    android:layout_height="104dp"
                     android:layout_marginTop="4dp"
                     android:background="@drawable/txwq_match_card"
-                    android:gravity="center_vertical"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:text="第51期日本名人战挑战赛5/7【中盘】\n  芝野虎丸                    51 : 49                    一力辽"
-                    android:textColor="#2B4436"
-                    android:textSize="19sp" />
+                    android:orientation="vertical"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="5dp">
+                    <TextView android:layout_width="match_parent" android:layout_height="25dp" android:ellipsize="end" android:maxLines="1" android:gravity="center_vertical" android:text="2026韩国水协银行杯女子锦标赛半决赛【已结束】" android:textColor="#32664C" android:textSize="16sp" />
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical" android:orientation="horizontal">
+                        <TextView android:layout_width="42dp" android:layout_height="42dp" android:layout_marginEnd="7dp" android:background="#D8E9DE" android:gravity="center" android:text="◯" android:textColor="#FAFAFA" android:textSize="27sp" />
+                        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="start|center_vertical">
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="start" android:text="金恩持" android:textColor="#304739" android:textSize="17sp" />
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="start" android:text="九段 🇰🇷" android:textColor="#658E75" android:textSize="12sp" />
+                        </LinearLayout>
+                        <TextView android:layout_width="68dp" android:layout_height="match_parent" android:gravity="center" android:text="胜" android:textColor="#669880" android:textSize="18sp" />
+                        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="end|center_vertical">
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="end" android:text="许瑞玹" android:textColor="#304739" android:textSize="17sp" />
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="end" android:text="五段 🇰🇷" android:textColor="#658E75" android:textSize="12sp" />
+                        </LinearLayout>
+                        <TextView android:layout_width="42dp" android:layout_height="42dp" android:layout_marginStart="7dp" android:background="#D8E9DE" android:gravity="center" android:text="●" android:textColor="#18211C" android:textSize="27sp" />
+                    </LinearLayout>
+                </LinearLayout>
 
-                <TextView
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="110dp"
+                    android:layout_height="104dp"
                     android:layout_marginTop="4dp"
                     android:background="@drawable/txwq_match_card"
-                    android:gravity="center_vertical"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:text="友谊赛【中盘】\n  ⚪  叶树林                             VS                             老杨头1  ⚫"
-                    android:textColor="#2B4436"
-                    android:textSize="19sp" />
+                    android:orientation="vertical"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="5dp">
+                    <TextView android:layout_width="match_parent" android:layout_height="25dp" android:ellipsize="end" android:maxLines="1" android:gravity="center_vertical" android:text="转播对局【中盘】" android:textColor="#32664C" android:textSize="16sp" />
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical" android:orientation="horizontal">
+                        <TextView android:layout_width="42dp" android:layout_height="42dp" android:layout_marginEnd="7dp" android:background="#D8E9DE" android:gravity="center" android:text="◯" android:textColor="#FAFAFA" android:textSize="27sp" />
+                        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="start|center_vertical">
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="start" android:text="yoyam" android:textColor="#304739" android:textSize="17sp" />
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="start" android:text="九段 🇯🇵" android:textColor="#658E75" android:textSize="12sp" />
+                        </LinearLayout>
+                        <TextView android:layout_width="68dp" android:layout_height="match_parent" android:gravity="center" android:text="VS" android:textColor="#669880" android:textSize="18sp" />
+                        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="end|center_vertical">
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="end" android:text="Fivestar" android:textColor="#304739" android:textSize="17sp" />
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="end" android:text="九段 🇰🇷" android:textColor="#658E75" android:textSize="12sp" />
+                        </LinearLayout>
+                        <TextView android:layout_width="42dp" android:layout_height="42dp" android:layout_marginStart="7dp" android:background="#D8E9DE" android:gravity="center" android:text="●" android:textColor="#18211C" android:textSize="27sp" />
+                    </LinearLayout>
+                </LinearLayout>
 
-                <TextView
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="110dp"
+                    android:layout_height="104dp"
                     android:layout_marginTop="4dp"
                     android:background="@drawable/txwq_match_card"
-                    android:gravity="center_vertical"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:text="友谊赛【官子】\n  漠北雪飞呀                           VS                           加减标点号"
-                    android:textColor="#2B4436"
-                    android:textSize="19sp" />
+                    android:orientation="vertical"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="5dp">
+                    <TextView android:layout_width="match_parent" android:layout_height="25dp" android:ellipsize="end" android:maxLines="1" android:gravity="center_vertical" android:text="转播对局【中盘】" android:textColor="#32664C" android:textSize="16sp" />
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical" android:orientation="horizontal">
+                        <TextView android:layout_width="42dp" android:layout_height="42dp" android:layout_marginEnd="7dp" android:background="#D8E9DE" android:gravity="center" android:text="◯" android:textColor="#FAFAFA" android:textSize="27sp" />
+                        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="start|center_vertical">
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="start" android:text="takoyaki" android:textColor="#304739" android:textSize="17sp" />
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="start" android:text="九段 🇯🇵" android:textColor="#658E75" android:textSize="12sp" />
+                        </LinearLayout>
+                        <TextView android:layout_width="68dp" android:layout_height="match_parent" android:gravity="center" android:text="VS" android:textColor="#669880" android:textSize="18sp" />
+                        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="end|center_vertical">
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="end" android:text="华丽的烟火" android:textColor="#304739" android:textSize="17sp" />
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="end" android:text="九段 🇨🇳" android:textColor="#658E75" android:textSize="12sp" />
+                        </LinearLayout>
+                        <TextView android:layout_width="42dp" android:layout_height="42dp" android:layout_marginStart="7dp" android:background="#D8E9DE" android:gravity="center" android:text="●" android:textColor="#18211C" android:textSize="27sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="104dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/txwq_match_card"
+                    android:orientation="vertical"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="5dp">
+                    <TextView android:layout_width="match_parent" android:layout_height="25dp" android:ellipsize="end" android:maxLines="1" android:gravity="center_vertical" android:text="转播对局【中盘】" android:textColor="#32664C" android:textSize="16sp" />
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical" android:orientation="horizontal">
+                        <TextView android:layout_width="42dp" android:layout_height="42dp" android:layout_marginEnd="7dp" android:background="#D8E9DE" android:gravity="center" android:text="◯" android:textColor="#FAFAFA" android:textSize="27sp" />
+                        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="start|center_vertical">
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="start" android:text="1000325" android:textColor="#304739" android:textSize="17sp" />
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="start" android:text="九段 🇯🇵" android:textColor="#658E75" android:textSize="12sp" />
+                        </LinearLayout>
+                        <TextView android:layout_width="68dp" android:layout_height="match_parent" android:gravity="center" android:text="VS" android:textColor="#669880" android:textSize="18sp" />
+                        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="end|center_vertical">
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="end" android:text="arakan" android:textColor="#304739" android:textSize="17sp" />
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="end" android:text="九段 🇯🇵" android:textColor="#658E75" android:textSize="12sp" />
+                        </LinearLayout>
+                        <TextView android:layout_width="42dp" android:layout_height="42dp" android:layout_marginStart="7dp" android:background="#D8E9DE" android:gravity="center" android:text="●" android:textColor="#18211C" android:textSize="27sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="104dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/txwq_match_card"
+                    android:orientation="vertical"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="5dp">
+                    <TextView android:layout_width="match_parent" android:layout_height="25dp" android:ellipsize="end" android:maxLines="1" android:gravity="center_vertical" android:text="升降级【布局】" android:textColor="#32664C" android:textSize="16sp" />
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical" android:orientation="horizontal">
+                        <TextView android:layout_width="42dp" android:layout_height="42dp" android:layout_marginEnd="7dp" android:background="#D8E9DE" android:gravity="center" android:text="◯" android:textColor="#FAFAFA" android:textSize="27sp" />
+                        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="start|center_vertical">
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="start" android:text="知天命5672" android:textColor="#304739" android:textSize="17sp" />
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="start" android:text="九段 🇨🇳" android:textColor="#658E75" android:textSize="12sp" />
+                        </LinearLayout>
+                        <TextView android:layout_width="68dp" android:layout_height="match_parent" android:gravity="center" android:text="VS" android:textColor="#669880" android:textSize="18sp" />
+                        <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="end|center_vertical">
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="end" android:text="象围爱好者" android:textColor="#304739" android:textSize="17sp" />
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" android:gravity="end" android:text="九段 🇨🇳" android:textColor="#658E75" android:textSize="12sp" />
+                        </LinearLayout>
+                        <TextView android:layout_width="42dp" android:layout_height="42dp" android:layout_marginStart="7dp" android:background="#D8E9DE" android:gravity="center" android:text="●" android:textColor="#18211C" android:textSize="27sp" />
+                    </LinearLayout>
+                </LinearLayout>
             </LinearLayout>
         </ScrollView>
 
         <GridLayout
             android:layout_width="match_parent"
-            android:layout_height="268dp"
-            android:alignmentMode="alignMargins"
+            android:layout_height="260dp"
             android:columnCount="3"
-            android:paddingTop="6dp"
             android:rowCount="2"
-            android:useDefaultMargins="true">
-
-            <Button android:id="@+id/match19Button" android:layout_width="0dp" android:layout_height="125dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="19路对弈\n♟ 20502" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="22sp" />
-            <Button android:id="@+id/match913Button" android:layout_width="0dp" android:layout_height="125dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="9/13路对弈\n♟ 3749" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="22sp" />
-            <Button android:id="@+id/challengeButton" android:layout_width="0dp" android:layout_height="125dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="挑战赛\n♟ 89" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="22sp" />
-            <Button android:id="@+id/lifeDeathButton" android:layout_width="0dp" android:layout_height="125dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="死活题" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="24sp" />
-            <Button android:id="@+id/aiBattleButton" android:layout_width="0dp" android:layout_height="125dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="AI训练" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="24sp" />
-            <Button android:id="@+id/friendButton" android:layout_width="0dp" android:layout_height="125dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="约战" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="24sp" />
+            android:alignmentMode="alignBounds"
+            android:useDefaultMargins="false"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp">
+            <Button android:id="@+id/match19Button" android:layout_width="0dp" android:layout_height="118dp" android:layout_columnWeight="1" android:layout_marginStart="12dp" android:layout_marginEnd="12dp" android:layout_marginTop="4dp" android:layout_marginBottom="4dp" android:background="@drawable/txwq_green_button" android:text="19路对弈\n♟ 20502" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="20sp" />
+            <Button android:id="@+id/match913Button" android:layout_width="0dp" android:layout_height="118dp" android:layout_columnWeight="1" android:layout_marginStart="12dp" android:layout_marginEnd="12dp" android:layout_marginTop="4dp" android:layout_marginBottom="4dp" android:background="@drawable/txwq_green_button" android:text="9/13路对弈\n♟ 3749" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="20sp" />
+            <Button android:id="@+id/challengeButton" android:layout_width="0dp" android:layout_height="118dp" android:layout_columnWeight="1" android:layout_marginStart="12dp" android:layout_marginEnd="12dp" android:layout_marginTop="4dp" android:layout_marginBottom="4dp" android:background="@drawable/txwq_green_button" android:text="挑战赛\n♟ 89" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="20sp" />
+            <Button android:id="@+id/lifeDeathButton" android:layout_width="0dp" android:layout_height="118dp" android:layout_columnWeight="1" android:layout_marginStart="12dp" android:layout_marginEnd="12dp" android:layout_marginTop="4dp" android:layout_marginBottom="4dp" android:background="@drawable/txwq_green_button" android:text="死活题" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="20sp" />
+            <Button android:id="@+id/aiBattleButton" android:layout_width="0dp" android:layout_height="118dp" android:layout_columnWeight="1" android:layout_marginStart="12dp" android:layout_marginEnd="12dp" android:layout_marginTop="4dp" android:layout_marginBottom="4dp" android:background="@drawable/txwq_green_button" android:text="AI训练" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="20sp" />
+            <Button android:id="@+id/friendButton" android:layout_width="0dp" android:layout_height="118dp" android:layout_columnWeight="1" android:layout_marginStart="12dp" android:layout_marginEnd="12dp" android:layout_marginTop="4dp" android:layout_marginBottom="4dp" android:background="@drawable/txwq_green_button" android:text="约战" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="20sp" />
         </GridLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="129dp"
+            android:layout_height="112dp"
             android:background="#DDF2E3"
             android:gravity="center"
             android:orientation="horizontal">
-
-            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="🛒\n商城" android:textColor="#38765A" android:textSize="18sp" />
-            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="⊕\n棋谱" android:textColor="#38765A" android:textSize="18sp" />
-            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="📷\n拍照数子" android:textColor="#38765A" android:textSize="18sp" />
-            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="▦\n定式" android:textColor="#38765A" android:textSize="18sp" />
-            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="▤\n资讯" android:textColor="#38765A" android:textSize="18sp" />
-            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="•••\n更多" android:textColor="#38765A" android:textSize="18sp" />
+            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+                <TextView android:layout_width="match_parent" android:layout_height="42dp" android:gravity="center" android:text="🛒" android:textColor="#5B9A77" android:textSize="28sp" />
+                <TextView android:layout_width="match_parent" android:layout_height="27dp" android:gravity="center" android:maxLines="1" android:includeFontPadding="false" android:text="商城" android:textColor="#38765A" android:textSize="15sp" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+                <TextView android:layout_width="match_parent" android:layout_height="42dp" android:gravity="center" android:text="⊕" android:textColor="#5B9A77" android:textSize="28sp" />
+                <TextView android:layout_width="match_parent" android:layout_height="27dp" android:gravity="center" android:maxLines="1" android:includeFontPadding="false" android:text="棋谱" android:textColor="#38765A" android:textSize="15sp" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+                <TextView android:layout_width="match_parent" android:layout_height="42dp" android:gravity="center" android:text="▣" android:textColor="#5B9A77" android:textSize="28sp" />
+                <TextView android:layout_width="match_parent" android:layout_height="27dp" android:gravity="center" android:maxLines="1" android:includeFontPadding="false" android:text="拍照数子" android:textColor="#38765A" android:textSize="15sp" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+                <TextView android:layout_width="match_parent" android:layout_height="42dp" android:gravity="center" android:text="▦" android:textColor="#5B9A77" android:textSize="28sp" />
+                <TextView android:layout_width="match_parent" android:layout_height="27dp" android:gravity="center" android:maxLines="1" android:includeFontPadding="false" android:text="定式" android:textColor="#38765A" android:textSize="15sp" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+                <TextView android:layout_width="match_parent" android:layout_height="42dp" android:gravity="center" android:text="▤" android:textColor="#5B9A77" android:textSize="28sp" />
+                <TextView android:layout_width="match_parent" android:layout_height="27dp" android:gravity="center" android:maxLines="1" android:includeFontPadding="false" android:text="资讯" android:textColor="#38765A" android:textSize="15sp" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+                <TextView android:layout_width="match_parent" android:layout_height="42dp" android:gravity="center" android:text="•••" android:textColor="#5B9A77" android:textSize="28sp" />
+                <TextView android:layout_width="match_parent" android:layout_height="27dp" android:gravity="center" android:maxLines="1" android:includeFontPadding="false" android:text="更多" android:textColor="#38765A" android:textSize="15sp" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 
