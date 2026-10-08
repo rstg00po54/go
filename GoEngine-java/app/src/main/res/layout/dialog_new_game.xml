@@ -118,21 +118,16 @@
                 <TextView
                     android:layout_width="74dp"
                     android:layout_height="wrap_content"
-                    android:text="难易程度"
+                    android:text="棋力等级"
                     android:textColor="#286B48"
                     android:textSize="14sp" />
 
-                <RadioGroup
-                    android:id="@+id/difficultyGroup"
+                <Spinner
+                    android:id="@+id/difficultySpinner"
                     android:layout_width="0dp"
-                    android:layout_height="match_parent"
+                    android:layout_height="44dp"
                     android:layout_weight="1"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-                    <RadioButton android:id="@+id/easyRadio" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:minWidth="0dp" android:buttonTint="#5B9D72" android:gravity="center_vertical" android:padding="0dp" android:text="简单" android:textColor="#286B48" android:textSize="14sp" />
-                    <RadioButton android:id="@+id/normalRadio" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:minWidth="0dp" android:buttonTint="#5B9D72" android:gravity="center_vertical" android:padding="0dp" android:text="普通" android:textColor="#286B48" android:textSize="14sp" />
-                    <RadioButton android:id="@+id/hardRadio" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:minWidth="0dp" android:buttonTint="#5B9D72" android:gravity="center_vertical" android:padding="0dp" android:text="困难" android:textColor="#286B48" android:textSize="14sp" />
-                </RadioGroup>
+                    android:spinnerMode="dropdown" />
             </LinearLayout>
         </LinearLayout>
 
