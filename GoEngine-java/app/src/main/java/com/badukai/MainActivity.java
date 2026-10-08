@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
         resignButton.setOnClickListener(v -> resign());
         newRoundButton.setOnClickListener(v -> showNewGameDialog());
         situationButton.setOnClickListener(v -> showSituation());
-        aiSuggestionButton.setOnClickListener(v -> Toast.makeText(this, "AI推荐功能待实现", Toast.LENGTH_SHORT).show());
+        aiSuggestionButton.setOnClickListener(v -> showAiSuggestions());
         countTerritoryButton.setOnClickListener(v -> Toast.makeText(this, "数目功能待实现", Toast.LENGTH_SHORT).show());
         moreGameButton.setOnClickListener(v -> Toast.makeText(this, "更多功能待实现", Toast.LENGTH_SHORT).show());
         render("正在启动 AI...");
@@ -177,6 +177,7 @@ public class MainActivity extends AppCompatActivity {
 
         StoneColor color = currentPlayer;
         boardView.setOwnership(null);
+        boardView.setRecommendations(null, null);
         board.playMove(new Move.Stone(point, color));
         lastMove = point;
         currentPlayer = color.opposite();
@@ -215,6 +216,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         boardView.setOwnership(null);
+        boardView.setRecommendations(null, null);
         if ("pass".equalsIgnoreCase(move)) {
             board.playMove(new Move.Pass(aiColor));
             currentPlayer = aiColor.opposite();
@@ -245,6 +247,7 @@ public class MainActivity extends AppCompatActivity {
         if (!engineReady || !gameReady || thinking || currentPlayer != playerColor || board.isGameOver()) return;
         StoneColor color = currentPlayer;
         boardView.setOwnership(null);
+        boardView.setRecommendations(null, null);
         board.playMove(new Move.Pass(color));
         lastMove = null;
         if (board.isGameOver()) {
@@ -267,6 +270,7 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "undo in, engineReady=" + engineReady + ", thinking=" + thinking + ", moveCount=" + board.getMoveCount());
         if (!engineReady || !gameReady || thinking || board.getMoveCount() < 2) return;
         boardView.setOwnership(null);
+        boardView.setRecommendations(null, null);
         board.undo();
         board.undo();
         Move last = board.getLastMove();
@@ -283,6 +287,7 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "resign in, thinking=" + thinking + ", moveCount=" + board.getMoveCount() + ", playerColor=" + playerColor);
         if (!gameReady || thinking || board.getMoveCount() == 0 || board.isGameOver()) return;
         boardView.setOwnership(null);
+        boardView.setRecommendations(null, null);
         board.playMove(new Move.Resign(playerColor));
         String winner = playerColor == StoneColor.BLACK ? "白棋" : "黑棋";
         finishByResignation("你认输了 · " + winner + "胜");
@@ -360,6 +365,83 @@ public class MainActivity extends AppCompatActivity {
                 blackTerritory, whiteTerritory, emptyPoints - blackTerritory - whiteTerritory,
                 GoBoardView.OWNERSHIP_MARK_THRESHOLD));
         return String.format(Locale.CHINA, "黑估空%d目\n白估空%d目", blackTerritory, whiteTerritory);
+    }
+
+    private void showAiSuggestions() {
+        DebugLog.enter(TAG, "showAiSuggestions in, ready=" + gameReady + ", thinking=" + thinking + ", evaluating=" + evaluating);
+        if (!engineReady || !gameReady || engineStarting || thinking || evaluating || currentPlayer != playerColor || board.isGameOver()) return;
+
+        if (boardView.hasRecommendations()) {
+            boardView.setRecommendations(null, null);
+            render("推荐标记已隐藏");
+            return;
+        }
+
+        evaluating = true;
+        final GoBoard snapshot = board;
+        final int moves = board.getMoveCount(), size = boardSize;
+        final StoneColor color = currentPlayer;
+        render("正在计算推荐点...");
+        engineExecutor.execute(() -> {
+            // Returns a raw 10b neural move policy; this command does not play a move.
+            KataGoEngine.PositionEvaluation evaluation = engine.evaluatePosition(size);
+            mainHandler.post(() -> {
+                evaluating = false;
+                if (board != snapshot || board.getMoveCount() != moves || boardSize != size || currentPlayer != color) return;
+                if (evaluation == null || evaluation.movePolicy == null || evaluation.movePolicy.length != size * size) {
+                    render("推荐失败，请检查日志");
+                    return;
+                }
+
+                Point[] points = new Point[3];
+                float[] probabilities = new float[3];
+                boolean[] excluded = new boolean[size * size];
+                int count = 0;
+
+                for (int rank = 0; rank < points.length; rank++) {
+                    while (true) {
+                        int bestIndex = -1;
+                        float bestPolicy = -1f;
+                        for (int i = 0; i < evaluation.movePolicy.length; i++) {
+                            float policy = evaluation.movePolicy[i];
+                            if (!excluded[i] && Float.isFinite(policy) && policy > bestPolicy) {
+                                bestIndex = i;
+                                bestPolicy = policy;
+                            }
+                        }
+                        if (bestIndex < 0 || bestPolicy <= 0f) break;
+                        excluded[bestIndex] = true;
+                        Point candidate = new Point(bestIndex % size, size - 1 - bestIndex / size);
+                        if (!board.isLegalMove(candidate, color)) continue;
+                        points[count] = candidate;
+                        probabilities[count] = bestPolicy;
+                        count++;
+                        break;
+                    }
+                    if (count != rank + 1) break;
+                }
+
+                if (count == 0) {
+                    render("没有可推荐的落点");
+                    return;
+                }
+                Point[] top = new Point[count];
+                float[] weights = new float[count];
+                System.arraycopy(points, 0, top, 0, count);
+                System.arraycopy(probabilities, 0, weights, 0, count);
+                boardView.setRecommendations(top, weights);
+                StringBuilder summary = new StringBuilder();
+                String[] ranks = {"①", "②", "③"};
+                for (int i = 0; i < count; i++) {
+                    if (i > 0) summary.append('\n');
+                    summary.append(ranks[i]).append(top[i].toGtp(size)).append(' ')
+                            .append(String.format(Locale.CHINA, "%.0f%%", weights[i] * 100));
+                    Log.i(TAG, String.format(Locale.US, "AI recommendation rank=%d color=%s point=%s policy=%.4f",
+                            i + 1, color.toGtp(), top[i].toGtp(size), weights[i]));
+                }
+                render(summary.toString());
+            });
+        });
     }
 
     private void showSituation() {
@@ -489,6 +571,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         boardView.setOwnership(null);
+        boardView.setRecommendations(null, null);
         gameResultText = null;
         board = new GoBoard(boardSize);
         currentPlayer = StoneColor.BLACK;
@@ -559,6 +642,7 @@ public class MainActivity extends AppCompatActivity {
         boardView.setBoard(board);
         boardView.setLastMove(lastMove);
         boardView.setInputEnabled(engineReady && gameReady && !engineStarting && !thinking && !evaluating && currentPlayer == playerColor && !board.isGameOver());
+        statusText.setMaxLines(boardView.hasRecommendations() ? 3 : 2);
         boolean playerBlack = playerColor == StoneColor.BLACK;
         playerStoneView.setBackgroundResource(playerBlack ? R.drawable.txwq_black_stone : R.drawable.txwq_white_stone);
         aiStoneView.setBackgroundResource(playerBlack ? R.drawable.txwq_white_stone : R.drawable.txwq_black_stone);
@@ -578,6 +662,7 @@ public class MainActivity extends AppCompatActivity {
         newGameButton.setEnabled(!thinking && !engineStarting && !evaluating);
         newRoundButton.setEnabled(!thinking && !engineStarting && !evaluating);
         situationButton.setEnabled(engineReady && gameReady && !engineStarting && !thinking && !evaluating && (board.isGameOver() || currentPlayer == playerColor));
+        aiSuggestionButton.setEnabled(playerTurn);
         undoButton.setEnabled(playerTurn && board.getMoveCount() >= 2);
         passButton.setEnabled(playerTurn);
         resignButton.setEnabled(playerTurn && board.getMoveCount() > 0);
