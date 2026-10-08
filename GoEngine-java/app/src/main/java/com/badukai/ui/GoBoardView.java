@@ -86,9 +86,13 @@ public class GoBoardView extends View {
         if (board == null) return;
         int n = board.getSize();
         float size = Math.min(getWidth(), getHeight());
-        padding = size * 0.045f;
-        boardPixels = size - 2f * padding;
-        cellSize = n > 1 ? boardPixels / (n - 1f) : boardPixels;
+        // Reserve space for the entire stone shadow, not only the grid lines.
+        // The shadow extends about 0.65 cell beyond an edge intersection.
+        float outerInset = dp(2f);
+        float edgeCells = 0.68f;
+        cellSize = n > 1 ? (size - 2f * outerInset) / (n - 1f + 2f * edgeCells) : size;
+        padding = outerInset + edgeCells * cellSize;
+        boardPixels = (n - 1f) * cellSize;
         drawGrid(canvas, n);
         drawStarPoints(canvas, n);
         drawStones(canvas, n);
