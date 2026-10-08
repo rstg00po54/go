@@ -40,6 +40,8 @@ public class GoBoardView extends View {
     private Point lastMove;
     private float[] ownershipWhite;
     private int ownershipMode = OWNERSHIP_OFF;
+    private Point[] recommendedPoints;
+    private float[] recommendedProbabilities;
     private OnIntersectionClickListener listener;
     private boolean inputEnabled = true;
 
@@ -85,6 +87,20 @@ public class GoBoardView extends View {
         invalidate();
     }
 
+    /** Mark the top three legal suggestions without changing the board position. */
+    public void setRecommendations(Point[] points, float[] probabilities) {
+        if (points == null || probabilities == null || points.length == 0 || points.length != probabilities.length) {
+            recommendedPoints = null;
+            recommendedProbabilities = null;
+        } else {
+            recommendedPoints = points.clone();
+            recommendedProbabilities = probabilities.clone();
+        }
+        invalidate();
+    }
+
+    public boolean hasRecommendations() { return recommendedPoints != null && recommendedPoints.length > 0; }
+
     public void setLastMove(Point point) {
         DebugLog.enter(TAG, "setLastMove in, point=" + point);
         lastMove = point;
@@ -128,6 +144,7 @@ public class GoBoardView extends View {
         drawStarPoints(canvas, n);
         drawOwnership(canvas, n);
         drawStones(canvas, n);
+        drawRecommendations(canvas);
     }
 
     private void drawGrid(Canvas canvas, int n) {
@@ -287,6 +304,36 @@ public class GoBoardView extends View {
                 }
             }
         }
+    }
+
+    private void drawRecommendations(Canvas canvas) {
+        if (!hasRecommendations()) return;
+        Paint marker = paint;
+        marker.setShader(null);
+        marker.setTypeface(Typeface.DEFAULT_BOLD);
+        marker.setTextAlign(Paint.Align.CENTER);
+        float radius = cellSize * 0.37f;
+        for (int i = 0; i < recommendedPoints.length; i++) {
+            Point p = recommendedPoints[i];
+            if (p == null || !board.isInside(p.x, p.y) || board.get(p) != Intersection.EMPTY) continue;
+            float cx = padding + p.x * cellSize;
+            float cy = padding + p.y * cellSize;
+            marker.setStyle(Paint.Style.FILL);
+            marker.setColor(i == 0 ? Color.rgb(245, 194, 87) : Color.rgb(44, 93, 66));
+            canvas.drawCircle(cx, cy, radius, marker);
+            marker.setStyle(Paint.Style.STROKE);
+            marker.setStrokeWidth(Math.max(dp(1), cellSize * 0.055f));
+            marker.setColor(i == 0 ? Color.rgb(93, 58, 22) : Color.rgb(231, 240, 217));
+            canvas.drawCircle(cx, cy, radius, marker);
+            marker.setStyle(Paint.Style.FILL);
+            marker.setTextSize(Math.min(cellSize * 0.48f, dp(17f)));
+            marker.setColor(i == 0 ? Color.rgb(39, 32, 22) : Color.WHITE);
+            Paint.FontMetrics fm = marker.getFontMetrics();
+            canvas.drawText(Integer.toString(i + 1), cx, cy - (fm.ascent + fm.descent) * 0.5f, marker);
+        }
+        marker.setTypeface(Typeface.DEFAULT);
+        marker.setTextAlign(Paint.Align.LEFT);
+        marker.setStyle(Paint.Style.FILL);
     }
 
     @Override
