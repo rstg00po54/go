@@ -385,12 +385,11 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <TextView
-                        android:layout_width="24dp"
-                        android:layout_height="wrap_content"
-                        android:gravity="start|center_vertical"
-                        android:text="⚪"
-                        android:textSize="20sp" />
+                    <View
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_marginEnd="2dp"
+                        android:background="@drawable/txwq_white_stone" />
 
                     <TextView
                         android:layout_width="0dp"
@@ -455,12 +454,11 @@
                         android:textColor="#286B48"
                         android:textSize="16sp" />
 
-                    <TextView
-                        android:layout_width="24dp"
-                        android:layout_height="wrap_content"
-                        android:gravity="end|center_vertical"
-                        android:text="⚫"
-                        android:textSize="20sp" />
+                    <View
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_marginStart="2dp"
+                        android:background="@drawable/txwq_black_stone" />
                 </LinearLayout>
 
                 <TextView
