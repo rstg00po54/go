@@ -41,6 +41,8 @@ jobs:
           test "$(stat -c '%s' "$MODEL")" -eq 99066230
           gzip -t "$MODEL"
           echo "637746e44f0efe00ad1245a50aa9bbf0716efe364c43965ead97bd6835d84ab5  $MODEL" | sha256sum -c -
+          echo "Verified uncompressed model metadata (for local .bin assets):"
+          gzip -cd "$MODEL" | tee >(sha256sum >&2) | wc -c
 
       - name: Build Android debug APK
         working-directory: GoEngine-java
