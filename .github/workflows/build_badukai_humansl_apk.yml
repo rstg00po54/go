@@ -1,14 +1,7 @@
 name: Build Badukai Human SL APK
 
+# Only build when manually requested from GitHub Actions.
 on:
-  push:
-    branches: [rk3588-engine]
-    paths:
-      - 'GoEngine-java/app/**'
-      - 'GoEngine-java/build.gradle.kts'
-      - 'GoEngine-java/settings.gradle.kts'
-      - 'GoEngine-java/gradle/**'
-      - '.github/workflows/build_badukai_humansl_apk.yml'
   workflow_dispatch:
 
 permissions:
