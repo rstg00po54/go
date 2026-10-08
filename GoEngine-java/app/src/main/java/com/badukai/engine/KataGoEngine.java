@@ -38,6 +38,10 @@ public class KataGoEngine {
     private static final String HUMAN_MODEL_URL = "https://github.com/lightvector/KataGo/releases/download/v1.15.0/" + HUMAN_MODEL_NAME;
     private static final long HUMAN_MODEL_BYTES = 99066230L;
     private static final String HUMAN_MODEL_SHA256 = "637746e44f0efe00ad1245a50aa9bbf0716efe364c43965ead97bd6835d84ab5";
+    private static final String HUMAN_MODEL_RAW_NAME = "b18c384nbt-humanv0.bin";
+    private static final String HUMAN_MODEL_RAW_ASSET = "engine/" + HUMAN_MODEL_RAW_NAME;
+    private static final long HUMAN_MODEL_RAW_BYTES = 107185997L;
+    private static final String HUMAN_MODEL_RAW_SHA256 = "c0b100bab7afd20afdf6d73f483464e0e9188be5479ee1c2ffc6b1c0a528509c";
 
     public interface ModelProgress {
         void onProgress(long downloaded, long total);
@@ -71,6 +75,7 @@ public class KataGoEngine {
     private Thread errorReaderThread;
     private volatile SearchStats currentSearchStats;
     private volatile boolean humanSLRunning;
+    private volatile File verifiedHumanModel;
 
     private static final class SearchStats {
         final CountDownLatch ready = new CountDownLatch(1);
@@ -114,8 +119,9 @@ public class KataGoEngine {
 
             File humanFile = null;
             if (useHumanSL) {
-                humanFile = new File(engineDir, HUMAN_MODEL_NAME);
-                if (!isValidHumanModel(humanFile)) throw new IOException("Human SL model unavailable; download it first");
+                humanFile = verifiedHumanModel;
+                if (humanFile == null || !isValidHumanModel(humanFile)) humanFile = findInstalledHumanModel(engineDir);
+                if (humanFile == null) throw new IOException("Human SL model unavailable; prepare it first");
                 Log.i(TAG, "Human SL model: " + humanFile.getAbsolutePath() + " size=" + humanFile.length());
             }
 
@@ -248,17 +254,30 @@ public class KataGoEngine {
     public boolean isHumanSLRunning() { return running.get() && humanSLRunning; }
 
     public boolean hasHumanModel() {
-        File stored = new File(new File(context.getFilesDir(), "engine"), HUMAN_MODEL_NAME);
-        if (isValidHumanModel(stored)) return true;
-        try (InputStream ignored = context.getAssets().open(HUMAN_MODEL_ASSET)) {
-            return true;
-        } catch (IOException ignored) {
-            return false;
+        File dir = new File(context.getFilesDir(), "engine");
+        if (isValidHumanModel(new File(dir, HUMAN_MODEL_NAME))
+                || isValidHumanModel(new File(dir, HUMAN_MODEL_RAW_NAME))) return true;
+        for (String asset : new String[]{HUMAN_MODEL_ASSET, HUMAN_MODEL_RAW_ASSET}) {
+            try (InputStream ignored = context.getAssets().open(asset)) {
+                return true;
+            } catch (java.io.FileNotFoundException missing) {
+                // Try the other supported model encoding.
+            } catch (IOException e) {
+                Log.w(TAG, "Cannot check Human SL asset " + asset, e);
+            }
         }
+        return false;
+    }
+
+    private boolean isRawHumanModel(File file) {
+        String name = file.getName();
+        return HUMAN_MODEL_RAW_NAME.equals(name) || (HUMAN_MODEL_RAW_NAME + ".part").equals(name);
     }
 
     private boolean isValidHumanModel(File file) {
-        if (!file.isFile() || file.length() != HUMAN_MODEL_BYTES) return false;
+        boolean raw = isRawHumanModel(file);
+        if (!file.isFile() || file.length() != (raw ? HUMAN_MODEL_RAW_BYTES : HUMAN_MODEL_BYTES)) return false;
+        if (raw) return true;
         try (FileInputStream in = new FileInputStream(file)) {
             return in.read() == 0x1f && in.read() == 0x8b;
         } catch (IOException e) {
@@ -277,40 +296,68 @@ public class KataGoEngine {
             }
             StringBuilder hex = new StringBuilder(64);
             for (byte b : digest.digest()) hex.append(String.format(Locale.US, "%02x", b & 0xff));
-            return HUMAN_MODEL_SHA256.equals(hex.toString());
+            String expected = isRawHumanModel(file) ? HUMAN_MODEL_RAW_SHA256 : HUMAN_MODEL_SHA256;
+            return expected.equals(hex.toString());
         } catch (NoSuchAlgorithmException e) {
             throw new IOException("SHA-256 unavailable", e);
         }
     }
 
-    /**
-     * Run on a background executor. Use the bundled model when available,
-     * otherwise fetch the official KataGo v1.15.0 release asset via HTTPS.
-     * Partial downloads never replace the usable model.
-     */
-    public File prepareHumanModel(ModelProgress progress) throws IOException {
-        File dir = new File(context.getFilesDir(), "engine");
-        if (!dir.isDirectory() && !dir.mkdirs()) throw new IOException("Cannot create model directory");
-        File model = new File(dir, HUMAN_MODEL_NAME);
-        if (isTrustedHumanModel(model)) return model;
-        File part = new File(dir, HUMAN_MODEL_NAME + ".part");
-        if (part.exists() && !part.delete()) throw new IOException("Cannot remove partial model");
+    private File findInstalledHumanModel(File dir) throws IOException {
+        File compressed = new File(dir, HUMAN_MODEL_NAME);
+        if (isTrustedHumanModel(compressed)) return compressed;
+        File raw = new File(dir, HUMAN_MODEL_RAW_NAME);
+        return isTrustedHumanModel(raw) ? raw : null;
+    }
 
+    /** Load from either official gzip asset or its verified decompressed .bin equivalent. */
+    private File copyBundledHumanModel(File dir, String asset, String name, long expected, ModelProgress progress) throws IOException {
+        InputStream source;
         try {
-            try (InputStream asset = context.getAssets().open(HUMAN_MODEL_ASSET)) {
-                Log.i(TAG, "Preparing bundled Human SL model");
-                copyStream(asset, part, HUMAN_MODEL_BYTES, progress);
-            } catch (java.io.FileNotFoundException missing) {
-                downloadHumanModel(part, progress);
-            }
-            if (!isTrustedHumanModel(part)) throw new IOException("Human SL model checksum, size or gzip header invalid");
-            if (model.exists() && !model.delete()) throw new IOException("Cannot replace old Human SL model");
-            if (!part.renameTo(model)) throw new IOException("Cannot install Human SL model");
-            Log.i(TAG, "Human SL model ready: " + model.getAbsolutePath());
-            return model;
+            source = context.getAssets().open(asset);
+        } catch (java.io.FileNotFoundException missing) {
+            return null;
+        }
+
+        File part = new File(dir, name + ".part");
+        try (InputStream input = source) {
+            Log.i(TAG, "Preparing bundled Human SL model: " + asset);
+            copyStream(input, part, expected, progress);
+            if (!isTrustedHumanModel(part)) throw new IOException("Human SL asset SHA-256 mismatch: " + asset);
+            File dest = new File(dir, name);
+            if (dest.exists() && !dest.delete()) throw new IOException("Cannot replace existing Human SL model");
+            if (!part.renameTo(dest)) throw new IOException("Cannot install bundled Human SL model");
+            return dest;
         } finally {
             if (part.exists()) part.delete();
         }
+    }
+
+    /** Run on the engine executor, not the Android UI thread. */
+    public File prepareHumanModel(ModelProgress progress) throws IOException {
+        File dir = new File(context.getFilesDir(), "engine");
+        if (!dir.isDirectory() && !dir.mkdirs()) throw new IOException("Cannot create model directory");
+
+        File model = findInstalledHumanModel(dir);
+        if (model == null) model = copyBundledHumanModel(dir, HUMAN_MODEL_ASSET, HUMAN_MODEL_NAME, HUMAN_MODEL_BYTES, progress);
+        if (model == null) model = copyBundledHumanModel(dir, HUMAN_MODEL_RAW_ASSET, HUMAN_MODEL_RAW_NAME, HUMAN_MODEL_RAW_BYTES, progress);
+
+        if (model == null) {
+            model = new File(dir, HUMAN_MODEL_NAME);
+            File part = new File(dir, HUMAN_MODEL_NAME + ".part");
+            try {
+                downloadHumanModel(part, progress);
+                if (!isTrustedHumanModel(part)) throw new IOException("Downloaded Human SL model SHA-256 mismatch");
+                if (model.exists() && !model.delete()) throw new IOException("Cannot replace Human SL model");
+                if (!part.renameTo(model)) throw new IOException("Cannot install downloaded Human SL model");
+            } finally {
+                if (part.exists()) part.delete();
+            }
+        }
+
+        verifiedHumanModel = model;
+        Log.i(TAG, "Human SL model ready: " + model.getAbsolutePath());
+        return model;
     }
 
     private void downloadHumanModel(File part, ModelProgress progress) throws IOException {
