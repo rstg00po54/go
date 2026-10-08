@@ -55,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView blackCaptureText;
     private TextView whiteCaptureText;
     private TextView gameTitleText;
+    private TextView aiDifficultyText;
     private Button aiBattleButton;
     private Button newGameButton;
     private Button backButton;
@@ -93,6 +94,7 @@ public class MainActivity extends AppCompatActivity {
         blackCaptureText = findViewById(R.id.blackCaptureText);
         whiteCaptureText = findViewById(R.id.whiteCaptureText);
         gameTitleText = findViewById(R.id.gameTitleText);
+        aiDifficultyText = findViewById(R.id.aiDifficultyText);
         aiBattleButton = findViewById(R.id.aiBattleButton);
         newGameButton = findViewById(R.id.newGameButton);
         backButton = findViewById(R.id.backButton);
@@ -263,6 +265,7 @@ public class MainActivity extends AppCompatActivity {
         else if (boardSize == 15) sizeGroup.check(R.id.size15Radio);
         else sizeGroup.check(R.id.size19Radio);
         colorGroup.check(playerColor == StoneColor.WHITE ? R.id.whiteRadio : R.id.blackRadio);
+        difficultyGroup.check(searchVisits == 500 ? R.id.hardRadio : searchVisits == 100 ? R.id.normalRadio : R.id.easyRadio);
 
         AlertDialog dialog = new AlertDialog.Builder(this).setView(content).create();
         closeButton.setOnClickListener(v -> dialog.dismiss());
@@ -357,9 +360,16 @@ public class MainActivity extends AppCompatActivity {
         return size <= 11 ? 5.5f : 7.5f;
     }
 
+    private String getDifficultyName() {
+        if (searchVisits == 500) return "困难";
+        if (searchVisits == 100) return "普通";
+        return "简单";
+    }
+
     private void render(String message) {
         DebugLog.enter(TAG, "render in, message=" + message + ", engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer);
         statusText.setText(message);
+        aiDifficultyText.setText(String.format(Locale.CHINA, "%s · %d次/%.1f秒", getDifficultyName(), searchVisits, searchTime));
         boardView.setBoard(board);
         boardView.setLastMove(lastMove);
         boardView.setInputEnabled(engineReady && !thinking && currentPlayer == playerColor && !board.isGameOver());
