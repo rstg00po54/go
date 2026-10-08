@@ -31,6 +31,7 @@ public class GoBoardView extends View {
     private float shaderRadius = -1f;
     private GoBoard board = new GoBoard(19);
     private Point lastMove;
+    private float[] ownershipWhite;
     private OnIntersectionClickListener listener;
     private boolean inputEnabled = true;
 
@@ -51,6 +52,13 @@ public class GoBoardView extends View {
     public void setBoard(GoBoard board) {
         DebugLog.enter(TAG, "setBoard in, board=" + board);
         this.board = board == null ? new GoBoard(19) : board;
+        invalidate();
+    }
+
+    /** Ownership from KataGo: x increases rightward, raw y=0 is the bottom of the board. */
+    public void setOwnership(float[] values) {
+        if (values == null || board == null || values.length != board.getSize() * board.getSize()) ownershipWhite = null;
+        else ownershipWhite = values.clone();
         invalidate();
     }
 
@@ -95,6 +103,7 @@ public class GoBoardView extends View {
         boardPixels = (n - 1f) * cellSize;
         drawGrid(canvas, n);
         drawStarPoints(canvas, n);
+        drawOwnership(canvas, n);
         drawStones(canvas, n);
     }
 
@@ -174,6 +183,34 @@ public class GoBoardView extends View {
         rimPaint.setColor(black ? Color.rgb(7, 10, 9) : Color.rgb(124, 134, 128));
         canvas.drawCircle(0f, 0f, radius * 0.975f, rimPaint);
         canvas.restore();
+    }
+
+    private void drawOwnership(Canvas canvas, int n) {
+        if (ownershipWhite == null || ownershipWhite.length != n * n) return;
+        float radius = cellSize * 0.23f;
+        paint.setShader(null);
+        for (int y = 0; y < n; y++) {
+            for (int x = 0; x < n; x++) {
+                if (board.get(x, y) != Intersection.EMPTY) continue;
+                float whiteOwn = ownershipWhite[(n - 1 - y) * n + x];
+                float strength = Math.abs(whiteOwn);
+                if (strength < 0.55f) continue; // Uncertain area: leave unmarked.
+                int alpha = Math.min(235, 90 + Math.round(145 * (strength - 0.55f) / 0.45f));
+                boolean white = whiteOwn > 0;
+                float cx = padding + x * cellSize;
+                float cy = padding + y * cellSize;
+                paint.setStyle(Paint.Style.FILL);
+                paint.setColor(white ? Color.argb(alpha, 255, 255, 249) : Color.argb(alpha, 25, 30, 28));
+                canvas.drawRoundRect(cx - radius, cy - radius, cx + radius, cy + radius, dp(1.5f), dp(1.5f), paint);
+                if (white) {
+                    paint.setStyle(Paint.Style.STROKE);
+                    paint.setStrokeWidth(dp(0.8f));
+                    paint.setColor(Color.argb(140, 75, 65, 50));
+                    canvas.drawRoundRect(cx - radius, cy - radius, cx + radius, cy + radius, dp(1.5f), dp(1.5f), paint);
+                }
+            }
+        }
+        paint.setStyle(Paint.Style.FILL);
     }
 
     private void drawStones(Canvas canvas, int n) {
