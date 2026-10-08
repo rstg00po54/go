@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean engineReady;
     private boolean engineStarting;
     private boolean thinking;
+    private boolean evaluating;
     private boolean gameReady;
     private Point lastMove;
 
@@ -91,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
         passButton.setOnClickListener(v -> pass());
         resignButton.setOnClickListener(v -> resign());
         newRoundButton.setOnClickListener(v -> showNewGameDialog());
-        situationButton.setOnClickListener(v -> Toast.makeText(this, "形势功能待实现", Toast.LENGTH_SHORT).show());
+        situationButton.setOnClickListener(v -> showSituation());
         aiSuggestionButton.setOnClickListener(v -> Toast.makeText(this, "AI推荐功能待实现", Toast.LENGTH_SHORT).show());
         countTerritoryButton.setOnClickListener(v -> Toast.makeText(this, "数目功能待实现", Toast.LENGTH_SHORT).show());
         moreGameButton.setOnClickListener(v -> Toast.makeText(this, "更多功能待实现", Toast.LENGTH_SHORT).show());
@@ -154,6 +155,7 @@ public class MainActivity extends AppCompatActivity {
         if (!board.isLegalMove(point, currentPlayer)) return;
 
         StoneColor color = currentPlayer;
+        boardView.setOwnership(null);
         board.playMove(new Move.Stone(point, color));
         lastMove = point;
         currentPlayer = color.opposite();
@@ -191,6 +193,7 @@ public class MainActivity extends AppCompatActivity {
             render("AI 没有返回落子");
             return;
         }
+        boardView.setOwnership(null);
         if ("pass".equalsIgnoreCase(move)) {
             board.playMove(new Move.Pass(aiColor));
             currentPlayer = aiColor.opposite();
@@ -220,6 +223,7 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "pass in, engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer + ", playerColor=" + playerColor);
         if (!engineReady || !gameReady || thinking || currentPlayer != playerColor || board.isGameOver()) return;
         StoneColor color = currentPlayer;
+        boardView.setOwnership(null);
         board.playMove(new Move.Pass(color));
         lastMove = null;
         if (board.isGameOver()) {
@@ -238,6 +242,7 @@ public class MainActivity extends AppCompatActivity {
     private void undo() {
         DebugLog.enter(TAG, "undo in, engineReady=" + engineReady + ", thinking=" + thinking + ", moveCount=" + board.getMoveCount());
         if (!engineReady || !gameReady || thinking || board.getMoveCount() < 2) return;
+        boardView.setOwnership(null);
         board.undo();
         board.undo();
         Move last = board.getLastMove();
@@ -253,6 +258,7 @@ public class MainActivity extends AppCompatActivity {
     private void resign() {
         DebugLog.enter(TAG, "resign in, thinking=" + thinking + ", moveCount=" + board.getMoveCount() + ", playerColor=" + playerColor);
         if (!gameReady || thinking || board.getMoveCount() == 0 || board.isGameOver()) return;
+        boardView.setOwnership(null);
         board.playMove(new Move.Resign(playerColor));
         String winner = playerColor == StoneColor.BLACK ? "白棋" : "黑棋";
         render("你认输了，" + winner + "胜");
@@ -263,6 +269,51 @@ public class MainActivity extends AppCompatActivity {
         engineExecutor.execute(() -> {
             String score = engine.getFinalScore();
             mainHandler.post(() -> render(score == null ? "对局结束" : "对局结束：" + score));
+        });
+    }
+
+    private void showSituation() {
+        DebugLog.enter(TAG, "showSituation in, ready=" + gameReady + ", thinking=" + thinking + ", evaluating=" + evaluating);
+        if (!engineReady || !gameReady || engineStarting || thinking || evaluating || currentPlayer != playerColor || board.isGameOver()) {
+            Toast.makeText(this, "请等 AI 落子结束再判断形势", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        evaluating = true;
+        final GoBoard snapshot = board;
+        final int moves = board.getMoveCount(), size = boardSize;
+        render("正在判断形势...");
+        engineExecutor.execute(() -> {
+            KataGoEngine.PositionEvaluation result = engine.evaluatePosition(size);
+            mainHandler.post(() -> {
+                evaluating = false;
+                if (snapshot != board || moves != board.getMoveCount() || size != boardSize) {
+                    render("棋局已变化，请重新判断形势");
+                    return;
+                }
+                if (result == null) {
+                    render("形势判断失败，请查看 KataGo 日志");
+                    Toast.makeText(this, "AI 没有返回有效的形势数据", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                boardView.setOwnership(result.whiteOwnership);
+                render("形势估算已更新");
+                if (gamePageContainer.getVisibility() != View.VISIBLE) return;
+                String lead = Math.abs(result.whiteLead) < 0.05
+                        ? "双方大致均势"
+                        : String.format(Locale.CHINA, "%s预计领先 %.1f 目",
+                                result.whiteLead > 0 ? "白棋" : "黑棋", Math.abs(result.whiteLead));
+                String details = String.format(Locale.CHINA,
+                        "黑棋估算胜率：%.1f%%\n白棋估算胜率：%.1f%%\n\n%s\n\n"
+                                + "棋盘黑色方块：黑方地盘倾向\n棋盘白色方块：白方地盘倾向\n"
+                                + "未标记位置：归属尚不明确\n\n"
+                                + "使用 10b 模型单次快速估算，已考虑贴目；不是精确数目，中盘结果仅供参考。",
+                        result.blackWin * 100, result.whiteWin * 100, lead);
+                new AlertDialog.Builder(this).setTitle("形势判断 · 第" + moves + "手")
+                        .setMessage(details)
+                        .setPositiveButton("保留标记", null)
+                        .setNeutralButton("清除标记", (dialog, which) -> boardView.setOwnership(null))
+                        .show();
+            });
         });
     }
 
@@ -356,6 +407,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        boardView.setOwnership(null);
         board = new GoBoard(boardSize);
         currentPlayer = StoneColor.BLACK;
         lastMove = null;
@@ -422,7 +474,7 @@ public class MainActivity extends AppCompatActivity {
         aiDifficultyText.setText(getDifficultyName() + " · Human SL");
         boardView.setBoard(board);
         boardView.setLastMove(lastMove);
-        boardView.setInputEnabled(engineReady && gameReady && !engineStarting && !thinking && currentPlayer == playerColor && !board.isGameOver());
+        boardView.setInputEnabled(engineReady && gameReady && !engineStarting && !thinking && !evaluating && currentPlayer == playerColor && !board.isGameOver());
         boolean playerBlack = playerColor == StoneColor.BLACK;
         playerStoneView.setBackgroundResource(playerBlack ? R.drawable.txwq_black_stone : R.drawable.txwq_white_stone);
         aiStoneView.setBackgroundResource(playerBlack ? R.drawable.txwq_white_stone : R.drawable.txwq_black_stone);
@@ -438,9 +490,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateButtons() {
         DebugLog.enter(TAG, "updateButtons in, engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer + ", playerColor=" + playerColor);
-        boolean playerTurn = engineReady && gameReady && !engineStarting && !thinking && currentPlayer == playerColor && !board.isGameOver();
-        newGameButton.setEnabled(!thinking && !engineStarting);
-        newRoundButton.setEnabled(!thinking && !engineStarting);
+        boolean playerTurn = engineReady && gameReady && !engineStarting && !thinking && !evaluating && currentPlayer == playerColor && !board.isGameOver();
+        newGameButton.setEnabled(!thinking && !engineStarting && !evaluating);
+        newRoundButton.setEnabled(!thinking && !engineStarting && !evaluating);
+        situationButton.setEnabled(playerTurn);
         undoButton.setEnabled(playerTurn && board.getMoveCount() >= 2);
         passButton.setEnabled(playerTurn);
         resignButton.setEnabled(playerTurn && board.getMoveCount() > 0);
