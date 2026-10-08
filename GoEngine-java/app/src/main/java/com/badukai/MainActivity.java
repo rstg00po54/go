@@ -53,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean thinking;
     private boolean evaluating;
     private boolean gameReady;
+    private String gameResultText;
     private Point lastMove;
 
     private View mainPageContainer;
@@ -199,13 +200,13 @@ public class MainActivity extends AppCompatActivity {
             board.playMove(new Move.Pass(aiColor));
             currentPlayer = aiColor.opposite();
             lastMove = null;
-            if (board.isGameOver()) finishByScore();
+            if (board.isGameOver()) finishByScore(null);
             else render("AI 停一手，你下");
             return;
         }
         if ("resign".equalsIgnoreCase(move)) {
             board.playMove(new Move.Resign(aiColor));
-            render("AI 认输，你赢了");
+            finishByResignation("AI认输 · 你赢了");
             return;
         }
 
@@ -229,14 +230,17 @@ public class MainActivity extends AppCompatActivity {
         lastMove = null;
         if (board.isGameOver()) {
             render("正在数目...");
-            finishByScore();
+            finishByScore(color.toGtp());
             return;
         }
         currentPlayer = color.opposite();
         render("你停一手，AI 思考中...");
         engineExecutor.execute(() -> {
-            engine.playMove(color.toGtp(), "pass");
-            mainHandler.post(this::requestAiMove);
+            boolean synced = engine.playMove(color.toGtp(), "pass");
+            mainHandler.post(() -> {
+                if (synced) requestAiMove();
+                else render("停一手同步失败");
+            });
         });
     }
 
@@ -262,20 +266,86 @@ public class MainActivity extends AppCompatActivity {
         boardView.setOwnership(null);
         board.playMove(new Move.Resign(playerColor));
         String winner = playerColor == StoneColor.BLACK ? "白棋" : "黑棋";
-        render("你认输了，" + winner + "胜");
+        finishByResignation("你认输了 · " + winner + "胜");
     }
 
-    private void finishByScore() {
-        DebugLog.enter(TAG, "finishByScore in");
+    /** Synchronize a final human pass before scoring and territory estimation. */
+    private void finishByScore(String pendingPassColor) {
+        DebugLog.enter(TAG, "finishByScore in, pendingPassColor=" + pendingPassColor);
+        if (evaluating) return;
+        evaluating = true;
+        final GoBoard snapshot = board;
+        final int size = boardSize, moves = board.getMoveCount();
+        render("正在结算地盘...");
         engineExecutor.execute(() -> {
-            String score = engine.getFinalScore();
-            mainHandler.post(() -> render(score == null ? "对局结束" : "对局结束：" + score));
+            boolean synced = pendingPassColor == null || engine.playMove(pendingPassColor, "pass");
+            String score = synced ? engine.getFinalScore() : null;
+            KataGoEngine.PositionEvaluation result = synced ? engine.evaluatePosition(size) : null;
+            String outcome = formatFinalResult(score);
+            mainHandler.post(() -> {
+                evaluating = false;
+                if (board != snapshot || board.getMoveCount() != moves) return;
+                gameResultText = synced ? outcome : "对局结束 · 同步失败";
+                if (result != null) render(territorySummary(result));
+                else render(synced ? "对局结束，地盘评估失败" : "停一手同步失败");
+            });
         });
+    }
+
+    private void finishByResignation(String outcome) {
+        DebugLog.enter(TAG, "finishByResignation in, outcome=" + outcome);
+        gameResultText = outcome;
+        finishEndgameTerritory();
+    }
+
+    private void finishEndgameTerritory() {
+        if (evaluating) return;
+        evaluating = true;
+        final GoBoard snapshot = board;
+        final int size = boardSize, moves = board.getMoveCount();
+        render("正在估算地盘...");
+        engineExecutor.execute(() -> {
+            KataGoEngine.PositionEvaluation result = engine.evaluatePosition(size);
+            mainHandler.post(() -> {
+                evaluating = false;
+                if (board != snapshot || board.getMoveCount() != moves) return;
+                render(result == null ? "对局结束，地盘评估失败" : territorySummary(result));
+            });
+        });
+    }
+
+    private String formatFinalResult(String score) {
+        if (score == null || score.trim().isEmpty()) return "对局结束 · 未得到数目结果";
+        String text = score.trim();
+        if (text.startsWith("B+")) return "对局结束 · 黑胜 " + text.substring(2);
+        if (text.startsWith("W+")) return "对局结束 · 白胜 " + text.substring(2);
+        return "对局结束 · " + text;
+    }
+
+    /** Estimate only confidently owned empty intersections, not the formal final score. */
+    private String territorySummary(KataGoEngine.PositionEvaluation result) {
+        int blackTerritory = 0, whiteTerritory = 0, emptyPoints = 0;
+        final int size = result.size;
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                if (board.get(x, y) != Intersection.EMPTY) continue;
+                emptyPoints++;
+                float whiteOwn = result.whiteOwnership[(size - 1 - y) * size + x];
+                if (whiteOwn >= GoBoardView.OWNERSHIP_MARK_THRESHOLD) whiteTerritory++;
+                else if (whiteOwn <= -GoBoardView.OWNERSHIP_MARK_THRESHOLD) blackTerritory++;
+            }
+        }
+        boardView.setOwnership(result.whiteOwnership);
+        Log.i(TAG, String.format(Locale.US,
+                "Position territory estimate black=%d white=%d uncertain=%d (ownership threshold %.2f, no komi/captures)",
+                blackTerritory, whiteTerritory, emptyPoints - blackTerritory - whiteTerritory,
+                GoBoardView.OWNERSHIP_MARK_THRESHOLD));
+        return String.format(Locale.CHINA, "黑估空%d目\n白估空%d目", blackTerritory, whiteTerritory);
     }
 
     private void showSituation() {
         DebugLog.enter(TAG, "showSituation in, ready=" + gameReady + ", thinking=" + thinking + ", evaluating=" + evaluating);
-        if (!engineReady || !gameReady || engineStarting || thinking || evaluating || currentPlayer != playerColor || board.isGameOver()) {
+        if (!engineReady || !gameReady || engineStarting || thinking || evaluating || (!board.isGameOver() && currentPlayer != playerColor)) {
             Toast.makeText(this, "请等 AI 落子结束再判断形势", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -296,24 +366,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(this, "AI 没有返回有效的形势数据", Toast.LENGTH_LONG).show();
                     return;
                 }
-                // Count confident ownership of EMPTY intersections only. This is not
-                // a final Japanese-rules score: captures and komi are excluded.
-                int blackTerritory = 0, whiteTerritory = 0, emptyPoints = 0;
-                for (int y = 0; y < size; y++) {
-                    for (int x = 0; x < size; x++) {
-                        if (board.get(x, y) != Intersection.EMPTY) continue;
-                        emptyPoints++;
-                        float whiteOwn = result.whiteOwnership[(size - 1 - y) * size + x];
-                        if (whiteOwn >= GoBoardView.OWNERSHIP_MARK_THRESHOLD) whiteTerritory++;
-                        else if (whiteOwn <= -GoBoardView.OWNERSHIP_MARK_THRESHOLD) blackTerritory++;
-                    }
-                }
-                boardView.setOwnership(result.whiteOwnership);
-                render(String.format(Locale.CHINA, "黑估空%d目\n白估空%d目", blackTerritory, whiteTerritory));
-                Log.i(TAG, String.format(Locale.US,
-                        "Position territory estimate black=%d white=%d uncertain=%d (ownership threshold %.2f, no komi/captures)",
-                        blackTerritory, whiteTerritory, emptyPoints - blackTerritory - whiteTerritory,
-                        GoBoardView.OWNERSHIP_MARK_THRESHOLD));
+                render(territorySummary(result));
             });
         });
     }
@@ -398,7 +451,7 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "showGamePage in, boardSize=" + boardSize);
         mainPageContainer.setVisibility(View.GONE);
         gamePageContainer.setVisibility(View.VISIBLE);
-        gameTitleText.setText(boardSize + "路对局　常见问题　　第" + (board.getMoveCount() + 1) + "手");
+        gameTitleText.setText(gameResultText == null ? boardSize + "路对局　常见问题　　第" + (board.getMoveCount() + 1) + "手" : gameResultText);
     }
 
     private void startNewGame() {
@@ -409,6 +462,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         boardView.setOwnership(null);
+        gameResultText = null;
         board = new GoBoard(boardSize);
         currentPlayer = StoneColor.BLACK;
         lastMove = null;
@@ -485,7 +539,7 @@ public class MainActivity extends AppCompatActivity {
         int aiCaptures = playerBlack ? whiteCaptures : blackCaptures;
         playerCaptureText.setText(String.format(Locale.CHINA, "%s棋提子 %d", playerBlack ? "黑" : "白", playerCaptures));
         aiCaptureText.setText(String.format(Locale.CHINA, "%s棋提子 %d", playerBlack ? "白" : "黑", aiCaptures));
-        gameTitleText.setText(boardSize + "路对局　常见问题　　第" + (board.getMoveCount() + 1) + "手");
+        gameTitleText.setText(gameResultText == null ? boardSize + "路对局　常见问题　　第" + (board.getMoveCount() + 1) + "手" : gameResultText);
         updateButtons();
     }
 
@@ -494,7 +548,7 @@ public class MainActivity extends AppCompatActivity {
         boolean playerTurn = engineReady && gameReady && !engineStarting && !thinking && !evaluating && currentPlayer == playerColor && !board.isGameOver();
         newGameButton.setEnabled(!thinking && !engineStarting && !evaluating);
         newRoundButton.setEnabled(!thinking && !engineStarting && !evaluating);
-        situationButton.setEnabled(playerTurn);
+        situationButton.setEnabled(engineReady && gameReady && !engineStarting && !thinking && !evaluating && (board.isGameOver() || currentPlayer == playerColor));
         undoButton.setEnabled(playerTurn && board.getMoveCount() >= 2);
         passButton.setEnabled(playerTurn);
         resignButton.setEnabled(playerTurn && board.getMoveCount() > 0);
