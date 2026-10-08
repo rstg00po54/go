@@ -6,6 +6,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,11 +42,13 @@ public class MainActivity extends AppCompatActivity {
     private StoneColor playerColor = StoneColor.BLACK;
     private StoneColor currentPlayer = StoneColor.BLACK;
     private int boardSize = 19;
-    private int searchVisits = 20;
-    private double searchTime = 0.4;
+    private int aiKyu = 12;
+    private int searchVisits = 40;
+    private double searchTime = 8.0;
     private boolean engineReady;
     private boolean engineStarting;
     private boolean thinking;
+    private boolean gameReady;
     private Point lastMove;
 
     private View mainPageContainer;
@@ -143,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void onBoardTap(int x, int y) {
         DebugLog.enter(TAG, "onBoardTap in, x=" + x + ", y=" + y + ", engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer + ", playerColor=" + playerColor);
-        if (!engineReady || thinking || currentPlayer != playerColor || board.isGameOver()) return;
+        if (!engineReady || !gameReady || thinking || currentPlayer != playerColor || board.isGameOver()) return;
         if (!board.isInside(x, y)) return;
         Point point = new Point(x, y);
         if (!board.isLegalMove(point, currentPlayer)) return;
@@ -169,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void requestAiMove() {
         DebugLog.enter(TAG, "requestAiMove in, engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer + ", playerColor=" + playerColor);
-        if (!engineReady || thinking || currentPlayer == playerColor || board.isGameOver()) return;
+        if (!engineReady || !gameReady || thinking || currentPlayer == playerColor || board.isGameOver()) return;
         thinking = true;
         render("AI 思考中...");
         StoneColor aiColor = currentPlayer;
@@ -213,7 +216,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void pass() {
         DebugLog.enter(TAG, "pass in, engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer + ", playerColor=" + playerColor);
-        if (!engineReady || thinking || currentPlayer != playerColor || board.isGameOver()) return;
+        if (!engineReady || !gameReady || thinking || currentPlayer != playerColor || board.isGameOver()) return;
         StoneColor color = currentPlayer;
         board.playMove(new Move.Pass(color));
         lastMove = null;
@@ -232,7 +235,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void undo() {
         DebugLog.enter(TAG, "undo in, engineReady=" + engineReady + ", thinking=" + thinking + ", moveCount=" + board.getMoveCount());
-        if (!engineReady || thinking || board.getMoveCount() < 2) return;
+        if (!engineReady || !gameReady || thinking || board.getMoveCount() < 2) return;
         board.undo();
         board.undo();
         Move last = board.getLastMove();
@@ -247,7 +250,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void resign() {
         DebugLog.enter(TAG, "resign in, thinking=" + thinking + ", moveCount=" + board.getMoveCount() + ", playerColor=" + playerColor);
-        if (thinking || board.getMoveCount() == 0 || board.isGameOver()) return;
+        if (!gameReady || thinking || board.getMoveCount() == 0 || board.isGameOver()) return;
         board.playMove(new Move.Resign(playerColor));
         String winner = playerColor == StoneColor.BLACK ? "白棋" : "黑棋";
         render("你认输了，" + winner + "胜");
@@ -266,7 +269,7 @@ public class MainActivity extends AppCompatActivity {
         View content = LayoutInflater.from(this).inflate(R.layout.dialog_new_game, null, false);
         Spinner sizeSpinner = content.findViewById(R.id.sizeSpinner);
         RadioGroup colorGroup = content.findViewById(R.id.colorGroup);
-        RadioGroup difficultyGroup = content.findViewById(R.id.difficultyGroup);
+        Spinner difficultySpinner = content.findViewById(R.id.difficultySpinner);
         Spinner conditionSpinner = content.findViewById(R.id.conditionSpinner);
         Button startButton = content.findViewById(R.id.startGameButton);
         Button closeButton = content.findViewById(R.id.closeDialogButton);
@@ -284,7 +287,12 @@ public class MainActivity extends AppCompatActivity {
         conditionSpinner.setAdapter(conditionAdapter);
 
         colorGroup.check(playerColor == StoneColor.WHITE ? R.id.whiteRadio : R.id.blackRadio);
-        difficultyGroup.check(searchVisits == 500 ? R.id.hardRadio : searchVisits == 100 ? R.id.normalRadio : R.id.easyRadio);
+        String[] kyuLabels = new String[18];
+        for (int i = 0; i < kyuLabels.length; i++) kyuLabels[i] = (18 - i) + "级";
+        ArrayAdapter<String> difficultyAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, kyuLabels);
+        difficultyAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        difficultySpinner.setAdapter(difficultyAdapter);
+        difficultySpinner.setSelection(18 - aiKyu);
 
         AlertDialog dialog = new AlertDialog.Builder(this).setView(content).create();
         closeButton.setOnClickListener(v -> dialog.dismiss());
@@ -296,21 +304,24 @@ public class MainActivity extends AppCompatActivity {
             else if (colorId == R.id.randomRadio) playerColor = (System.nanoTime() & 1L) == 0L ? StoneColor.BLACK : StoneColor.WHITE;
             else playerColor = StoneColor.BLACK;
 
-            int difficultyId = difficultyGroup.getCheckedRadioButtonId();
-            if (difficultyId == R.id.hardRadio) {
-                searchVisits = 500;
-                searchTime = 5.0;
-            } else if (difficultyId == R.id.normalRadio) {
-                searchVisits = 100;
-                searchTime = 1.5;
-            } else {
-                searchVisits = 20;
-                searchTime = 0.4;
-            }
+            int selectedKyu = 18 - difficultySpinner.getSelectedItemPosition();
+            Runnable begin = () -> {
+                aiKyu = selectedKyu;
+                showGamePage();
+                startNewGame();
+                dialog.dismiss();
+            };
 
-            showGamePage();
-            startNewGame();
-            dialog.dismiss();
+            if (engine.hasHumanModel()) {
+                begin.run();
+            } else {
+                new AlertDialog.Builder(this)
+                        .setTitle("首次准备棋力模型")
+                        .setMessage("18级～1级需要 KataGo Human SL 模型，约 99 MB。首次需联网下载，下载后可离线对弈。现在下载吗？")
+                        .setPositiveButton("下载并开始", (confirm, which) -> begin.run())
+                        .setNegativeButton("取消", null)
+                        .show();
+            }
         });
         dialog.setOnShowListener(ignored -> {
             if (dialog.getWindow() != null) {
@@ -337,8 +348,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startNewGame() {
-        DebugLog.enter(TAG, "startNewGame in, engineReady=" + engineReady + ", engineStarting=" + engineStarting + ", boardSize=" + boardSize + ", playerColor=" + playerColor + ", visits=" + searchVisits + ", time=" + searchTime);
-        if (!engineReady) {
+        DebugLog.enter(TAG, "startNewGame in, engineReady=" + engineReady + ", boardSize=" + boardSize + ", kyu=" + aiKyu);
+        if (!engineReady || engineStarting) {
             render(engineStarting ? "AI 正在启动，请稍候..." : "AI 尚未启动");
             return;
         }
@@ -346,30 +357,52 @@ public class MainActivity extends AppCompatActivity {
         board = new GoBoard(boardSize);
         currentPlayer = StoneColor.BLACK;
         lastMove = null;
-        thinking = false;
-        boolean playerFirst = playerColor == StoneColor.BLACK;
-        final int visits = searchVisits;
+        gameReady = false;
+        engineStarting = true;
+        engineReady = false;
+        final boolean playerFirst = playerColor == StoneColor.BLACK;
+        final int size = boardSize, kyu = aiKyu, visits = searchVisits;
         final double seconds = searchTime;
-        render("正在初始化棋盘...");
+        render("正在准备人类棋力模型...");
 
         engineExecutor.execute(() -> {
-            boolean ok = engine.setBoardSize(boardSize);
-            ok = engine.clearBoard() && ok;
-            ok = engine.setKomi(komiFor(boardSize)) && ok;
-            boolean limitsOk = ok && engine.setSearchLimits(visits, seconds);
-            boolean success = ok && limitsOk;
-
+            String error = null;
+            try {
+                engine.prepareHumanModel((done, total) -> {
+                    int percent = (int) (done * 100 / total);
+                    mainHandler.post(() -> {
+                        if (engineStarting) render("正在准备棋力模型 " + percent + "%");
+                    });
+                });
+                if (!engine.isHumanSLRunning()) {
+                    engine.stop();
+                    if (!engine.start(KataGoEngine.Model.HUMAN, true)) throw new IllegalStateException("Human SL 引擎启动失败");
+                }
+                boolean ok = engine.setBoardSize(size);
+                ok = engine.clearBoard() && ok;
+                ok = engine.setKomi(komiFor(size)) && ok;
+                if (!ok) throw new IllegalStateException("棋盘初始化失败");
+                if (!engine.setSearchLimits(visits, seconds)) throw new IllegalStateException("AI 搜索限制设置失败");
+                if (!engine.setHumanRank(kyu)) throw new IllegalStateException("AI 棋力等级设置失败");
+            } catch (Exception e) {
+                error = e.getMessage() == null ? e.toString() : e.getMessage();
+                Log.e(TAG, "Human SL game initialization failed", e);
+                if (!engine.isReady()) engine.start(KataGoEngine.Model.HUMAN);
+            }
+            boolean ready = error == null && engine.isReady();
+            boolean running = engine.isReady();
+            String failure = error;
             mainHandler.post(() -> {
-                if (!success) {
-                    render(limitsOk ? "初始化棋盘失败" : "AI 搜索参数设置失败");
+                engineStarting = false;
+                engineReady = running;
+                gameReady = ready;
+                if (!ready) {
+                    render("棋力模型准备失败：" + failure);
+                    Toast.makeText(this, "未进入对局，请重试下载或检查日志", Toast.LENGTH_LONG).show();
                     return;
                 }
-
                 if (playerFirst) render("轮到你了");
-                else {
-                    render("AI 思考中...");
-                    requestAiMove();
-                }
+                else requestAiMove();
             });
         });
     }
@@ -379,19 +412,15 @@ public class MainActivity extends AppCompatActivity {
         return size <= 11 ? 5.5f : 7.5f;
     }
 
-    private String getDifficultyName() {
-        if (searchVisits == 500) return "困难";
-        if (searchVisits == 100) return "普通";
-        return "简单";
-    }
+    private String getDifficultyName() { return aiKyu + "级"; }
 
     private void render(String message) {
         DebugLog.enter(TAG, "render in, message=" + message + ", engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer);
         statusText.setText(message);
-        aiDifficultyText.setText(String.format(Locale.CHINA, "%s · %d次/%.1f秒", getDifficultyName(), searchVisits, searchTime));
+        aiDifficultyText.setText(getDifficultyName() + " · Human SL");
         boardView.setBoard(board);
         boardView.setLastMove(lastMove);
-        boardView.setInputEnabled(engineReady && !thinking && currentPlayer == playerColor && !board.isGameOver());
+        boardView.setInputEnabled(engineReady && gameReady && !engineStarting && !thinking && currentPlayer == playerColor && !board.isGameOver());
         boolean playerBlack = playerColor == StoneColor.BLACK;
         playerStoneView.setBackgroundResource(playerBlack ? R.drawable.txwq_black_stone : R.drawable.txwq_white_stone);
         aiStoneView.setBackgroundResource(playerBlack ? R.drawable.txwq_white_stone : R.drawable.txwq_black_stone);
@@ -407,9 +436,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateButtons() {
         DebugLog.enter(TAG, "updateButtons in, engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer + ", playerColor=" + playerColor);
-        boolean playerTurn = engineReady && !thinking && currentPlayer == playerColor && !board.isGameOver();
-        newGameButton.setEnabled(!thinking);
-        newRoundButton.setEnabled(!thinking);
+        boolean playerTurn = engineReady && gameReady && !engineStarting && !thinking && currentPlayer == playerColor && !board.isGameOver();
+        newGameButton.setEnabled(!thinking && !engineStarting);
+        newRoundButton.setEnabled(!thinking && !engineStarting);
         undoButton.setEnabled(playerTurn && board.getMoveCount() >= 2);
         passButton.setEnabled(playerTurn);
         resignButton.setEnabled(playerTurn && board.getMoveCount() > 0);
