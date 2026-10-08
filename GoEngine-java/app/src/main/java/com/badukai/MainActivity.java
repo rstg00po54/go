@@ -24,6 +24,7 @@ import com.badukai.game.Move;
 import com.badukai.game.Point;
 import com.badukai.game.StoneColor;
 import com.badukai.ui.GoBoardView;
+import com.badukai.ui.TencentHomeScaler;
 import com.badukai.util.DebugLog;
 
 import java.util.Locale;
@@ -69,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         engine = new KataGoEngine(getApplicationContext());
         bindViews();
+        TencentHomeScaler.install((ViewGroup) mainPageContainer);
         boardView.setOnIntersectionClickListener(this::onBoardTap);
         aiBattleButton.setOnClickListener(v -> showNewGameDialog());
         newGameButton.setOnClickListener(v -> showNewGameDialog());
