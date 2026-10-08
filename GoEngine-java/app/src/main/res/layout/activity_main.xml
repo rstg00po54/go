@@ -389,6 +389,7 @@
                         android:layout_width="22dp"
                         android:layout_height="22dp"
                         android:layout_marginEnd="2dp"
+                        android:id="@+id/aiStoneView"
                         android:background="@drawable/txwq_white_stone" />
 
                     <TextView
@@ -397,25 +398,28 @@
                         android:layout_weight="1"
                         android:ellipsize="end"
                         android:maxLines="1"
-                        android:text="安静01006"
+                        android:text="围棋精灵"
                         android:textColor="#286B48"
                         android:textSize="16sp" />
                 </LinearLayout>
 
                 <TextView
+                    android:id="@+id/aiDifficultyText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="start"
-                    android:text="13级"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:text="简单 · 20次/0.4秒"
                     android:textColor="#286B48"
-                    android:textSize="14sp" />
+                    android:textSize="12sp" />
 
                 <TextView
-                    android:id="@+id/blackCaptureText"
+                    android:id="@+id/aiCaptureText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="start"
-                    android:text="黑棋提子 0"
+                    android:text="白棋提子 0"
                     android:textColor="#5B7B69"
                     android:textSize="12sp" />
             </LinearLayout>
@@ -450,7 +454,7 @@
                         android:ellipsize="end"
                         android:gravity="end"
                         android:maxLines="1"
-                        android:text="围棋精灵"
+                        android:text="安静01006"
                         android:textColor="#286B48"
                         android:textSize="16sp" />
 
@@ -458,26 +462,26 @@
                         android:layout_width="22dp"
                         android:layout_height="22dp"
                         android:layout_marginStart="2dp"
+                        android:id="@+id/playerStoneView"
                         android:background="@drawable/txwq_black_stone" />
                 </LinearLayout>
 
                 <TextView
-                    android:id="@+id/aiDifficultyText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
                     android:gravity="end"
                     android:maxLines="1"
-                    android:text="简单 · 20次/0.4秒"
+                    android:text="13级"
                     android:textColor="#286B48"
-                    android:textSize="12sp" />
+                    android:textSize="14sp" />
 
                 <TextView
-                    android:id="@+id/whiteCaptureText"
+                    android:id="@+id/playerCaptureText"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="end"
-                    android:text="白棋提子 0"
+                    android:text="黑棋提子 0"
                     android:textColor="#5B7B69"
                     android:textSize="12sp" />
             </LinearLayout>
