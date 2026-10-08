@@ -22,8 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class KataGoEngine {
     private static final String TAG = "KataGoEngine";
-    private static final String BINARY_ASSET = "engine/katago";
-    private static final String LIBCXX_ASSET = "engine/libc++_shared.so";
+    private static final String NATIVE_BINARY = "libkatago_exec.so";
     private static final String CONFIG_ASSET = "engine/default_gtp.cfg";
     private static final String DEFAULT_MODEL_ASSET = "engine/10b.bin";
 
@@ -67,13 +66,13 @@ public class KataGoEngine {
             File engineDir = new File(context.getFilesDir(), "engine");
             if (!engineDir.exists() && !engineDir.mkdirs()) throw new IOException("Cannot create engine dir: " + engineDir);
 
-            File binaryFile = new File(engineDir, "katago");
-            File libcxxFile = new File(engineDir, "libc++_shared.so");
+            String nativeLibDir = context.getApplicationInfo().nativeLibraryDir;
+            File binaryFile = new File(nativeLibDir, NATIVE_BINARY);
             File configFile = new File(engineDir, "default_gtp.cfg");
             File modelFile = new File(engineDir, model.fileName);
 
-            copyAssetToFile(BINARY_ASSET, binaryFile);
-            copyAssetToFile(LIBCXX_ASSET, libcxxFile);
+            if (!binaryFile.isFile()) throw new IOException("KataGo binary not installed in nativeLibraryDir: " + binaryFile);
+            if (!binaryFile.canExecute()) throw new IOException("KataGo binary is not executable: " + binaryFile);
             copyAssetToFile(CONFIG_ASSET, configFile);
 
             String modelAsset = "engine/" + model.fileName;
@@ -85,9 +84,6 @@ public class KataGoEngine {
                 modelFile = new File(engineDir, "10b.bin");
                 copyAssetToFile(DEFAULT_MODEL_ASSET, modelFile);
             }
-
-            if (!binaryFile.setExecutable(true, false) && !binaryFile.canExecute()) throw new IOException("Cannot make KataGo executable: " + binaryFile);
-            libcxxFile.setExecutable(false, false);
 
             Log.i(TAG, "Model: " + modelFile.getAbsolutePath() + " size=" + modelFile.length());
             Log.i(TAG, "Config: " + configFile.getAbsolutePath());
@@ -104,8 +100,7 @@ public class KataGoEngine {
             ProcessBuilder builder = new ProcessBuilder(command);
             builder.directory(engineDir);
             Map<String, String> env = builder.environment();
-            String nativeLibDir = context.getApplicationInfo().nativeLibraryDir;
-            env.put("LD_LIBRARY_PATH", engineDir.getAbsolutePath() + ":" + nativeLibDir);
+            env.put("LD_LIBRARY_PATH", nativeLibDir);
             env.remove("ADSP_LIBRARY_PATH");
             env.put("HOME", context.getFilesDir().getAbsolutePath());
 

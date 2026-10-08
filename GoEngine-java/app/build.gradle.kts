@@ -26,11 +26,12 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    // RK3588 版本不再打包旧的 SNPE/QNN/HTP JNI 库。
-    // libc++_shared.so 作为 assets/engine 下的普通文件释放到 filesDir/engine。
+    // Android 10+ does not allow executing binaries extracted under writable filesDir.
+    // Package katago as libkatago_exec.so and extract native libs to nativeLibraryDir.
+    // Only our arm64-v8a libraries are included; legacy SNPE/QNN/HTP libs stay out.
     packaging {
         jniLibs {
-            excludes += setOf("**/*.so")
+            useLegacyPackaging = true
         }
     }
 
