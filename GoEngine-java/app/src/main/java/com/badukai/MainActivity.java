@@ -349,6 +349,14 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "请等 AI 落子结束再判断形势", Toast.LENGTH_SHORT).show();
             return;
         }
+        // Tap cycle: squares -> ownership percentages -> hidden -> squares.
+        // Reuse the last neural evaluation while the board position is unchanged.
+        if (boardView.hasOwnership()) {
+            int nextMode = (boardView.getOwnershipMode() + 1) % 3;
+            boardView.setOwnershipMode(nextMode);
+            Log.i(TAG, "Situation overlay mode=" + nextMode + " (0=hidden, 1=squares, 2=percent)");
+            return;
+        }
         evaluating = true;
         final GoBoard snapshot = board;
         final int moves = board.getMoveCount(), size = boardSize;
