@@ -275,7 +275,7 @@ public class KataGoEngine {
         Log.i(TAG, "KataGo stopped");
     }
 
-    public boolean isHumanSLRunning() { return running.get() && humanSLRunning; }
+    public boolean isHumanSLRunning() { return isReady() && humanSLRunning; }
 
     public boolean hasHumanModel() {
         File dir = new File(context.getFilesDir(), "engine");
@@ -450,7 +450,7 @@ public class KataGoEngine {
 
     public boolean isReady() {
         DebugLog.enter(TAG, "isReady in, running=" + running.get());
-        return running.get();
+        return running.get() && process != null && process.isAlive();
     }
 
     /**
