@@ -264,34 +264,32 @@ public class MainActivity extends AppCompatActivity {
     private void showNewGameDialog() {
         DebugLog.enter(TAG, "showNewGameDialog in, boardSize=" + boardSize + ", playerColor=" + playerColor);
         View content = LayoutInflater.from(this).inflate(R.layout.dialog_new_game, null, false);
-        RadioGroup sizeGroup = content.findViewById(R.id.sizeGroup);
+        Spinner sizeSpinner = content.findViewById(R.id.sizeSpinner);
         RadioGroup colorGroup = content.findViewById(R.id.colorGroup);
         RadioGroup difficultyGroup = content.findViewById(R.id.difficultyGroup);
         Spinner conditionSpinner = content.findViewById(R.id.conditionSpinner);
         Button startButton = content.findViewById(R.id.startGameButton);
         Button closeButton = content.findViewById(R.id.closeDialogButton);
 
+        int[] boardSizes = {9, 11, 13, 15, 19};
+        ArrayAdapter<String> sizeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{"9路", "11路", "13路", "15路", "19路"});
+        sizeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        sizeSpinner.setAdapter(sizeAdapter);
+        int selectedSize = 4;
+        for (int i = 0; i < boardSizes.length; i++) if (boardSizes[i] == boardSize) selectedSize = i;
+        sizeSpinner.setSelection(selectedSize);
+
         ArrayAdapter<String> conditionAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{"分先", "让先", "让2子", "让3子"});
         conditionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         conditionSpinner.setAdapter(conditionAdapter);
 
-        if (boardSize == 9) sizeGroup.check(R.id.size9Radio);
-        else if (boardSize == 11) sizeGroup.check(R.id.size11Radio);
-        else if (boardSize == 13) sizeGroup.check(R.id.size13Radio);
-        else if (boardSize == 15) sizeGroup.check(R.id.size15Radio);
-        else sizeGroup.check(R.id.size19Radio);
         colorGroup.check(playerColor == StoneColor.WHITE ? R.id.whiteRadio : R.id.blackRadio);
         difficultyGroup.check(searchVisits == 500 ? R.id.hardRadio : searchVisits == 100 ? R.id.normalRadio : R.id.easyRadio);
 
         AlertDialog dialog = new AlertDialog.Builder(this).setView(content).create();
         closeButton.setOnClickListener(v -> dialog.dismiss());
         startButton.setOnClickListener(v -> {
-            int sizeId = sizeGroup.getCheckedRadioButtonId();
-            if (sizeId == R.id.size9Radio) boardSize = 9;
-            else if (sizeId == R.id.size11Radio) boardSize = 11;
-            else if (sizeId == R.id.size13Radio) boardSize = 13;
-            else if (sizeId == R.id.size15Radio) boardSize = 15;
-            else boardSize = 19;
+            boardSize = boardSizes[sizeSpinner.getSelectedItemPosition()];
 
             int colorId = colorGroup.getCheckedRadioButtonId();
             if (colorId == R.id.whiteRadio) playerColor = StoneColor.WHITE;
@@ -317,7 +315,9 @@ public class MainActivity extends AppCompatActivity {
         dialog.setOnShowListener(ignored -> {
             if (dialog.getWindow() != null) {
                 dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-                dialog.getWindow().setLayout((int) (getResources().getDisplayMetrics().widthPixels * 0.94f), ViewGroup.LayoutParams.WRAP_CONTENT);
+                int width = getResources().getDisplayMetrics().widthPixels;
+                int maxWidth = (int) (420 * getResources().getDisplayMetrics().density);
+                dialog.getWindow().setLayout(Math.min((int) (width * 0.88f), maxWidth), ViewGroup.LayoutParams.WRAP_CONTENT);
             }
         });
         dialog.show();
