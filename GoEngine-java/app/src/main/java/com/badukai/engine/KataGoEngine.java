@@ -513,6 +513,73 @@ public class KataGoEngine {
         return simpleCommand("undo", 5000);
     }
 
+    /**
+     * A single evaluation from the normal 10b model, NOT the human-style model.
+     * whiteLead already accounts for komi, in points. whiteOwnership is in
+     * KataGo board order: x left-to-right, y bottom-to-top.
+     */
+    public static final class PositionEvaluation {
+        public final double blackWin, whiteWin, whiteLead;
+        public final int size;
+        public final float[] whiteOwnership;
+
+        private PositionEvaluation(double blackWin, double whiteWin, double whiteLead, int size, float[] ownership) {
+            this.blackWin = blackWin;
+            this.whiteWin = whiteWin;
+            this.whiteLead = whiteLead;
+            this.size = size;
+            this.whiteOwnership = ownership.clone();
+        }
+    }
+
+    /** Does not make a move or change the GTP board; call on engineExecutor. */
+    public PositionEvaluation evaluatePosition(int size) {
+        DebugLog.enter(TAG, "evaluatePosition in, size=" + size);
+        if (!running.get() || size < 2 || size > 19) return null;
+        responseQueue.clear();
+        long startNs = System.nanoTime();
+        if (!sendCommandSync("kata-raw-nn 0")) return null;
+        String response = waitForResponse(30000);
+        if (!response.startsWith("=")) {
+            Log.e(TAG, "kata-raw-nn failed: " + response.trim());
+            return null;
+        }
+        try {
+            String[] tokens = response.substring(1).trim().split("\\s+");
+            double whiteWin = Double.NaN, blackWin = Double.NaN, whiteLead = Double.NaN;
+            float[] ownership = null;
+            for (int i = 0; i < tokens.length; i++) {
+                String key = tokens[i];
+                if ("whiteWin".equals(key) && i + 1 < tokens.length) whiteWin = Double.parseDouble(tokens[++i]);
+                else if ("whiteLoss".equals(key) && i + 1 < tokens.length) blackWin = Double.parseDouble(tokens[++i]);
+                else if ("whiteLead".equals(key) && i + 1 < tokens.length) whiteLead = Double.parseDouble(tokens[++i]);
+                else if ("whiteOwnership".equals(key)) {
+                    int count = size * size;
+                    if (i + count >= tokens.length) throw new IllegalArgumentException("Incomplete ownership array");
+                    ownership = new float[count];
+                    for (int p = 0; p < count; p++) {
+                        float value = Float.parseFloat(tokens[++i]);
+                        if (!Float.isFinite(value) || Math.abs(value) > 1.01f)
+                            throw new IllegalArgumentException("Invalid ownership value: " + value);
+                        ownership[p] = Math.max(-1f, Math.min(1f, value));
+                    }
+                }
+            }
+            if (!Double.isFinite(whiteWin) || !Double.isFinite(blackWin) || !Double.isFinite(whiteLead)
+                    || whiteWin < 0 || whiteWin > 1 || blackWin < 0 || blackWin > 1 || ownership == null)
+                throw new IllegalArgumentException("Incomplete KataGo raw NN evaluation");
+
+            PositionEvaluation eval = new PositionEvaluation(blackWin, whiteWin, whiteLead, size, ownership);
+            long elapsedMs = (System.nanoTime() - startNs) / 1000000L;
+            Log.i(TAG, String.format(Locale.US, "Position evaluation blackWin=%.3f whiteWin=%.3f whiteLead=%.2f size=%d elapsedMs=%d",
+                    blackWin, whiteWin, whiteLead, size, elapsedMs));
+            return eval;
+        } catch (RuntimeException e) {
+            Log.e(TAG, "Cannot parse kata-raw-nn response", e);
+            return null;
+        }
+    }
+
     public String getFinalScore() {
         DebugLog.enter(TAG, "getFinalScore in");
         responseQueue.clear();
