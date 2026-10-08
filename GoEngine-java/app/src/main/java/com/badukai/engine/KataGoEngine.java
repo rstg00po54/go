@@ -76,6 +76,8 @@ public class KataGoEngine {
     private volatile SearchStats currentSearchStats;
     private volatile boolean humanSLRunning;
     private volatile File verifiedHumanModel;
+    private volatile long verifiedHumanModelLength;
+    private volatile long verifiedHumanModelModified;
 
     private static final class SearchStats {
         final CountDownLatch ready = new CountDownLatch(1);
@@ -92,7 +94,10 @@ public class KataGoEngine {
 
     public synchronized boolean start(Model model, boolean useHumanSL) {
         DebugLog.enter(TAG, "start in, model=" + model + ", running=" + running.get());
-        if (running.get()) return true;
+        if (running.get()) {
+            if (process != null && process.isAlive() && humanSLRunning == useHumanSL) return true;
+            stop(); // Different engine mode or native process died.
+        }
         Log.i(TAG, "=== JAVA KATAGO ENGINE / ANDROID ARM64 ===");
         try {
             File engineDir = new File(context.getFilesDir(), "engine");
@@ -119,8 +124,7 @@ public class KataGoEngine {
 
             File humanFile = null;
             if (useHumanSL) {
-                humanFile = verifiedHumanModel;
-                if (humanFile == null || !isValidHumanModel(humanFile)) humanFile = findInstalledHumanModel(engineDir);
+                humanFile = isCachedHumanModelValid() ? verifiedHumanModel : findInstalledHumanModel(engineDir);
                 if (humanFile == null) throw new IOException("Human SL model unavailable; prepare it first");
                 Log.i(TAG, "Human SL model: " + humanFile.getAbsolutePath() + " size=" + humanFile.length());
             }
@@ -154,17 +158,18 @@ public class KataGoEngine {
             reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 
-            Thread.sleep(2000);
-            if (!process.isAlive()) {
-                Log.e(TAG, "KataGo process exited during startup");
-                stop();
-                return false;
-            }
-
             running.set(true);
             humanSLRunning = useHumanSL;
             startReaderThread();
             startErrorReaderThread();
+
+            // Wait for the actual native GTP response instead of a fixed 2-second sleep.
+            responseQueue.clear();
+            if (!sendCommandSync("name") || !waitForStartupResponse(30000)) {
+                Log.e(TAG, "KataGo GTP did not become ready");
+                stop();
+                return false;
+            }
             Log.i(TAG, "=== ENGINE STARTED SUCCESSFULLY ===");
             return true;
         } catch (Exception e) {
@@ -172,6 +177,25 @@ public class KataGoEngine {
             stop();
             return false;
         }
+    }
+
+    /** GTP is ready only after its models have loaded and it replies to name. */
+    private boolean waitForStartupResponse(int timeoutMs) {
+        long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs);
+        while (System.nanoTime() < deadline) {
+            if (process == null || !process.isAlive()) return false;
+            try {
+                String response = responseQueue.poll(200, TimeUnit.MILLISECONDS);
+                if (response != null) {
+                    Log.i(TAG, "KataGo GTP ready response: " + response.trim());
+                    return response.startsWith("=");
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+        }
+        return false;
     }
 
     private void startReaderThread() {
@@ -303,6 +327,14 @@ public class KataGoEngine {
         }
     }
 
+    /** Trust a SHA-256 result only while the private file remains unchanged. */
+    private boolean isCachedHumanModelValid() {
+        File file = verifiedHumanModel;
+        return file != null && isValidHumanModel(file)
+                && file.length() == verifiedHumanModelLength
+                && file.lastModified() == verifiedHumanModelModified;
+    }
+
     private File findInstalledHumanModel(File dir) throws IOException {
         File compressed = new File(dir, HUMAN_MODEL_NAME);
         if (isTrustedHumanModel(compressed)) return compressed;
@@ -338,6 +370,11 @@ public class KataGoEngine {
         File dir = new File(context.getFilesDir(), "engine");
         if (!dir.isDirectory() && !dir.mkdirs()) throw new IOException("Cannot create model directory");
 
+        if (isCachedHumanModelValid()) {
+            Log.i(TAG, "Human SL model reused from verified cache: " + verifiedHumanModel.getAbsolutePath());
+            return verifiedHumanModel;
+        }
+        verifiedHumanModel = null;
         File model = findInstalledHumanModel(dir);
         if (model == null) model = copyBundledHumanModel(dir, HUMAN_MODEL_ASSET, HUMAN_MODEL_NAME, HUMAN_MODEL_BYTES, progress);
         if (model == null) model = copyBundledHumanModel(dir, HUMAN_MODEL_RAW_ASSET, HUMAN_MODEL_RAW_NAME, HUMAN_MODEL_RAW_BYTES, progress);
@@ -355,6 +392,8 @@ public class KataGoEngine {
             }
         }
 
+        verifiedHumanModelLength = model.length();
+        verifiedHumanModelModified = model.lastModified();
         verifiedHumanModel = model;
         Log.i(TAG, "Human SL model ready: " + model.getAbsolutePath());
         return model;
