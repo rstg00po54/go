@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Locale;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -53,6 +54,13 @@ public class KataGoEngine {
     private BufferedReader errorReader;
     private Thread readerThread;
     private Thread errorReaderThread;
+    private volatile SearchStats currentSearchStats;
+
+    private static final class SearchStats {
+        final CountDownLatch ready = new CountDownLatch(1);
+        volatile long rootVisits = -1;
+        volatile long newPlayouts = -1;
+    }
 
     public KataGoEngine(Context context) {
         DebugLog.enter(TAG, "KataGoEngine in, context=" + context);
@@ -156,12 +164,31 @@ public class KataGoEngine {
         errorReaderThread = new Thread(() -> {
             try {
                 String line;
-                while (running.get() && (line = errorReader.readLine()) != null) Log.w(TAG, "KataGo stderr: " + line);
+                while (running.get() && (line = errorReader.readLine()) != null) {
+                    recordSearchStats(line);
+                    Log.d(TAG, "KataGo stderr: " + line);
+                }
             } catch (IOException e) {
                 if (running.get()) Log.e(TAG, "Stderr reader failed", e);
             }
         }, "KataGo-stderr");
         errorReaderThread.start();
+    }
+
+    private void recordSearchStats(String line) {
+        SearchStats stats = currentSearchStats;
+        if (stats == null) return;
+        try {
+            if (line.startsWith("Root visits: ")) {
+                stats.rootVisits = Long.parseLong(line.substring("Root visits: ".length()).trim());
+            } else if (line.startsWith("New playouts: ")) {
+                stats.newPlayouts = Long.parseLong(line.substring("New playouts: ".length()).trim());
+                stats.ready.countDown();
+            }
+        } catch (NumberFormatException e) {
+            Log.w(TAG, "Cannot parse KataGo search statistics: " + line, e);
+            stats.ready.countDown();
+        }
     }
 
     public synchronized void stop() {
@@ -242,14 +269,28 @@ public class KataGoEngine {
     public String generateMove(String color) {
         DebugLog.enter(TAG, "generateMove in, color=" + color);
         responseQueue.clear();
+        SearchStats stats = new SearchStats();
+        currentSearchStats = stats;
         long startedNs = System.nanoTime();
-        if (!sendCommandSync("genmove " + color)) return null;
-        String response = waitForResponse(60000);
-        long elapsedMs = (System.nanoTime() - startedNs) / 1000000L;
-        String move = parseGtpResponse(response);
-        Log.i(TAG, "genmove color=" + color + " move=" + move + " elapsedMs=" + elapsedMs
-                + " (wall time includes GTP and inference overhead)");
-        return move;
+        try {
+            // KataGo v1.14.1: same move as genmove, with exact root visit stats on stderr.
+            if (!sendCommandSync("genmove_debug " + color)) return null;
+            String response = waitForResponse(60000);
+            long elapsedMs = (System.nanoTime() - startedNs) / 1000000L;
+            String move = parseGtpResponse(response);
+            try {
+                if (!stats.ready.await(500, TimeUnit.MILLISECONDS)) Log.w(TAG, "Search statistics not received from KataGo");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            Log.i(TAG, "genmove color=" + color + " move=" + move
+                    + " rootVisits=" + (stats.rootVisits >= 0 ? stats.rootVisits : "unavailable")
+                    + " newPlayouts=" + (stats.newPlayouts >= 0 ? stats.newPlayouts : "unavailable")
+                    + " elapsedMs=" + elapsedMs + " (wall time includes GTP and inference overhead)");
+            return move;
+        } finally {
+            currentSearchStats = null;
+        }
     }
 
     public boolean playMove(String color, String move) {
