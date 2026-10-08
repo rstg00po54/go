@@ -65,6 +65,10 @@ public class MainActivity extends AppCompatActivity {
     private Button passButton;
     private Button resignButton;
     private Button moreGameButton;
+    private Button newRoundButton;
+    private Button situationButton;
+    private Button aiSuggestionButton;
+    private Button countTerritoryButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,7 +85,11 @@ public class MainActivity extends AppCompatActivity {
         undoButton.setOnClickListener(v -> undo());
         passButton.setOnClickListener(v -> pass());
         resignButton.setOnClickListener(v -> resign());
-        moreGameButton.setOnClickListener(v -> Toast.makeText(this, "更多对局功能后面再接", Toast.LENGTH_SHORT).show());
+        newRoundButton.setOnClickListener(v -> showNewGameDialog());
+        situationButton.setOnClickListener(v -> Toast.makeText(this, "形势功能待实现", Toast.LENGTH_SHORT).show());
+        aiSuggestionButton.setOnClickListener(v -> Toast.makeText(this, "AI推荐功能待实现", Toast.LENGTH_SHORT).show());
+        countTerritoryButton.setOnClickListener(v -> Toast.makeText(this, "数目功能待实现", Toast.LENGTH_SHORT).show());
+        moreGameButton.setOnClickListener(v -> Toast.makeText(this, "更多功能待实现", Toast.LENGTH_SHORT).show());
         render("正在启动 AI...");
         showMainPage();
         startEngine();
@@ -106,6 +114,10 @@ public class MainActivity extends AppCompatActivity {
         passButton = findViewById(R.id.passButton);
         resignButton = findViewById(R.id.resignButton);
         moreGameButton = findViewById(R.id.moreGameButton);
+        newRoundButton = findViewById(R.id.newRoundButton);
+        situationButton = findViewById(R.id.situationButton);
+        aiSuggestionButton = findViewById(R.id.aiSuggestionButton);
+        countTerritoryButton = findViewById(R.id.countTerritoryButton);
     }
 
     private void startEngine() {
@@ -394,6 +406,7 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "updateButtons in, engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer + ", playerColor=" + playerColor);
         boolean playerTurn = engineReady && !thinking && currentPlayer == playerColor && !board.isGameOver();
         newGameButton.setEnabled(!thinking);
+        newRoundButton.setEnabled(!thinking);
         undoButton.setEnabled(playerTurn && board.getMoveCount() >= 2);
         passButton.setEnabled(playerTurn);
         resignButton.setEnabled(playerTurn && board.getMoveCount() > 0);
