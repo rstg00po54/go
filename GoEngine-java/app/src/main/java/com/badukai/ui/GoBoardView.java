@@ -169,9 +169,6 @@ public class GoBoardView extends View {
         rimPaint.setStrokeWidth(Math.max(dp(0.5f), radius * 0.044f));
         rimPaint.setColor(black ? Color.rgb(7, 10, 9) : Color.rgb(124, 134, 128));
         canvas.drawCircle(0f, 0f, radius * 0.975f, rimPaint);
-        rimPaint.setColor(black ? 0x66FFFFFF : 0xBFFFFFFF);
-        canvas.drawArc(-radius * 0.89f, -radius * 0.89f, radius * 0.89f, radius * 0.89f,
-                201f, 124f, false, rimPaint);
         canvas.restore();
     }
 
