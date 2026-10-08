@@ -561,13 +561,20 @@ public class KataGoEngine {
         public final double blackWin, whiteWin, whiteLead;
         public final int size;
         public final float[] whiteOwnership;
+        // Raw 10b neural policy for the side to move, NOT per-move win rates.
+        // Both arrays use KataGo's bottom-row-first board order.
+        public final float[] movePolicy;
+        public final float passPolicy;
 
-        private PositionEvaluation(double blackWin, double whiteWin, double whiteLead, int size, float[] ownership) {
+        private PositionEvaluation(double blackWin, double whiteWin, double whiteLead,
+                                   int size, float[] ownership, float[] policy, float passPolicy) {
             this.blackWin = blackWin;
             this.whiteWin = whiteWin;
             this.whiteLead = whiteLead;
             this.size = size;
             this.whiteOwnership = ownership.clone();
+            this.movePolicy = policy == null ? null : policy.clone();
+            this.passPolicy = passPolicy;
         }
     }
 
@@ -586,13 +593,26 @@ public class KataGoEngine {
         try {
             String[] tokens = response.substring(1).trim().split("\\s+");
             double whiteWin = Double.NaN, blackWin = Double.NaN, whiteLead = Double.NaN;
-            float[] ownership = null;
+            float[] ownership = null, policy = null;
+            float policyPass = Float.NaN;
             for (int i = 0; i < tokens.length; i++) {
                 String key = tokens[i];
                 if ("whiteWin".equals(key) && i + 1 < tokens.length) whiteWin = Double.parseDouble(tokens[++i]);
                 else if ("whiteLoss".equals(key) && i + 1 < tokens.length) blackWin = Double.parseDouble(tokens[++i]);
                 else if ("whiteLead".equals(key) && i + 1 < tokens.length) whiteLead = Double.parseDouble(tokens[++i]);
-                else if ("whiteOwnership".equals(key)) {
+                else if ("policyPass".equals(key) && i + 1 < tokens.length) {
+                    String value = tokens[++i];
+                    policyPass = "NAN".equalsIgnoreCase(value) ? Float.NaN : Float.parseFloat(value);
+                } else if ("policy".equals(key)) {
+                    int count = size * size;
+                    if (i + count >= tokens.length) throw new IllegalArgumentException("Incomplete policy array");
+                    policy = new float[count];
+                    for (int p = 0; p < count; p++) {
+                        String value = tokens[++i];
+                        float prob = "NAN".equalsIgnoreCase(value) ? -1f : Float.parseFloat(value);
+                        policy[p] = Float.isFinite(prob) && prob >= 0f && prob <= 1f ? prob : -1f;
+                    }
+                } else if ("whiteOwnership".equals(key)) {
                     int count = size * size;
                     if (i + count >= tokens.length) throw new IllegalArgumentException("Incomplete ownership array");
                     ownership = new float[count];
@@ -608,7 +628,7 @@ public class KataGoEngine {
                     || whiteWin < 0 || whiteWin > 1 || blackWin < 0 || blackWin > 1 || ownership == null)
                 throw new IllegalArgumentException("Incomplete KataGo raw NN evaluation");
 
-            PositionEvaluation eval = new PositionEvaluation(blackWin, whiteWin, whiteLead, size, ownership);
+            PositionEvaluation eval = new PositionEvaluation(blackWin, whiteWin, whiteLead, size, ownership, policy, policyPass);
             long elapsedMs = (System.nanoTime() - startNs) / 1000000L;
             Log.i(TAG, String.format(Locale.US, "Position evaluation blackWin=%.3f whiteWin=%.3f whiteLead=%.2f size=%d elapsedMs=%d",
                     blackWin, whiteWin, whiteLead, size, elapsedMs));
