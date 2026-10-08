@@ -59,9 +59,11 @@ if [[ ! -f "$BINARY" ]]; then
     echo "KataGo executable not found at $BINARY" >&2
     exit 1
 fi
-READELF="$(find "$NDK/toolchains/llvm/prebuilt" -path '*/bin/llvm-readelf' -type f | head -n 1)"
+# GNU readelf can inspect Android AArch64 ELF files from an x86-64 Linux host.
+# Android NDK r27 no longer ships llvm-readelf under the expected path.
+READELF="$(command -v readelf || true)"
 if [[ -z "$READELF" ]]; then
-    echo "NDK llvm-readelf not found" >&2
+    echo "readelf not found. Install binutils on the Linux build host." >&2
     exit 1
 fi
 HEADER="$("$READELF" -h "$BINARY")"
