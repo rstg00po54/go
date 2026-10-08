@@ -21,6 +21,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.badukai.engine.KataGoEngine;
 import com.badukai.game.GoBoard;
+import com.badukai.game.Intersection;
 import com.badukai.game.Move;
 import com.badukai.game.Point;
 import com.badukai.game.StoneColor;
@@ -295,24 +296,24 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(this, "AI 没有返回有效的形势数据", Toast.LENGTH_LONG).show();
                     return;
                 }
+                // Count confident ownership of EMPTY intersections only. This is not
+                // a final Japanese-rules score: captures and komi are excluded.
+                int blackTerritory = 0, whiteTerritory = 0, emptyPoints = 0;
+                for (int y = 0; y < size; y++) {
+                    for (int x = 0; x < size; x++) {
+                        if (board.get(x, y) != Intersection.EMPTY) continue;
+                        emptyPoints++;
+                        float whiteOwn = result.whiteOwnership[(size - 1 - y) * size + x];
+                        if (whiteOwn >= GoBoardView.OWNERSHIP_MARK_THRESHOLD) whiteTerritory++;
+                        else if (whiteOwn <= -GoBoardView.OWNERSHIP_MARK_THRESHOLD) blackTerritory++;
+                    }
+                }
                 boardView.setOwnership(result.whiteOwnership);
-                render("形势估算已更新");
-                if (gamePageContainer.getVisibility() != View.VISIBLE) return;
-                String lead = Math.abs(result.whiteLead) < 0.05
-                        ? "双方大致均势"
-                        : String.format(Locale.CHINA, "%s预计领先 %.1f 目",
-                                result.whiteLead > 0 ? "白棋" : "黑棋", Math.abs(result.whiteLead));
-                String details = String.format(Locale.CHINA,
-                        "黑棋估算胜率：%.1f%%\n白棋估算胜率：%.1f%%\n\n%s\n\n"
-                                + "棋盘黑色方块：黑方地盘倾向\n棋盘白色方块：白方地盘倾向\n"
-                                + "未标记位置：归属尚不明确\n\n"
-                                + "使用 10b 模型单次快速估算，已考虑贴目；不是精确数目，中盘结果仅供参考。",
-                        result.blackWin * 100, result.whiteWin * 100, lead);
-                new AlertDialog.Builder(this).setTitle("形势判断 · 第" + moves + "手")
-                        .setMessage(details)
-                        .setPositiveButton("保留标记", null)
-                        .setNeutralButton("清除标记", (dialog, which) -> boardView.setOwnership(null))
-                        .show();
+                render(String.format(Locale.CHINA, "黑估空%d目\n白估空%d目", blackTerritory, whiteTerritory));
+                Log.i(TAG, String.format(Locale.US,
+                        "Position territory estimate black=%d white=%d uncertain=%d (ownership threshold %.2f, no komi/captures)",
+                        blackTerritory, whiteTerritory, emptyPoints - blackTerritory - whiteTerritory,
+                        GoBoardView.OWNERSHIP_MARK_THRESHOLD));
             });
         });
     }
