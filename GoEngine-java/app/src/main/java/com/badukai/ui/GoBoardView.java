@@ -4,6 +4,8 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.RadialGradient;
+import android.graphics.Shader;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -21,6 +23,12 @@ public class GoBoardView extends View {
     }
 
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint stonePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint shadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint highlightPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint rimPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private Shader blackShader, whiteShader, blackHighlight, whiteHighlight, shadowShader;
+    private float shaderRadius = -1f;
     private GoBoard board = new GoBoard(19);
     private Point lastMove;
     private OnIntersectionClickListener listener;
@@ -122,27 +130,65 @@ public class GoBoardView extends View {
         return new int[][]{{a,a},{b,a},{c,a},{a,b},{b,b},{c,b},{a,c},{b,c},{c,c}};
     }
 
+    private void prepareStoneShaders(float radius) {
+        if (Math.abs(shaderRadius - radius) < 0.01f) return;
+        shaderRadius = radius;
+        blackShader = new RadialGradient(-radius * 0.30f, -radius * 0.42f, radius * 1.50f,
+                new int[]{Color.rgb(83, 91, 85), Color.rgb(33, 39, 36), Color.rgb(6, 8, 8)},
+                new float[]{0f, 0.45f, 1f}, Shader.TileMode.CLAMP);
+        whiteShader = new RadialGradient(-radius * 0.30f, -radius * 0.42f, radius * 1.50f,
+                new int[]{Color.rgb(255, 255, 251), Color.rgb(233, 236, 231), Color.rgb(157, 164, 160)},
+                new float[]{0f, 0.45f, 1f}, Shader.TileMode.CLAMP);
+        blackHighlight = new RadialGradient(-radius * 0.36f, -radius * 0.49f, radius * 0.62f,
+                new int[]{0x66FFFFFF, 0x18FFFFFF, 0x00FFFFFF},
+                new float[]{0f, 0.45f, 1f}, Shader.TileMode.CLAMP);
+        whiteHighlight = new RadialGradient(-radius * 0.36f, -radius * 0.49f, radius * 0.62f,
+                new int[]{0xAAFFFFFF, 0x33FFFFFF, 0x00FFFFFF},
+                new float[]{0f, 0.45f, 1f}, Shader.TileMode.CLAMP);
+        shadowShader = new RadialGradient(radius * 0.13f, radius * 0.17f, radius * 1.28f,
+                new int[]{0x66000000, 0x29000000, 0x00000000},
+                new float[]{0f, 0.70f, 1f}, Shader.TileMode.CLAMP);
+        shadowPaint.setStyle(Paint.Style.FILL);
+        shadowPaint.setShader(shadowShader);
+        stonePaint.setStyle(Paint.Style.FILL);
+        highlightPaint.setStyle(Paint.Style.FILL);
+        rimPaint.setStyle(Paint.Style.STROKE);
+    }
+
+    private void drawLitStone(Canvas canvas, float cx, float cy, float radius, boolean black) {
+        canvas.save();
+        canvas.translate(cx, cy);
+
+        canvas.drawCircle(radius * 0.13f, radius * 0.17f, radius * 1.28f, shadowPaint);
+        stonePaint.setShader(black ? blackShader : whiteShader);
+        canvas.drawCircle(0f, 0f, radius, stonePaint);
+
+        highlightPaint.setShader(black ? blackHighlight : whiteHighlight);
+        canvas.drawOval(-radius * 0.61f, -radius * 0.72f, radius * 0.12f, -radius * 0.21f, highlightPaint);
+
+        rimPaint.setStrokeWidth(Math.max(dp(0.5f), radius * 0.044f));
+        rimPaint.setColor(black ? Color.rgb(7, 10, 9) : Color.rgb(124, 134, 128));
+        canvas.drawCircle(0f, 0f, radius * 0.975f, rimPaint);
+        rimPaint.setColor(black ? 0x66FFFFFF : 0xBFFFFFFF);
+        canvas.drawArc(-radius * 0.89f, -radius * 0.89f, radius * 0.89f, radius * 0.89f,
+                201f, 124f, false, rimPaint);
+        canvas.restore();
+    }
+
     private void drawStones(Canvas canvas, int n) {
         DebugLog.v(TAG, "drawStones in, canvas=" + canvas + ", n=" + n + ", lastMove=" + lastMove);
         float radius = cellSize * 0.45f;
+        prepareStoneShaders(radius);
         for (int y = 0; y < n; y++) {
             for (int x = 0; x < n; x++) {
                 Intersection intersection = board.get(x, y);
                 if (intersection == Intersection.EMPTY) continue;
                 float cx = padding + x * cellSize;
                 float cy = padding + y * cellSize;
-
-                paint.setStyle(Paint.Style.FILL);
-                paint.setColor(intersection == Intersection.BLACK ? Color.rgb(24,24,24) : Color.rgb(247,247,247));
-                canvas.drawCircle(cx, cy, radius, paint);
-                if (intersection == Intersection.WHITE) {
-                    paint.setStyle(Paint.Style.STROKE);
-                    paint.setStrokeWidth(dp(1));
-                    paint.setColor(Color.rgb(105,105,105));
-                    canvas.drawCircle(cx, cy, radius, paint);
-                }
+                drawLitStone(canvas, cx, cy, radius, intersection == Intersection.BLACK);
 
                 if (lastMove != null && lastMove.x == x && lastMove.y == y) {
+                    paint.setShader(null);
                     paint.setStyle(Paint.Style.STROKE);
                     paint.setStrokeWidth(Math.max(dp(2), radius * 0.10f));
                     paint.setColor(Color.rgb(220, 48, 48));
