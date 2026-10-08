@@ -43,6 +43,7 @@ jadx_output/
 # Large model files (download separately)
 app/src/main/assets/models/*.bin.gz
 app/src/main/assets/models/*.bin
+app/src/main/assets/engine/b18c384nbt-humanv0.bin.gz
 
 # Original APK file
 baduk_ai_arm64.apk
