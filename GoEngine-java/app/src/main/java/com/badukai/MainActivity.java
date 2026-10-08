@@ -43,7 +43,9 @@ public class MainActivity extends AppCompatActivity {
     private StoneColor currentPlayer = StoneColor.BLACK;
     private int boardSize = 19;
     private int aiKyu = 12;
-    private int searchVisits = 40;
+    // Human SL selects moves from its rank profile; search primarily assists pass/resign decisions.
+    // Start with 8 visits for responsiveness; keep rank selection independent of this limit.
+    private int searchVisits = 8;
     private double searchTime = 8.0;
     private boolean engineReady;
     private boolean engineStarting;
