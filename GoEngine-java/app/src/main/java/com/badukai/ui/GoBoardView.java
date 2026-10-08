@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RadialGradient;
 import android.graphics.Shader;
+import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -20,6 +21,9 @@ public class GoBoardView extends View {
     // Draw tentative influence too, but count estimated territory only above 0.55.
     public static final float OWNERSHIP_INFLUENCE_THRESHOLD = 0.15f;
     public static final float OWNERSHIP_MARK_THRESHOLD = 0.55f;
+    public static final int OWNERSHIP_OFF = 0;
+    public static final int OWNERSHIP_SQUARES = 1;
+    public static final int OWNERSHIP_PROBABILITY = 2;
 
     public interface OnIntersectionClickListener {
         void onIntersectionClick(int x, int y);
@@ -35,6 +39,7 @@ public class GoBoardView extends View {
     private GoBoard board = new GoBoard(19);
     private Point lastMove;
     private float[] ownershipWhite;
+    private int ownershipMode = OWNERSHIP_OFF;
     private OnIntersectionClickListener listener;
     private boolean inputEnabled = true;
 
@@ -60,8 +65,23 @@ public class GoBoardView extends View {
 
     /** Ownership from KataGo: x increases rightward, raw y=0 is the bottom of the board. */
     public void setOwnership(float[] values) {
-        if (values == null || board == null || values.length != board.getSize() * board.getSize()) ownershipWhite = null;
-        else ownershipWhite = values.clone();
+        if (values == null || board == null || values.length != board.getSize() * board.getSize()) {
+            ownershipWhite = null;
+            ownershipMode = OWNERSHIP_OFF;
+        } else {
+            ownershipWhite = values.clone();
+            ownershipMode = OWNERSHIP_SQUARES;
+        }
+        invalidate();
+    }
+
+    /** Keeps the last evaluation cached when hiding it, until the next move clears it. */
+    public boolean hasOwnership() { return ownershipWhite != null; }
+    public int getOwnershipMode() { return ownershipMode; }
+
+    public void setOwnershipMode(int mode) {
+        if (mode < OWNERSHIP_OFF || mode > OWNERSHIP_PROBABILITY || (mode != OWNERSHIP_OFF && !hasOwnership())) return;
+        ownershipMode = mode;
         invalidate();
     }
 
@@ -189,7 +209,7 @@ public class GoBoardView extends View {
     }
 
     private void drawOwnership(Canvas canvas, int n) {
-        if (ownershipWhite == null || ownershipWhite.length != n * n) return;
+        if (ownershipMode == OWNERSHIP_OFF || ownershipWhite == null || ownershipWhite.length != n * n) return;
         float radius = cellSize * 0.14f;
         paint.setShader(null);
         for (int y = 0; y < n; y++) {
@@ -197,25 +217,53 @@ public class GoBoardView extends View {
                 if (board.get(x, y) != Intersection.EMPTY) continue;
                 float whiteOwn = ownershipWhite[(n - 1 - y) * n + x];
                 float strength = Math.abs(whiteOwn);
-                if (strength < OWNERSHIP_INFLUENCE_THRESHOLD) continue;
+                if (!Float.isFinite(strength) || strength < OWNERSHIP_INFLUENCE_THRESHOLD) continue;
                 boolean confident = strength >= OWNERSHIP_MARK_THRESHOLD;
-                int alpha = confident ? Math.min(235, 150 + Math.round(85 * (strength - 0.55f) / 0.45f))
-                                      : 55 + Math.round(70 * (strength - 0.15f) / 0.40f);
                 boolean white = whiteOwn > 0;
                 float cx = padding + x * cellSize;
                 float cy = padding + y * cellSize;
+                if (ownershipMode == OWNERSHIP_PROBABILITY) {
+                    drawOwnershipProbability(canvas, cx, cy, strength, white);
+                    continue;
+                }
+                // Strong ownership is solid; weak influence is translucent.
+                int alpha = confident ? 255 : 55 + Math.round(70 * (strength - OWNERSHIP_INFLUENCE_THRESHOLD)
+                        / (OWNERSHIP_MARK_THRESHOLD - OWNERSHIP_INFLUENCE_THRESHOLD));
                 paint.setStyle(Paint.Style.FILL);
                 paint.setColor(white ? Color.argb(alpha, 255, 255, 249) : Color.argb(alpha, 25, 30, 28));
                 canvas.drawRoundRect(cx - radius, cy - radius, cx + radius, cy + radius, dp(1.5f), dp(1.5f), paint);
                 if (white) {
                     paint.setStyle(Paint.Style.STROKE);
                     paint.setStrokeWidth(dp(0.8f));
-                    paint.setColor(Color.argb(confident ? 140 : 65, 75, 65, 50));
+                    paint.setColor(Color.argb(confident ? 190 : 65, 75, 65, 50));
                     canvas.drawRoundRect(cx - radius, cy - radius, cx + radius, cy + radius, dp(1.5f), dp(1.5f), paint);
                 }
             }
         }
         paint.setStyle(Paint.Style.FILL);
+    }
+
+    private void drawOwnershipProbability(Canvas canvas, float cx, float cy, float strength, boolean white) {
+        // whiteOwnership in [-1, 1] is KataGo's mean ownership; this maps
+        // to the preferred side's approximate ownership likelihood, 50-100%.
+        int percent = Math.round(50f * (1f + Math.min(1f, strength)));
+        String label = percent + "%";
+        paint.setTypeface(Typeface.DEFAULT_BOLD);
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setTextSize(Math.min(cellSize * 0.24f, dp(10.5f)));
+        float halfWidth = Math.min(cellSize * 0.47f, paint.measureText(label) / 2f + dp(1.5f));
+        float halfHeight = Math.min(cellSize * 0.28f, paint.getTextSize() * 0.72f);
+        int backgroundAlpha = strength >= OWNERSHIP_MARK_THRESHOLD ? 220 : 110;
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(white ? Color.argb(backgroundAlpha, 250, 250, 245)
+                             : Color.argb(backgroundAlpha, 26, 32, 29));
+        canvas.drawRoundRect(cx - halfWidth, cy - halfHeight, cx + halfWidth, cy + halfHeight,
+                dp(1.5f), dp(1.5f), paint);
+        Paint.FontMetrics metrics = paint.getFontMetrics();
+        paint.setColor(white ? Color.rgb(24, 32, 28) : Color.WHITE);
+        canvas.drawText(label, cx, cy - (metrics.ascent + metrics.descent) * 0.5f, paint);
+        paint.setTextAlign(Paint.Align.LEFT);
+        paint.setTypeface(Typeface.DEFAULT);
     }
 
     private void drawStones(Canvas canvas, int n) {
