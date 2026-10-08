@@ -1,0 +1,52 @@
+name: Promote KataGo 1.15 Android ARM64 binary
+
+on:
+  push:
+    branches: [rk3588-engine]
+    paths:
+      - '.github/workflows/promote_katago_1_15.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download successfully built KataGo 1.15 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: katago-1_15-android-arm64-eigen
+          run-id: 37758920868
+          github-token: ${{ github.token }}
+          path: /tmp/katago115
+
+      - name: Verify new native engine
+        run: |
+          set -euo pipefail
+          ENGINE=/tmp/katago115/libkatago_exec.so
+          test -s "$ENGINE"
+          readelf -h "$ENGINE" | grep -E 'Machine:.*AArch64'
+          readelf -h "$ENGINE" | grep -E 'Type:.*DYN'
+          readelf -d "$ENGINE" | grep NEEDED
+          sha256sum "$ENGINE"
+
+      - name: Commit engine into Android application
+        run: |
+          set -euo pipefail
+          TARGET=GoEngine-java/app/src/main/jniLibs/arm64-v8a/libkatago_exec.so
+          cp /tmp/katago115/libkatago_exec.so "$TARGET"
+          git add -- "$TARGET"
+          if git diff --staged --quiet; then
+            echo "Target engine already matches built artifact"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update Android ARM64 KataGo engine to v1.15.0 CPU"
+          git push origin HEAD:refs/heads/rk3588-engine
