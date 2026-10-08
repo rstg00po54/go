@@ -28,6 +28,8 @@ https://github.com/lightvector/KataGo/releases/download/v1.15.0/b18c384nbt-human
 GoEngine-java/app/src/main/assets/engine/b18c384nbt-humanv0.bin.gz
 ```
 
+如果 APK 中包含的是解压后的 `b18c384nbt-humanv0.bin`（107185997 字节），现在也可以直接使用；运行时会用官方解压文件的 SHA-256 校验。优先使用 gzip 格式，避免 APK 额外变大。
+
 本地这个大模型文件已加入 `.gitignore`，不会误推送至 GitHub。
 
 ## 日志验证
