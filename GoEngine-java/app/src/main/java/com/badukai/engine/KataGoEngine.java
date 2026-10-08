@@ -16,6 +16,7 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -191,13 +192,63 @@ public class KataGoEngine {
         return running.get();
     }
 
+    /**
+     * Applies the new-game search limits to the running GTP engine.
+     * Both limits are ceilings; whichever is reached first can stop a search.
+     * A successful set response is followed by a get-param readback.
+     */
+    public synchronized boolean setSearchLimits(int visits, double seconds) {
+        DebugLog.enter(TAG, "setSearchLimits in, visits=" + visits + ", seconds=" + seconds);
+        if (!running.get() || visits < 1 || !Double.isFinite(seconds) || seconds <= 0.0) {
+            Log.e(TAG, "Search limits invalid or engine not ready");
+            return false;
+        }
+
+        String timeText = String.format(Locale.US, "%.3f", seconds);
+        boolean visitsSet = simpleCommand("kata-set-param maxVisits " + visits, 10000);
+        boolean timeSet = visitsSet && simpleCommand("kata-set-param maxTime " + timeText, 10000);
+        if (!visitsSet || !timeSet) {
+            Log.e(TAG, "Search limit setting FAILED: maxVisits=" + visits + ", maxTime=" + timeText);
+            return false;
+        }
+
+        String returnedVisits = getSearchParam("maxVisits");
+        String returnedTime = getSearchParam("maxTime");
+        boolean verified = false;
+        try {
+            int readVisits = Integer.parseInt(returnedVisits.trim());
+            double readTime = Double.parseDouble(returnedTime.trim());
+            verified = readVisits == visits && Math.abs(readTime - seconds) < 0.001;
+        } catch (Exception e) {
+            Log.e(TAG, "Cannot parse search limit readback", e);
+        }
+        Log.i(TAG, "Search limits verified=" + verified + " requested: maxVisits=" + visits
+                + " maxTime=" + timeText + " readback: maxVisits=" + returnedVisits
+                + " maxTime=" + returnedTime);
+        return verified;
+    }
+
+    private String getSearchParam(String name) {
+        responseQueue.clear();
+        if (!sendCommandSync("kata-get-param " + name)) return null;
+        String response = waitForResponse(10000);
+        if (!response.startsWith("=")) {
+            Log.e(TAG, "kata-get-param " + name + " failed: " + response.trim());
+            return null;
+        }
+        return parseGtpResponse(response);
+    }
+
     public String generateMove(String color) {
         DebugLog.enter(TAG, "generateMove in, color=" + color);
         responseQueue.clear();
+        long startedNs = System.nanoTime();
         if (!sendCommandSync("genmove " + color)) return null;
         String response = waitForResponse(60000);
+        long elapsedMs = (System.nanoTime() - startedNs) / 1000000L;
         String move = parseGtpResponse(response);
-        Log.i(TAG, "Generated move for " + color + ": " + move);
+        Log.i(TAG, "genmove color=" + color + " move=" + move + " elapsedMs=" + elapsedMs
+                + " (wall time includes GTP and inference overhead)");
         return move;
     }
 
