@@ -17,6 +17,7 @@ import com.badukai.util.DebugLog;
 
 public class GoBoardView extends View {
     private static final String TAG = "GoBoardView";
+    public static final float OWNERSHIP_MARK_THRESHOLD = 0.55f;
 
     public interface OnIntersectionClickListener {
         void onIntersectionClick(int x, int y);
@@ -187,14 +188,14 @@ public class GoBoardView extends View {
 
     private void drawOwnership(Canvas canvas, int n) {
         if (ownershipWhite == null || ownershipWhite.length != n * n) return;
-        float radius = cellSize * 0.23f;
+        float radius = cellSize * 0.14f;
         paint.setShader(null);
         for (int y = 0; y < n; y++) {
             for (int x = 0; x < n; x++) {
                 if (board.get(x, y) != Intersection.EMPTY) continue;
                 float whiteOwn = ownershipWhite[(n - 1 - y) * n + x];
                 float strength = Math.abs(whiteOwn);
-                if (strength < 0.55f) continue; // Uncertain area: leave unmarked.
+                if (strength < OWNERSHIP_MARK_THRESHOLD) continue; // Uncertain area: leave unmarked.
                 int alpha = Math.min(235, 90 + Math.round(145 * (strength - 0.55f) / 0.45f));
                 boolean white = whiteOwn > 0;
                 float cx = padding + x * cellSize;
