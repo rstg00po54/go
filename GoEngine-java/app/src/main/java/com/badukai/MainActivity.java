@@ -348,17 +348,20 @@ public class MainActivity extends AppCompatActivity {
         lastMove = null;
         thinking = false;
         boolean playerFirst = playerColor == StoneColor.BLACK;
+        final int visits = searchVisits;
+        final double seconds = searchTime;
         render("正在初始化棋盘...");
 
         engineExecutor.execute(() -> {
             boolean ok = engine.setBoardSize(boardSize);
             ok = engine.clearBoard() && ok;
             ok = engine.setKomi(komiFor(boardSize)) && ok;
-            boolean success = ok;
+            boolean limitsOk = ok && engine.setSearchLimits(visits, seconds);
+            boolean success = ok && limitsOk;
 
             mainHandler.post(() -> {
                 if (!success) {
-                    render("初始化棋盘失败");
+                    render(limitsOk ? "初始化棋盘失败" : "AI 搜索参数设置失败");
                     return;
                 }
 
