@@ -12,6 +12,8 @@ import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -35,6 +37,7 @@ public class KataGoEngine {
     private static final String HUMAN_MODEL_ASSET = "engine/" + HUMAN_MODEL_NAME;
     private static final String HUMAN_MODEL_URL = "https://github.com/lightvector/KataGo/releases/download/v1.15.0/" + HUMAN_MODEL_NAME;
     private static final long HUMAN_MODEL_BYTES = 99066230L;
+    private static final String HUMAN_MODEL_SHA256 = "637746e44f0efe00ad1245a50aa9bbf0716efe364c43965ead97bd6835d84ab5";
 
     public interface ModelProgress {
         void onProgress(long downloaded, long total);
@@ -263,6 +266,23 @@ public class KataGoEngine {
         }
     }
 
+    private boolean isTrustedHumanModel(File file) throws IOException {
+        if (!isValidHumanModel(file)) return false;
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            try (FileInputStream in = new FileInputStream(file)) {
+                byte[] data = new byte[65536];
+                int n;
+                while ((n = in.read(data)) != -1) if (n > 0) digest.update(data, 0, n);
+            }
+            StringBuilder hex = new StringBuilder(64);
+            for (byte b : digest.digest()) hex.append(String.format(Locale.US, "%02x", b & 0xff));
+            return HUMAN_MODEL_SHA256.equals(hex.toString());
+        } catch (NoSuchAlgorithmException e) {
+            throw new IOException("SHA-256 unavailable", e);
+        }
+    }
+
     /**
      * Run on a background executor. Use the bundled model when available,
      * otherwise fetch the official KataGo v1.15.0 release asset via HTTPS.
@@ -272,7 +292,7 @@ public class KataGoEngine {
         File dir = new File(context.getFilesDir(), "engine");
         if (!dir.isDirectory() && !dir.mkdirs()) throw new IOException("Cannot create model directory");
         File model = new File(dir, HUMAN_MODEL_NAME);
-        if (isValidHumanModel(model)) return model;
+        if (isTrustedHumanModel(model)) return model;
         File part = new File(dir, HUMAN_MODEL_NAME + ".part");
         if (part.exists() && !part.delete()) throw new IOException("Cannot remove partial model");
 
@@ -283,7 +303,7 @@ public class KataGoEngine {
             } catch (java.io.FileNotFoundException missing) {
                 downloadHumanModel(part, progress);
             }
-            if (!isValidHumanModel(part)) throw new IOException("Human SL model file size or gzip header invalid");
+            if (!isTrustedHumanModel(part)) throw new IOException("Human SL model checksum, size or gzip header invalid");
             if (model.exists() && !model.delete()) throw new IOException("Cannot replace old Human SL model");
             if (!part.renameTo(model)) throw new IOException("Cannot install Human SL model");
             Log.i(TAG, "Human SL model ready: " + model.getAbsolutePath());
