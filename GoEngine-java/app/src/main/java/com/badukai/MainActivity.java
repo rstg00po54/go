@@ -132,19 +132,38 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "startEngine in, engineStarting=" + engineStarting + ", engineReady=" + engineReady + ", boardSize=" + boardSize);
         if (engineStarting || engineReady) return;
         engineStarting = true;
+        aiBattleButton.setEnabled(false);
         updateButtons();
         engineExecutor.execute(() -> {
-            boolean ok = engine.start(KataGoEngine.Model.HUMAN);
-            if (ok) {
-                engine.setBoardSize(boardSize);
-                engine.clearBoard();
-                engine.setKomi(komiFor(boardSize));
+            long started = System.nanoTime();
+            boolean ok = false;
+            boolean humanPreloaded = false;
+            if (engine.hasHumanModel()) {
+                try {
+                    // Preload once on the home screen. New games then reuse this process.
+                    engine.prepareHumanModel(null);
+                    ok = engine.start(KataGoEngine.Model.HUMAN, true);
+                    humanPreloaded = ok;
+                } catch (Exception e) {
+                    Log.e(TAG, "Human SL preload failed; new game will retry", e);
+                }
             }
+            if (!ok) {
+                engine.stop();
+                ok = engine.start(KataGoEngine.Model.HUMAN);
+            }
+            if (ok) {
+                ok = engine.setBoardSize(boardSize) && engine.clearBoard() && engine.setKomi(komiFor(boardSize));
+                if (!ok) engine.stop();
+            }
+            final boolean ready = ok, preloaded = humanPreloaded;
+            Log.i(TAG, "Initial engine ready=" + ready + " humanSL=" + preloaded
+                    + " elapsedMs=" + (System.nanoTime() - started) / 1000000L);
             mainHandler.post(() -> {
                 engineStarting = false;
-                engineReady = ok;
-                render(ok ? "准备好了" : "AI 启动失败");
-                if (ok && gamePageContainer.getVisibility() == View.VISIBLE && playerColor == StoneColor.WHITE) requestAiMove();
+                engineReady = ready;
+                aiBattleButton.setEnabled(true);
+                render(ready ? "准备好了" : "AI 启动失败，可重试新局");
             });
         });
     }
@@ -464,8 +483,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void startNewGame() {
         DebugLog.enter(TAG, "startNewGame in, engineReady=" + engineReady + ", boardSize=" + boardSize + ", kyu=" + aiKyu);
-        if (!engineReady || engineStarting) {
-            render(engineStarting ? "AI 正在启动，请稍候..." : "AI 尚未启动");
+        if (engineStarting || thinking || evaluating) {
+            render("AI 正在处理，请稍候...");
             return;
         }
 
@@ -480,20 +499,22 @@ public class MainActivity extends AppCompatActivity {
         final boolean playerFirst = playerColor == StoneColor.BLACK;
         final int size = boardSize, kyu = aiKyu, visits = searchVisits;
         final double seconds = searchTime;
-        render("正在准备人类棋力模型...");
+        render(engine.isHumanSLRunning() ? "正在初始化棋局..." : "正在准备人类棋力模型...");
 
         engineExecutor.execute(() -> {
             String error = null;
             try {
-                engine.prepareHumanModel((done, total) -> {
-                    int percent = (int) (done * 100 / total);
-                    mainHandler.post(() -> {
-                        if (engineStarting) render("正在准备棋力模型 " + percent + "%");
-                    });
-                });
                 if (!engine.isHumanSLRunning()) {
+                    engine.prepareHumanModel((done, total) -> {
+                        int percent = (int) (done * 100 / total);
+                        mainHandler.post(() -> {
+                            if (engineStarting) render("正在准备棋力模型 " + percent + "%");
+                        });
+                    });
                     engine.stop();
                     if (!engine.start(KataGoEngine.Model.HUMAN, true)) throw new IllegalStateException("Human SL 引擎启动失败");
+                } else {
+                    Log.i(TAG, "Reusing running Human SL KataGo process for new game");
                 }
                 boolean ok = engine.setBoardSize(size);
                 ok = engine.clearBoard() && ok;
