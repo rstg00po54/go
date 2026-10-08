@@ -72,7 +72,7 @@
 
         <HorizontalScrollView
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="60dp"
             android:background="#E9F6ED"
             android:fillViewport="true"
             android:scrollbars="none">
@@ -107,7 +107,7 @@
 
                 <TextView
                     android:layout_width="match_parent"
-                    android:layout_height="86dp"
+                    android:layout_height="110dp"
                     android:layout_marginTop="4dp"
                     android:background="@drawable/txwq_match_card"
                     android:gravity="center_vertical"
@@ -115,11 +115,11 @@
                     android:paddingEnd="16dp"
                     android:text="转播对局【中盘】\n  ⚪  绝艺指导F                         VS                         clear777  ⚫"
                     android:textColor="#2B4436"
-                    android:textSize="17sp" />
+                    android:textSize="19sp" />
 
                 <TextView
                     android:layout_width="match_parent"
-                    android:layout_height="86dp"
+                    android:layout_height="110dp"
                     android:layout_marginTop="4dp"
                     android:background="@drawable/txwq_match_card"
                     android:gravity="center_vertical"
@@ -127,11 +127,11 @@
                     android:paddingEnd="16dp"
                     android:text="第51期日本名人战挑战赛5/7【中盘】\n  芝野虎丸                    51 : 49                    一力辽"
                     android:textColor="#2B4436"
-                    android:textSize="17sp" />
+                    android:textSize="19sp" />
 
                 <TextView
                     android:layout_width="match_parent"
-                    android:layout_height="86dp"
+                    android:layout_height="110dp"
                     android:layout_marginTop="4dp"
                     android:background="@drawable/txwq_match_card"
                     android:gravity="center_vertical"
@@ -139,11 +139,11 @@
                     android:paddingEnd="16dp"
                     android:text="友谊赛【中盘】\n  ⚪  叶树林                             VS                             老杨头1  ⚫"
                     android:textColor="#2B4436"
-                    android:textSize="17sp" />
+                    android:textSize="19sp" />
 
                 <TextView
                     android:layout_width="match_parent"
-                    android:layout_height="86dp"
+                    android:layout_height="110dp"
                     android:layout_marginTop="4dp"
                     android:background="@drawable/txwq_match_card"
                     android:gravity="center_vertical"
@@ -151,40 +151,40 @@
                     android:paddingEnd="16dp"
                     android:text="友谊赛【官子】\n  漠北雪飞呀                           VS                           加减标点号"
                     android:textColor="#2B4436"
-                    android:textSize="17sp" />
+                    android:textSize="19sp" />
             </LinearLayout>
         </ScrollView>
 
         <GridLayout
             android:layout_width="match_parent"
-            android:layout_height="216dp"
+            android:layout_height="268dp"
             android:alignmentMode="alignMargins"
             android:columnCount="3"
             android:paddingTop="6dp"
             android:rowCount="2"
             android:useDefaultMargins="true">
 
-            <Button android:id="@+id/match19Button" android:layout_width="0dp" android:layout_height="96dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="19路对弈\n♟ 20502" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="18sp" />
-            <Button android:id="@+id/match913Button" android:layout_width="0dp" android:layout_height="96dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="9/13路对弈\n♟ 3749" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="18sp" />
-            <Button android:id="@+id/challengeButton" android:layout_width="0dp" android:layout_height="96dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="挑战赛\n♟ 89" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="18sp" />
-            <Button android:id="@+id/lifeDeathButton" android:layout_width="0dp" android:layout_height="96dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="死活题" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="20sp" />
-            <Button android:id="@+id/aiBattleButton" android:layout_width="0dp" android:layout_height="96dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="AI训练" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="20sp" />
-            <Button android:id="@+id/friendButton" android:layout_width="0dp" android:layout_height="96dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="约战" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="20sp" />
+            <Button android:id="@+id/match19Button" android:layout_width="0dp" android:layout_height="125dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="19路对弈\n♟ 20502" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="22sp" />
+            <Button android:id="@+id/match913Button" android:layout_width="0dp" android:layout_height="125dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="9/13路对弈\n♟ 3749" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="22sp" />
+            <Button android:id="@+id/challengeButton" android:layout_width="0dp" android:layout_height="125dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="挑战赛\n♟ 89" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="22sp" />
+            <Button android:id="@+id/lifeDeathButton" android:layout_width="0dp" android:layout_height="125dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="死活题" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="24sp" />
+            <Button android:id="@+id/aiBattleButton" android:layout_width="0dp" android:layout_height="125dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="AI训练" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="24sp" />
+            <Button android:id="@+id/friendButton" android:layout_width="0dp" android:layout_height="125dp" android:layout_columnWeight="1" android:background="@drawable/txwq_green_button" android:text="约战" android:textAllCaps="false" android:textColor="#FFF3C7" android:textSize="24sp" />
         </GridLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="82dp"
+            android:layout_height="129dp"
             android:background="#DDF2E3"
             android:gravity="center"
             android:orientation="horizontal">
 
-            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="🛒\n商城" android:textColor="#38765A" android:textSize="16sp" />
-            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="⊕\n棋谱" android:textColor="#38765A" android:textSize="16sp" />
-            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="📷\n拍照数子" android:textColor="#38765A" android:textSize="16sp" />
-            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="▦\n定式" android:textColor="#38765A" android:textSize="16sp" />
-            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="▤\n资讯" android:textColor="#38765A" android:textSize="16sp" />
-            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="•••\n更多" android:textColor="#38765A" android:textSize="16sp" />
+            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="🛒\n商城" android:textColor="#38765A" android:textSize="18sp" />
+            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="⊕\n棋谱" android:textColor="#38765A" android:textSize="18sp" />
+            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="📷\n拍照数子" android:textColor="#38765A" android:textSize="18sp" />
+            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="▦\n定式" android:textColor="#38765A" android:textSize="18sp" />
+            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="▤\n资讯" android:textColor="#38765A" android:textSize="18sp" />
+            <TextView android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:gravity="center" android:text="•••\n更多" android:textColor="#38765A" android:textSize="18sp" />
         </LinearLayout>
     </LinearLayout>
 
