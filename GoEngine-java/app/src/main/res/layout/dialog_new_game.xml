@@ -3,10 +3,10 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/txwq_popup_bg"
-    android:paddingStart="26dp"
-    android:paddingTop="24dp"
-    android:paddingEnd="26dp"
-    android:paddingBottom="28dp">
+    android:paddingStart="16dp"
+    android:paddingTop="10dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="16dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -15,28 +15,11 @@
 
         <TextView
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="42dp"
             android:gravity="center"
-            android:text="AI对局"
+            android:text="新开一局"
             android:textColor="#9C6853"
-            android:textSize="24sp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="今日剩余免费对局数：5局"
-            android:textColor="#286B48"
-            android:textSize="17sp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="14dp"
-            android:gravity="center"
-            android:text="开通会员最高可享受无限次特权"
-            android:textColor="#4F745F"
-            android:textSize="15sp" />
+            android:textSize="20sp" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -44,91 +27,139 @@
             android:background="@drawable/txwq_dialog_box"
             android:orientation="vertical">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="54dp"
+                android:layout_height="50dp"
                 android:gravity="center_vertical"
-                android:paddingStart="22dp"
-                android:text="请选择人机对局信息"
-                android:textColor="#7D5A50"
-                android:textSize="18sp" />
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp">
 
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#B9D9C2" />
+                <TextView
+                    android:layout_width="74dp"
+                    android:layout_height="wrap_content"
+                    android:text="棋盘路数"
+                    android:textColor="#286B48"
+                    android:textSize="14sp" />
 
-            <TextView android:layout_width="match_parent" android:layout_height="42dp" android:gravity="center" android:text="棋盘路数" android:textColor="#286B48" android:textSize="17sp" />
-
-            <RadioGroup
-                android:id="@+id/sizeGroup"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:gravity="center"
-                android:orientation="horizontal">
-                <RadioButton android:id="@+id/size9Radio" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:buttonTint="#5B9D72" android:checked="true" android:gravity="center" android:text="9路" android:textColor="#286B48" android:textSize="16sp" />
-                <RadioButton android:id="@+id/size11Radio" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:buttonTint="#5B9D72" android:gravity="center" android:text="11路" android:textColor="#286B48" android:textSize="16sp" />
-                <RadioButton android:id="@+id/size13Radio" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:buttonTint="#5B9D72" android:gravity="center" android:text="13路" android:textColor="#286B48" android:textSize="16sp" />
-                <RadioButton android:id="@+id/size15Radio" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:buttonTint="#5B9D72" android:gravity="center" android:text="15路" android:textColor="#286B48" android:textSize="16sp" />
-                <RadioButton android:id="@+id/size19Radio" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:buttonTint="#5B9D72" android:gravity="center" android:text="19路" android:textColor="#286B48" android:textSize="16sp" />
-            </RadioGroup>
-
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#B9D9C2" />
-
-            <TextView android:layout_width="match_parent" android:layout_height="42dp" android:gravity="center" android:text="黑白" android:textColor="#286B48" android:textSize="17sp" />
-
-            <RadioGroup
-                android:id="@+id/colorGroup"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:gravity="center"
-                android:orientation="horizontal">
-                <RadioButton android:id="@+id/randomRadio" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:buttonTint="#5B9D72" android:checked="true" android:gravity="center" android:text="猜先" android:textColor="#286B48" android:textSize="16sp" />
-                <RadioButton android:id="@+id/blackRadio" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:buttonTint="#5B9D72" android:gravity="center" android:text="执黑" android:textColor="#286B48" android:textSize="16sp" />
-                <RadioButton android:id="@+id/whiteRadio" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:buttonTint="#5B9D72" android:gravity="center" android:text="执白" android:textColor="#286B48" android:textSize="16sp" />
-            </RadioGroup>
-
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#B9D9C2" />
-
-            <LinearLayout android:layout_width="match_parent" android:layout_height="64dp" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="22dp" android:paddingEnd="22dp">
-                <TextView android:layout_width="110dp" android:layout_height="wrap_content" android:text="对局条件" android:textColor="#4C7860" android:textSize="16sp" />
-                <Spinner android:id="@+id/conditionSpinner" android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1" />
+                <Spinner
+                    android:id="@+id/sizeSpinner"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:spinnerMode="dropdown" />
             </LinearLayout>
 
             <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#B9D9C2" />
 
-            <TextView android:layout_width="match_parent" android:layout_height="42dp" android:gravity="center" android:text="难易程度" android:textColor="#286B48" android:textSize="17sp" />
-
-            <RadioGroup
-                android:id="@+id/difficultyGroup"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:gravity="center"
-                android:orientation="horizontal">
-                <RadioButton android:id="@+id/easyRadio" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:buttonTint="#5B9D72" android:checked="true" android:gravity="center" android:text="简单" android:textColor="#286B48" android:textSize="16sp" />
-                <RadioButton android:id="@+id/normalRadio" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:buttonTint="#5B9D72" android:gravity="center" android:text="普通" android:textColor="#286B48" android:textSize="16sp" />
-                <RadioButton android:id="@+id/hardRadio" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:buttonTint="#5B9D72" android:gravity="center" android:text="困难" android:textColor="#286B48" android:textSize="16sp" />
-            </RadioGroup>
+                android:layout_height="50dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp">
+
+                <TextView
+                    android:layout_width="74dp"
+                    android:layout_height="wrap_content"
+                    android:text="执棋颜色"
+                    android:textColor="#286B48"
+                    android:textSize="14sp" />
+
+                <RadioGroup
+                    android:id="@+id/colorGroup"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+                    <RadioButton android:id="@+id/randomRadio" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:minWidth="0dp" android:buttonTint="#5B9D72" android:gravity="center_vertical" android:padding="0dp" android:text="猜先" android:textColor="#286B48" android:textSize="14sp" />
+                    <RadioButton android:id="@+id/blackRadio" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:minWidth="0dp" android:buttonTint="#5B9D72" android:gravity="center_vertical" android:padding="0dp" android:text="执黑" android:textColor="#286B48" android:textSize="14sp" />
+                    <RadioButton android:id="@+id/whiteRadio" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:minWidth="0dp" android:buttonTint="#5B9D72" android:gravity="center_vertical" android:padding="0dp" android:text="执白" android:textColor="#286B48" android:textSize="14sp" />
+                </RadioGroup>
+            </LinearLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#B9D9C2" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp">
+
+                <TextView
+                    android:layout_width="74dp"
+                    android:layout_height="wrap_content"
+                    android:text="对局条件"
+                    android:textColor="#286B48"
+                    android:textSize="14sp" />
+
+                <Spinner
+                    android:id="@+id/conditionSpinner"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:spinnerMode="dropdown" />
+            </LinearLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#B9D9C2" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp">
+
+                <TextView
+                    android:layout_width="74dp"
+                    android:layout_height="wrap_content"
+                    android:text="难易程度"
+                    android:textColor="#286B48"
+                    android:textSize="14sp" />
+
+                <RadioGroup
+                    android:id="@+id/difficultyGroup"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+                    <RadioButton android:id="@+id/easyRadio" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:minWidth="0dp" android:buttonTint="#5B9D72" android:gravity="center_vertical" android:padding="0dp" android:text="简单" android:textColor="#286B48" android:textSize="14sp" />
+                    <RadioButton android:id="@+id/normalRadio" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:minWidth="0dp" android:buttonTint="#5B9D72" android:gravity="center_vertical" android:padding="0dp" android:text="普通" android:textColor="#286B48" android:textSize="14sp" />
+                    <RadioButton android:id="@+id/hardRadio" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:minWidth="0dp" android:buttonTint="#5B9D72" android:gravity="center_vertical" android:padding="0dp" android:text="困难" android:textColor="#286B48" android:textSize="14sp" />
+                </RadioGroup>
+            </LinearLayout>
         </LinearLayout>
 
         <Button
             android:id="@+id/startGameButton"
-            android:layout_width="212dp"
-            android:layout_height="58dp"
+            android:layout_width="190dp"
+            android:layout_height="46dp"
             android:layout_gravity="center_horizontal"
-            android:layout_marginTop="18dp"
+            android:layout_marginTop="12dp"
             android:background="@drawable/txwq_green_button"
             android:text="开始对局"
             android:textAllCaps="false"
             android:textColor="#FFF3D0"
-            android:textSize="20sp" />
+            android:textSize="17sp" />
     </LinearLayout>
 
     <Button
         android:id="@+id/closeDialogButton"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
         android:layout_gravity="top|end"
+        android:minWidth="0dp"
+        android:minHeight="0dp"
+        android:padding="0dp"
         android:background="@android:color/transparent"
         android:text="✕"
         android:textAllCaps="false"
         android:textColor="#57936E"
-        android:textSize="26sp" />
+        android:textSize="23sp" />
 </FrameLayout>
