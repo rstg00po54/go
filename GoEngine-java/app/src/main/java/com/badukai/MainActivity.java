@@ -52,8 +52,10 @@ public class MainActivity extends AppCompatActivity {
     private View gamePageContainer;
     private GoBoardView boardView;
     private TextView statusText;
-    private TextView blackCaptureText;
-    private TextView whiteCaptureText;
+    private TextView aiCaptureText;
+    private TextView playerCaptureText;
+    private View aiStoneView;
+    private View playerStoneView;
     private TextView gameTitleText;
     private TextView aiDifficultyText;
     private Button aiBattleButton;
@@ -91,8 +93,10 @@ public class MainActivity extends AppCompatActivity {
         gamePageContainer = findViewById(R.id.gamePageContainer);
         boardView = findViewById(R.id.boardView);
         statusText = findViewById(R.id.statusText);
-        blackCaptureText = findViewById(R.id.blackCaptureText);
-        whiteCaptureText = findViewById(R.id.whiteCaptureText);
+        aiCaptureText = findViewById(R.id.aiCaptureText);
+        playerCaptureText = findViewById(R.id.playerCaptureText);
+        aiStoneView = findViewById(R.id.aiStoneView);
+        playerStoneView = findViewById(R.id.playerStoneView);
         gameTitleText = findViewById(R.id.gameTitleText);
         aiDifficultyText = findViewById(R.id.aiDifficultyText);
         aiBattleButton = findViewById(R.id.aiBattleButton);
@@ -373,8 +377,15 @@ public class MainActivity extends AppCompatActivity {
         boardView.setBoard(board);
         boardView.setLastMove(lastMove);
         boardView.setInputEnabled(engineReady && !thinking && currentPlayer == playerColor && !board.isGameOver());
-        blackCaptureText.setText(String.format(Locale.CHINA, "黑棋提子 %d", board.getCapturedWhite()));
-        whiteCaptureText.setText(String.format(Locale.CHINA, "白棋提子 %d", board.getCapturedBlack()));
+        boolean playerBlack = playerColor == StoneColor.BLACK;
+        playerStoneView.setBackgroundResource(playerBlack ? R.drawable.txwq_black_stone : R.drawable.txwq_white_stone);
+        aiStoneView.setBackgroundResource(playerBlack ? R.drawable.txwq_white_stone : R.drawable.txwq_black_stone);
+        int blackCaptures = board.getCapturedWhite();
+        int whiteCaptures = board.getCapturedBlack();
+        int playerCaptures = playerBlack ? blackCaptures : whiteCaptures;
+        int aiCaptures = playerBlack ? whiteCaptures : blackCaptures;
+        playerCaptureText.setText(String.format(Locale.CHINA, "%s棋提子 %d", playerBlack ? "黑" : "白", playerCaptures));
+        aiCaptureText.setText(String.format(Locale.CHINA, "%s棋提子 %d", playerBlack ? "白" : "黑", aiCaptures));
         gameTitleText.setText(boardSize + "路对局　常见问题　　第" + (board.getMoveCount() + 1) + "手");
         updateButtons();
     }
