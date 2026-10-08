@@ -22,10 +22,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y cmake ninja-build libeigen3-dev
 
-      - uses: android-actions/setup-android@v3
-
+      # GitHub's Ubuntu runner already includes Android command-line tools.
+      # setup-android@v3 tries to install the retired "tools" package and fails.
       - name: Install Android NDK
-        run: sdkmanager --install "ndk;27.2.12479018"
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          sdkmanager --install "ndk;27.2.12479018"
 
       - name: Build KataGo 1.15.0 arm64 CPU engine
         env:
