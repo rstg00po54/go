@@ -250,7 +250,7 @@ public class GoBoardView extends View {
         String label = percent + "%";
         paint.setTypeface(Typeface.DEFAULT_BOLD);
         paint.setTextAlign(Paint.Align.CENTER);
-        paint.setTextSize(Math.min(cellSize * 0.24f, dp(10.5f)));
+        paint.setTextSize(Math.min(cellSize * 0.34f, dp(10.5f)));
         float halfWidth = Math.min(cellSize * 0.47f, paint.measureText(label) / 2f + dp(1.5f));
         float halfHeight = Math.min(cellSize * 0.28f, paint.getTextSize() * 0.72f);
         int backgroundAlpha = strength >= OWNERSHIP_MARK_THRESHOLD ? 220 : 110;
