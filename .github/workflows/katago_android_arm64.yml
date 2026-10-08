@@ -1,0 +1,43 @@
+name: Build KataGo Android ARM64 CPU
+
+on:
+  push:
+    branches: [rk3588-engine]
+    paths:
+      - 'GoEngine-java/tools/build_katago_android.sh'
+      - '.github/workflows/katago_android_arm64.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install native build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build libeigen3-dev
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android NDK
+        run: sdkmanager --install "ndk;27.2.12479018"
+
+      - name: Build KataGo 1.15.0 arm64 CPU engine
+        env:
+          KATAGO_JOBS: 2
+        run: |
+          export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.2.12479018"
+          bash GoEngine-java/tools/build_katago_android.sh
+
+      - name: Upload new engine for manual verification
+        uses: actions/upload-artifact@v4
+        with:
+          name: katago-1_15-android-arm64-eigen
+          path: GoEngine-java/build/katago_android_arm64/libkatago_exec.so
+          if-no-files-found: error
+          retention-days: 14
