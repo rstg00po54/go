@@ -17,6 +17,8 @@ import com.badukai.util.DebugLog;
 
 public class GoBoardView extends View {
     private static final String TAG = "GoBoardView";
+    // Draw tentative influence too, but count estimated territory only above 0.55.
+    public static final float OWNERSHIP_INFLUENCE_THRESHOLD = 0.15f;
     public static final float OWNERSHIP_MARK_THRESHOLD = 0.55f;
 
     public interface OnIntersectionClickListener {
@@ -195,8 +197,10 @@ public class GoBoardView extends View {
                 if (board.get(x, y) != Intersection.EMPTY) continue;
                 float whiteOwn = ownershipWhite[(n - 1 - y) * n + x];
                 float strength = Math.abs(whiteOwn);
-                if (strength < OWNERSHIP_MARK_THRESHOLD) continue; // Uncertain area: leave unmarked.
-                int alpha = Math.min(235, 90 + Math.round(145 * (strength - 0.55f) / 0.45f));
+                if (strength < OWNERSHIP_INFLUENCE_THRESHOLD) continue;
+                boolean confident = strength >= OWNERSHIP_MARK_THRESHOLD;
+                int alpha = confident ? Math.min(235, 150 + Math.round(85 * (strength - 0.55f) / 0.45f))
+                                      : 55 + Math.round(70 * (strength - 0.15f) / 0.40f);
                 boolean white = whiteOwn > 0;
                 float cx = padding + x * cellSize;
                 float cy = padding + y * cellSize;
@@ -206,7 +210,7 @@ public class GoBoardView extends View {
                 if (white) {
                     paint.setStyle(Paint.Style.STROKE);
                     paint.setStrokeWidth(dp(0.8f));
-                    paint.setColor(Color.argb(140, 75, 65, 50));
+                    paint.setColor(Color.argb(confident ? 140 : 65, 75, 65, 50));
                     canvas.drawRoundRect(cx - radius, cy - radius, cx + radius, cy + radius, dp(1.5f), dp(1.5f), paint);
                 }
             }
