@@ -40,7 +40,7 @@ jobs:
           curl -fL --retry 5 --retry-delay 5 --connect-timeout 30             "https://github.com/lightvector/KataGo/releases/download/v1.15.0/b18c384nbt-humanv0.bin.gz" -o "$MODEL"
           test "$(stat -c '%s' "$MODEL")" -eq 99066230
           gzip -t "$MODEL"
-          sha256sum "$MODEL"
+          echo "637746e44f0efe00ad1245a50aa9bbf0716efe364c43965ead97bd6835d84ab5  $MODEL" | sha256sum -c -
 
       - name: Build Android debug APK
         working-directory: GoEngine-java
