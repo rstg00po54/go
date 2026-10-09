@@ -86,7 +86,7 @@ else
     ARGS+=(-DOpenCL_INCLUDE_DIR="$OPENCL_INCLUDE_DIR" -DOpenCL_LIBRARY="$OPENCL_LIBRARY")
 fi
 
-cmake -S "$SOURCE_DIR/cpp" -B "$BUILD_DIR" -G Ninja "${ARGS[@]}"
+cmake -Wno-deprecated -S "$SOURCE_DIR/cpp" -B "$BUILD_DIR" -G Ninja "${ARGS[@]}"
 cmake --build "$BUILD_DIR" --parallel "${KATAGO_JOBS:-2}"
 BIN="$BUILD_DIR/katago"
 [[ -f "$BIN" ]] || { echo "Missing compiled binary $BIN" >&2; exit 1; }
