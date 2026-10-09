@@ -14,6 +14,7 @@ import android.view.View;
 import com.badukai.game.GoBoard;
 import com.badukai.game.Intersection;
 import com.badukai.game.Point;
+import com.badukai.game.StoneColor;
 import com.badukai.util.DebugLog;
 
 public class GoBoardView extends View {
@@ -42,6 +43,10 @@ public class GoBoardView extends View {
     private int ownershipMode = OWNERSHIP_OFF;
     private Point[] recommendedPoints;
     private float[] recommendedProbabilities;
+    private GoBoard previewBoard;
+    private Point[] previewMoves;
+    private StoneColor[] previewColors;
+    private int[] previewNumbers;
     private OnIntersectionClickListener listener;
     private boolean inputEnabled = true;
 
@@ -101,6 +106,26 @@ public class GoBoardView extends View {
 
     public boolean hasRecommendations() { return recommendedPoints != null && recommendedPoints.length > 0; }
 
+    /** Show KataGo's proposed sequence on an independent board; the live board is untouched. */
+    public void setVariationPreview(GoBoard preview, Point[] moves, StoneColor[] colors, int[] numbers) {
+        if (preview == null || board == null || preview.getSize() != board.getSize()
+                || moves == null || colors == null || numbers == null
+                || moves.length != colors.length || moves.length != numbers.length) {
+            previewBoard = null;
+            previewMoves = null;
+            previewColors = null;
+            previewNumbers = null;
+        } else {
+            previewBoard = preview;
+            previewMoves = moves.clone();
+            previewColors = colors.clone();
+            previewNumbers = numbers.clone();
+        }
+        invalidate();
+    }
+
+    public boolean hasVariationPreview() { return previewBoard != null; }
+
     public void setLastMove(Point point) {
         DebugLog.enter(TAG, "setLastMove in, point=" + point);
         lastMove = point;
@@ -130,8 +155,9 @@ public class GoBoardView extends View {
     protected void onDraw(Canvas canvas) {
         DebugLog.v(TAG, "onDraw in, canvas=" + canvas + ", board=" + board);
         super.onDraw(canvas);
-        if (board == null) return;
-        int n = board.getSize();
+        GoBoard shown = previewBoard != null ? previewBoard : board;
+        if (shown == null) return;
+        int n = shown.getSize();
         float size = Math.min(getWidth(), getHeight());
         // Reserve space for the entire stone shadow, not only the grid lines.
         // The shadow extends about 0.65 cell beyond an edge intersection.
@@ -142,9 +168,10 @@ public class GoBoardView extends View {
         boardPixels = (n - 1f) * cellSize;
         drawGrid(canvas, n);
         drawStarPoints(canvas, n);
-        drawOwnership(canvas, n);
-        drawStones(canvas, n);
-        drawRecommendations(canvas);
+        if (previewBoard == null) drawOwnership(canvas, n);
+        drawStones(canvas, n, shown, previewBoard == null ? lastMove : null);
+        if (previewBoard == null) drawRecommendations(canvas);
+        else drawPreviewMoveNumbers(canvas);
     }
 
     private void drawGrid(Canvas canvas, int n) {
@@ -283,19 +310,19 @@ public class GoBoardView extends View {
         paint.setTypeface(Typeface.DEFAULT);
     }
 
-    private void drawStones(Canvas canvas, int n) {
-        DebugLog.v(TAG, "drawStones in, canvas=" + canvas + ", n=" + n + ", lastMove=" + lastMove);
+    private void drawStones(Canvas canvas, int n, GoBoard shown, Point markedMove) {
+        DebugLog.v(TAG, "drawStones in, canvas=" + canvas + ", n=" + n + ", markedMove=" + markedMove);
         float radius = cellSize * 0.45f;
         prepareStoneShaders(radius);
         for (int y = 0; y < n; y++) {
             for (int x = 0; x < n; x++) {
-                Intersection intersection = board.get(x, y);
+                Intersection intersection = shown.get(x, y);
                 if (intersection == Intersection.EMPTY) continue;
                 float cx = padding + x * cellSize;
                 float cy = padding + y * cellSize;
                 drawLitStone(canvas, cx, cy, radius, intersection == Intersection.BLACK);
 
-                if (lastMove != null && lastMove.x == x && lastMove.y == y) {
+                if (markedMove != null && markedMove.x == x && markedMove.y == y) {
                     paint.setShader(null);
                     paint.setStyle(Paint.Style.STROKE);
                     paint.setStrokeWidth(Math.max(dp(2), radius * 0.10f));
@@ -334,6 +361,29 @@ public class GoBoardView extends View {
         marker.setTypeface(Typeface.DEFAULT);
         marker.setTextAlign(Paint.Align.LEFT);
         marker.setStyle(Paint.Style.FILL);
+    }
+
+    /** Draw PV sequence numbers on stones still present after captures. */
+    private void drawPreviewMoveNumbers(Canvas canvas) {
+        if (previewBoard == null || previewMoves == null) return;
+        paint.setShader(null);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setTypeface(Typeface.DEFAULT_BOLD);
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setTextSize(Math.min(cellSize * 0.48f, dp(14f)));
+        Paint.FontMetrics fm = paint.getFontMetrics();
+        for (int i = 0; i < previewMoves.length; i++) {
+            Point point = previewMoves[i];
+            if (point == null) continue;
+            Intersection expected = previewColors[i] == StoneColor.BLACK ? Intersection.BLACK : Intersection.WHITE;
+            if (previewBoard.get(point) != expected) continue;
+            paint.setColor(expected == Intersection.BLACK ? Color.WHITE : Color.rgb(24, 32, 28));
+            float x = padding + point.x * cellSize;
+            float y = padding + point.y * cellSize - (fm.ascent + fm.descent) * 0.5f;
+            canvas.drawText(Integer.toString(previewNumbers[i]), x, y, paint);
+        }
+        paint.setTypeface(Typeface.DEFAULT);
+        paint.setTextAlign(Paint.Align.LEFT);
     }
 
     @Override
