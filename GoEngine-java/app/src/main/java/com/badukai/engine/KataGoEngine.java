@@ -760,6 +760,13 @@ public class KataGoEngine {
         return parseGtpResponse(waitForResponse(10000));
     }
 
+    /** KataGo GTP final_status_list dead returns the coordinates of predicted dead stones. */
+    public String getFinalDeadStones() {
+        responseQueue.clear();
+        if (!sendCommandSync("final_status_list dead")) return null;
+        return parseGtpResponse(waitForResponse(30000));
+    }
+
     private boolean simpleCommand(String command, int timeoutMs) {
         DebugLog.enter(TAG, "simpleCommand in, command=" + command + ", timeoutMs=" + timeoutMs);
         responseQueue.clear();
