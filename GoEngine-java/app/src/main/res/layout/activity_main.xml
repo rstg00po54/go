@@ -422,6 +422,16 @@
                     android:text="白棋提子 0"
                     android:textColor="#5B7B69"
                     android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/aiWinRateText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="start"
+                    android:singleLine="true"
+                    android:text="白胜率 --%"
+                    android:textColor="#276949"
+                    android:textSize="12sp" />
             </LinearLayout>
 
             <TextView
@@ -483,6 +493,16 @@
                     android:gravity="end"
                     android:text="黑棋提子 0"
                     android:textColor="#5B7B69"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/playerWinRateText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="end"
+                    android:singleLine="true"
+                    android:text="黑胜率 --%"
+                    android:textColor="#276949"
                     android:textSize="12sp" />
             </LinearLayout>
         </LinearLayout>
