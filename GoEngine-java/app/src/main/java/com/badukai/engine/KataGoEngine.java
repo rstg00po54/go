@@ -717,30 +717,57 @@ public class KataGoEngine {
     }
 
     /**
-     * Read only the two win probabilities from a raw NN response.
-     * Does not play a move, perform MCTS, or need an ownership map in Java.
-     * Call only on the serial engineExecutor.
+     * Evaluate the actual position by bounded MCTS instead of one noisy raw NN inference.
+     * rootInfo winrate is in SIDETOMOVE perspective (configured in human_gtp.cfg).
+     * This is analysis-only: neither the GTP position nor the Human SL rank is changed.
+     * Run only on engineExecutor.
      */
-    public WinRate evaluateWinRate() {
-        if (!running.get()) return null;
-        responseQueue.clear();
-        if (!sendCommandSync("kata-raw-nn 0")) return null;
-        String response = waitForResponse(30000);
-        if (response == null || !response.startsWith("=")) return null;
+    public WinRate evaluateWinRate(String nextPlayer) {
+        if (!isReady() || (!"black".equals(nextPlayer) && !"white".equals(nextPlayer))) return null;
+        String previousVisits = getSearchParam("maxVisits");
+        String previousTime = getSearchParam("maxTime");
+        if (previousVisits == null || previousTime == null) return null;
+
         try {
-            String[] tokens = response.substring(1).trim().split("\\s+");
-            float white = Float.NaN, black = Float.NaN;
-            for (int i = 0; i + 1 < tokens.length; i++) {
-                if ("whiteWin".equals(tokens[i])) white = Float.parseFloat(tokens[++i]);
-                else if ("whiteLoss".equals(tokens[i])) black = Float.parseFloat(tokens[++i]);
-                if (Float.isFinite(white) && Float.isFinite(black)) break;
+            if (!simpleCommand("kata-set-param maxVisits 48", 10000)) return null;
+            if (!simpleCommand("kata-set-param maxTime 1.200", 10000)) return null;
+            responseQueue.clear();
+            if (!sendCommandSync("kata-search_analyze " + nextPlayer
+                    + " 20 minmoves 1 maxmoves 1 rootInfo true")) return null;
+            String response = waitForResponse(20000);
+            if (response == null || !response.startsWith("=")) {
+                Log.w(TAG, "Win rate MCTS search failed: " + (response == null ? "null" : response.trim()));
+                return null;
             }
-            if (!Float.isFinite(black) || !Float.isFinite(white)
-                    || black < 0f || black > 1f || white < 0f || white > 1f) return null;
-            return new WinRate(black, white);
+            // Intermediate analyses can repeat rootInfo. Use the final report.
+            int root = response.lastIndexOf("rootInfo");
+            if (root < 0) {
+                Log.w(TAG, "Win rate MCTS search did not report rootInfo");
+                return null;
+            }
+            String[] parts = response.substring(root + "rootInfo".length()).trim().split("\\s+");
+            float playerWin = Float.NaN;
+            int rootVisits = 0;
+            for (int i = 0; i + 1 < parts.length; i++) {
+                String key = parts[i];
+                if ("info".equals(key) || "ownership".equals(key) || "rootInfo".equals(key)) break;
+                if ("winrate".equals(key)) playerWin = Float.parseFloat(parts[++i]);
+                else if ("visits".equals(key)) rootVisits = Integer.parseInt(parts[++i]);
+            }
+            if (rootVisits < 1 || !Float.isFinite(playerWin) || playerWin < 0f || playerWin > 1f) return null;
+            float black = "black".equals(nextPlayer) ? playerWin : 1f - playerWin;
+            Log.d(TAG, String.format(Locale.US,
+                    "MCTS winrate: toPlay=%s rootVisits=%d black=%.3f white=%.3f",
+                    nextPlayer, rootVisits, black, 1f - black));
+            return new WinRate(black, 1f - black);
         } catch (RuntimeException e) {
-            Log.w(TAG, "Cannot read KataGo win rate", e);
+            Log.w(TAG, "Cannot parse KataGo MCTS winrate", e);
             return null;
+        } finally {
+            boolean visitsRestored = simpleCommand("kata-set-param maxVisits " + previousVisits, 10000);
+            boolean timeRestored = simpleCommand("kata-set-param maxTime " + previousTime, 10000);
+            if (!visitsRestored || !timeRestored)
+                Log.e(TAG, "Could not restore Human SL move search limits after winrate evaluation");
         }
     }
 
