@@ -13,6 +13,8 @@ public class GoBoard {
     private final int size;
     private final Intersection[][] board;
     private final List<Move> moveHistory = new ArrayList<>();
+    // Starting handicap stones are part of the initial position, not undoable moves.
+    private final List<Point> initialHandicapStones = new ArrayList<>();
     private Point koPoint;
     private int capturedBlack;
     private int capturedWhite;
@@ -57,13 +59,14 @@ public class GoBoard {
 
     /** Place initial black handicap stones without treating them as played moves. */
     public boolean placeHandicapStones(List<Point> points) {
-        if (points == null || points.size() < 2 || points.size() > 9 || !moveHistory.isEmpty()) return false;
+        if (points == null || points.size() < 2 || points.size() > 9 || !moveHistory.isEmpty() || !initialHandicapStones.isEmpty()) return false;
         Set<Point> unique = new HashSet<>();
         for (Point point : points) {
             if (point == null || !isInside(point.x, point.y) || get(point) != Intersection.EMPTY || !unique.add(point))
                 return false;
         }
         for (Point point : points) placeStone(point, StoneColor.BLACK);
+        initialHandicapStones.addAll(points);
         return true;
     }
 
@@ -231,7 +234,14 @@ public class GoBoard {
         DebugLog.enter(TAG, "undo in, moveCount=" + moveHistory.size());
         if (moveHistory.isEmpty()) return false;
         List<Move> history = new ArrayList<>(moveHistory.subList(0, moveHistory.size() - 1));
-        clear();
+        // Replay from the handicap position, never from an empty board.
+        clearBoardOnly();
+        for (Point point : initialHandicapStones) placeStone(point, StoneColor.BLACK);
+        moveHistory.clear();
+        koPoint = null;
+        capturedBlack = 0;
+        capturedWhite = 0;
+        consecutivePasses = 0;
         for (Move move : history) playMove(move);
         return true;
     }
@@ -239,6 +249,7 @@ public class GoBoard {
     public void clear() {
         DebugLog.enter(TAG, "clear in, moveCount=" + moveHistory.size());
         clearBoardOnly();
+        initialHandicapStones.clear();
         moveHistory.clear();
         koPoint = null;
         capturedBlack = 0;
@@ -347,6 +358,7 @@ public class GoBoard {
         DebugLog.v(TAG, "copyPosition in, size=" + size + ", koPoint=" + koPoint);
         GoBoard copy = new GoBoard(size);
         for (int y = 0; y < size; y++) System.arraycopy(board[y], 0, copy.board[y], 0, size);
+        copy.initialHandicapStones.addAll(initialHandicapStones);
         copy.koPoint = koPoint;
         return copy;
     }
