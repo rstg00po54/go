@@ -68,6 +68,7 @@ public class KataGoEngine {
     }
 
     private final Context context;
+    private final String engineDirectoryName;
     private final LinkedBlockingQueue<String> responseQueue = new LinkedBlockingQueue<>();
     private final AtomicBoolean running = new AtomicBoolean(false);
     private Process process;
@@ -88,9 +89,14 @@ public class KataGoEngine {
         volatile long newPlayouts = -1;
     }
 
-    public KataGoEngine(Context context) {
-        DebugLog.enter(TAG, "KataGoEngine in, context=" + context);
+    public KataGoEngine(Context context) { this(context, "engine"); }
+
+    /** Distinct data folders allow simultaneous GTP processes without overwriting model/config files. */
+    public KataGoEngine(Context context, String engineDirectoryName) {
         this.context = context.getApplicationContext();
+        this.engineDirectoryName = engineDirectoryName;
+        if (!"engine".equals(engineDirectoryName) && !"engine_winrate".equals(engineDirectoryName))
+            throw new IllegalArgumentException("Unsupported engine directory: " + engineDirectoryName);
     }
 
     public synchronized boolean start(Model model) { return start(model, false); }
@@ -103,7 +109,7 @@ public class KataGoEngine {
         }
         Log.i(TAG, "=== JAVA KATAGO ENGINE / ANDROID ARM64 ===");
         try {
-            File engineDir = new File(context.getFilesDir(), "engine");
+            File engineDir = new File(context.getFilesDir(), engineDirectoryName);
             if (!engineDir.exists() && !engineDir.mkdirs()) throw new IOException("Cannot create engine dir: " + engineDir);
 
             String nativeLibDir = context.getApplicationInfo().nativeLibraryDir;
@@ -114,6 +120,13 @@ public class KataGoEngine {
             if (!binaryFile.isFile()) throw new IOException("KataGo binary not installed in nativeLibraryDir: " + binaryFile);
             if (!binaryFile.canExecute()) throw new IOException("KataGo binary is not executable: " + binaryFile);
             copyAssetToFile(useHumanSL ? HUMAN_CONFIG_ASSET : CONFIG_ASSET, configFile);
+            if ("engine_winrate".equals(engineDirectoryName)) {
+                // Avoid 6 search threads in a second process competing with the game engine.
+                String config = new String(java.nio.file.Files.readAllBytes(configFile.toPath()),
+                        java.nio.charset.StandardCharsets.UTF_8);
+                config = config.replace("numSearchThreads = 6", "numSearchThreads = 2");
+                java.nio.file.Files.write(configFile.toPath(), config.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            }
 
             String modelAsset = "engine/" + model.fileName;
             try {
