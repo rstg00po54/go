@@ -65,7 +65,7 @@ if [[ "$(git -C "$SOURCE_DIR" describe --tags --exact-match 2>/dev/null || true)
     exit 1
 fi
 
-cmake -S "$SOURCE_DIR/cpp" -B "$BUILD_DIR" -G Ninja \
+cmake -Wno-deprecated -S "$SOURCE_DIR/cpp" -B "$BUILD_DIR" -G Ninja \
     -DCMAKE_TOOLCHAIN_FILE="$NDK/build/cmake/android.toolchain.cmake" \
     -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static \
     -DCMAKE_BUILD_TYPE=Release -DUSE_BACKEND=EIGEN \
