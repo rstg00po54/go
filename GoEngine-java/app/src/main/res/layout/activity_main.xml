@@ -619,7 +619,7 @@
                 android:textSize="14sp" />
 
             <Button
-                android:id="@+id/moreGameButton"
+                android:id="@+id/variationButton"
                 android:layout_width="0dp"
                 android:layout_height="42dp"
                 android:layout_columnWeight="1"
@@ -629,7 +629,7 @@
                 android:padding="0dp"
                 android:singleLine="true"
                 android:background="@drawable/txwq_green_button"
-                android:text="更多"
+                android:text="后续变化"
                 android:textAllCaps="false"
                 android:textColor="#FFF4CB"
                 android:textSize="14sp" />
