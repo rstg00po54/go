@@ -561,6 +561,20 @@ public class KataGoEngine {
         return simpleCommand("boardsize " + size, 5000);
     }
 
+    /** Initialize KataGo with the same fixed handicap positions as the Java board. */
+    public boolean setHandicapStones(List<com.badukai.game.Point> points, int boardSize) {
+        if (points == null || points.size() < 2 || points.size() > 9) return false;
+        StringBuilder command = new StringBuilder("set_free_handicap");
+        for (com.badukai.game.Point point : points) {
+            String vertex = point == null ? null : point.toGtp(boardSize);
+            if (vertex == null) return false;
+            command.append(' ').append(vertex);
+        }
+        boolean ok = simpleCommand(command.toString(), 10000);
+        Log.i(TAG, "KataGo fixed handicap stones=" + points.size() + " ready=" + ok);
+        return ok;
+    }
+
     public boolean clearBoard() {
         DebugLog.enter(TAG, "clearBoard in");
         return simpleCommand("clear_board", 5000);
