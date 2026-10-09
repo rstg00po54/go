@@ -1,0 +1,3 @@
+[submodule "GoEngine-java/native/KataGo"]
+    path = GoEngine-java/native/KataGo
+    url = https://github.com/lightvector/KataGo.git
