@@ -17,6 +17,30 @@ if [[ ! -f "$SOURCE_DIR/cpp/CMakeLists.txt" ]]; then
     exit 1
 fi
 
+# Locate Eigen3's CMake package on Ubuntu/Debian and other common Linux layouts.
+# An explicit EIGEN3_CMAKE_DIR takes precedence; do not create system-wide symlinks.
+find_eigen_cmake_dir() {
+    local dir
+    if [[ -n "${EIGEN3_CMAKE_DIR:-}" ]]; then
+        [[ -f "$EIGEN3_CMAKE_DIR/Eigen3Config.cmake" ]] || {
+            echo "Invalid EIGEN3_CMAKE_DIR: $EIGEN3_CMAKE_DIR (Eigen3Config.cmake not found)" >&2
+            return 1
+        }
+        printf '%s\n' "$EIGEN3_CMAKE_DIR"
+        return
+    fi
+    for dir in /usr/lib/cmake/eigen3 /usr/share/eigen3/cmake \
+               /usr/lib/x86_64-linux-gnu/cmake/eigen3 /usr/local/lib/cmake/eigen3 \
+               /usr/local/share/eigen3/cmake; do
+        if [[ -f "$dir/Eigen3Config.cmake" ]]; then
+            printf '%s\n' "$dir"
+            return
+        fi
+    done
+    echo "Eigen3Config.cmake not found. Install libeigen3-dev or set EIGEN3_CMAKE_DIR." >&2
+    return 1
+}
+
 NDK="${ANDROID_NDK_HOME:-${ANDROID_NDK_ROOT:-}}"
 if [[ -z "$NDK" && -n "${ANDROID_HOME:-}" && -d "$ANDROID_HOME/ndk" ]]; then
     NDK="$(find "$ANDROID_HOME/ndk" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
@@ -43,11 +67,8 @@ ARGS=(
     -DCMAKE_CXX_FLAGS="-DLITTLE_ENDIAN=1234 -DBIG_ENDIAN=4321 -DBYTE_ORDER=1234"
 )
 if [[ "$BACKEND" == "eigen" ]]; then
-    EIGEN_CMAKE_DIR="${EIGEN3_CMAKE_DIR:-/usr/share/eigen3/cmake}"
-    [[ -f "$EIGEN_CMAKE_DIR/Eigen3Config.cmake" ]] || {
-        echo "Missing Eigen3Config.cmake: $EIGEN_CMAKE_DIR" >&2
-        exit 1
-    }
+    EIGEN_CMAKE_DIR="$(find_eigen_cmake_dir)"
+    echo "Eigen3 CMake dir: $EIGEN_CMAKE_DIR"
     ARGS+=(-DEigen3_DIR="$EIGEN_CMAKE_DIR")
 else
     # Get the OpenCL headers from Khronos OpenCL-Headers (CL/cl.h).
