@@ -42,8 +42,13 @@ find_eigen_cmake_dir() {
 }
 
 NDK="${ANDROID_NDK_HOME:-${ANDROID_NDK_ROOT:-}}"
-if [[ -z "$NDK" && -n "${ANDROID_HOME:-}" && -d "$ANDROID_HOME/ndk" ]]; then
-    NDK="$(find "$ANDROID_HOME/ndk" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+if [[ -z "$NDK" ]]; then
+    for sdk in "${ANDROID_HOME:-}" "${ANDROID_SDK_ROOT:-}" "$HOME/Android/Sdk"; do
+        if [[ -n "$sdk" && -d "$sdk/ndk" ]]; then
+            NDK="$(find "$sdk/ndk" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)"
+            [[ -z "$NDK" ]] || break
+        fi
+    done
 fi
 if [[ ! -f "$NDK/build/cmake/android.toolchain.cmake" ]]; then
     echo "Android NDK not found; set ANDROID_NDK_HOME." >&2
@@ -72,22 +77,57 @@ if [[ "$BACKEND" == "eigen" ]]; then
     echo "Eigen3 CMake dir: $EIGEN_CMAKE_DIR"
     ARGS+=(-DEigen3_DIR="$EIGEN_CMAKE_DIR")
 else
-    # Get the OpenCL headers from Khronos OpenCL-Headers (CL/cl.h).
-    # Point OPENCL_LIBRARY to an Android arm64 OpenCL link library.
-    # Do not check the device's proprietary vendor library into Git.
-    [[ -f "${OPENCL_INCLUDE_DIR:-}/CL/cl.h" ]] || {
-        echo "Set OPENCL_INCLUDE_DIR to a directory containing CL/cl.h" >&2
+    # OpenCL-Headers are architecture-neutral. The link library MUST be Android ARM64.
+    # Use a device-provided library only locally; never commit proprietary binaries.
+    if [[ -z "${OPENCL_INCLUDE_DIR:-}" ]]; then
+        for dir in /usr/include /usr/local/include "$WORK_DIR/OpenCL-Headers"; do
+            if [[ -f "$dir/CL/cl.h" ]]; then OPENCL_INCLUDE_DIR="$dir"; break; fi
+        done
+    fi
+    if [[ ! -f "${OPENCL_INCLUDE_DIR:-}/CL/cl.h" ]]; then
+        echo "OpenCL headers missing. Install: sudo apt install opencl-headers" >&2
+        echo "Or set OPENCL_INCLUDE_DIR to the directory containing CL/cl.h." >&2
         exit 1
-    }
-    [[ -f "${OPENCL_LIBRARY:-}" ]] || {
-        echo "Set OPENCL_LIBRARY to a local Android arm64 OpenCL link library" >&2
+    fi
+
+    OPENCL_LIBRARY="${OPENCL_LIBRARY:-$WORK_DIR/opencl_arm64/libOpenCL.so}"
+    if [[ ! -f "$OPENCL_LIBRARY" ]]; then
+        echo "Android ARM64 libOpenCL.so not cached: $OPENCL_LIBRARY"
+        if command -v adb >/dev/null 2>&1; then
+            SERIAL="${ANDROID_SERIAL:-}"
+            if [[ -z "$SERIAL" ]]; then
+                mapfile -t connected < <(adb devices | awk 'NR > 1 && $2 == "device" {print $1}')
+                if [[ "${#connected[@]}" -eq 1 ]]; then SERIAL="${connected[0]}"; fi
+            fi
+            if [[ -n "$SERIAL" ]]; then
+                echo "Reading Android vendor OpenCL link library from device $SERIAL"
+                mkdir -p "$(dirname "$OPENCL_LIBRARY")"
+                # This file is used for linking only and is NOT packaged into the APK.
+                if ! adb -s "$SERIAL" pull /vendor/lib64/libOpenCL.so "$OPENCL_LIBRARY"; then
+                    rm -f "$OPENCL_LIBRARY"
+                fi
+            fi
+        fi
+    fi
+    if [[ ! -f "$OPENCL_LIBRARY" ]]; then
+        echo "Android ARM64 libOpenCL.so missing." >&2
+        echo "Connect one Android device with adb and rerun, or run:" >&2
+        echo "  adb pull /vendor/lib64/libOpenCL.so $WORK_DIR/opencl_arm64/libOpenCL.so" >&2
+        echo "Alternatively set OPENCL_LIBRARY to your Android ARM64 libOpenCL.so file." >&2
         exit 1
-    }
+    fi
+    OPENCL_LIBRARY="$(realpath "$OPENCL_LIBRARY")"
+    HEADER_LIB="$(LC_ALL=C "$READELF" -h "$OPENCL_LIBRARY")"
+    if ! grep -Eq '^[[:space:]]*Machine:[[:space:]]*AArch64([[:space:]]|$)' <<< "$HEADER_LIB"; then
+        echo "ERROR: OPENCL_LIBRARY is not Android ARM64: $OPENCL_LIBRARY" >&2
+        exit 1
+    fi
+    echo "OpenCL: headers=$OPENCL_INCLUDE_DIR library=$OPENCL_LIBRARY"
     ARGS+=(-DOpenCL_INCLUDE_DIR="$OPENCL_INCLUDE_DIR" -DOpenCL_LIBRARY="$OPENCL_LIBRARY")
 fi
 
 cmake -Wno-deprecated -S "$SOURCE_DIR/cpp" -B "$BUILD_DIR" -G Ninja "${ARGS[@]}"
-cmake --build "$BUILD_DIR" --parallel "${KATAGO_JOBS:-2}"
+cmake --build "$BUILD_DIR" --parallel "${KATAGO_JOBS:-8}"
 BIN="$BUILD_DIR/katago"
 [[ -f "$BIN" ]] || { echo "Missing compiled binary $BIN" >&2; exit 1; }
 HEADER="$(LC_ALL=C "$READELF" -h "$BIN")"
