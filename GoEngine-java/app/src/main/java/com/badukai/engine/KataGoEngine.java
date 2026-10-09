@@ -2,6 +2,7 @@ package com.badukai.engine;
 
 import android.content.Context;
 import android.util.Log;
+import org.json.JSONObject;
 
 import com.badukai.util.DebugLog;
 
@@ -532,6 +533,27 @@ public class KataGoEngine {
     public boolean playMove(String color, String move) {
         DebugLog.enter(TAG, "playMove in, color=" + color + ", move=" + move);
         return simpleCommand("play " + color + " " + move, 5000);
+    }
+
+    /** Apply real Chinese area rules to GTP and verify the active ruleset. */
+    public boolean setChineseRules() {
+        if (!simpleCommand("kata-set-rules chinese", 10000)) return false;
+        responseQueue.clear();
+        if (!sendCommandSync("kata-get-rules")) return false;
+        String json = parseGtpResponse(waitForResponse(10000));
+        if (json == null) return false;
+        try {
+            JSONObject rules = new JSONObject(json);
+            boolean correct = "AREA".equals(rules.optString("scoring"))
+                    && "NONE".equals(rules.optString("tax"))
+                    && "SIMPLE".equals(rules.optString("ko"))
+                    && !rules.optBoolean("suicide", true);
+            Log.i(TAG, "Chinese rules verified=" + correct + " rules=" + json);
+            return correct;
+        } catch (Exception e) {
+            Log.e(TAG, "Cannot verify KataGo Chinese rules", e);
+            return false;
+        }
     }
 
     public boolean setBoardSize(int size) {
