@@ -31,7 +31,9 @@ import com.badukai.util.DebugLog;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -56,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean evaluating;
     private boolean gameReady;
     private String gameResultText;
+    private String finalScoreText;
     private Point lastMove;
     private final List<KataGoEngine.SearchRecommendation> recommendationChoices = new ArrayList<>();
     private Point[] recommendationPoints;
@@ -159,7 +162,8 @@ public class MainActivity extends AppCompatActivity {
                 ok = engine.start(KataGoEngine.Model.HUMAN);
             }
             if (ok) {
-                ok = engine.setBoardSize(boardSize) && engine.clearBoard() && engine.setKomi(komiFor(boardSize));
+                ok = engine.setBoardSize(boardSize) && engine.clearBoard()
+                        && engine.setChineseRules() && engine.setKomi(komiFor(boardSize));
                 if (!ok) engine.stop();
             }
             final boolean ready = ok, preloaded = humanPreloaded;
@@ -322,14 +326,16 @@ public class MainActivity extends AppCompatActivity {
         engineExecutor.execute(() -> {
             boolean synced = pendingPassColor == null || engine.playMove(pendingPassColor, "pass");
             String score = synced ? engine.getFinalScore() : null;
+            String deadStones = synced ? engine.getFinalDeadStones() : null;
             KataGoEngine.PositionEvaluation result = synced ? engine.evaluatePosition(size) : null;
             String outcome = formatFinalResult(score);
             mainHandler.post(() -> {
                 evaluating = false;
                 if (board != snapshot || board.getMoveCount() != moves) return;
                 gameResultText = synced ? outcome : "对局结束 · 同步失败";
-                if (result != null) render(territorySummary(result));
-                else render(synced ? "对局结束，地盘评估失败" : "停一手同步失败");
+                if (result != null) territorySummary(result); // Keep ownership marks but don't show "估空".
+                finalScoreText = synced ? finalPointsSummary(score, deadStones) : "终局数子\n同步失败";
+                render(finalScoreText);
             });
         });
     }
@@ -337,6 +343,7 @@ public class MainActivity extends AppCompatActivity {
     private void finishByResignation(String outcome) {
         DebugLog.enter(TAG, "finishByResignation in, outcome=" + outcome);
         gameResultText = outcome;
+        finalScoreText = "认输结束\n未进行数子";
         finishEndgameTerritory();
     }
 
@@ -351,7 +358,8 @@ public class MainActivity extends AppCompatActivity {
             mainHandler.post(() -> {
                 evaluating = false;
                 if (board != snapshot || board.getMoveCount() != moves) return;
-                render(result == null ? "对局结束，地盘评估失败" : territorySummary(result));
+                if (result != null) territorySummary(result);
+                render(finalScoreText == null ? "认输结束\n未进行数子" : finalScoreText);
             });
         });
     }
@@ -362,6 +370,41 @@ public class MainActivity extends AppCompatActivity {
         if (text.startsWith("B+")) return "对局结束 · 黑胜 " + text.substring(2);
         if (text.startsWith("W+")) return "对局结束 · 白胜 " + text.substring(2);
         return "对局结束 · " + text;
+    }
+
+    /**
+     * Chinese area score: stones on board + enclosed empty intersections, after removal
+     * of KataGo-predicted dead stones. White receives the configured komi.
+     * This is AI-adjudicated scoring, not a manually confirmed tournament result.
+     */
+    private String finalPointsSummary(String finalScore, String deadVertices) {
+        if (finalScore == null || deadVertices == null) return "终局数子\n结果不可用";
+        Set<Point> deadStones = new HashSet<>();
+        for (String vertex : deadVertices.trim().split("\\s+")) {
+            Point point = Point.fromGtp(vertex, boardSize);
+            if (point != null && board.get(point) != Intersection.EMPTY) deadStones.add(point);
+        }
+        GoBoard.FinalScore totals = board.countChineseScore(deadStones, komiFor(boardSize));
+        double expectedLead = Double.NaN;
+        try {
+            String text = finalScore.trim().toUpperCase(Locale.US);
+            if ("0".equals(text)) expectedLead = 0.0;
+            else if (text.startsWith("W+")) expectedLead = Double.parseDouble(text.substring(2));
+            else if (text.startsWith("B+")) expectedLead = -Double.parseDouble(text.substring(2));
+        } catch (NumberFormatException e) {
+            Log.w(TAG, "KataGo final score does not have a numeric margin: " + finalScore, e);
+        }
+        double calculatedLead = totals.whitePoints - totals.blackPoints;
+        boolean agrees = Double.isFinite(expectedLead) && Math.abs(expectedLead - calculatedLead) < 0.01;
+        Log.i(TAG, String.format(Locale.US,
+                "Chinese area score B stones=%d territory=%d, W stones=%d territory=%d, "
+                        + "dead B=%d W=%d, komi=%.1f, total B=%.1f W=%.1f, lead local=%.1f engine=%.1f agrees=%s",
+                totals.blackStones, totals.blackTerritory, totals.whiteStones, totals.whiteTerritory,
+                totals.deadBlack, totals.deadWhite, komiFor(boardSize),
+                totals.blackPoints, totals.whitePoints, calculatedLead, expectedLead, agrees));
+        if (!agrees) Log.w(TAG, "Chinese area score differs from KataGo final_score; these totals are approximate");
+        String prefix = agrees ? "" : "约";
+        return String.format(Locale.CHINA, "黑%s%.0f目\n白%s%.1f目", prefix, totals.blackPoints, prefix, totals.whitePoints);
     }
 
     /** Ownership-based estimate of empty points plus projected dead-stone points, not a formal final score. */
@@ -556,7 +599,8 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(this, "AI 没有返回有效的形势数据", Toast.LENGTH_LONG).show();
                     return;
                 }
-                render(territorySummary(result));
+                String estimate = territorySummary(result);
+                render(board.isGameOver() ? (finalScoreText == null ? "终局数子\n结果待确认" : finalScoreText) : estimate);
             });
         });
     }
@@ -654,6 +698,7 @@ public class MainActivity extends AppCompatActivity {
         boardView.setOwnership(null);
         clearRecommendations();
         gameResultText = null;
+        finalScoreText = null;
         board = new GoBoard(boardSize);
         currentPlayer = StoneColor.BLACK;
         lastMove = null;
@@ -682,6 +727,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 boolean ok = engine.setBoardSize(size);
                 ok = engine.clearBoard() && ok;
+                ok = engine.setChineseRules() && ok;
                 ok = engine.setKomi(komiFor(size)) && ok;
                 if (!ok) throw new IllegalStateException("棋盘初始化失败");
                 if (!engine.setSearchLimits(visits, seconds)) throw new IllegalStateException("AI 搜索限制设置失败");
