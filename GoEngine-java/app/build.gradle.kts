@@ -143,7 +143,9 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
     doLast {
         if (!inputExe.isFile) throw GradleException("KataGo native executable missing: $inputExe")
         if (!skipKataGoNative) {
-            val process = ProcessBuilder("readelf", "-h", inputExe.absolutePath).redirectErrorStream(true).start()
+            val inspector = ProcessBuilder("readelf", "-h", inputExe.absolutePath).redirectErrorStream(true)
+            inspector.environment()["LC_ALL"] = "C"
+            val process = inspector.start()
             val header = process.inputStream.bufferedReader().use { it.readText() }
             val exitCode = process.waitFor()
             println(header.lineSequence().filter { it.trimStart().startsWith("Type:") ||
