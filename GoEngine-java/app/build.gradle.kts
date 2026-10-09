@@ -47,10 +47,12 @@ android {
     packaging {
         jniLibs {
             useLegacyPackaging = true
+            // Keep the PIE executable intact; these binaries are intentionally not stripped.
+            keepDebugSymbols += setOf("**/libkatago_exec.so", "**/libc++_shared.so")
         }
     }
 
-    aaptOptions {
+    androidResources {
         noCompress += listOf("bin", "gz", "model", "so")
     }
 }
@@ -100,7 +102,7 @@ val configureKataGoNative = tasks.register<Exec>("configureKataGoNative") {
             ?: throw GradleException("Eigen3Config.cmake not found (install libeigen3-dev or set EIGEN3_CMAKE_DIR)")
         println("KataGo CMake: NDK=$ndkHome, Eigen3=${eigenDir.absolutePath}")
         (this as Exec).commandLine(
-            "cmake", "-S", katagoSourceDir.absolutePath, "-B", katagoBuildDir.absolutePath, "-G", "Ninja",
+            "cmake", "-Wno-deprecated", "-S", katagoSourceDir.absolutePath, "-B", katagoBuildDir.absolutePath, "-G", "Ninja",
             "-DCMAKE_TOOLCHAIN_FILE=${toolchain.absolutePath}", "-DANDROID_ABI=arm64-v8a",
             "-DANDROID_PLATFORM=android-26", "-DANDROID_STL=c++_static", "-DCMAKE_BUILD_TYPE=Release",
             "-DUSE_BACKEND=EIGEN", "-DEigen3_DIR=${eigenDir.absolutePath}",
