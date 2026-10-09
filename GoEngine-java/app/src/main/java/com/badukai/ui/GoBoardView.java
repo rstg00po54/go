@@ -170,8 +170,10 @@ public class GoBoardView extends View {
         drawStarPoints(canvas, n);
         if (previewBoard == null) drawOwnership(canvas, n);
         drawStones(canvas, n, shown, previewBoard == null ? lastMove : null);
-        if (previewBoard == null) drawRecommendations(canvas);
-        else drawPreviewMoveNumbers(canvas);
+        if (previewBoard == null) {
+            drawDeadStoneOwnership(canvas, n);
+            drawRecommendations(canvas);
+        } else drawPreviewMoveNumbers(canvas);
     }
 
     private void drawGrid(Canvas canvas, int n) {
@@ -254,7 +256,6 @@ public class GoBoardView extends View {
 
     private void drawOwnership(Canvas canvas, int n) {
         if (ownershipMode == OWNERSHIP_OFF || ownershipWhite == null || ownershipWhite.length != n * n) return;
-        float radius = cellSize * 0.14f;
         paint.setShader(null);
         for (int y = 0; y < n; y++) {
             for (int x = 0; x < n; x++) {
@@ -262,29 +263,54 @@ public class GoBoardView extends View {
                 float whiteOwn = ownershipWhite[y * n + x];
                 float strength = Math.abs(whiteOwn);
                 if (!Float.isFinite(strength) || strength < OWNERSHIP_INFLUENCE_THRESHOLD) continue;
-                boolean confident = strength >= OWNERSHIP_MARK_THRESHOLD;
                 boolean white = whiteOwn > 0;
                 float cx = padding + x * cellSize;
                 float cy = padding + y * cellSize;
-                if (ownershipMode == OWNERSHIP_PROBABILITY) {
-                    drawOwnershipProbability(canvas, cx, cy, strength, white);
-                    continue;
-                }
-                // Strong ownership is solid; weak influence is translucent.
-                int alpha = confident ? 255 : 55 + Math.round(70 * (strength - OWNERSHIP_INFLUENCE_THRESHOLD)
-                        / (OWNERSHIP_MARK_THRESHOLD - OWNERSHIP_INFLUENCE_THRESHOLD));
-                paint.setStyle(Paint.Style.FILL);
-                paint.setColor(white ? Color.argb(alpha, 255, 255, 249) : Color.argb(alpha, 25, 30, 28));
-                canvas.drawRoundRect(cx - radius, cy - radius, cx + radius, cy + radius, dp(1.5f), dp(1.5f), paint);
-                if (white) {
-                    paint.setStyle(Paint.Style.STROKE);
-                    paint.setStrokeWidth(dp(0.8f));
-                    paint.setColor(Color.argb(confident ? 190 : 65, 75, 65, 50));
-                    canvas.drawRoundRect(cx - radius, cy - radius, cx + radius, cy + radius, dp(1.5f), dp(1.5f), paint);
-                }
+                if (ownershipMode == OWNERSHIP_PROBABILITY) drawOwnershipProbability(canvas, cx, cy, strength, white);
+                else drawOwnershipSquare(canvas, cx, cy, strength, white);
             }
         }
         paint.setStyle(Paint.Style.FILL);
+    }
+
+    /** Mark only confidently predicted captured stones, in the opponent's color. */
+    private void drawDeadStoneOwnership(Canvas canvas, int n) {
+        if (ownershipMode == OWNERSHIP_OFF || ownershipWhite == null || ownershipWhite.length != n * n) return;
+        paint.setShader(null);
+        for (int y = 0; y < n; y++) {
+            for (int x = 0; x < n; x++) {
+                Intersection stone = board.get(x, y);
+                if (stone == Intersection.EMPTY) continue;
+                float whiteOwn = ownershipWhite[y * n + x];
+                if (!Float.isFinite(whiteOwn)) continue;
+                // White owns a black stone's point, or black owns a white stone's point.
+                boolean predictedDeadBlack = stone == Intersection.BLACK && whiteOwn >= OWNERSHIP_MARK_THRESHOLD;
+                boolean predictedDeadWhite = stone == Intersection.WHITE && whiteOwn <= -OWNERSHIP_MARK_THRESHOLD;
+                if (!predictedDeadBlack && !predictedDeadWhite) continue;
+                float cx = padding + x * cellSize, cy = padding + y * cellSize;
+                if (ownershipMode == OWNERSHIP_PROBABILITY)
+                    drawOwnershipProbability(canvas, cx, cy, Math.abs(whiteOwn), predictedDeadBlack);
+                else drawOwnershipSquare(canvas, cx, cy, Math.abs(whiteOwn), predictedDeadBlack);
+            }
+        }
+        paint.setStyle(Paint.Style.FILL);
+    }
+
+    private void drawOwnershipSquare(Canvas canvas, float cx, float cy, float strength, boolean white) {
+        float radius = cellSize * 0.14f;
+        boolean confident = strength >= OWNERSHIP_MARK_THRESHOLD;
+        int alpha = confident ? 255 : 55 + Math.round(70 * (strength - OWNERSHIP_INFLUENCE_THRESHOLD)
+                / (OWNERSHIP_MARK_THRESHOLD - OWNERSHIP_INFLUENCE_THRESHOLD));
+        paint.setShader(null);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(white ? Color.argb(alpha, 255, 255, 249) : Color.argb(alpha, 25, 30, 28));
+        canvas.drawRoundRect(cx - radius, cy - radius, cx + radius, cy + radius, dp(1.5f), dp(1.5f), paint);
+        if (white) {
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(dp(0.8f));
+            paint.setColor(Color.argb(confident ? 190 : 65, 75, 65, 50));
+            canvas.drawRoundRect(cx - radius, cy - radius, cx + radius, cy + radius, dp(1.5f), dp(1.5f), paint);
+        }
     }
 
     private void drawOwnershipProbability(Canvas canvas, float cx, float cy, float strength, boolean white) {
