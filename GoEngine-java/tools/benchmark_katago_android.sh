@@ -49,5 +49,18 @@ echo "KataGo $MODE benchmark on $SERIAL, board=$BOARD visits=$VISITS threads=$TH
 "$ADB" -s "$SERIAL" push "$MODEL" "$REMOTE/10b.bin" >/dev/null
 "$ADB" -s "$SERIAL" push "$CONFIG" "$REMOTE/default_gtp.cfg" >/dev/null
 "$ADB" -s "$SERIAL" shell "chmod 755 $REMOTE/$NAME"
-# Runtime OpenCL comes from the device, never from the host linker library.
-"$ADB" -s "$SERIAL" shell "cd $REMOTE && LD_LIBRARY_PATH=/vendor/lib64:/system/vendor/lib64 $REMOTE/$NAME benchmark -model 10b.bin -config default_gtp.cfg -v $VISITS -t $THREADS -n $POSITIONS --boardsize $BOARD"
+
+# On some Mali devices /vendor/lib64/libOpenCL.so has SONAME=libGLES_mali.so,
+# but no file named libGLES_mali.so exists in the default executable namespace.
+# Stage the same vendor library under its requested SONAME inside the bench dir.
+# Do not modify /vendor or package proprietary libraries in the app.
+if [[ "$MODE" == "gpu" ]] && readelf -d "$BINARY" | grep -Fq '[libGLES_mali.so]'; then
+    echo "Staging Mali OpenCL runtime as $REMOTE/libGLES_mali.so"
+    "$ADB" -s "$SERIAL" shell "cp /vendor/lib64/libOpenCL.so $REMOTE/libGLES_mali.so" || {
+        echo "Failed to stage device's Mali OpenCL library; check vendor path/permissions." >&2
+        exit 1
+    }
+fi
+
+# KataGo deliberately uses single-dash long options (see command/commandline.h).
+"$ADB" -s "$SERIAL" shell "cd $REMOTE && LD_LIBRARY_PATH=$REMOTE:/vendor/lib64:/system/vendor/lib64 $REMOTE/$NAME benchmark -model 10b.bin -config default_gtp.cfg -v $VISITS -t $THREADS -n $POSITIONS -boardsize $BOARD"
