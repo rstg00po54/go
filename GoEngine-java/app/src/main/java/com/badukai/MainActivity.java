@@ -29,6 +29,7 @@ import com.badukai.ui.GoBoardView;
 import com.badukai.ui.TencentHomeScaler;
 import com.badukai.util.DebugLog;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -381,63 +382,49 @@ public class MainActivity extends AppCompatActivity {
         final GoBoard snapshot = board;
         final int moves = board.getMoveCount(), size = boardSize;
         final StoneColor color = currentPlayer;
-        render("正在计算推荐点...");
+        render("高手搜索中...");
         engineExecutor.execute(() -> {
-            // Returns a raw 10b neural move policy; this command does not play a move.
-            KataGoEngine.PositionEvaluation evaluation = engine.evaluatePosition(size);
+            // The 10b net performs a bounded MCTS search. The GTP board is not changed.
+            List<KataGoEngine.SearchRecommendation> candidates = engine.searchRecommendations(color.toGtp(), 96, 8.0);
             mainHandler.post(() -> {
                 evaluating = false;
                 if (board != snapshot || board.getMoveCount() != moves || boardSize != size || currentPlayer != color) return;
-                if (evaluation == null || evaluation.movePolicy == null || evaluation.movePolicy.length != size * size) {
-                    render("推荐失败，请检查日志");
+                if (candidates.isEmpty()) {
+                    render("高手推荐失败，请查看日志");
                     return;
                 }
 
                 Point[] points = new Point[3];
-                float[] probabilities = new float[3];
-                boolean[] excluded = new boolean[size * size];
+                float[] winrates = new float[3];
+                double[] leads = new double[3];
                 int count = 0;
-
-                for (int rank = 0; rank < points.length; rank++) {
-                    while (true) {
-                        int bestIndex = -1;
-                        float bestPolicy = -1f;
-                        for (int i = 0; i < evaluation.movePolicy.length; i++) {
-                            float policy = evaluation.movePolicy[i];
-                            if (!excluded[i] && Float.isFinite(policy) && policy > bestPolicy) {
-                                bestIndex = i;
-                                bestPolicy = policy;
-                            }
-                        }
-                        if (bestIndex < 0 || bestPolicy <= 0f) break;
-                        excluded[bestIndex] = true;
-                        Point candidate = new Point(bestIndex % size, size - 1 - bestIndex / size);
-                        if (!board.isLegalMove(candidate, color)) continue;
-                        points[count] = candidate;
-                        probabilities[count] = bestPolicy;
-                        count++;
-                        break;
-                    }
-                    if (count != rank + 1) break;
+                for (KataGoEngine.SearchRecommendation suggestion : candidates) {
+                    Point point = Point.fromGtp(suggestion.move, size);
+                    if (point == null || !board.isLegalMove(point, color) || suggestion.visits <= 0) continue;
+                    points[count] = point;
+                    winrates[count] = (float) suggestion.winrate;
+                    leads[count] = suggestion.scoreLead;
+                    Log.i(TAG, String.format(Locale.US,
+                            "Expert recommendation rank=%d color=%s point=%s winrate=%.3f lead=%.2f visits=%d",
+                            count + 1, color.toGtp(), suggestion.move, suggestion.winrate, suggestion.scoreLead, suggestion.visits));
+                    if (++count == 3) break;
                 }
 
                 if (count == 0) {
-                    render("没有可推荐的落点");
+                    render("搜索完成，但没有有效候选点");
                     return;
                 }
                 Point[] top = new Point[count];
-                float[] weights = new float[count];
+                float[] scores = new float[count];
                 System.arraycopy(points, 0, top, 0, count);
-                System.arraycopy(probabilities, 0, weights, 0, count);
-                boardView.setRecommendations(top, weights);
-                StringBuilder summary = new StringBuilder();
+                System.arraycopy(winrates, 0, scores, 0, count);
+                boardView.setRecommendations(top, scores);
                 String[] ranks = {"①", "②", "③"};
+                StringBuilder summary = new StringBuilder();
                 for (int i = 0; i < count; i++) {
                     if (i > 0) summary.append('\n');
-                    summary.append(ranks[i]).append(top[i].toGtp(size)).append(' ')
-                            .append(String.format(Locale.CHINA, "%.0f%%", weights[i] * 100));
-                    Log.i(TAG, String.format(Locale.US, "AI recommendation rank=%d color=%s point=%s policy=%.4f",
-                            i + 1, color.toGtp(), top[i].toGtp(size), weights[i]));
+                    summary.append(ranks[i]).append(top[i].toGtp(size)).append(" 胜")
+                            .append(String.format(Locale.CHINA, "%.0f%% %+.1f目", winrates[i] * 100, leads[i]));
                 }
                 render(summary.toString());
             });
@@ -643,6 +630,7 @@ public class MainActivity extends AppCompatActivity {
         boardView.setLastMove(lastMove);
         boardView.setInputEnabled(engineReady && gameReady && !engineStarting && !thinking && !evaluating && currentPlayer == playerColor && !board.isGameOver());
         statusText.setMaxLines(boardView.hasRecommendations() ? 3 : 2);
+        statusText.setTextSize(boardView.hasRecommendations() ? 10f : 13f);
         boolean playerBlack = playerColor == StoneColor.BLACK;
         playerStoneView.setBackgroundResource(playerBlack ? R.drawable.txwq_black_stone : R.drawable.txwq_white_stone);
         aiStoneView.setBackgroundResource(playerBlack ? R.drawable.txwq_white_stone : R.drawable.txwq_black_stone);
