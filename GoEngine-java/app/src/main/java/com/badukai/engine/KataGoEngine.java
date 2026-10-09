@@ -19,7 +19,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map;
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
@@ -557,6 +560,98 @@ public class KataGoEngine {
      * whiteLead already accounts for komi, in points. whiteOwnership is in
      * KataGo board order: x left-to-right, y bottom-to-top.
      */
+    /** A ranked MCTS candidate from the normal KataGo 10b search, not Human SL. */
+    public static final class SearchRecommendation {
+        public final String move;
+        public final double winrate, scoreLead, prior;
+        public final int visits, order;
+
+        private SearchRecommendation(String move, double winrate, double scoreLead, double prior, int visits, int order) {
+            this.move = move;
+            this.winrate = winrate;
+            this.scoreLead = scoreLead;
+            this.prior = prior;
+            this.visits = visits;
+            this.order = order;
+        }
+    }
+
+    /**
+     * Run a short non-playing MCTS search. All commands run on engineExecutor.
+     * Save and restore the Human SL game limits even if analysis fails.
+     * Results use the requested player's perspective (scoreLead includes komi).
+     */
+    public List<SearchRecommendation> searchRecommendations(String player, int visits, double seconds) {
+        DebugLog.enter(TAG, "searchRecommendations in, player=" + player + ", visits=" + visits + ", seconds=" + seconds);
+        if (!isReady() || (!"black".equals(player) && !"white".equals(player))
+                || visits < 1 || !Double.isFinite(seconds) || seconds <= 0.0) return Collections.emptyList();
+        String previousVisits = getSearchParam("maxVisits");
+        String previousTime = getSearchParam("maxTime");
+        if (previousVisits == null || previousTime == null) {
+            Log.e(TAG, "Cannot read original game search limits; recommendation cancelled");
+            return Collections.emptyList();
+        }
+
+        try {
+            String timeText = String.format(Locale.US, "%.3f", seconds);
+            if (!simpleCommand("kata-set-param maxVisits " + visits, 10000)) return Collections.emptyList();
+            if (!simpleCommand("kata-set-param maxTime " + timeText, 10000)) return Collections.emptyList();
+
+            // Unlike genmove_analyze, kata-search_analyze does not play the chosen move.
+            // It terminates automatically at the configured search limit.
+            responseQueue.clear();
+            if (!sendCommandSync("kata-search_analyze " + player + " 50 minmoves 3 maxmoves 3")) return Collections.emptyList();
+            String response = waitForResponse(45000);
+            if (!response.startsWith("=")) {
+                Log.e(TAG, "kata-search_analyze failed: " + response.trim());
+                return Collections.emptyList();
+            }
+            List<SearchRecommendation> results = parseSearchRecommendations(response);
+            Log.i(TAG, "KataGo MCTS recommendation candidates=" + results.size() + " maxVisits=" + visits + " maxTime=" + timeText);
+            return results;
+        } finally {
+            boolean visitsRestored = simpleCommand("kata-set-param maxVisits " + previousVisits, 10000);
+            boolean timeRestored = simpleCommand("kata-set-param maxTime " + previousTime, 10000);
+            if (!visitsRestored || !timeRestored) {
+                Log.e(TAG, "Cannot restore Human SL game search limits; original maxVisits="
+                        + previousVisits + ", maxTime=" + previousTime);
+            }
+        }
+    }
+
+    private List<SearchRecommendation> parseSearchRecommendations(String response) {
+        // Intermediate analyses can repeat the same move. Keep the latest snapshot.
+        Map<String, SearchRecommendation> latest = new LinkedHashMap<>();
+        String[] segments = response.split("\\binfo\\s+");
+        for (int i = 1; i < segments.length; i++) {
+            String[] tokens = segments[i].trim().split("\\s+");
+            String move = null;
+            int visits = -1, order = -1;
+            double winrate = Double.NaN, scoreLead = Double.NaN, prior = Double.NaN;
+            try {
+                for (int j = 0; j + 1 < tokens.length; j++) {
+                    String key = tokens[j];
+                    if ("pv".equals(key) || "rootInfo".equals(key) || "ownership".equals(key)
+                            || "play".equals(key) || "ownershipStdev".equals(key)) break;
+                    if ("move".equals(key)) move = tokens[++j];
+                    else if ("visits".equals(key)) visits = Integer.parseInt(tokens[++j]);
+                    else if ("winrate".equals(key)) winrate = Double.parseDouble(tokens[++j]);
+                    else if ("scoreLead".equals(key)) scoreLead = Double.parseDouble(tokens[++j]);
+                    else if ("prior".equals(key)) prior = Double.parseDouble(tokens[++j]);
+                    else if ("order".equals(key)) order = Integer.parseInt(tokens[++j]);
+                }
+                if (move != null && order >= 0 && visits >= 0 && Double.isFinite(winrate)
+                        && winrate >= 0 && winrate <= 1 && Double.isFinite(scoreLead))
+                    latest.put(move, new SearchRecommendation(move, winrate, scoreLead, prior, visits, order));
+            } catch (NumberFormatException e) {
+                Log.w(TAG, "Invalid KataGo candidate analysis data", e);
+            }
+        }
+        List<SearchRecommendation> candidates = new ArrayList<>(latest.values());
+        Collections.sort(candidates, (a, b) -> Integer.compare(a.order, b.order));
+        return candidates;
+    }
+
     public static final class PositionEvaluation {
         public final double blackWin, whiteWin, whiteLead;
         public final int size;
