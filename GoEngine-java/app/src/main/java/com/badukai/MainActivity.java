@@ -63,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
     private final List<KataGoEngine.SearchRecommendation> recommendationChoices = new ArrayList<>();
     private Point[] recommendationPoints;
     private GoBoard variationBoard;
+    private int variationRank = -1;
     private String recommendationSummary;
 
     private View mainPageContainer;
@@ -81,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
     private Button undoButton;
     private Button passButton;
     private Button resignButton;
-    private Button moreGameButton;
+    private Button variationButton;
     private Button newRoundButton;
     private Button situationButton;
     private Button aiSuggestionButton;
@@ -106,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
         situationButton.setOnClickListener(v -> showSituation());
         aiSuggestionButton.setOnClickListener(v -> showAiSuggestions());
         countTerritoryButton.setOnClickListener(v -> Toast.makeText(this, "数目功能待实现", Toast.LENGTH_SHORT).show());
-        moreGameButton.setOnClickListener(v -> Toast.makeText(this, "更多功能待实现", Toast.LENGTH_SHORT).show());
+        variationButton.setOnClickListener(v -> showVariations());
         render("正在启动 AI...");
         showMainPage();
         startEngine();
@@ -130,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
         undoButton = findViewById(R.id.undoButton);
         passButton = findViewById(R.id.passButton);
         resignButton = findViewById(R.id.resignButton);
-        moreGameButton = findViewById(R.id.moreGameButton);
+        variationButton = findViewById(R.id.variationButton);
         newRoundButton = findViewById(R.id.newRoundButton);
         situationButton = findViewById(R.id.situationButton);
         aiSuggestionButton = findViewById(R.id.aiSuggestionButton);
@@ -186,14 +187,6 @@ public class MainActivity extends AppCompatActivity {
         if (variationBoard != null) {
             exitVariationPreview();
             return;
-        }
-        if (recommendationPoints != null) {
-            for (int i = 0; i < recommendationPoints.length; i++) {
-                if (point.equals(recommendationPoints[i])) {
-                    previewRecommendedVariation(i);
-                    return; // Tapping a recommendation previews it, never plays a real move.
-                }
-            }
         }
         if (!board.isLegalMove(point, currentPlayer)) return;
 
@@ -440,6 +433,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void clearRecommendations() {
+        variationRank = -1;
         variationBoard = null;
         boardView.setVariationPreview(null, null, null, null);
         boardView.setRecommendations(null, null);
@@ -449,14 +443,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void exitVariationPreview() {
+        variationRank = -1;
         variationBoard = null;
         boardView.setVariationPreview(null, null, null, null);
         render(recommendationSummary == null ? "轮到你了" : recommendationSummary);
     }
 
     /** Preview the KataGo principal variation without changing the live game or GTP state. */
-    private void previewRecommendedVariation(int rank) {
-        if (rank < 0 || rank >= recommendationChoices.size()) return;
+    private boolean previewRecommendedVariation(int rank) {
+        if (rank < 0 || rank >= recommendationChoices.size()) return false;
         KataGoEngine.SearchRecommendation choice = recommendationChoices.get(rank);
         GoBoard hypothetical = board.copyForPreview();
         List<Point> points = new ArrayList<>();
@@ -480,29 +475,77 @@ public class MainActivity extends AppCompatActivity {
             numbers.add(played);
             turn = turn.opposite();
         }
-        if (points.isEmpty()) {
-            Toast.makeText(this, "这一手暂时没有可预览的变化", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        if (points.isEmpty()) return false;
 
         Point[] pvPoints = points.toArray(new Point[0]);
         StoneColor[] pvColors = colors.toArray(new StoneColor[0]);
         int[] pvNumbers = new int[numbers.size()];
         for (int i = 0; i < numbers.size(); i++) pvNumbers[i] = numbers.get(i);
         variationBoard = hypothetical;
+        variationRank = rank;
         boardView.setVariationPreview(hypothetical, pvPoints, pvColors, pvNumbers);
         String[] labels = {"①", "②", "③"};
-        render("变化" + labels[rank] + " 共" + played + "手\n点棋盘退出预览");
+        String next = rank + 1 < recommendationChoices.size() ? "再点后续变化看下一条" : "再点后续变化退出";
+        render("变化" + labels[rank] + " 共" + played + "手\n" + next);
+        return true;
+    }
+
+    /**
+     * Dedicated variation button: best PV -> second PV -> third PV -> return to the live game.
+     * If AI recommendations have not been requested yet, search independently.
+     */
+    private void showVariations() {
+        DebugLog.enter(TAG, "showVariations in, rank=" + variationRank + ", choices=" + recommendationChoices.size());
+        if (!engineReady || !gameReady || engineStarting || thinking || evaluating
+                || currentPlayer != playerColor || board.isGameOver()) return;
+
+        int nextRank = variationBoard == null ? 0 : variationRank + 1;
+        if (variationBoard != null && nextRank >= recommendationChoices.size()) {
+            exitVariationPreview();
+            return;
+        }
+        if (!recommendationChoices.isEmpty()) {
+            for (int i = nextRank; i < recommendationChoices.size(); i++) {
+                if (previewRecommendedVariation(i)) return;
+            }
+            if (variationBoard != null) exitVariationPreview();
+            else Toast.makeText(this, "没有可预览的后续变化", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        evaluating = true;
+        final GoBoard snapshot = board;
+        final int moves = board.getMoveCount(), size = boardSize;
+        final StoneColor color = currentPlayer;
+        render("正在推演后续变化...");
+        engineExecutor.execute(() -> {
+            List<KataGoEngine.SearchRecommendation> candidates = engine.searchRecommendations(color.toGtp(), 96, 8.0);
+            mainHandler.post(() -> {
+                evaluating = false;
+                if (snapshot != board || moves != board.getMoveCount() || size != boardSize || currentPlayer != color) {
+                    render("棋局已变化，请重新分析");
+                    return;
+                }
+                recommendationChoices.clear();
+                for (KataGoEngine.SearchRecommendation candidate : candidates) {
+                    Point point = Point.fromGtp(candidate.move, size);
+                    if (point != null && board.isLegalMove(point, color) && candidate.visits > 0) {
+                        recommendationChoices.add(candidate);
+                        if (recommendationChoices.size() == 3) break;
+                    }
+                }
+                for (int i = 0; i < recommendationChoices.size(); i++) {
+                    if (previewRecommendedVariation(i)) return;
+                }
+                render("当前没有可预览的变化");
+            });
+        });
     }
 
     private void showAiSuggestions() {
         DebugLog.enter(TAG, "showAiSuggestions in, ready=" + gameReady + ", thinking=" + thinking + ", evaluating=" + evaluating);
         if (!engineReady || !gameReady || engineStarting || thinking || evaluating || currentPlayer != playerColor || board.isGameOver()) return;
 
-        if (variationBoard != null) {
-            exitVariationPreview();
-            return;
-        }
         if (boardView.hasRecommendations()) {
             clearRecommendations();
             render("推荐标记已隐藏");
@@ -792,8 +835,10 @@ public class MainActivity extends AppCompatActivity {
         newRoundButton.setEnabled(!thinking && !engineStarting && !evaluating);
         situationButton.setEnabled(variationBoard == null && engineReady && gameReady && !engineStarting
                 && !thinking && !evaluating && (board.isGameOver() || currentPlayer == playerColor));
-        aiSuggestionButton.setEnabled((playerTurn || variationBoard != null) && engineReady && gameReady
-                && !engineStarting && !thinking && !evaluating);
+        aiSuggestionButton.setEnabled(playerTurn && variationBoard == null);
+        variationButton.setEnabled(playerTurn);
+        variationButton.setText(variationBoard == null ? "后续变化"
+                : (variationRank + 1 < recommendationChoices.size() ? "下一变化" : "退出预览"));
         undoButton.setEnabled(playerTurn && variationBoard == null && board.getMoveCount() >= 2);
         passButton.setEnabled(playerTurn && variationBoard == null);
         resignButton.setEnabled(playerTurn && variationBoard == null && board.getMoveCount() > 0);
