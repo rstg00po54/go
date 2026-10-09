@@ -26,6 +26,7 @@ import com.badukai.game.Move;
 import com.badukai.game.Point;
 import com.badukai.game.StoneColor;
 import com.badukai.ui.GoBoardView;
+import com.badukai.ui.WinRateChartView;
 import com.badukai.ui.TencentHomeScaler;
 import com.badukai.util.DebugLog;
 
@@ -67,11 +68,16 @@ public class MainActivity extends AppCompatActivity {
     private GoBoard variationBoard;
     private int variationRank = -1;
     private String recommendationSummary;
+    private final List<Float> blackWinHistory = new ArrayList<>();
+    private final List<Float> whiteWinHistory = new ArrayList<>();
+    private long winRateEpoch;
 
     private View mainPageContainer;
     private View gamePageContainer;
     private GoBoardView boardView;
     private TextView statusText;
+    private TextView aiWinRateText;
+    private TextView playerWinRateText;
     private TextView aiCaptureText;
     private TextView playerCaptureText;
     private View aiStoneView;
@@ -99,6 +105,8 @@ public class MainActivity extends AppCompatActivity {
         bindViews();
         TencentHomeScaler.install((ViewGroup) mainPageContainer);
         boardView.setOnIntersectionClickListener(this::onBoardTap);
+        aiWinRateText.setOnClickListener(v -> showWinRateChart());
+        playerWinRateText.setOnClickListener(v -> showWinRateChart());
         aiBattleButton.setOnClickListener(v -> showNewGameDialog());
         newGameButton.setOnClickListener(v -> showNewGameDialog());
         backButton.setOnClickListener(v -> showMainPage());
@@ -121,6 +129,8 @@ public class MainActivity extends AppCompatActivity {
         gamePageContainer = findViewById(R.id.gamePageContainer);
         boardView = findViewById(R.id.boardView);
         statusText = findViewById(R.id.statusText);
+        aiWinRateText = findViewById(R.id.aiWinRateText);
+        playerWinRateText = findViewById(R.id.playerWinRateText);
         aiCaptureText = findViewById(R.id.aiCaptureText);
         playerCaptureText = findViewById(R.id.playerCaptureText);
         aiStoneView = findViewById(R.id.aiStoneView);
@@ -181,6 +191,60 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /** Queue each position read behind its GTP move, never alongside the AI search. */
+    private void scheduleWinRateEvaluation(GoBoard snapshot, int moveCount) {
+        final long epoch = winRateEpoch;
+        engineExecutor.execute(() -> {
+            KataGoEngine.WinRate rate = engine.evaluateWinRate();
+            mainHandler.post(() -> recordWinRate(snapshot, moveCount, epoch, rate));
+        });
+    }
+
+    private void recordWinRate(GoBoard snapshot, int moveCount, long epoch, KataGoEngine.WinRate rate) {
+        if (rate == null || snapshot != board || epoch != winRateEpoch || moveCount > board.getMoveCount()) return;
+        while (blackWinHistory.size() <= moveCount) {
+            blackWinHistory.add(Float.NaN);
+            whiteWinHistory.add(Float.NaN);
+        }
+        blackWinHistory.set(moveCount, rate.black);
+        whiteWinHistory.set(moveCount, rate.white);
+        updateWinRateLabels();
+    }
+
+    private void recordPositionWinRate(GoBoard snapshot, int moveCount, long epoch,
+                                       KataGoEngine.PositionEvaluation result) {
+        if (result != null) recordWinRate(snapshot, moveCount, epoch,
+                new KataGoEngine.WinRate((float) result.blackWin, (float) result.whiteWin));
+    }
+
+    private void updateWinRateLabels() {
+        int turn = board.getMoveCount();
+        boolean available = turn < blackWinHistory.size() && Float.isFinite(blackWinHistory.get(turn));
+        float black = available ? blackWinHistory.get(turn) : Float.NaN;
+        float white = available ? whiteWinHistory.get(turn) : Float.NaN;
+        float aiRate = playerColor == StoneColor.BLACK ? white : black;
+        float myRate = playerColor == StoneColor.BLACK ? black : white;
+        String aiName = playerColor == StoneColor.BLACK ? "白" : "黑";
+        String myName = playerColor == StoneColor.BLACK ? "黑" : "白";
+        aiWinRateText.setText(Float.isFinite(aiRate)
+                ? String.format(Locale.CHINA, "%s胜率 %.1f%%", aiName, aiRate * 100f) : aiName + "胜率 --%");
+        playerWinRateText.setText(Float.isFinite(myRate)
+                ? String.format(Locale.CHINA, "%s胜率 %.1f%%", myName, myRate * 100f) : myName + "胜率 --%");
+    }
+
+    private void showWinRateChart() {
+        int samples = Math.max(board.getMoveCount() + 1, blackWinHistory.size());
+        float[] black = new float[samples], white = new float[samples];
+        for (int i = 0; i < samples; i++) {
+            black[i] = i < blackWinHistory.size() ? blackWinHistory.get(i) : Float.NaN;
+            white[i] = i < whiteWinHistory.size() ? whiteWinHistory.get(i) : Float.NaN;
+        }
+        WinRateChartView chart = new WinRateChartView(this);
+        chart.setRates(black, white);
+        new AlertDialog.Builder(this).setTitle("胜率曲线 · 神经网络即时评估")
+                .setView(chart).setPositiveButton("关闭", null).show();
+    }
+
     private void onBoardTap(int x, int y) {
         DebugLog.enter(TAG, "onBoardTap in, x=" + x + ", y=" + y + ", engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer + ", playerColor=" + playerColor);
         if (!engineReady || !gameReady || thinking || currentPlayer != playerColor || board.isGameOver()) return;
@@ -201,13 +265,18 @@ public class MainActivity extends AppCompatActivity {
         render("AI 思考中...");
 
         String gtp = point.toGtp(boardSize);
+        final GoBoard snapshot = board;
+        final int moveCount = board.getMoveCount();
+        final long epoch = winRateEpoch;
         engineExecutor.execute(() -> {
             boolean synced = gtp != null && engine.playMove(color.toGtp(), gtp);
+            KataGoEngine.WinRate rate = synced ? engine.evaluateWinRate() : null;
             mainHandler.post(() -> {
                 if (!synced) {
                     render("落子同步失败");
                     return;
                 }
+                recordWinRate(snapshot, moveCount, epoch, rate);
                 requestAiMove();
             });
         });
@@ -239,7 +308,10 @@ public class MainActivity extends AppCompatActivity {
             currentPlayer = aiColor.opposite();
             lastMove = null;
             if (board.isGameOver()) finishByScore(null);
-            else render("AI 停一手，你下");
+            else {
+                render("AI 停一手，你下");
+                scheduleWinRateEvaluation(board, board.getMoveCount());
+            }
             return;
         }
         if ("resign".equalsIgnoreCase(move)) {
@@ -257,6 +329,7 @@ public class MainActivity extends AppCompatActivity {
         lastMove = point;
         currentPlayer = aiColor.opposite();
         render("轮到你了");
+        scheduleWinRateEvaluation(board, board.getMoveCount());
     }
 
     private void pass() {
@@ -274,11 +347,17 @@ public class MainActivity extends AppCompatActivity {
         }
         currentPlayer = color.opposite();
         render("你停一手，AI 思考中...");
+        final GoBoard snapshot = board;
+        final int moveCount = board.getMoveCount();
+        final long epoch = winRateEpoch;
         engineExecutor.execute(() -> {
             boolean synced = engine.playMove(color.toGtp(), "pass");
+            KataGoEngine.WinRate rate = synced ? engine.evaluateWinRate() : null;
             mainHandler.post(() -> {
-                if (synced) requestAiMove();
-                else render("停一手同步失败");
+                if (synced) {
+                    recordWinRate(snapshot, moveCount, epoch, rate);
+                    requestAiMove();
+                } else render("停一手同步失败");
             });
         });
     }
@@ -290,13 +369,26 @@ public class MainActivity extends AppCompatActivity {
         clearRecommendations();
         board.undo();
         board.undo();
+        winRateEpoch++;
+        final long epoch = winRateEpoch;
+        final GoBoard snapshot = board;
+        final int moveCount = board.getMoveCount();
+        while (blackWinHistory.size() > moveCount + 1) {
+            blackWinHistory.remove(blackWinHistory.size() - 1);
+            whiteWinHistory.remove(whiteWinHistory.size() - 1);
+        }
         Move last = board.getLastMove();
         lastMove = last instanceof Move.Stone ? ((Move.Stone) last).point : null;
         currentPlayer = playerColor;
         render("已悔棋，轮到你了");
         engineExecutor.execute(() -> {
-            engine.undo();
-            engine.undo();
+            boolean first = engine.undo();
+            boolean second = first && engine.undo();
+            KataGoEngine.WinRate rate = second ? engine.evaluateWinRate() : null;
+            mainHandler.post(() -> {
+                if (!second && snapshot == board && winRateEpoch == epoch) render("引擎悔棋同步失败");
+                else recordWinRate(snapshot, moveCount, epoch, rate);
+            });
         });
     }
 
@@ -317,6 +409,7 @@ public class MainActivity extends AppCompatActivity {
         evaluating = true;
         final GoBoard snapshot = board;
         final int size = boardSize, moves = board.getMoveCount();
+        final long epoch = winRateEpoch;
         render("正在结算地盘...");
         engineExecutor.execute(() -> {
             boolean synced = pendingPassColor == null || engine.playMove(pendingPassColor, "pass");
@@ -328,7 +421,10 @@ public class MainActivity extends AppCompatActivity {
                 evaluating = false;
                 if (board != snapshot || board.getMoveCount() != moves) return;
                 gameResultText = synced ? outcome : "对局结束 · 同步失败";
-                if (result != null) territorySummary(result); // Keep ownership marks but don't show "估空".
+                if (result != null) {
+                    territorySummary(result); // Keep ownership marks.
+                    recordPositionWinRate(snapshot, moves, epoch, result);
+                }
                 finalScoreText = synced ? finalPointsSummary(score, deadStones) : "终局数子\n同步失败";
                 render(finalScoreText);
             });
@@ -347,13 +443,17 @@ public class MainActivity extends AppCompatActivity {
         evaluating = true;
         final GoBoard snapshot = board;
         final int size = boardSize, moves = board.getMoveCount();
+        final long epoch = winRateEpoch;
         render("正在估算地盘...");
         engineExecutor.execute(() -> {
             KataGoEngine.PositionEvaluation result = engine.evaluatePosition(size);
             mainHandler.post(() -> {
                 evaluating = false;
                 if (board != snapshot || board.getMoveCount() != moves) return;
-                if (result != null) territorySummary(result);
+                if (result != null) {
+                    territorySummary(result);
+                    recordPositionWinRate(snapshot, moves, epoch, result);
+                }
                 render(finalScoreText == null ? "认输结束\n未进行数子" : finalScoreText);
             });
         });
@@ -748,6 +848,9 @@ public class MainActivity extends AppCompatActivity {
         clearRecommendations();
         gameResultText = null;
         finalScoreText = null;
+        winRateEpoch++;
+        blackWinHistory.clear();
+        whiteWinHistory.clear();
         board = new GoBoard(boardSize);
         final int handicapCount = gameCondition >= 2 ? gameCondition : 0;
         final List<Point> handicapPoints = handicapCount > 0
@@ -806,6 +909,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(this, "未进入对局，请重试下载或检查日志", Toast.LENGTH_LONG).show();
                     return;
                 }
+                scheduleWinRateEvaluation(board, 0);
                 if (playerFirst) render("轮到你了");
                 else requestAiMove();
             });
@@ -829,6 +933,7 @@ public class MainActivity extends AppCompatActivity {
     private void render(String message) {
         DebugLog.enter(TAG, "render in, message=" + message + ", engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer);
         statusText.setText(message);
+        updateWinRateLabels();
         aiDifficultyText.setText(getDifficultyName() + " · Human SL");
         boardView.setBoard(board);
         boardView.setLastMove(lastMove);
