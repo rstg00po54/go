@@ -194,8 +194,9 @@ public class MainActivity extends AppCompatActivity {
     /** Queue each position read behind its GTP move, never alongside the AI search. */
     private void scheduleWinRateEvaluation(GoBoard snapshot, int moveCount) {
         final long epoch = winRateEpoch;
+        final String nextPlayer = currentPlayer.toGtp();
         engineExecutor.execute(() -> {
-            KataGoEngine.WinRate rate = engine.evaluateWinRate();
+            KataGoEngine.WinRate rate = engine.evaluateWinRate(nextPlayer);
             mainHandler.post(() -> recordWinRate(snapshot, moveCount, epoch, rate));
         });
     }
@@ -211,10 +212,13 @@ public class MainActivity extends AppCompatActivity {
         updateWinRateLabels();
     }
 
-    private void recordPositionWinRate(GoBoard snapshot, int moveCount, long epoch,
-                                       KataGoEngine.PositionEvaluation result) {
-        if (result != null) recordWinRate(snapshot, moveCount, epoch,
-                new KataGoEngine.WinRate((float) result.blackWin, (float) result.whiteWin));
+    private void recordFinalWinRate(GoBoard snapshot, int moveCount, long epoch, String score) {
+        if (score == null) return;
+        String result = score.trim().toUpperCase(Locale.US);
+        float black = result.startsWith("B+") ? 1f : result.startsWith("W+") ? 0f
+                : "0".equals(result) ? 0.5f : Float.NaN;
+        if (Float.isFinite(black)) recordWinRate(snapshot, moveCount, epoch,
+                new KataGoEngine.WinRate(black, 1f - black));
     }
 
     private void updateWinRateLabels() {
@@ -241,7 +245,7 @@ public class MainActivity extends AppCompatActivity {
         }
         WinRateChartView chart = new WinRateChartView(this);
         chart.setRates(black, white);
-        new AlertDialog.Builder(this).setTitle("胜率曲线 · 神经网络即时评估")
+        new AlertDialog.Builder(this).setTitle("胜率曲线 · MCTS搜索评估")
                 .setView(chart).setPositiveButton("关闭", null).show();
     }
 
@@ -270,7 +274,7 @@ public class MainActivity extends AppCompatActivity {
         final long epoch = winRateEpoch;
         engineExecutor.execute(() -> {
             boolean synced = gtp != null && engine.playMove(color.toGtp(), gtp);
-            KataGoEngine.WinRate rate = synced ? engine.evaluateWinRate() : null;
+            KataGoEngine.WinRate rate = synced ? engine.evaluateWinRate(color.opposite().toGtp()) : null;
             mainHandler.post(() -> {
                 if (!synced) {
                     render("落子同步失败");
@@ -352,7 +356,7 @@ public class MainActivity extends AppCompatActivity {
         final long epoch = winRateEpoch;
         engineExecutor.execute(() -> {
             boolean synced = engine.playMove(color.toGtp(), "pass");
-            KataGoEngine.WinRate rate = synced ? engine.evaluateWinRate() : null;
+            KataGoEngine.WinRate rate = synced ? engine.evaluateWinRate(color.opposite().toGtp()) : null;
             mainHandler.post(() -> {
                 if (synced) {
                     recordWinRate(snapshot, moveCount, epoch, rate);
@@ -364,7 +368,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void undo() {
         DebugLog.enter(TAG, "undo in, engineReady=" + engineReady + ", thinking=" + thinking + ", moveCount=" + board.getMoveCount());
-        if (!engineReady || !gameReady || thinking || board.getMoveCount() < 2) return;
+        if (!engineReady || !gameReady || thinking || evaluating || engineStarting || board.getMoveCount() < 2) return;
         boardView.setOwnership(null);
         clearRecommendations();
         board.undo();
@@ -380,14 +384,21 @@ public class MainActivity extends AppCompatActivity {
         Move last = board.getLastMove();
         lastMove = last instanceof Move.Stone ? ((Move.Stone) last).point : null;
         currentPlayer = playerColor;
-        render("已悔棋，轮到你了");
+        evaluating = true;
+        render("正在同步悔棋...");
         engineExecutor.execute(() -> {
             boolean first = engine.undo();
             boolean second = first && engine.undo();
-            KataGoEngine.WinRate rate = second ? engine.evaluateWinRate() : null;
+            KataGoEngine.WinRate rate = second ? engine.evaluateWinRate(playerColor.toGtp()) : null;
             mainHandler.post(() -> {
-                if (!second && snapshot == board && winRateEpoch == epoch) render("引擎悔棋同步失败");
-                else recordWinRate(snapshot, moveCount, epoch, rate);
+                if (snapshot != board || winRateEpoch != epoch) return;
+                evaluating = false;
+                if (!second) {
+                    render("引擎悔棋同步失败");
+                    return;
+                }
+                recordWinRate(snapshot, moveCount, epoch, rate);
+                render("已悔棋，轮到你了");
             });
         });
     }
@@ -421,10 +432,8 @@ public class MainActivity extends AppCompatActivity {
                 evaluating = false;
                 if (board != snapshot || board.getMoveCount() != moves) return;
                 gameResultText = synced ? outcome : "对局结束 · 同步失败";
-                if (result != null) {
-                    territorySummary(result); // Keep ownership marks.
-                    recordPositionWinRate(snapshot, moves, epoch, result);
-                }
+                if (result != null) territorySummary(result); // Keep ownership marks.
+                recordFinalWinRate(snapshot, moves, epoch, score);
                 finalScoreText = synced ? finalPointsSummary(score, deadStones) : "终局数子\n同步失败";
                 render(finalScoreText);
             });
@@ -435,6 +444,9 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "finishByResignation in, outcome=" + outcome);
         gameResultText = outcome;
         finalScoreText = "认输结束\n未进行数子";
+        StoneColor winner = outcome.startsWith("AI") ? playerColor : playerColor.opposite();
+        float black = winner == StoneColor.BLACK ? 1f : 0f;
+        recordWinRate(board, board.getMoveCount(), winRateEpoch, new KataGoEngine.WinRate(black, 1f - black));
         finishEndgameTerritory();
     }
 
@@ -443,17 +455,13 @@ public class MainActivity extends AppCompatActivity {
         evaluating = true;
         final GoBoard snapshot = board;
         final int size = boardSize, moves = board.getMoveCount();
-        final long epoch = winRateEpoch;
         render("正在估算地盘...");
         engineExecutor.execute(() -> {
             KataGoEngine.PositionEvaluation result = engine.evaluatePosition(size);
             mainHandler.post(() -> {
                 evaluating = false;
                 if (board != snapshot || board.getMoveCount() != moves) return;
-                if (result != null) {
-                    territorySummary(result);
-                    recordPositionWinRate(snapshot, moves, epoch, result);
-                }
+                if (result != null) territorySummary(result);
                 render(finalScoreText == null ? "认输结束\n未进行数子" : finalScoreText);
             });
         });
