@@ -169,7 +169,10 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
     }
 }
 
-// AGP must wait for the executable before collecting native libraries for any variant.
+// AGP reads generated jniLibs in merge<Variant>JniLibFolders, before merge<Variant>NativeLibs.
+// Declare the producer dependency on both tasks to satisfy Gradle 8 input validation.
 tasks.configureEach {
-    if (name.startsWith("merge") && name.endsWith("NativeLibs")) dependsOn(stageKataGoNative)
+    if (name.startsWith("merge") && (name.endsWith("JniLibFolders") || name.endsWith("NativeLibs"))) {
+        dependsOn(stageKataGoNative)
+    }
 }
