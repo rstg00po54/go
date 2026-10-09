@@ -41,9 +41,14 @@ import java.util.concurrent.Executors;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private final ExecutorService engineExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService winRateExecutor = Executors.newSingleThreadExecutor();
+    private volatile long winRateSession;
+    // Accessed only on winRateExecutor, whose GTP process is independent of the playing engine.
+    private boolean winRateSynchronized;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     private KataGoEngine engine;
+    private KataGoEngine winRateEngine;
     private GoBoard board = new GoBoard(19);
     private StoneColor playerColor = StoneColor.BLACK;
     private StoneColor currentPlayer = StoneColor.BLACK;
@@ -102,6 +107,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         engine = new KataGoEngine(getApplicationContext());
+        winRateEngine = new KataGoEngine(getApplicationContext(), "engine_winrate");
         bindViews();
         TencentHomeScaler.install((ViewGroup) mainPageContainer);
         boardView.setOnIntersectionClickListener(this::onBoardTap);
@@ -191,13 +197,59 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /** Queue each position read behind its GTP move, never alongside the AI search. */
-    private void scheduleWinRateEvaluation(GoBoard snapshot, int moveCount) {
-        final long epoch = winRateEpoch;
-        final String nextPlayer = currentPlayer.toGtp();
-        engineExecutor.execute(() -> {
-            KataGoEngine.WinRate rate = engine.evaluateWinRate(nextPlayer);
-            mainHandler.post(() -> recordWinRate(snapshot, moveCount, epoch, rate));
+    /** Start/reuse a separate 10b engine. This work never enters the gameplay executor. */
+    private void initializeWinRateAnalysis(GoBoard snapshot, int size, float komi,
+                                           List<Point> handicap, StoneColor nextToPlay) {
+        final long session = winRateSession, epoch = winRateEpoch;
+        final List<Point> setup = new ArrayList<>(handicap);
+        winRateExecutor.execute(() -> {
+            if (session != winRateSession) return;
+            // Calling start twice on an already-running engine reuses its GTP process.
+            boolean ready = winRateEngine.start(KataGoEngine.Model.HUMAN);
+            if (ready) ready = winRateEngine.setBoardSize(size);
+            if (ready) ready = winRateEngine.clearBoard();
+            if (ready) ready = winRateEngine.setChineseRules();
+            if (ready) ready = winRateEngine.setKomi(komi);
+            if (ready && !setup.isEmpty()) ready = winRateEngine.setHandicapStones(setup, size);
+            winRateSynchronized = ready;
+            if (!ready) {
+                Log.w(TAG, "Independent winrate engine is unavailable; play continues normally");
+                return;
+            }
+            KataGoEngine.WinRate result = winRateEngine.evaluateWinRate(nextToPlay.toGtp());
+            mainHandler.post(() -> recordWinRate(snapshot, 0, epoch, result));
+        });
+    }
+
+    /** Only the analysis process sees this command; it may lag behind the real game safely. */
+    private void queueWinRateMove(StoneColor played, String vertex, StoneColor next,
+                                  GoBoard snapshot, int moveCount) {
+        final long session = winRateSession, epoch = winRateEpoch;
+        winRateExecutor.execute(() -> {
+            if (session != winRateSession || !winRateSynchronized) return;
+            if (!winRateEngine.playMove(played.toGtp(), vertex)) {
+                winRateSynchronized = false;
+                Log.w(TAG, "Independent winrate engine move sync failed; awaiting next game");
+                return;
+            }
+            KataGoEngine.WinRate result = winRateEngine.evaluateWinRate(next.toGtp());
+            mainHandler.post(() -> recordWinRate(snapshot, moveCount, epoch, result));
+        });
+    }
+
+    private void queueWinRateUndo(GoBoard snapshot, int moveCount) {
+        final long session = winRateSession, epoch = winRateEpoch;
+        winRateExecutor.execute(() -> {
+            if (session != winRateSession || !winRateSynchronized) return;
+            boolean ok = winRateEngine.undo();
+            ok = winRateEngine.undo() && ok;
+            if (!ok) {
+                winRateSynchronized = false;
+                Log.w(TAG, "Independent winrate engine undo failed; awaiting next game");
+                return;
+            }
+            KataGoEngine.WinRate result = winRateEngine.evaluateWinRate(playerColor.toGtp());
+            mainHandler.post(() -> recordWinRate(snapshot, moveCount, epoch, result));
         });
     }
 
@@ -271,16 +323,14 @@ public class MainActivity extends AppCompatActivity {
         String gtp = point.toGtp(boardSize);
         final GoBoard snapshot = board;
         final int moveCount = board.getMoveCount();
-        final long epoch = winRateEpoch;
         engineExecutor.execute(() -> {
             boolean synced = gtp != null && engine.playMove(color.toGtp(), gtp);
-            KataGoEngine.WinRate rate = synced ? engine.evaluateWinRate(color.opposite().toGtp()) : null;
             mainHandler.post(() -> {
                 if (!synced) {
                     render("落子同步失败");
                     return;
                 }
-                recordWinRate(snapshot, moveCount, epoch, rate);
+                queueWinRateMove(color, gtp, color.opposite(), snapshot, moveCount);
                 requestAiMove();
             });
         });
@@ -314,7 +364,7 @@ public class MainActivity extends AppCompatActivity {
             if (board.isGameOver()) finishByScore(null);
             else {
                 render("AI 停一手，你下");
-                scheduleWinRateEvaluation(board, board.getMoveCount());
+                queueWinRateMove(aiColor, "pass", currentPlayer, board, board.getMoveCount());
             }
             return;
         }
@@ -333,7 +383,7 @@ public class MainActivity extends AppCompatActivity {
         lastMove = point;
         currentPlayer = aiColor.opposite();
         render("轮到你了");
-        scheduleWinRateEvaluation(board, board.getMoveCount());
+        queueWinRateMove(aiColor, move, currentPlayer, board, board.getMoveCount());
     }
 
     private void pass() {
@@ -353,13 +403,11 @@ public class MainActivity extends AppCompatActivity {
         render("你停一手，AI 思考中...");
         final GoBoard snapshot = board;
         final int moveCount = board.getMoveCount();
-        final long epoch = winRateEpoch;
         engineExecutor.execute(() -> {
             boolean synced = engine.playMove(color.toGtp(), "pass");
-            KataGoEngine.WinRate rate = synced ? engine.evaluateWinRate(color.opposite().toGtp()) : null;
             mainHandler.post(() -> {
                 if (synced) {
-                    recordWinRate(snapshot, moveCount, epoch, rate);
+                    queueWinRateMove(color, "pass", color.opposite(), snapshot, moveCount);
                     requestAiMove();
                 } else render("停一手同步失败");
             });
@@ -374,9 +422,9 @@ public class MainActivity extends AppCompatActivity {
         board.undo();
         board.undo();
         winRateEpoch++;
-        final long epoch = winRateEpoch;
         final GoBoard snapshot = board;
         final int moveCount = board.getMoveCount();
+        queueWinRateUndo(snapshot, moveCount);
         while (blackWinHistory.size() > moveCount + 1) {
             blackWinHistory.remove(blackWinHistory.size() - 1);
             whiteWinHistory.remove(whiteWinHistory.size() - 1);
@@ -389,16 +437,10 @@ public class MainActivity extends AppCompatActivity {
         engineExecutor.execute(() -> {
             boolean first = engine.undo();
             boolean second = first && engine.undo();
-            KataGoEngine.WinRate rate = second ? engine.evaluateWinRate(playerColor.toGtp()) : null;
             mainHandler.post(() -> {
-                if (snapshot != board || winRateEpoch != epoch) return;
+                if (snapshot != board) return;
                 evaluating = false;
-                if (!second) {
-                    render("引擎悔棋同步失败");
-                    return;
-                }
-                recordWinRate(snapshot, moveCount, epoch, rate);
-                render("已悔棋，轮到你了");
+                render(second ? "已悔棋，轮到你了" : "引擎悔棋同步失败");
             });
         });
     }
@@ -418,6 +460,7 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "finishByScore in, pendingPassColor=" + pendingPassColor);
         if (evaluating) return;
         evaluating = true;
+        winRateEpoch++;
         final GoBoard snapshot = board;
         final int size = boardSize, moves = board.getMoveCount();
         final long epoch = winRateEpoch;
@@ -444,6 +487,7 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "finishByResignation in, outcome=" + outcome);
         gameResultText = outcome;
         finalScoreText = "认输结束\n未进行数子";
+        winRateEpoch++;
         StoneColor winner = outcome.startsWith("AI") ? playerColor : playerColor.opposite();
         float black = winner == StoneColor.BLACK ? 1f : 0f;
         recordWinRate(board, board.getMoveCount(), winRateEpoch, new KataGoEngine.WinRate(black, 1f - black));
@@ -857,6 +901,7 @@ public class MainActivity extends AppCompatActivity {
         gameResultText = null;
         finalScoreText = null;
         winRateEpoch++;
+        winRateSession++;
         blackWinHistory.clear();
         whiteWinHistory.clear();
         board = new GoBoard(boardSize);
@@ -917,7 +962,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(this, "未进入对局，请重试下载或检查日志", Toast.LENGTH_LONG).show();
                     return;
                 }
-                scheduleWinRateEvaluation(board, 0);
+                initializeWinRateAnalysis(board, size, komiFor(size), handicapPoints, currentPlayer);
                 if (playerFirst) render("轮到你了");
                 else requestAiMove();
             });
@@ -991,6 +1036,8 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "onDestroy in");
         super.onDestroy();
         engineExecutor.execute(() -> engine.stop());
+        winRateExecutor.execute(() -> winRateEngine.stop());
         engineExecutor.shutdown();
+        winRateExecutor.shutdown();
     }
 }
