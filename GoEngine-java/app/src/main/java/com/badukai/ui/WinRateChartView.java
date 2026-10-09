@@ -35,8 +35,9 @@ public class WinRateChartView extends View {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int height = Math.round(dp(280));
-        setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), resolveSize(height, heightMeasureSpec));
+        int width = resolveSize(Math.round(dp(340)), widthMeasureSpec);
+        int height = resolveSize(Math.round(dp(280)), heightMeasureSpec);
+        setMeasuredDimension(width, height);
     }
 
     @Override
