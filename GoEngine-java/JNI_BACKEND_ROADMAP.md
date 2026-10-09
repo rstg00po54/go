@@ -18,7 +18,7 @@
 
 - [ ] CMake 拆出可复用 KataGo 核心目标，增加 Android `SHARED` JNI 库目标，不把 `main()` 链入 JNI 库。
 - [ ] 从 `command/gtp.cpp` 中抽离绑定 `std::cin/std::cout` 的 GTP 循环，建立可创建、可关闭的 `EngineSession` 和命令处理接口；禁止用修改全局 `cin/cout` 缓冲区来伪装 JNI。
-- [ ] 新增 `native/jni/katago_jni.cpp` 与 Java `KataGoNative`；接口需能创建/销毁句柄、提交 GTP 命令、异步回传结果和错误、取消搜索。
+- [ ] 在 Android 标准源码目录 `app/src/main/cpp/` 新增 `CMakeLists.txt`、`katago_jni.cpp`、`EngineSession.cpp` 与 Java `KataGoNative`；接口需能创建/销毁句柄、提交 GTP 命令、异步回传结果和错误、取消搜索。
 - [ ] 明确 JNI 线程模型、回调附着/释放、超时、搜索线程关闭顺序；防止阻塞主线程和释放后回调。
 - [ ] 保证 `engine` 与 `engine_winrate`（双进程模式）能够迁移为独立会话；检查 KataGo 进程级全局状态是否允许双实例，不可则先明确串行/共享限制。
 - [ ] Gradle 接入 `externalNativeBuild` 或等效原生构建任务，APK 打包真正的 `libkatago.so`，保留现有可执行程序备用。
@@ -68,6 +68,26 @@
 - [ ] `*.rknn` 模型和设备专用运行库允许作为独立资源/依赖，**不强求全部静态嵌进单个 ELF**；主 JNI 库接口保持统一。
 
 **阶段验收**：RK3588 上真实 NPU 推理并保持与 CPU 参考输出足够接近；其他手机不受 RKNN 依赖影响。
+
+## JNI 目录规划（不立即移动现有可运行源码）
+
+```text
+GoEngine-java/
+├── app/src/main/cpp/          # 新增：本项目 JNI、EngineSession、BackendManager 与后端适配层
+│   ├── CMakeLists.txt
+│   ├── katago_jni.cpp
+│   ├── EngineSession.cpp
+│   └── backend/
+│       ├── BackendManager.cpp
+│       ├── EigenBackend.cpp
+│       ├── OpenCLBackend.cpp
+│       └── RknnBackend.cpp   # 未来实现
+└── native/KataGo/cpp/         # 保留：KataGo 上游 C++ 源码及必要本地补丁
+```
+
+- [ ] 在阶段 1 迁移时按此目录添加 JNI 源码，Gradle `externalNativeBuild.cmake.path` 指向 `app/src/main/cpp/CMakeLists.txt`。
+- [ ] 新 CMake 显式引用 `native/KataGo/cpp` 的源码；注意上游 CMake 目前有 `add_executable(katago)`，不能原样 `add_subdirectory` 就得到 JNI 库。
+- [ ] 原有 CPU 构建链及源文件路径保持不变，等 JNI 构建、打包和真机回归成功后再清理旧流程。
 
 ## 主要代码位置
 
