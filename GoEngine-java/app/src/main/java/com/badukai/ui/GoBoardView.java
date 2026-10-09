@@ -70,7 +70,7 @@ public class GoBoardView extends View {
         invalidate();
     }
 
-    /** Ownership from KataGo: x increases rightward, raw y=0 is the bottom of the board. */
+    /** KataGo kata-raw-nn outputs rows top-to-bottom (same order as the Java board). */
     public void setOwnership(float[] values) {
         if (values == null || board == null || values.length != board.getSize() * board.getSize()) {
             ownershipWhite = null;
@@ -259,7 +259,7 @@ public class GoBoardView extends View {
         for (int y = 0; y < n; y++) {
             for (int x = 0; x < n; x++) {
                 if (board.get(x, y) != Intersection.EMPTY) continue;
-                float whiteOwn = ownershipWhite[(n - 1 - y) * n + x];
+                float whiteOwn = ownershipWhite[y * n + x];
                 float strength = Math.abs(whiteOwn);
                 if (!Float.isFinite(strength) || strength < OWNERSHIP_INFLUENCE_THRESHOLD) continue;
                 boolean confident = strength >= OWNERSHIP_MARK_THRESHOLD;
