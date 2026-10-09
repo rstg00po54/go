@@ -65,8 +65,10 @@ public class KataGoEngine {
             if (!appDir.exists()) appDir.mkdirs();
 
             File binaryFile = new File(filesDir, BINARY_NAME);
-            if (!binaryFile.exists()) copyAssetToFile(BINARY_NAME, binaryFile);
+            // Refresh the executable on every launch so APK updates never reuse stale native code.
+            copyAssetToFile(BINARY_NAME, binaryFile);
             binaryFile.setExecutable(true);
+            Log.i(TAG, "KataGo binary refreshed from APK assets, bytes=" + binaryFile.length());
 
             // Always overwrite config so editing app/src/main/assets/gtp_static.cfg takes effect after reinstall/update.
             File configFile = new File(filesDir, CONFIG_NAME);
@@ -102,15 +104,17 @@ public class KataGoEngine {
             reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 
-            Thread.sleep(2000);
-            if (!process.isAlive()) {
-                Log.e(TAG, "KataGo process exited during startup");
-                return false;
-            }
-
+            // Drain stdout/stderr immediately. Startup failures often happen within the first 2 seconds.
             running.set(true);
             startReaderThread();
             startErrorReaderThread();
+            Thread.sleep(2000);
+            if (!process.isAlive()) {
+                Log.e(TAG, "KataGo process exited during startup, exitCode=" + process.exitValue());
+                stop();
+                return false;
+            }
+
             Log.i(TAG, "=== ENGINE STARTED SUCCESSFULLY ===");
             return true;
         } catch (Exception e) {
