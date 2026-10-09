@@ -12,6 +12,18 @@
 - [ ] 记录用于对比的 CPU GTP 指令及结果（`name`、`boardsize`、`play`、`genmove`、`undo`、`kata-raw-nn`）。
 - [ ] CPU JNI 替代方案验收前，不删除现有 `libkatago_exec.so` 和 `ProcessBuilder` 回退路径。
 
+## 前置实验：Android GPU/OpenCL 性能测试（不改变现有 CPU APK）
+
+- [x] 提供独立 OpenCL 交叉编译脚本：`bash tools/build_katago_from_source.sh opencl`，使用单独的 OpenCL 构建/输出目录，不覆盖 CPU 产物。
+- [x] 提供同型号设备 CPU/GPU benchmark 脚本：`bash tools/benchmark_katago_android.sh gpu` / `cpu`。
+- [ ] 从 Android ARM64 设备获得用于链接的 OpenCL 库（仅保存在本地缓存，不提交供应商库）；Ubuntu 安装 `opencl-headers`。
+- [ ] **在用户的 NDK/Android 设备上完成 GPU 编译和运行验证**；首次编译前不能声称 GPU 可用。
+- [ ] 运行同一 `10b.bin` 模型、棋盘尺寸、访问次数和搜索线程数，记录 GPU/CPU 搜索速度和 GPU 初始化时间。
+- [ ] 如果设备的 Android linker namespace/SELinux 不允许访问 OpenCL，记录实际错误；不能仅根据 OpenCL 库文件存在认定 APP 可用。
+- [ ] 根据真实测试结果决定后续 JNI 双后端整合的优先级。
+
+注意：这个实验先保留两个独立的 Android PIE 可执行文件，不代表阶段 3 的「同一个 JNI `.so` CPU/GPU 运行时切换」已经完成。Android NDK 不自带厂商 OpenCL 库；库是否对 APP 可见还需要设备侧验证。
+
 ## 阶段 1：CPU/Eigen 真正 JNI 化 —— 首先实现
 
 **目标**：构建可加载的 `libkatago.so`，Java 在 APP 进程内调用 KataGo；先不接 GPU/NPU。
