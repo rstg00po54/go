@@ -44,7 +44,9 @@ POSITIONS="${KATAGO_BENCH_POSITIONS:-2}"
 BOARD="${KATAGO_BENCH_BOARD:-19}"
 
 echo "KataGo $MODE benchmark on $SERIAL, board=$BOARD visits=$VISITS threads=$THREADS positions=$POSITIONS"
-"$ADB" -s "$SERIAL" shell "mkdir -p $REMOTE"
+# Android adb shell may set HOME=/, which makes KataGo try to create //.katago.
+# Force a writable, persistent home for OpenCL tuning caches and log files.
+"$ADB" -s "$SERIAL" shell "mkdir -p $REMOTE/.katago $REMOTE/gtp_logs"
 "$ADB" -s "$SERIAL" push "$BINARY" "$REMOTE/$NAME" >/dev/null
 "$ADB" -s "$SERIAL" push "$MODEL" "$REMOTE/10b.bin" >/dev/null
 "$ADB" -s "$SERIAL" push "$CONFIG" "$REMOTE/default_gtp.cfg" >/dev/null
@@ -63,4 +65,4 @@ if [[ "$MODE" == "gpu" ]] && readelf -d "$BINARY" | grep -Fq '[libGLES_mali.so]'
 fi
 
 # KataGo deliberately uses single-dash long options (see command/commandline.h).
-"$ADB" -s "$SERIAL" shell "cd $REMOTE && LD_LIBRARY_PATH=$REMOTE:/vendor/lib64:/system/vendor/lib64 $REMOTE/$NAME benchmark -model 10b.bin -config default_gtp.cfg -v $VISITS -t $THREADS -n $POSITIONS -boardsize $BOARD"
+"$ADB" -s "$SERIAL" shell "cd $REMOTE && HOME=$REMOTE TMPDIR=$REMOTE LD_LIBRARY_PATH=$REMOTE:/vendor/lib64:/system/vendor/lib64 $REMOTE/$NAME benchmark -model 10b.bin -config default_gtp.cfg -v $VISITS -t $THREADS -n $POSITIONS -boardsize $BOARD"
