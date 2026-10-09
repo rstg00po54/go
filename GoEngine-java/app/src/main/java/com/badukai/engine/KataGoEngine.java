@@ -556,8 +556,8 @@ public class KataGoEngine {
 
     /**
      * A single evaluation from the normal 10b model, NOT the human-style model.
-     * whiteLead already accounts for komi, in points. whiteOwnership is in
-     * KataGo board order: x left-to-right, y bottom-to-top.
+     * whiteLead already accounts for komi, in points. KataGo raw NN arrays
+     * use row-major board order: x left-to-right, y top-to-bottom.
      */
     /** A ranked MCTS candidate from the normal KataGo 10b search, not Human SL. */
     public static final class SearchRecommendation {
@@ -676,7 +676,7 @@ public class KataGoEngine {
         public final int size;
         public final float[] whiteOwnership;
         // Raw 10b neural policy for the side to move, NOT per-move win rates.
-        // Both arrays use KataGo's bottom-row-first board order.
+        // Both arrays use KataGo's top-row-first board order.
         public final float[] movePolicy;
         public final float passPolicy;
 
