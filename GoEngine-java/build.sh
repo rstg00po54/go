@@ -6,6 +6,17 @@ cd "$PROJECT_DIR"
 
 echo "== Badukai build =="
 
+if [ -f "$PROJECT_DIR/build_native.sh" ]; then
+    echo "[native] Building KataGo C++..."
+    bash "$PROJECT_DIR/build_native.sh"
+else
+    echo "[native] SKIPPED: no build_native.sh; Gradle will package existing native binaries."
+fi
+
+if [ ! -f "app/src/main/assets/libkatago.so" ]; then
+    echo "WARNING: app/src/main/assets/libkatago.so is missing (required by KataGoEngine.java)."
+fi
+
 echo "[1/2] clean"
 ./gradlew clean
 
