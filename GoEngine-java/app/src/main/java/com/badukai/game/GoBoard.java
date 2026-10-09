@@ -216,6 +216,75 @@ public class GoBoard {
         }
     }
 
+    /** Japanese territory scoring after excluding KataGo-confirmed dead stones. */
+    public static final class FinalScore {
+        public final int blackTerritory, whiteTerritory, deadBlack, deadWhite;
+        public final double blackPoints, whitePoints;
+
+        private FinalScore(int blackTerritory, int whiteTerritory, int deadBlack, int deadWhite,
+                           double blackPoints, double whitePoints) {
+            this.blackTerritory = blackTerritory;
+            this.whiteTerritory = whiteTerritory;
+            this.deadBlack = deadBlack;
+            this.deadWhite = deadWhite;
+            this.blackPoints = blackPoints;
+            this.whitePoints = whitePoints;
+        }
+    }
+
+    public FinalScore countJapaneseScore(Set<Point> deadStones, double komi) {
+        boolean[][] removed = new boolean[size][size];
+        int deadBlack = 0, deadWhite = 0;
+        if (deadStones != null) {
+            for (Point point : deadStones) {
+                if (point == null || !isInside(point.x, point.y) || removed[point.y][point.x]) continue;
+                Intersection stone = get(point);
+                if (stone == Intersection.BLACK) deadBlack++;
+                else if (stone == Intersection.WHITE) deadWhite++;
+                else continue;
+                removed[point.y][point.x] = true;
+            }
+        }
+
+        int blackTerritory = 0, whiteTerritory = 0;
+        boolean[][] visited = new boolean[size][size];
+        int[] dx = {-1, 1, 0, 0}, dy = {0, 0, -1, 1};
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                if (visited[y][x] || (board[y][x] != Intersection.EMPTY && !removed[y][x])) continue;
+                ArrayDeque<Point> queue = new ArrayDeque<>();
+                queue.add(new Point(x, y));
+                visited[y][x] = true;
+                int points = 0;
+                boolean bordersBlack = false, bordersWhite = false;
+                while (!queue.isEmpty()) {
+                    Point p = queue.removeFirst();
+                    points++;
+                    for (int k = 0; k < 4; k++) {
+                        int nx = p.x + dx[k], ny = p.y + dy[k];
+                        if (!isInside(nx, ny)) continue;
+                        Intersection stone = board[ny][nx];
+                        if (stone != Intersection.EMPTY && !removed[ny][nx]) {
+                            if (stone == Intersection.BLACK) bordersBlack = true;
+                            else bordersWhite = true;
+                        } else if (!visited[ny][nx]) {
+                            visited[ny][nx] = true;
+                            queue.add(new Point(nx, ny));
+                        }
+                    }
+                }
+                if (bordersBlack && !bordersWhite) blackTerritory += points;
+                else if (bordersWhite && !bordersBlack) whiteTerritory += points;
+            }
+        }
+
+        // CapturedBlack counts black stones removed by white during play.
+        // Dead stones are extra prisoners AND their vacated points may become territory.
+        double blackPoints = blackTerritory + capturedWhite + deadWhite;
+        double whitePoints = whiteTerritory + capturedBlack + deadBlack + komi;
+        return new FinalScore(blackTerritory, whiteTerritory, deadBlack, deadWhite, blackPoints, whitePoints);
+    }
+
     /** Copy the current game for a read-only preview; subsequent moves affect only the copy. */
     public GoBoard copyForPreview() {
         GoBoard result = copyPosition();
