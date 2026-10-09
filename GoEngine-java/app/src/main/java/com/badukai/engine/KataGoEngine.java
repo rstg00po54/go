@@ -564,14 +564,18 @@ public class KataGoEngine {
         public final String move;
         public final double winrate, scoreLead, prior;
         public final int visits, order;
+        // KataGo principal variation in GTP notation, beginning with this candidate move.
+        public final List<String> pvMoves;
 
-        private SearchRecommendation(String move, double winrate, double scoreLead, double prior, int visits, int order) {
+        private SearchRecommendation(String move, double winrate, double scoreLead, double prior, int visits,
+                                     int order, List<String> pvMoves) {
             this.move = move;
             this.winrate = winrate;
             this.scoreLead = scoreLead;
             this.prior = prior;
             this.visits = visits;
             this.order = order;
+            this.pvMoves = Collections.unmodifiableList(new ArrayList<>(pvMoves));
         }
     }
 
@@ -627,10 +631,20 @@ public class KataGoEngine {
             String move = null;
             int visits = -1, order = -1;
             double winrate = Double.NaN, scoreLead = Double.NaN, prior = Double.NaN;
+            List<String> variation = new ArrayList<>();
             try {
                 for (int j = 0; j + 1 < tokens.length; j++) {
                     String key = tokens[j];
-                    if ("pv".equals(key) || "rootInfo".equals(key) || "ownership".equals(key)
+                    if ("pv".equals(key)) {
+                        for (int p = j + 1; p < tokens.length && variation.size() < 12; p++) {
+                            String vertex = tokens[p];
+                            if ("rootInfo".equals(vertex) || "ownership".equals(vertex)
+                                    || "ownershipStdev".equals(vertex) || "play".equals(vertex)) break;
+                            variation.add(vertex);
+                        }
+                        break;
+                    }
+                    if ("rootInfo".equals(key) || "ownership".equals(key)
                             || "play".equals(key) || "ownershipStdev".equals(key)) break;
                     if ("move".equals(key)) move = tokens[++j];
                     else if ("visits".equals(key)) visits = Integer.parseInt(tokens[++j]);
@@ -640,8 +654,14 @@ public class KataGoEngine {
                     else if ("order".equals(key)) order = Integer.parseInt(tokens[++j]);
                 }
                 if (move != null && order >= 0 && visits >= 0 && Double.isFinite(winrate)
-                        && winrate >= 0 && winrate <= 1 && Double.isFinite(scoreLead))
-                    latest.put(move, new SearchRecommendation(move, winrate, scoreLead, prior, visits, order));
+                        && winrate >= 0 && winrate <= 1 && Double.isFinite(scoreLead)) {
+                    // Some KataGo responses omit PV for low-visit candidates.
+                    if (variation.isEmpty() || !move.equalsIgnoreCase(variation.get(0))) {
+                        variation.clear();
+                        variation.add(move);
+                    }
+                    latest.put(move, new SearchRecommendation(move, winrate, scoreLead, prior, visits, order, variation));
+                }
             } catch (NumberFormatException e) {
                 Log.w(TAG, "Invalid KataGo candidate analysis data", e);
             }
