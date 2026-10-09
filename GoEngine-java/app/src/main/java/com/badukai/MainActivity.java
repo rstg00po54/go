@@ -364,23 +364,34 @@ public class MainActivity extends AppCompatActivity {
         return "对局结束 · " + text;
     }
 
-    /** Estimate only confidently owned empty intersections, not the formal final score. */
+    /** Ownership-based estimate of empty points plus projected dead-stone points, not a formal final score. */
     private String territorySummary(KataGoEngine.PositionEvaluation result) {
-        int blackTerritory = 0, whiteTerritory = 0, emptyPoints = 0;
+        int blackTerritory = 0, whiteTerritory = 0, deadBlack = 0, deadWhite = 0, uncertainEmpty = 0;
         final int size = result.size;
         for (int y = 0; y < size; y++) {
             for (int x = 0; x < size; x++) {
-                if (board.get(x, y) != Intersection.EMPTY) continue;
-                emptyPoints++;
+                Intersection stone = board.get(x, y);
                 float whiteOwn = result.whiteOwnership[y * size + x];
-                if (whiteOwn >= GoBoardView.OWNERSHIP_MARK_THRESHOLD) whiteTerritory++;
-                else if (whiteOwn <= -GoBoardView.OWNERSHIP_MARK_THRESHOLD) blackTerritory++;
+                if (!Float.isFinite(whiteOwn)) continue;
+                if (stone == Intersection.EMPTY) {
+                    if (whiteOwn >= GoBoardView.OWNERSHIP_MARK_THRESHOLD) whiteTerritory++;
+                    else if (whiteOwn <= -GoBoardView.OWNERSHIP_MARK_THRESHOLD) blackTerritory++;
+                    else uncertainEmpty++;
+                } else if (stone == Intersection.BLACK && whiteOwn >= GoBoardView.OWNERSHIP_MARK_THRESHOLD) {
+                    // A black stone likely dies: this point becomes white territory after removal.
+                    whiteTerritory++;
+                    deadBlack++;
+                } else if (stone == Intersection.WHITE && whiteOwn <= -GoBoardView.OWNERSHIP_MARK_THRESHOLD) {
+                    blackTerritory++;
+                    deadWhite++;
+                }
             }
         }
         boardView.setOwnership(result.whiteOwnership);
         Log.i(TAG, String.format(Locale.US,
-                "Position territory estimate black=%d white=%d uncertain=%d (ownership threshold %.2f, no komi/captures)",
-                blackTerritory, whiteTerritory, emptyPoints - blackTerritory - whiteTerritory,
+                "Ownership estimate black=%d white=%d predictedDeadBlack=%d predictedDeadWhite=%d uncertainEmpty=%d "
+                        + "(threshold %.2f; no komi, prisoner count or official dead-stone confirmation)",
+                blackTerritory, whiteTerritory, deadBlack, deadWhite, uncertainEmpty,
                 GoBoardView.OWNERSHIP_MARK_THRESHOLD));
         return String.format(Locale.CHINA, "黑估空%d目\n白估空%d目", blackTerritory, whiteTerritory);
     }
