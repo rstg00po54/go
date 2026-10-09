@@ -20,8 +20,26 @@ if (( BUILD_NATIVE )); then
     echo "[2/3] Compile KataGo C++ (Android ARM64, CPU/Eigen)"
     echo "       Requires Android NDK, CMake, Ninja and libeigen3-dev."
     echo "       For an APK-only rebuild, run: ./build.sh --apk-only"
-    # Conserve memory on small Ubuntu VMs; override explicitly if desired.
-    export KATAGO_JOBS="${KATAGO_JOBS:-1}"
+    # Choose C++ parallelism based on available cores and memory (~1.5 GiB per job).
+    # Override when desired: KATAGO_JOBS=8 ./build.sh
+    if [[ -z "${KATAGO_JOBS:-}" ]]; then
+        CPU_JOBS="$(nproc 2>/dev/null || echo 2)"
+        AVAILABLE_KB="$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo 2>/dev/null || true)"
+        if [[ "$AVAILABLE_KB" =~ ^[0-9]+$ ]]; then
+            MEM_JOBS=$((AVAILABLE_KB / 1572864))
+            if (( MEM_JOBS < 1 )); then MEM_JOBS=1; fi
+        else
+            MEM_JOBS=2
+        fi
+        KATAGO_JOBS=$((CPU_JOBS < MEM_JOBS ? CPU_JOBS : MEM_JOBS))
+        if (( KATAGO_JOBS > 8 )); then KATAGO_JOBS=8; fi
+    fi
+    if ! [[ "$KATAGO_JOBS" =~ ^[1-9][0-9]*$ ]]; then
+        echo "ERROR: KATAGO_JOBS must be a positive integer" >&2
+        exit 2
+    fi
+    export KATAGO_JOBS
+    echo "KataGo C++ parallel jobs: $KATAGO_JOBS"
     bash tools/build_katago_from_source.sh eigen
 
     SRC="$PROJECT_DIR/build/katago_android_arm64_eigen/libkatago_exec.so"
