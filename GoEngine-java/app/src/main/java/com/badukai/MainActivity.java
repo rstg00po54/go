@@ -372,7 +372,7 @@ public class MainActivity extends AppCompatActivity {
             for (int x = 0; x < size; x++) {
                 if (board.get(x, y) != Intersection.EMPTY) continue;
                 emptyPoints++;
-                float whiteOwn = result.whiteOwnership[(size - 1 - y) * size + x];
+                float whiteOwn = result.whiteOwnership[y * size + x];
                 if (whiteOwn >= GoBoardView.OWNERSHIP_MARK_THRESHOLD) whiteTerritory++;
                 else if (whiteOwn <= -GoBoardView.OWNERSHIP_MARK_THRESHOLD) blackTerritory++;
             }
