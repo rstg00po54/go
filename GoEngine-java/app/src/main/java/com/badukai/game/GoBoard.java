@@ -271,7 +271,7 @@ public class GoBoard {
         }
     }
 
-    public FinalScore countChineseScore(Set<Point> deadStones, double komi) {
+    public FinalScore countChineseScore(Set<Point> deadStones, double komi, int handicapStones) {
         boolean[][] removed = new boolean[size][size];
         int deadBlack = 0, deadWhite = 0;
         if (deadStones != null) {
@@ -325,9 +325,10 @@ public class GoBoard {
         }
 
         // Chinese area scoring: living stones + controlled empty points, not prisoners.
-        // White gets the configured komi. Dead stones have already been removed above.
+        // Match KataGo's Chinese rules: white gets N bonus points in an N-stone handicap game.
+        // Dead stones have already been removed above, and captured stones are not counted separately.
         double blackPoints = blackStones + blackTerritory;
-        double whitePoints = whiteStones + whiteTerritory + komi;
+        double whitePoints = whiteStones + whiteTerritory + komi + Math.max(0, handicapStones);
         return new FinalScore(blackTerritory, whiteTerritory, blackStones, whiteStones,
                 deadBlack, deadWhite, blackPoints, whitePoints);
     }
