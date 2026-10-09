@@ -30,6 +30,43 @@ public class GoBoard {
         clearBoardOnly();
     }
 
+    /** Fixed handicap placement shared by Android's board and KataGo's GTP setup. */
+    public static List<Point> standardHandicapPoints(int size, int count) {
+        if (count < 2 || count > 9 || (size != 9 && size != 11 && size != 13 && size != 15 && size != 19))
+            throw new IllegalArgumentException("Unsupported handicap: board=" + size + ", stones=" + count);
+        int low = size <= 11 ? 2 : 3;
+        int high = size - 1 - low, mid = size / 2;
+        List<Point> points = new ArrayList<>(count);
+        points.add(new Point(high, low));
+        points.add(new Point(low, high));
+        if (count >= 3) points.add(new Point(high, high));
+        if (count >= 4) points.add(new Point(low, low));
+        if (count == 5) points.add(new Point(mid, mid));
+        if (count >= 6) {
+            points.add(new Point(low, mid));
+            points.add(new Point(high, mid));
+        }
+        if (count == 7) points.add(new Point(mid, mid));
+        if (count >= 8) {
+            points.add(new Point(mid, low));
+            points.add(new Point(mid, high));
+        }
+        if (count == 9) points.add(new Point(mid, mid));
+        return points;
+    }
+
+    /** Place initial black handicap stones without treating them as played moves. */
+    public boolean placeHandicapStones(List<Point> points) {
+        if (points == null || points.size() < 2 || points.size() > 9 || !moveHistory.isEmpty()) return false;
+        Set<Point> unique = new HashSet<>();
+        for (Point point : points) {
+            if (point == null || !isInside(point.x, point.y) || get(point) != Intersection.EMPTY || !unique.add(point))
+                return false;
+        }
+        for (Point point : points) placeStone(point, StoneColor.BLACK);
+        return true;
+    }
+
     public int getSize() {
         DebugLog.v(TAG, "getSize in, size=" + size);
         return size;
