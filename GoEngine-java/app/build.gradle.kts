@@ -119,12 +119,7 @@ val compileKataGoNative = tasks.register<Exec>("compileKataGoNative") {
     onlyIf { !skipKataGoNative }
     doFirst {
         val requested = System.getenv("KATAGO_JOBS")
-        val cpuJobs = Runtime.getRuntime().availableProcessors().coerceAtLeast(1)
-        val availableKB = File("/proc/meminfo").takeIf { it.isFile }?.useLines { lines ->
-            lines.firstOrNull { it.startsWith("MemAvailable:") }?.trim()?.split(Regex("\\s+"))?.getOrNull(1)?.toLongOrNull()
-        }
-        val memoryJobs = ((availableKB ?: 3145728L) / 1572864L).toInt().coerceAtLeast(1)
-        val jobs = if (requested.isNullOrBlank()) minOf(cpuJobs, memoryJobs, 8) else
+        val jobs = if (requested.isNullOrBlank()) 8 else
             requested.toIntOrNull()?.takeIf { it > 0 } ?: throw GradleException("Invalid KATAGO_JOBS: $requested")
         println("KataGo C++ parallel jobs: $jobs")
         (this as Exec).commandLine("cmake", "--build", katagoBuildDir.absolutePath, "--parallel", jobs.toString())
