@@ -20,7 +20,8 @@ public class WinRateChartView extends View {
     public WinRateChartView(Context context) {
         super(context);
         setBackgroundColor(Color.rgb(249, 251, 245));
-        setMinimumHeight(dp(260));
+        setMinimumHeight(Math.round(dp(260)));
+
     }
 
     public void setRates(float[] blacks, float[] whites) {
