@@ -469,6 +469,15 @@ ComputeContext* NeuralNet::createComputeContext(
     enabled_t testFP16ComputeMode = enabled_t::Auto;
     enabled_t testFP16TensorCoresMode = enabled_t::Auto;
 
+    // Mali OpenCL supports FP16, but the WMMA kernels can fail during driver
+    // compilation ("couldn't allocate output register for constraint 'r'").
+    // Keep normal FP16 compute/storage tuning enabled and skip only WMMA.
+    if(name.find("Mali-") != string::npos) {
+      testFP16TensorCoresMode = enabled_t::False;
+      if(logger != NULL)
+        logger->write("Mali OpenCL detected: skipping unsupported FP16 WMMA tuning, retaining FP16 compute/storage");
+    }
+
     return OpenCLTuner::loadOrAutoTune(
       openCLTunerFile,homeDataDirOverride,name,gpuIdxForTuning,logger,openCLReTunePerBoardSize,
       nnXLen,nnYLen,
