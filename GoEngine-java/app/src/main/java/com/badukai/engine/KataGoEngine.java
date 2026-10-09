@@ -707,6 +707,43 @@ public class KataGoEngine {
         return candidates;
     }
 
+    public static final class WinRate {
+        public final float black, white;
+
+        public WinRate(float black, float white) {
+            this.black = black;
+            this.white = white;
+        }
+    }
+
+    /**
+     * Read only the two win probabilities from a raw NN response.
+     * Does not play a move, perform MCTS, or need an ownership map in Java.
+     * Call only on the serial engineExecutor.
+     */
+    public WinRate evaluateWinRate() {
+        if (!running.get()) return null;
+        responseQueue.clear();
+        if (!sendCommandSync("kata-raw-nn 0")) return null;
+        String response = waitForResponse(30000);
+        if (response == null || !response.startsWith("=")) return null;
+        try {
+            String[] tokens = response.substring(1).trim().split("\\s+");
+            float white = Float.NaN, black = Float.NaN;
+            for (int i = 0; i + 1 < tokens.length; i++) {
+                if ("whiteWin".equals(tokens[i])) white = Float.parseFloat(tokens[++i]);
+                else if ("whiteLoss".equals(tokens[i])) black = Float.parseFloat(tokens[++i]);
+                if (Float.isFinite(white) && Float.isFinite(black)) break;
+            }
+            if (!Float.isFinite(black) || !Float.isFinite(white)
+                    || black < 0f || black > 1f || white < 0f || white > 1f) return null;
+            return new WinRate(black, white);
+        } catch (RuntimeException e) {
+            Log.w(TAG, "Cannot read KataGo win rate", e);
+            return null;
+        }
+    }
+
     public static final class PositionEvaluation {
         public final double blackWin, whiteWin, whiteLead;
         public final int size;
