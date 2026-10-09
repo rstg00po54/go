@@ -7,12 +7,11 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.view.View;
 
-import java.util.Locale;
-
 /** Full-game win rate history: x is the played move number, y is win probability. */
 public class WinRateChartView extends View {
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private float[] blackRates = new float[0];
+    private float[] whiteRates = new float[0];
 
     private static final int DARK_GREEN = Color.rgb(39, 105, 73);
     private static final int LIGHT_BROWN = Color.rgb(174, 105, 58);
@@ -24,8 +23,9 @@ public class WinRateChartView extends View {
         setMinimumHeight(dp(260));
     }
 
-    public void setBlackRates(float[] values) {
-        blackRates = values == null ? new float[0] : values.clone();
+    public void setRates(float[] blacks, float[] whites) {
+        blackRates = blacks == null ? new float[0] : blacks.clone();
+        whiteRates = whites == null ? new float[0] : whites.clone();
         invalidate();
     }
 
@@ -86,25 +86,24 @@ public class WinRateChartView extends View {
             return;
         }
 
-        drawSeries(canvas, left, right, top, bottom, lastMove, true, DARK_GREEN);
-        drawSeries(canvas, left, right, top, bottom, lastMove, false, LIGHT_BROWN);
+        drawSeries(canvas, left, right, top, bottom, lastMove, blackRates, DARK_GREEN);
+        drawSeries(canvas, left, right, top, bottom, lastMove, whiteRates, LIGHT_BROWN);
     }
 
     private void drawSeries(Canvas canvas, float left, float right, float top, float bottom,
-                            int lastMove, boolean black, int color) {
+                            int lastMove, float[] rates, int color) {
         Path path = new Path();
         boolean started = false;
         int valid = 0;
         float lastX = 0f, lastY = 0f;
-        for (int i = 0; i < blackRates.length; i++) {
-            float rate = blackRates[i];
+        for (int i = 0; i < rates.length; i++) {
+            float rate = rates[i];
             if (!Float.isFinite(rate)) {
                 started = false;
                 continue;
             }
-            float value = black ? rate : 1f - rate;
             float x = left + (right - left) * i / lastMove;
-            float y = bottom - (bottom - top) * Math.max(0f, Math.min(1f, value));
+            float y = bottom - (bottom - top) * Math.max(0f, Math.min(1f, rate));
             if (!started) {
                 path.moveTo(x, y);
                 started = true;
