@@ -99,7 +99,7 @@ val configureKataGoNative = tasks.register<Exec>("configureKataGoNative") {
         val eigenDir = eigenCandidates.firstOrNull { File(it, "Eigen3Config.cmake").isFile }
             ?: throw GradleException("Eigen3Config.cmake not found (install libeigen3-dev or set EIGEN3_CMAKE_DIR)")
         println("KataGo CMake: NDK=$ndkHome, Eigen3=${eigenDir.absolutePath}")
-        commandLine(
+        (this as Exec).commandLine(
             "cmake", "-S", katagoSourceDir.absolutePath, "-B", katagoBuildDir.absolutePath, "-G", "Ninja",
             "-DCMAKE_TOOLCHAIN_FILE=${toolchain.absolutePath}", "-DANDROID_ABI=arm64-v8a",
             "-DANDROID_PLATFORM=android-26", "-DANDROID_STL=c++_static", "-DCMAKE_BUILD_TYPE=Release",
@@ -127,7 +127,7 @@ val compileKataGoNative = tasks.register<Exec>("compileKataGoNative") {
         val jobs = if (requested.isNullOrBlank()) minOf(cpuJobs, memoryJobs, 8) else
             requested.toIntOrNull()?.takeIf { it > 0 } ?: throw GradleException("Invalid KATAGO_JOBS: $requested")
         println("KataGo C++ parallel jobs: $jobs")
-        commandLine("cmake", "--build", katagoBuildDir.absolutePath, "--parallel", jobs.toString())
+        (this as Exec).commandLine("cmake", "--build", katagoBuildDir.absolutePath, "--parallel", jobs.toString())
     }
 }
 
