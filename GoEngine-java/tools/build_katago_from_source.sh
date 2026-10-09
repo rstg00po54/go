@@ -156,8 +156,18 @@ fi
 cp "$BIN" "$OUT"
 echo "Built $OUT"
 "$READELF" -d "$OUT" | grep NEEDED || true
-if [[ "$BACKEND" == "opencl" ]] && ! "$READELF" -d "$OUT" | grep -q 'libOpenCL.so'; then
-    echo "WARNING: ELF does not request libOpenCL.so by name." >&2
-    echo "Check the link library's SONAME and Android vendor namespace before testing." >&2
+if [[ "$BACKEND" == "opencl" ]]; then
+    # The Android vendor's libOpenCL.so can have a different ELF SONAME (e.g. libGLES_mali.so).
+    # In that case the executable will correctly list the SONAME, not the filename we linked.
+    LIB_SONAME="$("$READELF" -d "$OPENCL_LIBRARY" | sed -nE 's/.*\(SONAME\).*\[([^]]+)\].*/\1/p' | head -n 1)"
+    NEEDED_LIBS="$("$READELF" -d "$OUT" | sed -nE 's/.*\(NEEDED\).*\[([^]]+)\].*/\1/p')"
+    if [[ -n "$LIB_SONAME" ]] && grep -Fxq "$LIB_SONAME" <<< "$NEEDED_LIBS"; then
+        echo "OpenCL vendor dependency: $LIB_SONAME (linker input: $(basename "$OPENCL_LIBRARY"))"
+    elif grep -Fxq 'libOpenCL.so' <<< "$NEEDED_LIBS"; then
+        echo "OpenCL dependency: libOpenCL.so"
+    else
+        echo "WARNING: No matching OpenCL dependency recorded in the ELF." >&2
+        echo "Inspect the vendor library SONAME and Android runtime loader behavior." >&2
+    fi
 fi
 echo "No files were changed under app/src/main/jniLibs."
