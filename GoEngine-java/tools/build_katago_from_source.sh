@@ -90,6 +90,14 @@ else
         exit 1
     fi
 
+    # CMake may discard /usr/include as an implicit host include directory during
+    # cross-compilation. Stage only the portable CL headers outside the host sysroot.
+    # Passing /usr/include directly to Android clang would also mix host libc headers.
+    OPENCL_STAGE_DIR="$WORK_DIR/opencl_headers"
+    mkdir -p "$OPENCL_STAGE_DIR/CL"
+    cp -a "$OPENCL_INCLUDE_DIR/CL/." "$OPENCL_STAGE_DIR/CL/"
+    OPENCL_INCLUDE_DIR="$OPENCL_STAGE_DIR"
+
     OPENCL_LIBRARY="${OPENCL_LIBRARY:-$WORK_DIR/opencl_arm64/libOpenCL.so}"
     if [[ ! -f "$OPENCL_LIBRARY" ]]; then
         echo "Android ARM64 libOpenCL.so not cached: $OPENCL_LIBRARY"
