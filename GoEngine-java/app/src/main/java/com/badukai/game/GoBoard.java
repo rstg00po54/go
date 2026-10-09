@@ -216,15 +216,17 @@ public class GoBoard {
         }
     }
 
-    /** Japanese territory scoring after excluding KataGo-confirmed dead stones. */
+    /** Chinese area scoring on the position after removing KataGo-adjudicated dead stones. */
     public static final class FinalScore {
-        public final int blackTerritory, whiteTerritory, deadBlack, deadWhite;
+        public final int blackTerritory, whiteTerritory, blackStones, whiteStones, deadBlack, deadWhite;
         public final double blackPoints, whitePoints;
 
-        private FinalScore(int blackTerritory, int whiteTerritory, int deadBlack, int deadWhite,
-                           double blackPoints, double whitePoints) {
+        private FinalScore(int blackTerritory, int whiteTerritory, int blackStones, int whiteStones,
+                           int deadBlack, int deadWhite, double blackPoints, double whitePoints) {
             this.blackTerritory = blackTerritory;
             this.whiteTerritory = whiteTerritory;
+            this.blackStones = blackStones;
+            this.whiteStones = whiteStones;
             this.deadBlack = deadBlack;
             this.deadWhite = deadWhite;
             this.blackPoints = blackPoints;
@@ -232,7 +234,7 @@ public class GoBoard {
         }
     }
 
-    public FinalScore countJapaneseScore(Set<Point> deadStones, double komi) {
+    public FinalScore countChineseScore(Set<Point> deadStones, double komi) {
         boolean[][] removed = new boolean[size][size];
         int deadBlack = 0, deadWhite = 0;
         if (deadStones != null) {
@@ -246,7 +248,14 @@ public class GoBoard {
             }
         }
 
-        int blackTerritory = 0, whiteTerritory = 0;
+        int blackTerritory = 0, whiteTerritory = 0, blackStones = 0, whiteStones = 0;
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                if (removed[y][x]) continue;
+                if (board[y][x] == Intersection.BLACK) blackStones++;
+                else if (board[y][x] == Intersection.WHITE) whiteStones++;
+            }
+        }
         boolean[][] visited = new boolean[size][size];
         int[] dx = {-1, 1, 0, 0}, dy = {0, 0, -1, 1};
         for (int y = 0; y < size; y++) {
@@ -278,11 +287,12 @@ public class GoBoard {
             }
         }
 
-        // CapturedBlack counts black stones removed by white during play.
-        // Dead stones are extra prisoners AND their vacated points may become territory.
-        double blackPoints = blackTerritory + capturedWhite + deadWhite;
-        double whitePoints = whiteTerritory + capturedBlack + deadBlack + komi;
-        return new FinalScore(blackTerritory, whiteTerritory, deadBlack, deadWhite, blackPoints, whitePoints);
+        // Chinese area scoring: living stones + controlled empty points, not prisoners.
+        // White gets the configured komi. Dead stones have already been removed above.
+        double blackPoints = blackStones + blackTerritory;
+        double whitePoints = whiteStones + whiteTerritory + komi;
+        return new FinalScore(blackTerritory, whiteTerritory, blackStones, whiteStones,
+                deadBlack, deadWhite, blackPoints, whitePoints);
     }
 
     /** Copy the current game for a read-only preview; subsequent moves affect only the copy. */
