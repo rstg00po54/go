@@ -29,6 +29,7 @@ import com.badukai.ui.GoBoardView;
 import com.badukai.ui.TencentHomeScaler;
 import com.badukai.util.DebugLog;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
@@ -56,6 +57,10 @@ public class MainActivity extends AppCompatActivity {
     private boolean gameReady;
     private String gameResultText;
     private Point lastMove;
+    private final List<KataGoEngine.SearchRecommendation> recommendationChoices = new ArrayList<>();
+    private Point[] recommendationPoints;
+    private GoBoard variationBoard;
+    private String recommendationSummary;
 
     private View mainPageContainer;
     private View gamePageContainer;
@@ -174,11 +179,23 @@ public class MainActivity extends AppCompatActivity {
         if (!engineReady || !gameReady || thinking || currentPlayer != playerColor || board.isGameOver()) return;
         if (!board.isInside(x, y)) return;
         Point point = new Point(x, y);
+        if (variationBoard != null) {
+            exitVariationPreview();
+            return;
+        }
+        if (recommendationPoints != null) {
+            for (int i = 0; i < recommendationPoints.length; i++) {
+                if (point.equals(recommendationPoints[i])) {
+                    previewRecommendedVariation(i);
+                    return; // Tapping a recommendation previews it, never plays a real move.
+                }
+            }
+        }
         if (!board.isLegalMove(point, currentPlayer)) return;
 
         StoneColor color = currentPlayer;
         boardView.setOwnership(null);
-        boardView.setRecommendations(null, null);
+        clearRecommendations();
         board.playMove(new Move.Stone(point, color));
         lastMove = point;
         currentPlayer = color.opposite();
@@ -217,7 +234,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         boardView.setOwnership(null);
-        boardView.setRecommendations(null, null);
+        clearRecommendations();
         if ("pass".equalsIgnoreCase(move)) {
             board.playMove(new Move.Pass(aiColor));
             currentPlayer = aiColor.opposite();
@@ -248,7 +265,7 @@ public class MainActivity extends AppCompatActivity {
         if (!engineReady || !gameReady || thinking || currentPlayer != playerColor || board.isGameOver()) return;
         StoneColor color = currentPlayer;
         boardView.setOwnership(null);
-        boardView.setRecommendations(null, null);
+        clearRecommendations();
         board.playMove(new Move.Pass(color));
         lastMove = null;
         if (board.isGameOver()) {
@@ -271,7 +288,7 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "undo in, engineReady=" + engineReady + ", thinking=" + thinking + ", moveCount=" + board.getMoveCount());
         if (!engineReady || !gameReady || thinking || board.getMoveCount() < 2) return;
         boardView.setOwnership(null);
-        boardView.setRecommendations(null, null);
+        clearRecommendations();
         board.undo();
         board.undo();
         Move last = board.getLastMove();
@@ -288,7 +305,7 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "resign in, thinking=" + thinking + ", moveCount=" + board.getMoveCount() + ", playerColor=" + playerColor);
         if (!gameReady || thinking || board.getMoveCount() == 0 || board.isGameOver()) return;
         boardView.setOwnership(null);
-        boardView.setRecommendations(null, null);
+        clearRecommendations();
         board.playMove(new Move.Resign(playerColor));
         String winner = playerColor == StoneColor.BLACK ? "白棋" : "黑棋";
         finishByResignation("你认输了 · " + winner + "胜");
@@ -368,12 +385,72 @@ public class MainActivity extends AppCompatActivity {
         return String.format(Locale.CHINA, "黑估空%d目\n白估空%d目", blackTerritory, whiteTerritory);
     }
 
+    private void clearRecommendations() {
+        variationBoard = null;
+        boardView.setVariationPreview(null, null, null, null);
+        boardView.setRecommendations(null, null);
+        recommendationChoices.clear();
+        recommendationPoints = null;
+        recommendationSummary = null;
+    }
+
+    private void exitVariationPreview() {
+        variationBoard = null;
+        boardView.setVariationPreview(null, null, null, null);
+        render(recommendationSummary == null ? "轮到你了" : recommendationSummary);
+    }
+
+    /** Preview the KataGo principal variation without changing the live game or GTP state. */
+    private void previewRecommendedVariation(int rank) {
+        if (rank < 0 || rank >= recommendationChoices.size()) return;
+        KataGoEngine.SearchRecommendation choice = recommendationChoices.get(rank);
+        GoBoard hypothetical = board.copyForPreview();
+        List<Point> points = new ArrayList<>();
+        List<StoneColor> colors = new ArrayList<>();
+        List<Integer> numbers = new ArrayList<>();
+        StoneColor turn = currentPlayer;
+        int played = 0;
+        for (String vertex : choice.pvMoves) {
+            if (played >= 8 || hypothetical.isGameOver()) break;
+            played++;
+            if ("pass".equalsIgnoreCase(vertex)) {
+                hypothetical.playMove(new Move.Pass(turn));
+                turn = turn.opposite();
+                continue;
+            }
+            Point point = Point.fromGtp(vertex, boardSize);
+            if (point == null || !hypothetical.isLegalMove(point, turn)) break;
+            hypothetical.playMove(new Move.Stone(point, turn));
+            points.add(point);
+            colors.add(turn);
+            numbers.add(played);
+            turn = turn.opposite();
+        }
+        if (points.isEmpty()) {
+            Toast.makeText(this, "这一手暂时没有可预览的变化", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Point[] pvPoints = points.toArray(new Point[0]);
+        StoneColor[] pvColors = colors.toArray(new StoneColor[0]);
+        int[] pvNumbers = new int[numbers.size()];
+        for (int i = 0; i < numbers.size(); i++) pvNumbers[i] = numbers.get(i);
+        variationBoard = hypothetical;
+        boardView.setVariationPreview(hypothetical, pvPoints, pvColors, pvNumbers);
+        String[] labels = {"①", "②", "③"};
+        render("变化" + labels[rank] + " 共" + played + "手\n点棋盘退出预览");
+    }
+
     private void showAiSuggestions() {
         DebugLog.enter(TAG, "showAiSuggestions in, ready=" + gameReady + ", thinking=" + thinking + ", evaluating=" + evaluating);
         if (!engineReady || !gameReady || engineStarting || thinking || evaluating || currentPlayer != playerColor || board.isGameOver()) return;
 
+        if (variationBoard != null) {
+            exitVariationPreview();
+            return;
+        }
         if (boardView.hasRecommendations()) {
-            boardView.setRecommendations(null, null);
+            clearRecommendations();
             render("推荐标记已隐藏");
             return;
         }
@@ -398,12 +475,14 @@ public class MainActivity extends AppCompatActivity {
                 float[] winrates = new float[3];
                 double[] leads = new double[3];
                 int count = 0;
+                List<KataGoEngine.SearchRecommendation> selected = new ArrayList<>();
                 for (KataGoEngine.SearchRecommendation suggestion : candidates) {
                     Point point = Point.fromGtp(suggestion.move, size);
                     if (point == null || !board.isLegalMove(point, color) || suggestion.visits <= 0) continue;
                     points[count] = point;
                     winrates[count] = (float) suggestion.winrate;
                     leads[count] = suggestion.scoreLead;
+                    selected.add(suggestion);
                     Log.i(TAG, String.format(Locale.US,
                             "Expert recommendation rank=%d color=%s point=%s winrate=%.3f lead=%.2f visits=%d",
                             count + 1, color.toGtp(), suggestion.move, suggestion.winrate, suggestion.scoreLead, suggestion.visits));
@@ -419,6 +498,9 @@ public class MainActivity extends AppCompatActivity {
                 System.arraycopy(points, 0, top, 0, count);
                 System.arraycopy(winrates, 0, scores, 0, count);
                 boardView.setRecommendations(top, scores);
+                recommendationPoints = top;
+                recommendationChoices.clear();
+                recommendationChoices.addAll(selected);
                 String[] ranks = {"①", "②", "③"};
                 StringBuilder summary = new StringBuilder();
                 for (int i = 0; i < count; i++) {
@@ -426,7 +508,8 @@ public class MainActivity extends AppCompatActivity {
                     summary.append(ranks[i]).append(top[i].toGtp(size)).append(" 胜")
                             .append(String.format(Locale.CHINA, "%.0f%% %+.1f目", winrates[i] * 100, leads[i]));
                 }
-                render(summary.toString());
+                recommendationSummary = summary.toString();
+                render(recommendationSummary);
             });
         });
     }
@@ -558,7 +641,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         boardView.setOwnership(null);
-        boardView.setRecommendations(null, null);
+        clearRecommendations();
         gameResultText = null;
         board = new GoBoard(boardSize);
         currentPlayer = StoneColor.BLACK;
@@ -640,7 +723,8 @@ public class MainActivity extends AppCompatActivity {
         int aiCaptures = playerBlack ? whiteCaptures : blackCaptures;
         playerCaptureText.setText(String.format(Locale.CHINA, "%s棋提子 %d", playerBlack ? "黑" : "白", playerCaptures));
         aiCaptureText.setText(String.format(Locale.CHINA, "%s棋提子 %d", playerBlack ? "白" : "黑", aiCaptures));
-        gameTitleText.setText(gameResultText == null ? boardSize + "路对局　常见问题　　第" + (board.getMoveCount() + 1) + "手" : gameResultText);
+        gameTitleText.setText(variationBoard != null ? "AI 推荐变化图 · 仅供预览"
+                : gameResultText == null ? boardSize + "路对局　常见问题　　第" + (board.getMoveCount() + 1) + "手" : gameResultText);
         updateButtons();
     }
 
@@ -649,17 +733,20 @@ public class MainActivity extends AppCompatActivity {
         boolean playerTurn = engineReady && gameReady && !engineStarting && !thinking && !evaluating && currentPlayer == playerColor && !board.isGameOver();
         newGameButton.setEnabled(!thinking && !engineStarting && !evaluating);
         newRoundButton.setEnabled(!thinking && !engineStarting && !evaluating);
-        situationButton.setEnabled(engineReady && gameReady && !engineStarting && !thinking && !evaluating && (board.isGameOver() || currentPlayer == playerColor));
-        aiSuggestionButton.setEnabled(playerTurn);
-        undoButton.setEnabled(playerTurn && board.getMoveCount() >= 2);
-        passButton.setEnabled(playerTurn);
-        resignButton.setEnabled(playerTurn && board.getMoveCount() > 0);
+        situationButton.setEnabled(variationBoard == null && engineReady && gameReady && !engineStarting
+                && !thinking && !evaluating && (board.isGameOver() || currentPlayer == playerColor));
+        aiSuggestionButton.setEnabled((playerTurn || variationBoard != null) && engineReady && gameReady
+                && !engineStarting && !thinking && !evaluating);
+        undoButton.setEnabled(playerTurn && variationBoard == null && board.getMoveCount() >= 2);
+        passButton.setEnabled(playerTurn && variationBoard == null);
+        resignButton.setEnabled(playerTurn && variationBoard == null && board.getMoveCount() > 0);
     }
 
     @Override
     public void onBackPressed() {
         DebugLog.enter(TAG, "onBackPressed in, gameVisible=" + (gamePageContainer.getVisibility() == View.VISIBLE));
-        if (gamePageContainer.getVisibility() == View.VISIBLE) showMainPage();
+        if (variationBoard != null) exitVariationPreview();
+        else if (gamePageContainer.getVisibility() == View.VISIBLE) showMainPage();
         else super.onBackPressed();
     }
 
