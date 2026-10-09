@@ -216,6 +216,16 @@ public class GoBoard {
         }
     }
 
+    /** Copy the current game for a read-only preview; subsequent moves affect only the copy. */
+    public GoBoard copyForPreview() {
+        GoBoard result = copyPosition();
+        result.moveHistory.addAll(moveHistory);
+        result.capturedBlack = capturedBlack;
+        result.capturedWhite = capturedWhite;
+        result.consecutivePasses = consecutivePasses;
+        return result;
+    }
+
     private GoBoard copyPosition() {
         DebugLog.v(TAG, "copyPosition in, size=" + size + ", koPoint=" + koPoint);
         GoBoard copy = new GoBoard(size);
