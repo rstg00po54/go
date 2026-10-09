@@ -63,6 +63,7 @@ ARGS=(
     -DCMAKE_TOOLCHAIN_FILE="$NDK/build/cmake/android.toolchain.cmake"
     -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-26 -DANDROID_STL=c++_static
     -DCMAKE_BUILD_TYPE=Release -DUSE_BACKEND="${BACKEND^^}"
+    -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_EXE_LINKER_FLAGS=-pie
     -DBUILD_DISTRIBUTED=OFF -DNO_GIT_REVISION=ON -DUSE_AVX2=OFF -DUSE_TCMALLOC=OFF
     -DCMAKE_CXX_FLAGS="-DLITTLE_ENDIAN=1234 -DBIG_ENDIAN=4321 -DBYTE_ORDER=1234"
 )
@@ -89,9 +90,14 @@ cmake -S "$SOURCE_DIR/cpp" -B "$BUILD_DIR" -G Ninja "${ARGS[@]}"
 cmake --build "$BUILD_DIR" --parallel "${KATAGO_JOBS:-2}"
 BIN="$BUILD_DIR/katago"
 [[ -f "$BIN" ]] || { echo "Missing compiled binary $BIN" >&2; exit 1; }
-HEADER="$("$READELF" -h "$BIN")"
-if ! grep -q 'Machine:.*AArch64' <<< "$HEADER" || ! grep -q 'Type:.*DYN' <<< "$HEADER"; then
-    echo "Expected Android AArch64 PIE executable; check toolchain and build." >&2
+HEADER="$(LC_ALL=C "$READELF" -h "$BIN")"
+echo "$HEADER" | grep -E '^[[:space:]]*(Type|Machine):' || true
+if ! grep -Eq '^[[:space:]]*Machine:[[:space:]]*AArch64([[:space:]]|$)' <<< "$HEADER" || \
+   ! grep -Eq '^[[:space:]]*Type:[[:space:]]*DYN([[:space:]]|$)' <<< "$HEADER"; then
+    echo "ERROR: expected Android ARM64 PIE executable (AArch64, ET_DYN)." >&2
+    echo "Actual ELF header:" >&2
+    echo "$HEADER" >&2
+    echo "Check NDK toolchain, target architecture, and PIE linker flags." >&2
     exit 1
 fi
 if [[ "$BACKEND" == "opencl" ]]; then
