@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build KataGo from the pinned upstream C++ sources in this repository.
+# Build KataGo from the vendored upstream C++ source files in this repository.
 # Experimental GPU output is separate: the working CPU .so is never replaced.
 set -euo pipefail
 
@@ -13,7 +13,7 @@ if [[ $# -gt 1 || ("$BACKEND" != "eigen" && "$BACKEND" != "opencl") ]]; then
 fi
 if [[ ! -f "$SOURCE_DIR/cpp/CMakeLists.txt" ]]; then
     echo "Missing KataGo C++ sources at $SOURCE_DIR" >&2
-    echo "Run from the repository root: git submodule update --init --recursive" >&2
+    echo "Fetch the latest rk3588-engine branch; KataGo sources are tracked directly." >&2
     exit 1
 fi
 

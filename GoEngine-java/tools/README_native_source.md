@@ -1,54 +1,56 @@
-# KataGo 原生 C++ 源码（Android / RK3588）
+# KataGo 原生源码（直接存放在主仓库）
 
-本工程通过 **Git submodule** 固定 KataGo 官方 **v1.15.0** 源码：
+`GoEngine-java/native/KataGo/` 现在保存 **KataGo v1.15.0 官方 C++ 源码的真实文件**，不是 submodule，不需要运行 `git submodule update`。
 
-- 本仓库路径：`GoEngine-java/native/KataGo/`
-- 官方仓库：`https://github.com/lightvector/KataGo`
-- 固定提交：`c560d38585b446bc93b0a62c77364bc8e7d266a4`
-- C++ 搜索引擎、神经网络、OpenCL 实现：`native/KataGo/cpp/`
+- 上游：`https://github.com/lightvector/KataGo`
+- 上游版本提交：`c560d38585b446bc93b0a62c77364bc8e7d266a4`
+- 目录：`GoEngine-java/native/KataGo/cpp/`
+- 已纳入：`core`、`search`、`game`、`neuralnet`、`command`、`dataio`、`external`、`book`、`program`、`distributed`、`configs`、CMake、编译需要的 28 个 `tests/*.cpp/.h`。
+- 未纳入：上游的大型测试模型、测试结果与测试数据集（不影响目标 `katago` 可执行程序的 CMake 源码依赖）。
 
-`jniLibs/arm64-v8a/libkatago_exec.so` 不是 JNI 接口库，而是以 `.so` 名称打包的 **Android arm64 PIE 可执行程序**，Java 使用 `ProcessBuilder` 启动，通过 GTP 与之通信。`libc++_shared.so` 是 Android NDK 的运行时库，源码属于 NDK/LLVM libc++，不是 KataGo 自己的实现。不复制/提交 Mali 厂商 GPU 驱动库。
-
-## 拉取源代码
-
-在仓库根目录：
+## 获取代码
 
 ```bash
 git pull --ff-only origin rk3588-engine
-git submodule update --init --recursive
+ls GoEngine-java/native/KataGo/cpp/neuralnet/openclbackend.cpp
 ```
 
-若第一次克隆：`git clone --recurse-submodules -b rk3588-engine <仓库地址>`。
+不需要其他 git clone 或 submodule 初始化。
 
-## CPU 版（仍保留现有 APK 引擎）
+## 编译 Android ARM64
 
 ```bash
 cd GoEngine-java
 bash tools/build_katago_from_source.sh eigen
 ```
 
-需要 Android NDK、CMake、Ninja、Eigen3。输出到 `build/katago_android_arm64_eigen/libkatago_exec.so`，不会替换 `app/src/main/jniLibs` 的可用二进制。
+输出 `build/katago_android_arm64_eigen/libkatago_exec.so`，依赖 Android NDK、CMake、Ninja、Eigen3。
 
-## RK3588 Android OpenCL 实验版
-
-你的 RK3588 Android 已有 `/vendor/lib64/libOpenCL.so`，它链接到 `egl/libGLES_mali.so`，且 `/vendor/etc/public.libraries.txt` 列出了 `libOpenCL.so`。这意味着可进一步测试，但 **并不代表编译出来的程序必然能创建 OpenCL 设备**。
+RK3588 Android GPU 实验版：
 
 ```bash
-cd GoEngine-java
 export ANDROID_NDK_HOME=/path/to/android-ndk
 export OPENCL_INCLUDE_DIR=/path/to/OpenCL-Headers
 export OPENCL_LIBRARY=/path/to/android-arm64/libOpenCL.so
 bash tools/build_katago_from_source.sh opencl
 ```
 
-`OPENCL_INCLUDE_DIR` 应包含 `CL/cl.h`；`OPENCL_LIBRARY` 是仅供交叉链接的 Android arm64 OpenCL 库，需保证最终 ELF 所需的 SONAME 可在目标设备被解析。**不要将厂商驱动或私有库上传至公开 Git 仓库**。
+输出 `build/katago_android_arm64_opencl/libkatago_exec_opencl.so`。OpenCL 头文件与 Android ARM64 链接库由你本地提供，**不提交设备厂商的 Mali 驱动**。需要在 RK3588 上测试 OpenCL 初始化和 GPU 调优，尚未验证编译通过。
 
-产物为 `build/katago_android_arm64_opencl/libkatago_exec_opencl.so`。它不会自动安装，也不会替换现有 CPU 引擎。首次上板应先检查 ELF 依赖、OpenCL 设备枚举、GPU 调优与运行日志，再决定是否集成到 APK。
+## 原生文件的区别
 
-注意：新增的源码与这个新脚本不会触发仓库现有按路径限定的自动编译工作流；不要改动或启动现有 GitHub Actions。
+- `jniLibs/arm64-v8a/libkatago_exec.so`：Android ARM64 PIE **可执行程序**，虽然文件名是 `.so`，但不是 JNI 接口。Java 通过 `ProcessBuilder` 启动并使用 GTP 交互。
+- `jniLibs/arm64-v8a/libc++_shared.so`：NDK C++ 运行库，不是 KataGo 源码。源代码在 Android NDK/LLVM libc++ 项目。
 
-## 修改原生代码
+新的编译脚本不会覆盖现有 CPU 二进制，且不会自动触发 APK 构建。
 
-可以在 `native/KataGo/cpp/` 阅读和本地修改 OpenCL 实现。由于这是 submodule，在内部做出的修改需要单独提交到可访问的 KataGo 分支／fork，再更新本仓库的 submodule 指针；或者把本地改动保存为主仓库的补丁文件。不能把子模块中的改动直接当作普通主仓库文件提交。
+## 修改源代码
 
-源码许可遵循 KataGo 上游许可证，参见 `native/KataGo/LICENSE`。
+直接编辑 `native/KataGo/cpp/` 里的文件，与普通项目文件一样提交：
+
+```bash
+git add GoEngine-java/native/KataGo/cpp
+git commit -m "Update KataGo OpenCL backend"
+```
+
+KataGo 许可证见 `native/KataGo/LICENSE`，第三方依赖的许可证仍保留在对应 `external` 子目录。
