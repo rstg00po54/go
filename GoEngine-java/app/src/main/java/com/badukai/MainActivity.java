@@ -48,6 +48,8 @@ public class MainActivity extends AppCompatActivity {
     private StoneColor currentPlayer = StoneColor.BLACK;
     private int boardSize = 19;
     private int aiKyu = 12;
+    // 0=even game, 1=black plays first without komi, 2..9=fixed black handicap stones.
+    private int gameCondition = 0;
     // Human SL selects moves from its rank profile; search primarily assists pass/resign decisions.
     // Start with 8 visits for responsiveness; keep rank selection independent of this limit.
     private int searchVisits = 8;
@@ -377,7 +379,7 @@ public class MainActivity extends AppCompatActivity {
             Point point = Point.fromGtp(vertex, boardSize);
             if (point != null && board.get(point) != Intersection.EMPTY) deadStones.add(point);
         }
-        GoBoard.FinalScore totals = board.countChineseScore(deadStones, komiFor(boardSize));
+        GoBoard.FinalScore totals = board.countChineseScore(deadStones, komiFor(boardSize), gameCondition >= 2 ? gameCondition : 0);
         double expectedLead = Double.NaN;
         try {
             String text = finalScore.trim().toUpperCase(Locale.US);
@@ -666,9 +668,11 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < boardSizes.length; i++) if (boardSizes[i] == boardSize) selectedSize = i;
         sizeSpinner.setSelection(selectedSize);
 
-        ArrayAdapter<String> conditionAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{"分先", "让先", "让2子", "让3子"});
+        ArrayAdapter<String> conditionAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item,
+                new String[]{"分先", "让先", "让2子", "让3子", "让4子", "让5子", "让6子", "让7子", "让8子", "让9子"});
         conditionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         conditionSpinner.setAdapter(conditionAdapter);
+        conditionSpinner.setSelection(gameCondition);
 
         colorGroup.check(playerColor == StoneColor.WHITE ? R.id.whiteRadio : R.id.blackRadio);
         String[] kyuLabels = new String[18];
@@ -689,8 +693,10 @@ public class MainActivity extends AppCompatActivity {
             else playerColor = StoneColor.BLACK;
 
             int selectedKyu = 18 - difficultySpinner.getSelectedItemPosition();
+            int selectedCondition = conditionSpinner.getSelectedItemPosition();
             Runnable begin = () -> {
                 aiKyu = selectedKyu;
+                gameCondition = selectedCondition;
                 showGamePage();
                 startNewGame();
                 dialog.dismiss();
@@ -728,7 +734,7 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "showGamePage in, boardSize=" + boardSize);
         mainPageContainer.setVisibility(View.GONE);
         gamePageContainer.setVisibility(View.VISIBLE);
-        gameTitleText.setText(gameResultText == null ? boardSize + "路对局　常见问题　　第" + (board.getMoveCount() + 1) + "手" : gameResultText);
+        gameTitleText.setText(gameResultText == null ? boardSize + "路　" + conditionName() + "　　第" + (board.getMoveCount() + 1) + "手" : gameResultText);
     }
 
     private void startNewGame() {
@@ -743,12 +749,19 @@ public class MainActivity extends AppCompatActivity {
         gameResultText = null;
         finalScoreText = null;
         board = new GoBoard(boardSize);
-        currentPlayer = StoneColor.BLACK;
+        final int handicapCount = gameCondition >= 2 ? gameCondition : 0;
+        final List<Point> handicapPoints = handicapCount > 0
+                ? GoBoard.standardHandicapPoints(boardSize, handicapCount) : new ArrayList<>();
+        if (handicapCount > 0 && !board.placeHandicapStones(handicapPoints)) {
+            render("让子布局失败");
+            return;
+        }
+        currentPlayer = handicapCount > 0 ? StoneColor.WHITE : StoneColor.BLACK;
         lastMove = null;
         gameReady = false;
         engineStarting = true;
         engineReady = false;
-        final boolean playerFirst = playerColor == StoneColor.BLACK;
+        final boolean playerFirst = currentPlayer == playerColor;
         final int size = boardSize, kyu = aiKyu, visits = searchVisits;
         final double seconds = searchTime;
         render(engine.isHumanSLRunning() ? "正在初始化棋局..." : "正在准备人类棋力模型...");
@@ -772,7 +785,8 @@ public class MainActivity extends AppCompatActivity {
                 ok = engine.clearBoard() && ok;
                 ok = engine.setChineseRules() && ok;
                 ok = engine.setKomi(komiFor(size)) && ok;
-                if (!ok) throw new IllegalStateException("棋盘初始化失败");
+                if (ok && handicapCount > 0) ok = engine.setHandicapStones(handicapPoints, size);
+                if (!ok) throw new IllegalStateException("棋盘或让子初始化失败");
                 if (!engine.setSearchLimits(visits, seconds)) throw new IllegalStateException("AI 搜索限制设置失败");
                 if (!engine.setHumanRank(kyu)) throw new IllegalStateException("AI 棋力等级设置失败");
             } catch (Exception e) {
@@ -799,8 +813,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private float komiFor(int size) {
-        DebugLog.enter(TAG, "komiFor in, size=" + size);
+        DebugLog.enter(TAG, "komiFor in, size=" + size + ", condition=" + gameCondition);
+        if (gameCondition != 0) return 0f; // Handicap/first-move games have no normal komi.
         return size <= 11 ? 5.5f : 7.5f;
+    }
+
+    private String conditionName() {
+        if (gameCondition == 0) return "分先";
+        if (gameCondition == 1) return "让先";
+        return "让" + gameCondition + "子";
     }
 
     private String getDifficultyName() { return aiKyu + "级"; }
@@ -824,7 +845,7 @@ public class MainActivity extends AppCompatActivity {
         playerCaptureText.setText(String.format(Locale.CHINA, "%s棋提子 %d", playerBlack ? "黑" : "白", playerCaptures));
         aiCaptureText.setText(String.format(Locale.CHINA, "%s棋提子 %d", playerBlack ? "白" : "黑", aiCaptures));
         gameTitleText.setText(variationBoard != null ? "AI 推荐变化图 · 仅供预览"
-                : gameResultText == null ? boardSize + "路对局　常见问题　　第" + (board.getMoveCount() + 1) + "手" : gameResultText);
+                : gameResultText == null ? boardSize + "路　" + conditionName() + "　　第" + (board.getMoveCount() + 1) + "手" : gameResultText);
         updateButtons();
     }
 
