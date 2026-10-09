@@ -19,7 +19,7 @@
 - [x] 从 Android ARM64 设备读取 `/vendor/lib64/libOpenCL.so` 到本地缓存（约 42 MB），本机已找到 OpenCL 头文件；不提交供应商库。
 - [x] 用户 Ubuntu + Android NDK 27.2.12479018 已完成 KataGo OpenCL AArch64 PIE 编译与链接（`[117/117] Linking CXX executable katago`），输出 `build/katago_android_arm64_opencl/libkatago_exec_opencl.so`。
 - [x] Android 真机上的 GPU KataGo 已加载厂商 OpenCL Runtime，识别 Mali-G610 r0p0 / OpenCL 3.0，创建 OpenCL context；原先 `libGLES_mali.so` SONAME 找不到的问题已通过临时复制 vendor OpenCL 库解决。
-- [ ] **完成 GPU 调优和实际 benchmark 验证**；首次运行在 `Error creating directory: //.katago` 中止，已修改测试脚本设置 `HOME` 和可写缓存，仍待真机重试。
+- [ ] **完成 GPU 调优和实际 benchmark 验证**。已修复 `//.katago` 目录问题；Mali-G610 的 `xGemmDirect` 和 `xGemm` 调优能跑，但 `hGemmWmma` 报 `couldn't allocate output register for constraint 'r'`。已改 OpenCL 后端在 Mali 上跳过 WMMA，保留 FP16 普通计算及存储；待重编译和实机重试。
 - [x] 同设备 19x19 / 10b / 100 visits / 2 搜索线程 / 2 positions CPU/Eigen 基线：`39.99 visits/s`、`38.60 nnEvals/s`、总测试约 5.1 秒（用户 2026-10-09 日志）。
 - [ ] 运行相同模型、棋盘、visits、线程数及局面数的 GPU 测试，记录 GPU/CPU 对比与 GPU 首次调优耗时。
 - [ ] 如果设备的 Android linker namespace/SELinux 不允许访问 OpenCL，记录实际错误；不能仅根据 OpenCL 库文件存在认定 APP 可用。
