@@ -16,8 +16,9 @@
 
 - [x] 提供独立 OpenCL 交叉编译脚本：`bash tools/build_katago_from_source.sh opencl`，使用单独的 OpenCL 构建/输出目录，不覆盖 CPU 产物。
 - [x] 提供同型号设备 CPU/GPU benchmark 脚本：`bash tools/benchmark_katago_android.sh gpu` / `cpu`。
-- [ ] 从 Android ARM64 设备获得用于链接的 OpenCL 库（仅保存在本地缓存，不提交供应商库）；Ubuntu 安装 `opencl-headers`。
-- [ ] **在用户的 NDK/Android 设备上完成 GPU 编译和运行验证**；首次编译前不能声称 GPU 可用。
+- [x] 从 Android ARM64 设备读取 `/vendor/lib64/libOpenCL.so` 到本地缓存（约 42 MB），本机已找到 OpenCL 头文件；不提交供应商库。
+- [x] 用户 Ubuntu + Android NDK 27.2.12479018 已完成 KataGo OpenCL AArch64 PIE 编译与链接（`[117/117] Linking CXX executable katago`），输出 `build/katago_android_arm64_opencl/libkatago_exec_opencl.so`。
+- [ ] **在 Android 真机上启动 GPU KataGo，完成 OpenCL 初始化及 benchmark 验证**；仅编译成功不能证明 GPU 可用。
 - [ ] 运行同一 `10b.bin` 模型、棋盘尺寸、访问次数和搜索线程数，记录 GPU/CPU 搜索速度和 GPU 初始化时间。
 - [ ] 如果设备的 Android linker namespace/SELinux 不允许访问 OpenCL，记录实际错误；不能仅根据 OpenCL 库文件存在认定 APP 可用。
 - [ ] 根据真实测试结果决定后续 JNI 双后端整合的优先级。
