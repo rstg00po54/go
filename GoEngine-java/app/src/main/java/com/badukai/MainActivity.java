@@ -6,6 +6,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -103,6 +104,9 @@ public class MainActivity extends AppCompatActivity {
     private TextView statusText;
     private AlertDialog gpuTuningDialog;
     private TextView gpuTuningStatus;
+    private int gpuStartupSize;
+    private boolean gpuStartupRequiresTuning;
+    private long gpuStartupStartedMs;
     private TextView aiWinRateText;
     private TextView playerWinRateText;
     private TextView aiCaptureText;
@@ -178,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
         render("正在启动 AI...");
         showMainPage();
         if (!jniGtpSmoke && !jniGtpRepeat) {
-            showGpuTuningIfNeeded(boardSize, selectedBackend);
+            showGpuStartupScreen(boardSize, selectedBackend);
             startEngine();
         }
     }
@@ -1080,7 +1084,7 @@ public class MainActivity extends AppCompatActivity {
                 && (selectedBackend == KataGoEngine.BackendPreference.GPU) == engine.getBackendName().startsWith("GPU");
         render(reusingHumanEngine ? "正在初始化棋局..." : requestedBackend == KataGoEngine.BackendPreference.GPU
                 ? "GPU 初始化中，首次调优可能需要数分钟..." : "正在准备人类棋力模型...");
-        if (!reusingHumanEngine) showGpuTuningIfNeeded(size, requestedBackend);
+        if (!reusingHumanEngine) showGpuStartupScreen(size, requestedBackend);
 
         engineExecutor.execute(() -> {
             String error = null;
@@ -1150,16 +1154,18 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /** First-run GPU tuning is part of the existing preloaded GTP startup, not a second engine. */
-    private void showGpuTuningIfNeeded(int size, KataGoEngine.BackendPreference backend) {
+    /** Show feedback for every cold GPU start, without starting an extra tuning session. */
+    private void showGpuStartupScreen(int size, KataGoEngine.BackendPreference backend) {
         if (backend != KataGoEngine.BackendPreference.GPU || forceLegacyBackend) return;
         if (!new File(getApplicationInfo().nativeLibraryDir, "libkatago_gpu.so").isFile()) return;
-        if (!engine.hasHumanModel()) return;
-        int tuneMask = GpuTuneCache.cachedModelMask(this, size);
-        Log.i(TAG, "GPU tuning preflight boardSize=" + size + " cachedMask=" + tuneMask
-                + " requiredMask=" + GpuTuneCache.BOTH_MODELS);
-        if (tuneMask == GpuTuneCache.BOTH_MODELS) return;
         if (gpuTuningDialog != null && gpuTuningDialog.isShowing()) return;
+
+        gpuStartupSize = size;
+        int tuneMask = GpuTuneCache.cachedModelMask(this, size);
+        gpuStartupRequiresTuning = tuneMask != GpuTuneCache.BOTH_MODELS;
+        gpuStartupStartedMs = SystemClock.elapsedRealtime();
+        Log.i(TAG, "GPU tuning preflight boardSize=" + size + " cachedMask=" + tuneMask
+                + " requiredMask=" + GpuTuneCache.BOTH_MODELS + " showStartupScreen=true");
 
         int padding = (int) (24 * getResources().getDisplayMetrics().density + 0.5f);
         LinearLayout layout = new LinearLayout(this);
@@ -1178,7 +1184,9 @@ public class MainActivity extends AppCompatActivity {
         labelParams.topMargin = padding / 2;
         layout.addView(gpuTuningStatus, labelParams);
         TextView info = new TextView(this);
-        info.setText("当前设备首次使用 GPU 时需要调优。过程可能持续数分钟，完成后会自动保存结果，下次启动直接跳过。");
+        info.setText(gpuStartupRequiresTuning
+                ? "首次使用当前 GPU 需要调优，可能持续数分钟。结果将保存到本机，完成后自动进入对弈。"
+                : "正在载入调优参数、OpenCL 内核与 AI 模型。首次生成内核二进制缓存后，后续启动可能更快。");
         info.setTextSize(12f);
         info.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams infoParams = new LinearLayout.LayoutParams(
@@ -1186,10 +1194,11 @@ public class MainActivity extends AppCompatActivity {
         infoParams.topMargin = padding / 2;
         layout.addView(info, infoParams);
 
-        gpuTuningDialog = new AlertDialog.Builder(this).setTitle("首次 GPU 自动调优")
+        gpuTuningDialog = new AlertDialog.Builder(this)
+                .setTitle(gpuStartupRequiresTuning ? "首次 GPU 自动调优" : "正在启动 GPU AI")
                 .setView(layout).setCancelable(false).create();
         gpuTuningDialog.show();
-        Log.i(TAG, "GPU tuning screen shown for boardSize=" + size);
+        Log.i(TAG, "GPU startup screen shown boardSize=" + size + " needsTuning=" + gpuStartupRequiresTuning);
         mainHandler.removeCallbacks(gpuTuneProgressUpdater);
         mainHandler.post(gpuTuneProgressUpdater);
     }
@@ -1197,11 +1206,16 @@ public class MainActivity extends AppCompatActivity {
     private final Runnable gpuTuneProgressUpdater = new Runnable() {
         @Override public void run() {
             if (gpuTuningDialog == null || !gpuTuningDialog.isShowing()) return;
-            int mask = GpuTuneCache.cachedModelMask(MainActivity.this, boardSize);
-            String stage = (mask & GpuTuneCache.MAIN_MODEL) == 0 ? "第 1 / 2 阶段：正在调优 10b 模型..."
-                    : (mask & GpuTuneCache.HUMAN_MODEL) == 0 ? "第 2 / 2 阶段：正在调优 Human SL 模型..."
-                    : "调优缓存已保存，正在编译内核并加载模型...";
-            if (gpuTuningStatus != null) gpuTuningStatus.setText(stage);
+            String stage;
+            if (gpuStartupRequiresTuning) {
+                int mask = GpuTuneCache.cachedModelMask(MainActivity.this, gpuStartupSize);
+                stage = (mask & GpuTuneCache.MAIN_MODEL) == 0 ? "第 1 / 2 阶段：正在调优 10b 模型..."
+                        : (mask & GpuTuneCache.HUMAN_MODEL) == 0 ? "第 2 / 2 阶段：正在调优 Human SL 模型..."
+                        : "调优完成，正在加载 OpenCL 内核与模型...";
+            }
+            else stage = "正在加载 OpenCL 内核与 AI 模型...";
+            long seconds = (SystemClock.elapsedRealtime() - gpuStartupStartedMs) / 1000;
+            if (gpuTuningStatus != null) gpuTuningStatus.setText(stage + "\n已等待 " + seconds + " 秒");
             mainHandler.postDelayed(this, 1000);
         }
     };
@@ -1212,7 +1226,8 @@ public class MainActivity extends AppCompatActivity {
             gpuTuningDialog.dismiss();
             gpuTuningDialog = null;
             gpuTuningStatus = null;
-            Log.i(TAG, "GPU tuning screen dismissed");
+            Log.i(TAG, "GPU startup screen dismissed elapsedMs=" +
+                    (SystemClock.elapsedRealtime() - gpuStartupStartedMs));
         }
     }
 
