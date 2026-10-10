@@ -15,6 +15,7 @@
 #include "../core/simpleallocator.h"
 #include "../core/test.h"
 #include <chrono>
+#include <future>
 
 //------------------------
 #include "../core/using.h"
@@ -691,6 +692,8 @@ struct OpenCLWeightUploadStats {
   size_t bufferBytes = 0;
   double fp16ConvertMs = 0;
   double copyHostPtrMs = 0;
+  double winogradTransformMs = 0;
+  size_t winogradLayerCount = 0;
 };
 static thread_local OpenCLWeightUploadStats* activeWeightStats = nullptr;
 struct OpenCLWeightUploadScope {
@@ -1148,7 +1151,11 @@ struct ConvLayer {
         a5 = 1.0f * z4;
       };
 
-      for(int oc = 0; oc < outChannelsPadded; oc++) {
+      const auto winogradStart = OpenCLClock::now();
+      // Each oc owns distinct output elements; the floating-point operations
+      // on each filter are unchanged. Parallelize only large conv matrices.
+      auto transformOcRange = [&](int startOc, int endOc) {
+        for(int oc = startOc; oc < endOc; oc++) {
         for(int ic = 0; ic < inChannelsPadded; ic++) {
           float tmp[maxTileYSize][maxTileXSize];
           for(int subY = 0; subY < convYSize; subY++) {
@@ -1192,6 +1199,30 @@ struct ConvLayer {
             }
           }
         }
+      }
+      };
+      const size_t numFilters = (size_t)outChannelsPadded * inChannelsPadded;
+      if(numFilters >= 32768 && outChannelsPadded >= 64) {
+        constexpr int numWorkers = 4;
+        const int chunk = (outChannelsPadded + numWorkers - 1) / numWorkers;
+        std::vector<std::future<void>> workers;
+        workers.reserve(numWorkers - 1);
+        for(int i = 1; i < numWorkers; i++) {
+          const int from = i * chunk;
+          const int to = std::min(outChannelsPadded,from + chunk);
+          if(from < to)
+            workers.push_back(std::async(std::launch::async,transformOcRange,from,to));
+        }
+        transformOcRange(0,std::min(chunk,outChannelsPadded));
+        for(auto& worker : workers)
+          worker.get();
+      }
+      else {
+        transformOcRange(0,outChannelsPadded);
+      }
+      if(activeWeightStats != nullptr) {
+        activeWeightStats->winogradTransformMs += openclMsSince(winogradStart);
+        activeWeightStats->winogradLayerCount++;
       }
 
       filter = createReadOnlyBuffer(handle,transWeights,useFP16);
@@ -2868,6 +2899,8 @@ ComputeHandle* NeuralNet::createComputeHandle(
     const string prefix = "OPENCL_TIMING model=" + loadedModel->modelDesc.name + " board=" +
                           std::to_string(context->nnXLen) + "x" + std::to_string(context->nnYLen);
     logger->write(prefix + " phase=kernel_objects ms=" + std::to_string(handle->kernelObjectsMs));
+    logger->write(prefix + " phase=winograd_weight_transform ms=" + std::to_string(handle->weightStats.winogradTransformMs) +
+                  " layers=" + std::to_string(handle->weightStats.winogradLayerCount));
     logger->write(prefix + " phase=weight_fp16_convert ms=" + std::to_string(handle->weightStats.fp16ConvertMs));
     logger->write(prefix + " phase=weight_copy_host_ptr ms=" + std::to_string(handle->weightStats.copyHostPtrMs) +
                   " buffers=" + std::to_string(handle->weightStats.bufferCount) +
