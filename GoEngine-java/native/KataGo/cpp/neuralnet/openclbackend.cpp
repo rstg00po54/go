@@ -1837,6 +1837,9 @@ struct BlockStack {
   const int nnXLen;
   const int nnYLen;
   vector<pair<int,unique_ptr_void>> blocks;
+  double blockConstructorMs = 0;
+  double slowestBlockMs = 0;
+  int slowestBlockIndex = -1;
 
   BlockStack() = delete;
   BlockStack(const BlockStack&) = delete;
@@ -1951,6 +1954,7 @@ BlockStack::BlockStack(
 {
   assert(descBlocks.size() == numBlocks);
   for(int i = 0; i<numBlocks; i++) {
+    const auto blockStart = OpenCLClock::now();
     if(descBlocks[i].first == ORDINARY_BLOCK_KIND) {
       ResidualBlockDesc* blockDesc = (ResidualBlockDesc*)descBlocks[i].second.get();
       unique_ptr_void blockPtr = make_unique_void(
@@ -1992,6 +1996,12 @@ BlockStack::BlockStack(
     }
     else {
       ASSERT_UNREACHABLE;
+    }
+    const double blockMs = openclMsSince(blockStart);
+    blockConstructorMs += blockMs;
+    if(blockMs > slowestBlockMs) {
+      slowestBlockMs = blockMs;
+      slowestBlockIndex = i;
     }
   }
 }
@@ -2153,7 +2163,9 @@ struct Trunk {
   std::unique_ptr<ConvLayer> initialConv;
   std::unique_ptr<MatMulLayer> initialMatMul;
   std::unique_ptr<SGFMetadataEncoder> sgfMetadataEncoder;
+  const OpenCLClock::time_point blockStackStart;
   const BlockStack blocks;
+  double blocksBuildMs = 0;
   std::unique_ptr<BatchNormLayer> trunkTipBN;
 
   Trunk() = delete;
@@ -2176,8 +2188,10 @@ struct Trunk {
     gpoolNumChannels(desc->gpoolNumChannels),
     nnXLen(nnX),
     nnYLen(nnY),
+    blockStackStart(OpenCLClock::now()),
     blocks(handle,desc->blocks,desc->numBlocks,desc->trunkNumChannels,nnX,nnY,useFP16)
   {
+    blocksBuildMs = openclMsSince(blockStackStart);
     checkBufferSize(maxBatchSize,nnXLen,nnYLen,trunkNumChannels);
     checkBufferSize(maxBatchSize,nnXLen,nnYLen,midNumChannels);
     checkBufferSize(maxBatchSize,nnXLen,nnYLen,regularNumChannels);
@@ -2521,6 +2535,9 @@ struct Model {
   int numValueChannels;
   int numScoreValueChannels;
   int numOwnershipChannels;
+  double trunkBuildMs = 0;
+  double policyHeadBuildMs = 0;
+  double valueHeadBuildMs = 0;
 
   std::unique_ptr<Trunk> trunk;
   std::unique_ptr<PolicyHead> policyHead;
@@ -2586,9 +2603,15 @@ struct Model {
     checkBufferSize(maxBatchSize,nnXLen,nnYLen,numOwnershipChannels);
 
     bool useFP16 = handle->usingFP16Storage;
+    const auto trunkStart = OpenCLClock::now();
     trunk = std::make_unique<Trunk>(handle,&desc->trunk,maxBatchSize,nnXLen,nnYLen,useFP16);
+    trunkBuildMs = openclMsSince(trunkStart);
+    const auto policyStart = OpenCLClock::now();
     policyHead = std::make_unique<PolicyHead>(handle,&desc->policyHead,nnXLen,nnYLen,useFP16);
+    policyHeadBuildMs = openclMsSince(policyStart);
+    const auto valueStart = OpenCLClock::now();
     valueHead = std::make_unique<ValueHead>(handle,&desc->valueHead,nnXLen,nnYLen,useFP16);
+    valueHeadBuildMs = openclMsSince(valueStart);
   }
 
   ~Model() {
@@ -2882,6 +2905,18 @@ ComputeHandle* NeuralNet::createComputeHandle(
                   " buffers=" + std::to_string(handle->weightStats.bufferCount) +
                   " bytes=" + std::to_string(handle->weightStats.bufferBytes));
     logger->write(prefix + " phase=model_build_total ms=" + std::to_string(handle->modelBuildMs));
+    logger->write(prefix + " phase=model_trunk_build ms=" + std::to_string(handle->model->trunkBuildMs));
+    logger->write(prefix + " phase=model_trunk_blocks ms=" + std::to_string(handle->model->trunk->blocksBuildMs) +
+                  " count=" + std::to_string(handle->model->trunk->blocks.numBlocks));
+    logger->write(prefix + " phase=model_trunk_other ms=" +
+                  std::to_string(handle->model->trunkBuildMs - handle->model->trunk->blocksBuildMs));
+    logger->write(prefix + " phase=model_trunk_slowest_block ms=" +
+                  std::to_string(handle->model->trunk->blocks.slowestBlockMs) +
+                  " index=" + std::to_string(handle->model->trunk->blocks.slowestBlockIndex));
+    logger->write(prefix + " phase=model_policy_head ms=" + std::to_string(handle->model->policyHeadBuildMs));
+    logger->write(prefix + " phase=model_value_head ms=" + std::to_string(handle->model->valueHeadBuildMs));
+    logger->write(prefix + " phase=model_build_misc ms=" + std::to_string(handle->modelBuildMs -
+                  handle->model->trunkBuildMs - handle->model->policyHeadBuildMs - handle->model->valueHeadBuildMs));
     logger->write(prefix + " phase=scratch_buffers ms=" + std::to_string(handle->scratchAllocMs));
   }
 
