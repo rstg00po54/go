@@ -26,6 +26,7 @@
 - [ ] **另行验证 Android APP/JNI 场景的 linker namespace 和 SELinux 访问权限**；ADB Shell 能跑不代表 APK 内可直接访问供应商驱动。
 - [x] **2026-10-10 多线程复测完成**：19x19、10b、200 visits、5 positions，搜索线程 2/4/6/8；GPU 在 8 线程达到 115.91 visits/s，相比 CPU 同为 8 线程的 79.33 visits/s 快约 46.1%；2 线程时 GPU 略慢。
 - [ ] 对 APP 实际的短时落子设置（当前 config `maxVisits=20`、`maxTime=0.4`）验证用户可感知延迟；关注更长测试时的发热、耗电和降频，不能直接将 benchmark 的 8 线程结果认定为 APP 最佳配置。
+- [x] 已提供 Android 真机 GTP `genmove` 延迟测试脚本：`bash tools/benchmark_katago_genmove_android.sh`，默认 CPU→GPU，16/24/32 搜索线程、19x19、20 visits/步、maxTime 0.4s，预热后针对 10 个固定开局局面各测试 2 次；统计 mean/median/P90/max，每步落子保存 `moves.csv`，汇总 `summary.csv`；**待用户真机运行验证**。该测试使用 ADB Shell GTP 往返时间，不代表 Android APP GUI 全链路落子延迟。
 
 ### 2026-10-10 手机多线程 benchmark 原始对比
 
