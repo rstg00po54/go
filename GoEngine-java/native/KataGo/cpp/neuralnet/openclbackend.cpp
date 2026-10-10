@@ -1229,40 +1229,40 @@ struct ConvLayer {
           for(int oc = ocStart; oc < ocEnd; oc++) {
             for(int ic = icStart; ic < icEnd; ic++) {
               float tmp[maxTileYSize][maxTileXSize];
-          for(int subY = 0; subY < convYSize; subY++) {
-            for(int subX = 0; subX < convXSize; subX++) {
-              if(oc < outChannels && ic < inChannels)
-                tmp[subY][subX] = desc->weights[((oc * inChannels + ic) * convYSize + subY) * convXSize + subX];
-              else
-                tmp[subY][subX] = 0.0f;
-            }
-          }
+              for(int subY = 0; subY < convYSize; subY++) {
+                for(int subX = 0; subX < convXSize; subX++) {
+                  if(oc < outChannels && ic < inChannels)
+                    tmp[subY][subX] = desc->weights[((oc * inChannels + ic) * convYSize + subY) * convXSize + subX];
+                  else
+                    tmp[subY][subX] = 0.0f;
+                }
+              }
 
-          if(convXSize == 3 && inTileXSize == 4) {
-            for(int subY = 0; subY < convYSize; subY++)
-              transform3x3_4(tmp[subY][0], tmp[subY][1], tmp[subY][2], tmp[subY][3]);
-          }
-          else if(convXSize == 3 && inTileXSize == 6) {
-            for(int subY = 0; subY < convYSize; subY++)
-              transform3x3_6(tmp[subY][0], tmp[subY][1], tmp[subY][2], tmp[subY][3], tmp[subY][4], tmp[subY][5]);
-          }
-          else if(convXSize == 5 && inTileXSize == 6) {
-            for(int subY = 0; subY < convYSize; subY++)
-              transform5x5_6(tmp[subY][0], tmp[subY][1], tmp[subY][2], tmp[subY][3], tmp[subY][4], tmp[subY][5]);
-          }
+              if(convXSize == 3 && inTileXSize == 4) {
+                for(int subY = 0; subY < convYSize; subY++)
+                  transform3x3_4(tmp[subY][0], tmp[subY][1], tmp[subY][2], tmp[subY][3]);
+              }
+              else if(convXSize == 3 && inTileXSize == 6) {
+                for(int subY = 0; subY < convYSize; subY++)
+                  transform3x3_6(tmp[subY][0], tmp[subY][1], tmp[subY][2], tmp[subY][3], tmp[subY][4], tmp[subY][5]);
+              }
+              else if(convXSize == 5 && inTileXSize == 6) {
+                for(int subY = 0; subY < convYSize; subY++)
+                  transform5x5_6(tmp[subY][0], tmp[subY][1], tmp[subY][2], tmp[subY][3], tmp[subY][4], tmp[subY][5]);
+              }
 
-          if(convYSize == 3 && inTileYSize == 4) {
-            for(int subX = 0; subX < inTileXSize; subX++)
-              transform3x3_4(tmp[0][subX], tmp[1][subX], tmp[2][subX], tmp[3][subX]);
-          }
-          else if(convYSize == 3 && inTileYSize == 6) {
-            for(int subX = 0; subX < inTileXSize; subX++)
-              transform3x3_6(tmp[0][subX], tmp[1][subX], tmp[2][subX], tmp[3][subX], tmp[4][subX], tmp[5][subX]);
-          }
-          else if(convYSize == 5 && inTileYSize == 6) {
-            for(int subX = 0; subX < inTileXSize; subX++)
-              transform5x5_6(tmp[0][subX], tmp[1][subX], tmp[2][subX], tmp[3][subX], tmp[4][subX], tmp[5][subX]);
-          }
+              if(convYSize == 3 && inTileYSize == 4) {
+                for(int subX = 0; subX < inTileXSize; subX++)
+                  transform3x3_4(tmp[0][subX], tmp[1][subX], tmp[2][subX], tmp[3][subX]);
+              }
+              else if(convYSize == 3 && inTileYSize == 6) {
+                for(int subX = 0; subX < inTileXSize; subX++)
+                  transform3x3_6(tmp[0][subX], tmp[1][subX], tmp[2][subX], tmp[3][subX], tmp[4][subX], tmp[5][subX]);
+              }
+              else if(convYSize == 5 && inTileYSize == 6) {
+                for(int subX = 0; subX < inTileXSize; subX++)
+                  transform5x5_6(tmp[0][subX], tmp[1][subX], tmp[2][subX], tmp[3][subX], tmp[4][subX], tmp[5][subX]);
+              }
 
               const int blockOffset = ((oc-ocStart)*icBlockSize + (ic-icStart))*maxTransformElts;
               for(int subY = 0; subY < inTileYSize; subY++) {
