@@ -4,6 +4,37 @@
 > 最终目标：Android 使用真正可通过 `System.loadLibrary("katago")` 加载的 `libkatago.so`；不再依赖 `ProcessBuilder` 启动伪装成 `.so` 的 PIE 可执行文件。一个 JNI 主库支持启动时选择 CPU / GPU，后续扩展 RK3588 NPU。  
 > 状态基准：2026-10-09。每完成并验证一个阶段再勾选对应任务。**计划已记录 ≠ 实现已完成。**
 
+## 2026-10-10 RK3588 OpenCL 原生启动分段计时（代码已提交，待真机测量）
+
+已经在 vendored KataGo C++ 中加入 `OPENCL_TIMING` 行，分别标记**10b** 与 **Human SL** 的模型名／路径和 9x9、19x19 棋盘尺寸。计时使用 `std::chrono::steady_clock`，写入原本的 KataGo GTP 日志文件；不在这些测量点调用额外的 `clFinish`，避免改变原来的初始化时序。
+
+- `model_file_parse`：读取和解析神经网络模型文件（文件 I/O + 反序列化）。
+- `context_init`：设备枚举、OpenCL context 和命令队列的创建（包含相关 API 调用）。
+- `tuning_lookup_or_autotune`：读取已有 tuning 缓存，或者首次自动调优；应与每次启动必经的内核构建区分。
+- `kernel_program_build`：`CompiledPrograms` 构造过程，包含 OpenCL 程序的 `clCreateProgramWithSource`、`clBuildProgram`，这是内核构建**总耗时**，不是每个 kernel 的单独时间。
+- `kernel_objects`：调用 `clCreateKernel` 创建计算 kernel 对象的耗时。
+- `weight_fp16_convert`：将模型权重 FP32 转 FP16 的 CPU 侧耗时。
+- `weight_copy_host_ptr`：在模型构造期间通过 `CL_MEM_COPY_HOST_PTR` 创建只读 GPU 权重缓冲区的主机侧 API 耗时，同时记录 `buffers` 和 `bytes`；这**不是**严格的设备端 DMA 计时，不能直接等同 GPU 总上传时间。
+- `model_build_total`：`Model` 构造全过程，包含上述权重转换/复制和卷积权重重排等，**不要与其中的子项重复累加**。
+- `scratch_buffers`：模型初始化后的 scratch/workspace 缓冲区创建。
+- `worker_startup_total`：神经网络计算工作线程启动到就绪的总体耗时，**包含** `kernel_objects`、`model_build_total`、`scratch_buffers`，不要重复累加。
+- `compute_context_total`：整个 compute context 阶段总耗时，**包含** `context_init`、`tuning_lookup_or_autotune`、`kernel_program_build`。
+
+真机验证步骤（必须先重新编译 **GPU 原生 JNI .so**，只编译 APK 不会纳入 C++ 计时改动）：
+
+```bash
+git pull
+bash tools/build_katago_from_source.sh opencljni
+./build.sh -PenableKataGoJniCore=true -PenableKataGoGpuJni=true
+adb -s 8719e18a71a2a66c install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s 8719e18a71a2a66c shell am force-stop com.badukai.java
+# 打开 APP 等待 GPU 初始化成功，再执行：
+adb -s 8719e18a71a2a66c shell "run-as com.badukai.java sh -c 'grep OPENCL_TIMING files/engine/gtp_logs/*.log | tail -40'"
+```
+
+- [x] 已提交 C++ 埋点及日志命名；现有 Java GPU/CPU 选择、计时缓存、命令协议不变。
+- [ ] **尚未在 RK3588 上重新编译 / 真机采样**。拿到 `OPENCL_TIMING` 实数后，比较 10b 与 Human SL 的阶段耗时，再决定是否优化内核二进制缓存或共用 context。
+
 ## 当前基线（必须保留）
 
 - [x] Android ARM64 KataGo CPU/Eigen 可执行文件通过 NDK/CMake/Ninja 编译。
