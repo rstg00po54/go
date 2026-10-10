@@ -139,15 +139,15 @@ adb -s 10AFB21HP5002ZK logcat -d -s KataGoOpenCLProbe:I '*:S'
 - 用户 Ubuntu 首次运行 `bash tools/build_katago_from_source.sh eigenjni`：114/114 份源文件编译到了最终共享库链接步骤，但因缺少 `Version::getGitRevision`、`getKataGoVersion`、`getKataGoVersionForHelp`、`getKataGoVersionFullInfo` 而出现 `ld.lld: undefined symbol`，未生成通过验证的 `libkatago.so`。
 - 根因已确认：上述 Version 实现原来写在 `native/KataGo/cpp/main.cpp` 内；启用 JNI 构建时必须排除 `main()`，却也排除了版本元数据实现。
 - [x] 新建 `native/KataGo/cpp/version.cpp`、从 `main.cpp` 移出完整 Version 实现，并将 `version.cpp` 添加到 `KATAGO_SOURCE_FILES`；命令行 PIE 与 JNI 共享库共用版本实现，避免重复符号。
-- [ ] **待 RK3588 用户环境复测** `bash tools/build_katago_from_source.sh eigenjni`，成功后打包 `./build.sh -PenableKataGoJniCore=true`，再用 `--ez katago_jni true` 检查 APP 内 JNI 核心动态装载。暂不标记链接和 GTP JNI 功能完成。
+- [x] **RK3588 真机已确认 CPU JNI 核心库可加载并调用**：修复 Version 链接错误后，`eigenjni` 生成的 `libkatago.so` 已打包进 APK 并安装。2026-10-10 11:25:33，ADB `--ez katago_jni true` 日志：`KataGoJniCore: KataGo CPU/Eigen JNI core loaded; maxBoardSize=19`。这是 JNI 核心链接/调用验证，不是可下棋的 GTP JNI 引擎。
 
-### 阶段 1A：独立 CPU/Eigen JNI ELF 构建起点（代码已提交、真机验证未完成）
+### 阶段 1A：独立 CPU/Eigen JNI ELF 构建起点（RK3588 已通过真机加载验证）
 
 - [x] `native/KataGo/cpp/CMakeLists.txt` 将原 `add_executable(katago ... main.cpp)` 源码列表拆到 `KATAGO_SOURCE_FILES`；默认仍生成 `katago` PIE，只有 `-DKATAGO_BUILD_JNI_LIBRARY=ON` 才调用 `add_library(katago SHARED ... katago_jni.cpp)`，排除 `main.cpp`。
 - [x] 新建 `app/src/main/cpp/katago_jni.cpp` 与 Java `KataGoNative`，首个 JNI 入口 `nativeBuildStatus()` 读取 KataGo `Board::MAX_LEN`，仅用于验证 C++ 引擎源码与 JNI 库成功链接/装载。
 - [x] `bash tools/build_katago_from_source.sh eigenjni` 的独立输出为 `build/katago_android_arm64_eigenjni/libkatago.so`，CMake 使用 EIGEN CPU 后端，检查 ARM64 ET_DYN、SONAME 与 JNI 符号。
 - [x] `./build.sh -PenableKataGoJniCore=true` 可选把预编译的 `libkatago.so` 与原有 `libkatago_exec.so` 一起打包；默认构建不包括实验 JNI 核心。通过 ADB intent `--ez katago_jni true` 触发日志 Tag `KataGoJniCore`，现有对弈仍使用 `ProcessBuilder`。
-- [ ] **未在用户 Ubuntu 上编译验证 JNI ELF，也未在真机上加载验证。** 预期可能出现 CMake/链接/API 兼容错误，须由日志修复后才能继续。
+- [x] **Ubuntu 构建及 RK3588 Android APP JNI 加载验证通过**：11:25:33 打印 `KataGo CPU/Eigen JNI core loaded; maxBoardSize=19`。仅代表 JNI 库可装载、导出函数可调用；模型推理/GTP 仍未接入。
 - [ ] 这一步只是 JNI 与原生源码的构建整合，`EngineSession`、GTP 请求/响应、模型加载和真实 CPU AI 落子**尚未实现**。不可把符号加载成功标记为整个 JNI 迁移完成。
 
 验证命令：
