@@ -75,6 +75,7 @@ class GtpEngine:
         self.stderr_path = log_dir / ("%s_%d.stderr.log" % (backend, threads))
         self.stderr_file = self.stderr_path.open("wb")
         self.stderr_read_pos = 0
+        self.stderr_pending = b""
         self.process = subprocess.Popen([adb, "-s", serial, "shell", "-T", remote_cmd],
                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                         stderr=self.stderr_file, bufsize=0)
@@ -124,15 +125,28 @@ class GtpEngine:
             self.pending += block.replace(b"\r\n", b"\n")
 
     def read_root_visits(self):
-        # OGS chat diagnostic is written synchronously to stderr before GTP reply.
-        with self.stderr_path.open("rb") as source:
-            source.seek(self.stderr_read_pos)
-            chunk = source.read()
-            self.stderr_read_pos = source.tell()
-        found = re.findall(rb"MALKOVICH:Visits\s+(\d+)", chunk)
-        if not found:
-            raise RuntimeError("No root visit count in KataGo stderr: %s" % self.stderr_path)
-        return int(found[-1])
+        # ADB forwards stdout and stderr independently. A complete GTP response
+        # can arrive before the earlier 'MALKOVICH' stderr line has been forwarded.
+        # Wait briefly, outside the already measured GTP latency, and never lose
+        # a successful move if the optional diagnostic is unavailable.
+        deadline = time.monotonic() + 1.5
+        while True:
+            with self.stderr_path.open("rb") as source:
+                source.seek(self.stderr_read_pos)
+                data = source.read()
+                self.stderr_read_pos = source.tell()
+            self.stderr_pending += data
+            found = re.findall(rb"MALKOVICH:\s*Visits\s+(\d+)", self.stderr_pending)
+            if found:
+                self.stderr_pending = b""
+                return int(found[-1])
+            if time.monotonic() >= deadline:
+                # Keep only any incomplete trailing record for the next read.
+                self.stderr_pending = self.stderr_pending[-256:]
+                print("WARNING: Root visits unavailable in %s; keeping latency measurement." %
+                      self.stderr_path, file=sys.stderr)
+                return None
+            time.sleep(0.025)
 
     def close(self):
         if self.process.poll() is None:
@@ -155,7 +169,8 @@ def summarize(report_dir, measurements, threads, backends, visit_cap):
     for row in measurements:
         key = (row["backend"], row["threads"])
         groups[key].append(row["latency_ms"])
-        visits[key].append(row["root_visits"])
+        if row["root_visits"] is not None:
+            visits[key].append(row["root_visits"])
     summary = {}
     with (report_dir / "summary.csv").open("w", newline="") as output:
         writer = csv.DictWriter(output, fieldnames=SUMMARY_FIELDS)
@@ -165,14 +180,15 @@ def summarize(report_dir, measurements, threads, backends, visit_cap):
                 values = groups.get((backend, thread), [])
                 if not values:
                     continue
+                observed = visits[(backend, thread)]
                 row = dict(backend=backend, threads=thread, moves=len(values),
                            mean_ms=statistics.mean(values), median_ms=statistics.median(values),
                            p90_ms=percentile(values, 0.90), min_ms=min(values), max_ms=max(values),
-                           mean_visits=statistics.mean(visits[(backend, thread)]),
-                           at_visit_cap_pct=100 * sum(v >= visit_cap for v in visits[(backend, thread)]) / len(values))
+                           mean_visits=statistics.mean(observed) if observed else None,
+                           at_visit_cap_pct=(100 * sum(v >= visit_cap for v in observed) / len(observed)) if observed else None)
                 summary[(backend, thread)] = row
-                writer.writerow({key: "%.2f" % value if isinstance(value, float) else value
-                                 for key, value in row.items()})
+                writer.writerow({key: ("%.2f" % value if isinstance(value, float) else
+                                       "" if value is None else value) for key, value in row.items()})
 
     print("\n======== Real genmove latency (ms; lower is better) ========")
     print("%-7s %7s %7s %10s %10s %10s %10s %10s %10s" %
@@ -181,9 +197,11 @@ def summarize(report_dir, measurements, threads, backends, visit_cap):
         for thread in threads:
             row = summary.get((backend, thread))
             if row:
-                print("%-7s %7d %7d %10.2f %10.2f %10.2f %10.2f %10.1f %9.1f%%" %
+                mean_visits = ("%.1f" % row["mean_visits"]) if row["mean_visits"] is not None else "N/A"
+                hit_cap = ("%.1f%%" % row["at_visit_cap_pct"]) if row["at_visit_cap_pct"] is not None else "N/A"
+                print("%-7s %7d %7d %10.2f %10.2f %10.2f %10.2f %10s %10s" %
                       (backend.upper(), thread, row["moves"], row["mean_ms"],
-                       row["median_ms"], row["p90_ms"], row["max_ms"], row["mean_visits"], row["at_visit_cap_pct"]))
+                       row["median_ms"], row["p90_ms"], row["max_ms"], mean_visits, hit_cap))
 
     if "cpu" in backends and "gpu" in backends:
         print("\n======== GPU latency reduction vs CPU (same threads) ========")
@@ -221,7 +239,10 @@ def main():
     parser.add_argument("--adb", default=os.getenv("ADB") or shutil.which("adb"))
     parser.add_argument("--serial", default=os.getenv("ANDROID_SERIAL"))
     parser.add_argument("--report-dir", type=Path)
+    parser.add_argument("--resume", action="store_true", help="Resume an interrupted run using --report-dir")
     args = parser.parse_args()
+    if args.resume and args.report_dir is None:
+        parser.error("--resume requires --report-dir pointing to an existing run")
     try:
         threads = [int(item) for item in args.threads.split(",")]
         if not threads or len(set(threads)) != len(threads) or any(t < 1 or t > 256 for t in threads):
@@ -267,12 +288,45 @@ def main():
                  "cp /vendor/lib64/libOpenCL.so %s/libGLES_mali.so" % REMOTE])
 
         measurements = []
-        with (report_dir / "moves.csv").open("w", newline="") as csv_file:
+        completed = set()
+        moves_path = report_dir / "moves.csv"
+        if args.resume:
+            if not moves_path.is_file():
+                raise RuntimeError("No saved moves.csv to resume: %s" % moves_path)
+            with moves_path.open(newline="") as saved:
+                reader = csv.DictReader(saved)
+                if reader.fieldnames != MOVE_FIELDS:
+                    raise RuntimeError("Existing moves.csv columns do not match: %s" % moves_path)
+                for source in reader:
+                    row = dict(backend=source["backend"], threads=int(source["threads"]),
+                               repeat=int(source["repeat"]), position=int(source["position"]),
+                               plies=int(source["plies"]), move=source["move"],
+                               latency_ms=float(source["latency_ms"]),
+                               root_visits=int(source["root_visits"]) if source["root_visits"] else None)
+                    key = (row["backend"], row["threads"], row["repeat"], row["position"])
+                    if (row["backend"] not in backends or row["threads"] not in threads or
+                            row["repeat"] not in range(1, args.repeats + 1) or
+                            row["position"] not in range(1, args.positions + 1) or key in completed):
+                        raise RuntimeError("Invalid or duplicated saved measurement: %s" % (key,))
+                    completed.add(key)
+                    measurements.append(row)
+            print("Resume: preserving %d already measured moves" % len(completed), flush=True)
+
+        with moves_path.open("a" if args.resume else "w", newline="") as csv_file:
             writer = csv.DictWriter(csv_file, fieldnames=MOVE_FIELDS)
-            writer.writeheader()
+            if not args.resume:
+                writer.writeheader()
             for backend in backends:
                 for thread in threads:
-                    print("\n======== %s / %d search threads ========" % (backend.upper(), thread), flush=True)
+                    unfinished = [(repeat, position) for repeat in range(1, args.repeats + 1)
+                                  for position in range(1, args.positions + 1)
+                                  if (backend, thread, repeat, position) not in completed]
+                    if not unfinished:
+                        print("======== %s / %d threads: %d moves already saved; skipping ========" %
+                              (backend.upper(), thread, args.positions * args.repeats), flush=True)
+                        continue
+                    print("\n======== %s / %d search threads (%d remaining) ========" %
+                          (backend.upper(), thread, len(unfinished)), flush=True)
                     engine = GtpEngine(args.adb, serial, backend, thread, args.visits,
                                        args.max_time, report_dir, args.timeout)
                     try:
@@ -283,6 +337,9 @@ def main():
                         engine.read_root_visits()
                         for repeat in range(1, args.repeats + 1):
                             for position in range(args.positions):
+                                key = (backend, thread, repeat, position + 1)
+                                if key in completed:
+                                    continue
                                 engine.command("clear_board")
                                 plies = position * 2
                                 for idx, move in enumerate(OPENINGS[:plies]):
@@ -300,8 +357,10 @@ def main():
                                 measurements.append(row)
                                 writer.writerow(row)
                                 csv_file.flush()
-                                print("  repeat %d position %02d/%02d: %7.1f ms, visits %d/%d, move %s" %
-                                      (repeat, position+1, args.positions, latency_ms, actual_visits, args.visits, move), flush=True)
+                                completed.add(key)
+                                visits_note = ("%d/%d" % (actual_visits, args.visits)) if actual_visits is not None else "N/A"
+                                print("  repeat %d position %02d/%02d: %7.1f ms, visits %s, move %s" %
+                                      (repeat, position+1, args.positions, latency_ms, visits_note, move), flush=True)
                     except (OSError, RuntimeError, TimeoutError):
                         print("Engine details: %s/%s_%d.stderr.log" %
                               (report_dir, backend, thread), file=sys.stderr)
