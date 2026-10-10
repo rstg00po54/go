@@ -1046,8 +1046,10 @@ public class MainActivity extends AppCompatActivity {
         final int size = boardSize, kyu = aiKyu, visits = searchVisits;
         final double seconds = searchTime;
         final KataGoEngine.BackendPreference requestedBackend = selectedBackend;
-        render(requestedBackend == KataGoEngine.BackendPreference.GPU ? "GPU 初始化中，首次调优可能需要数分钟..."
-                : engine.isHumanSLRunning() ? "正在初始化棋局..." : "正在准备人类棋力模型...");
+        boolean reusingHumanEngine = engine.isHumanSLRunning()
+                && (selectedBackend == KataGoEngine.BackendPreference.GPU) == engine.getBackendName().startsWith("GPU");
+        render(reusingHumanEngine ? "正在初始化棋局..." : requestedBackend == KataGoEngine.BackendPreference.GPU
+                ? "GPU 初始化中，首次调优可能需要数分钟..." : "正在准备人类棋力模型...");
 
         engineExecutor.execute(() -> {
             String error = null;
@@ -1065,14 +1067,27 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     Log.i(TAG, "Reusing running Human SL KataGo process for new game");
                 }
+                long initStartedNs = System.nanoTime(), phaseNs = initStartedNs;
                 boolean ok = engine.setBoardSize(size);
+                Log.i(TAG, "New game setup boardsize elapsedMs=" + (System.nanoTime() - phaseNs) / 1000000L + " ok=" + ok);
+                phaseNs = System.nanoTime();
                 ok = engine.clearBoard() && ok;
+                Log.i(TAG, "New game setup clear_board elapsedMs=" + (System.nanoTime() - phaseNs) / 1000000L + " ok=" + ok);
+                phaseNs = System.nanoTime();
                 ok = engine.setChineseRules() && ok;
+                Log.i(TAG, "New game setup chinese_rules elapsedMs=" + (System.nanoTime() - phaseNs) / 1000000L + " ok=" + ok);
+                phaseNs = System.nanoTime();
                 ok = engine.setKomi(komiFor(size)) && ok;
+                Log.i(TAG, "New game setup komi elapsedMs=" + (System.nanoTime() - phaseNs) / 1000000L + " ok=" + ok);
                 if (ok && handicapCount > 0) ok = engine.setHandicapStones(handicapPoints, size);
                 if (!ok) throw new IllegalStateException("棋盘或让子初始化失败");
+                phaseNs = System.nanoTime();
                 if (!engine.setSearchLimits(visits, seconds)) throw new IllegalStateException("AI 搜索限制设置失败");
+                Log.i(TAG, "New game setup search_limits elapsedMs=" + (System.nanoTime() - phaseNs) / 1000000L);
+                phaseNs = System.nanoTime();
                 if (!engine.setHumanRank(kyu)) throw new IllegalStateException("AI 棋力等级设置失败");
+                Log.i(TAG, "New game setup human_rank elapsedMs=" + (System.nanoTime() - phaseNs) / 1000000L
+                        + " totalMs=" + (System.nanoTime() - initStartedNs) / 1000000L);
             } catch (Exception e) {
                 error = e.getMessage() == null ? e.toString() : e.getMessage();
                 Log.e(TAG, "Human SL game initialization failed", e);
