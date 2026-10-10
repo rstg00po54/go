@@ -330,6 +330,29 @@ bash tools/test_katago_gpu_jni_android.sh 8719e18a71a2a66c
 
 正常 CPU APK 继续使用旧参数 `./build.sh -PenableKataGoJniCore=true`。GPU smoke 的独立 activity 在不启用 `-PenableKataGoGpuJni=true` 时由 manifest 禁用，不会影响正常主界面。
 
+### 阶段 1G：APP 新局 CPU / GPU 后端选择（代码已提交，待 RK3588 UI 实测）
+
+- [x] 新局弹窗 `dialog_new_game.xml` 新增「AI 运行」下拉框：`CPU / Eigen`、`GPU / OpenCL`；没有打包 GPU JNI 的 APK 只显示 CPU，避免伪装可用。
+- [x] `MainActivity` 通过 `SharedPreferences("katago_settings")` 记录本次新局选择，重开新局时应用它；对局 UI 显示引擎**实际后端**而不只是用户选择的标签。胜率分析仍保持独立 CPU PIE。
+- [x] `GpuGtpService` 作为 `:katago_gpu` 进程内的 bound Service，使用 `Messenger` 接收命令、通过 IPC 分片返回完整 GTP stdout；`GpuRemoteSession` 在 APP 主进程接到既有 `responseQueue`，原来的棋局初始化、Human SL 棋力、落子、悔棋、形势判断和推荐搜索方法保持同一套调用。
+- [x] 与已真机验证的 GPU smoke 共用 **独立 Android 进程/静态 OpenCL JNI 库**，主进程继续独占 CPU/Eigen JNI；不把同名 Eigen/OpenCL C++ 实现暴力链接进一个 JNI 库。
+- [x] GPU 启动/IPC 失败时尝试自动回退 CPU JNI，再必要时回退 PIE；选项变更仅在新局前停止旧会话并启动新后端；GPU 运行过程中进程异常退出时快速结束等待并提示重新开局（**尚未支持当前棋局中途无缝迁移至 CPU**）。
+- [x] 将已通过的 `jni_gpu_smoke/home` OpenCL 调优缓存优先用于 GPU 对局，尽量避免重新调优；若缓存不适用于棋盘尺寸或 Human SL 模型，仍可能首次调优。
+- [ ] **待用户 Ubuntu 编译和 RK3588 真机验证**：进入新局选 GPU，确认 `GPU/OPENCL JNI ENGINE STARTED SUCCESSFULLY`、`Game backend requested=GPU actual=GPU/OpenCL JNI ready=true`，并测试 Human SL 等级切换、真实落子、悔棋、形势与胜率分析、切回 CPU 后能否重新启动。
+- [ ] 完整阶段 2/3 所要求的单一 `libkatago.so` 内运行时 CPU/GPU/NPU 切换仍未实现；当前是两个 JNI ELF + 独立进程 IPC 的过渡架构。
+
+构建和验证：
+
+```bash
+git pull --ff-only github rk3588-engine
+./build.sh -PenableKataGoJniCore=true -PenableKataGoGpuJni=true
+adb -s 8719e18a71a2a66c install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s 8719e18a71a2a66c logcat -c
+adb -s 8719e18a71a2a66c shell am force-stop com.badukai.java
+adb -s 8719e18a71a2a66c shell am start -n com.badukai.java/com.badukai.MainActivity
+adb -s 8719e18a71a2a66c logcat -d -s MainActivity:I KataGoEngine:I GpuGtpService:I GpuRemoteSession:I AndroidRuntime:E '*:S' | tail -100
+```
+
 ## 阶段 2：抽象运行时 BackendManager —— 先只有 CPU
 
 **目标**：今后增加计算后端不用改 Java/GTP/MCTS 核心协议。
