@@ -140,11 +140,13 @@ NNEvaluator::NNEvaluator(
     loadedModel = NeuralNet::loadModelFile(modelFileName,expectedSha256);
 #ifdef USE_OPENCL_BACKEND
     if(logger != NULL) {
-      double ioShaMs = 0.0, parseMs = 0.0;
-      ModelDesc::getLastLoadTiming(ioShaMs,parseMs);
+      double fileIoMs = 0.0, sha256Ms = 0.0, parseMs = 0.0, shaWaitMs = 0.0;
+      ModelDesc::getLastLoadTiming(fileIoMs,sha256Ms,parseMs,shaWaitMs);
       const string modelPrefix = "OPENCL_TIMING model_file=" + modelFileName + " board=" +
                                  std::to_string(nnXLen) + "x" + std::to_string(nnYLen);
-      logger->write(modelPrefix + " phase=model_file_io_sha ms=" + std::to_string(ioShaMs));
+      logger->write(modelPrefix + " phase=model_file_io ms=" + std::to_string(fileIoMs));
+      logger->write(modelPrefix + " phase=model_sha256 ms=" + std::to_string(sha256Ms));
+      logger->write(modelPrefix + " phase=model_sha_wait ms=" + std::to_string(shaWaitMs));
       logger->write(modelPrefix + " phase=model_descriptor_parse ms=" + std::to_string(parseMs));
     }
     if(logger != NULL)
