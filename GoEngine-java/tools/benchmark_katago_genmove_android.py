@@ -23,8 +23,8 @@ PROJECT = Path(__file__).resolve().parent.parent
 REMOTE = "/data/local/tmp/katago_bench"
 OPENINGS = ["D4", "Q16", "D16", "Q4", "K10", "K4", "D10", "Q10",
             "G7", "N13", "C3", "R17", "K16", "K7", "E11", "P8", "F17", "O3"]
-MOVE_FIELDS = ["backend", "threads", "repeat", "position", "plies", "move", "latency_ms"]
-SUMMARY_FIELDS = ["backend", "threads", "moves", "mean_ms", "median_ms", "p90_ms", "min_ms", "max_ms"]
+MOVE_FIELDS = ["backend", "threads", "repeat", "position", "plies", "move", "latency_ms", "root_visits"]
+SUMMARY_FIELDS = ["backend", "threads", "moves", "mean_ms", "median_ms", "p90_ms", "min_ms", "max_ms", "mean_visits", "at_visit_cap_pct"]
 
 
 def run(args, capture=False):
@@ -67,11 +67,14 @@ class GtpEngine:
             "logAllGTPCommunication=false",
             "logSearchInfo=false",
             "logToStderr=false",
+            "ogsChatToStderr=true",  # One compact 'MALKOVICH:Visits N' diagnostic per genmove.
         ))
         remote_cmd = ("cd %s && HOME=%s TMPDIR=%s LD_LIBRARY_PATH=%s:/vendor/lib64:/system/vendor/lib64 "
                       "%s/katago_%s gtp -model 10b.bin -config default_gtp.cfg -override-config %s" %
                       (REMOTE, REMOTE, REMOTE, REMOTE, REMOTE, backend, overrides))
-        self.stderr_file = (log_dir / ("%s_%d.stderr.log" % (backend, threads))).open("wb")
+        self.stderr_path = log_dir / ("%s_%d.stderr.log" % (backend, threads))
+        self.stderr_file = self.stderr_path.open("wb")
+        self.stderr_read_pos = 0
         self.process = subprocess.Popen([adb, "-s", serial, "shell", "-T", remote_cmd],
                                         stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                         stderr=self.stderr_file, bufsize=0)
@@ -120,6 +123,17 @@ class GtpEngine:
                                    (command, self.process.poll()))
             self.pending += block.replace(b"\r\n", b"\n")
 
+    def read_root_visits(self):
+        # OGS chat diagnostic is written synchronously to stderr before GTP reply.
+        with self.stderr_path.open("rb") as source:
+            source.seek(self.stderr_read_pos)
+            chunk = source.read()
+            self.stderr_read_pos = source.tell()
+        found = re.findall(rb"MALKOVICH:Visits\s+(\d+)", chunk)
+        if not found:
+            raise RuntimeError("No root visit count in KataGo stderr: %s" % self.stderr_path)
+        return int(found[-1])
+
     def close(self):
         if self.process.poll() is None:
             self.timeout = min(self.timeout, 3.0)
@@ -135,10 +149,13 @@ class GtpEngine:
         self.stderr_file.close()
 
 
-def summarize(report_dir, measurements, threads, backends):
+def summarize(report_dir, measurements, threads, backends, visit_cap):
     groups = defaultdict(list)
+    visits = defaultdict(list)
     for row in measurements:
-        groups[(row["backend"], row["threads"])].append(row["latency_ms"])
+        key = (row["backend"], row["threads"])
+        groups[key].append(row["latency_ms"])
+        visits[key].append(row["root_visits"])
     summary = {}
     with (report_dir / "summary.csv").open("w", newline="") as output:
         writer = csv.DictWriter(output, fieldnames=SUMMARY_FIELDS)
@@ -150,21 +167,23 @@ def summarize(report_dir, measurements, threads, backends):
                     continue
                 row = dict(backend=backend, threads=thread, moves=len(values),
                            mean_ms=statistics.mean(values), median_ms=statistics.median(values),
-                           p90_ms=percentile(values, 0.90), min_ms=min(values), max_ms=max(values))
+                           p90_ms=percentile(values, 0.90), min_ms=min(values), max_ms=max(values),
+                           mean_visits=statistics.mean(visits[(backend, thread)]),
+                           at_visit_cap_pct=100 * sum(v >= visit_cap for v in visits[(backend, thread)]) / len(values))
                 summary[(backend, thread)] = row
                 writer.writerow({key: "%.2f" % value if isinstance(value, float) else value
                                  for key, value in row.items()})
 
     print("\n======== Real genmove latency (ms; lower is better) ========")
-    print("%-7s %7s %7s %10s %10s %10s %10s" %
-          ("Backend", "Threads", "Moves", "Mean", "Median", "P90", "Max"))
+    print("%-7s %7s %7s %10s %10s %10s %10s %10s %10s" %
+          ("Backend", "Threads", "Moves", "Mean", "Median", "P90", "Max", "Visits", "HitCap%"))
     for backend in backends:
         for thread in threads:
             row = summary.get((backend, thread))
             if row:
-                print("%-7s %7d %7d %10.2f %10.2f %10.2f %10.2f" %
+                print("%-7s %7d %7d %10.2f %10.2f %10.2f %10.2f %10.1f %9.1f%%" %
                       (backend.upper(), thread, row["moves"], row["mean_ms"],
-                       row["median_ms"], row["p90_ms"], row["max_ms"]))
+                       row["median_ms"], row["p90_ms"], row["max_ms"], row["mean_visits"], row["at_visit_cap_pct"]))
 
     if "cpu" in backends and "gpu" in backends:
         print("\n======== GPU latency reduction vs CPU (same threads) ========")
@@ -261,6 +280,7 @@ def main():
                         engine.command("komi 7.5")
                         engine.command("clear_board")
                         engine.command("genmove B")  # Warm GPU kernels, search threads, and model.
+                        engine.read_root_visits()
                         for repeat in range(1, args.repeats + 1):
                             for position in range(args.positions):
                                 engine.command("clear_board")
@@ -270,24 +290,25 @@ def main():
                                     engine.command("play %s %s" % (color, move))
                                 engine.command("clear_cache")
                                 move, latency_ms = engine.command("genmove B")
+                                actual_visits = engine.read_root_visits()
                                 if not re.fullmatch(r"(?:PASS|RESIGN|[A-HJ-T](?:[1-9]|1[0-9]))",
                                                     move, flags=re.IGNORECASE):
                                     raise RuntimeError("Unexpected genmove response: %r" % move)
                                 row = dict(backend=backend, threads=thread, repeat=repeat,
                                            position=position+1, plies=plies, move=move,
-                                           latency_ms=round(latency_ms, 3))
+                                           latency_ms=round(latency_ms, 3), root_visits=actual_visits)
                                 measurements.append(row)
                                 writer.writerow(row)
                                 csv_file.flush()
-                                print("  repeat %d position %02d/%02d: %7.1f ms, move %s" %
-                                      (repeat, position+1, args.positions, latency_ms, move), flush=True)
+                                print("  repeat %d position %02d/%02d: %7.1f ms, visits %d/%d, move %s" %
+                                      (repeat, position+1, args.positions, latency_ms, actual_visits, args.visits, move), flush=True)
                     except (OSError, RuntimeError, TimeoutError):
                         print("Engine details: %s/%s_%d.stderr.log" %
                               (report_dir, backend, thread), file=sys.stderr)
                         raise
                     finally:
                         engine.close()
-            summarize(report_dir, measurements, threads, backends)
+            summarize(report_dir, measurements, threads, backends, args.visits)
     except (OSError, RuntimeError, TimeoutError, subprocess.SubprocessError) as error:
         print("ERROR: %s" % error, file=sys.stderr)
         return 1
