@@ -477,3 +477,31 @@ GoEngine-java/
 2. 现有 CPU APK 为回退基线；未通过实际编译和真机测试的阶段不可标记完成。
 3. 一个真正的 JNI 主库（`libkatago.so`）是目标，CPU/GPU/NPU 运行时选择；**设备专用驱动和模型不要求全部嵌入单库**。
 4. 高耗时 `genmove`、分析不能阻塞 Android UI 线程，JNI 内的 C++ 崩溃可能直接带崩 APP，应有错误处理与资源释放测试。
+
+
+### GPU cold-start screen and OpenCL program binary cache (2026-10-10)
+
+- `MainActivity` displays a non-cancelable loading dialog for **every cold GPU startup**, including the normal cached-tuning case. When OpenCL autotuning cache files are missing it shows the two-model tuning stages. It closes when the existing game engine is ready or fails; it does **not** spawn a separate tuning session.
+- KataGo OpenCL tuner parameters remain under `<homeDataDir>/opencltuning/tune11_gpu*.txt`, where `homeDataDir` comes from the GTP configuration. CPU/Eigen is unaffected.
+- Inference kernels now save and load OpenCL program binaries under `<homeDataDir>/openclprograms/*.bin`. This is **not** enabled for temporary kernels built during automatic tuning.
+- Cache key includes device name/vendor, driver and OpenCL versions, kernel name/source, and complete compile options. Files have a magic header and payload checksum. Invalid/truncated or driver-rejected binaries are removed and rebuilt from OpenCL source automatically.
+- `clCreateProgramWithBinary` is always followed by `clBuildProgram` as the OpenCL 1.2 API requires; the driver may still spend time at this step. Cache speedup is hardware/driver dependent and **must be measured**.
+- The original `OPENCL_TIMING ... phase=kernel_program_build` measures total time including cache reads. New `OPENCL_CACHE hits=N misses=N invalid=N saved=N binary_load_ms=... source_build_ms=...` logs one summary for each model. On a fresh install expect misses and saves, then hits on subsequent cold starts, if the vendor runtime supports program binaries.
+
+Rebuild the *native OpenCL JNI* library after pulling the change; Gradle alone packages the previously built .so:
+
+```bash
+git pull
+bash tools/build_katago_from_source.sh opencljni
+./build.sh -PenableKataGoJniCore=true -PenableKataGoGpuJni=true
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+To inspect recent summaries and the UI:
+
+```bash
+adb shell "run-as com.badukai.java sh -c 'grep -hE \"OPENCL_CACHE|OPENCL_TIMING.*kernel_program_build\" files/engine/gtp_logs/*.log | tail -20'"
+adb logcat -d -s MainActivity:I KataGoEngine:I '*:S' | grep -E 'GPU startup screen|GPU tuning preflight|Initial engine ready'
+```
+
+This change is committed but has not been built or benchmarked on the target devices yet.
