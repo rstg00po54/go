@@ -7,7 +7,7 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.widget.TextView;
 
-import com.badukai.engine.KataGoNative;
+import com.badukai.engine.KataGoGpuNative;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -18,8 +18,8 @@ import java.nio.file.Files;
 
 /**
  * Debug-only entrypoint enabled by -PenableKataGoGpuJni=true.
- * Runs in :katago_gpu to avoid loading the OpenCL and Eigen backends in
- * one process (their KataGo global state is not safe to mix yet).
+ * Runs in an opt-in dedicated process to exercise GPU JNI independently
+ * of the app. Normal gameplay now runs GPU JNI in the main app process.
  */
 public final class GpuSmokeActivity extends Activity {
     private static final String TAG = "KataGoGpuJni";
@@ -36,8 +36,7 @@ public final class GpuSmokeActivity extends Activity {
     private void runSmoke() {
         try {
             Log.i(TAG, "Starting isolated OpenCL JNI test pid=" + Process.myPid());
-            KataGoNative.selectIsolatedGpuLibrary();
-            Log.i(TAG, "GPU JNI linkage: " + KataGoNative.checkCoreLinkage());
+            Log.i(TAG, "GPU JNI linkage: " + KataGoGpuNative.checkCoreLinkage());
 
             File dir = new File(getFilesDir(), "jni_gpu_smoke");
             File logDir = new File(dir, "gtp_logs");
@@ -68,7 +67,7 @@ public final class GpuSmokeActivity extends Activity {
             Files.write(configFile.toPath(), config.getBytes(StandardCharsets.UTF_8));
 
             Log.i(TAG, "Model size=" + model.length() + ", config=" + configFile.getAbsolutePath());
-            try (KataGoNative.GtpSession session = KataGoNative.createSession(model, configFile)) {
+            try (KataGoGpuNative.GtpSession session = KataGoGpuNative.createSession(model, configFile, null)) {
                 if (session == null) throw new IllegalStateException("GPU JNI createSession returned null");
                 Log.i(TAG, "GPU JNI session created, using compiled OpenCL backend");
                 StringBuilder pending = new StringBuilder();
@@ -94,7 +93,7 @@ public final class GpuSmokeActivity extends Activity {
         }
     }
 
-    private String request(KataGoNative.GtpSession session, StringBuilder pending, String command, long timeoutMs) {
+    private String request(KataGoGpuNative.GtpSession session, StringBuilder pending, String command, long timeoutMs) {
         Log.i(TAG, "Sending " + command);
         if (!session.send(command)) throw new IllegalStateException("GPU JNI send failed: " + command);
         long deadline = SystemClock.elapsedRealtime() + timeoutMs;
