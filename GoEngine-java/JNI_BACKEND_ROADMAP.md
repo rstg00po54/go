@@ -548,3 +548,27 @@ adb -s 8719e18a71a2a66c logcat -d -s MainActivity:I '*:S' | grep 'Initial engine
 ```
 
 - Threaded Winograd weight output was checked with a standalone C++ reference test across three matrix shapes, comparing all resulting float32 bytes bit-for-bit; **Android cross-compilation and RK3588 runtime validation have not yet been performed**.
+
+
+### Follow-up on RK3588 model startup profiling (2026-10-10, 15:59)
+
+User's RK3588 measurements show the per-layer `std::async` Winograd attempt was a regression:
+
+- Earlier Human SL `model_build_total` ~1370.7 ms, 10b ~157.5 ms.
+- New parallel version Human SL ~1513.6 ms, 10b ~181.3 ms.
+- Human SL `winograd_weight_transform` ~647.7 ms / 78 layers and `weight_fp16_convert` ~558.9 ms; model file load+SHA ~801.2 ms and descriptor parse ~250.9 ms.
+- **The per-layer Winograd parallelization has been reverted**, retaining detailed timings and the previous serial numerics.
+
+Instead, OpenCL loads of **uncompressed .bin models** now overlap the SHA-256 computation with descriptor parsing, after reading the file once. The full 256-bit hash is still computed and `expectedSha256` checked before the model is returned; `ModelDesc::sha256` is set to the verified digest. Non-OpenCL backends and gzipped model loading are unchanged. This only starts one asynchronous hash task per .bin model, not threads per convolution layer.
+
+New logs: `phase=model_file_io`, `phase=model_sha256`, `phase=model_sha_wait`, `phase=model_descriptor_parse`, and existing `phase=model_file_parse`. Hash and parsing times overlap and **must not be summed** as if sequential. Confirm the full elapsed time on the board.
+
+```bash
+git pull
+bash tools/build_katago_from_source.sh opencljni
+./build.sh -PenableKataGoJniCore=true -PenableKataGoGpuJni=true
+adb -s 8719e18a71a2a66c install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s 8719e18a71a2a66c shell "run-as com.badukai.java sh -c 'grep -hE \"phase=(model_file_io|model_sha256|model_sha_wait|model_descriptor_parse|model_file_parse|winograd_weight_transform|model_build_total)\" files/engine/gtp_logs/*.log | tail -16'"
+```
+
+These changes have not yet been cross-compiled or benchmarked on RK3588; assess three complete GPU cold starts using `Initial engine ready` timings before considering further optimization.
