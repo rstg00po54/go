@@ -86,8 +86,8 @@
 
 - GPU 16 线程为当前短时响应/搜索量的优先候选：平均 63.1 visits，477.83ms。GPU 32 线程 visits 更多但约 522ms；CPU 32 线程退化至约 870ms。
 - **`maxTime=0.4` 不是 GTP 返回时长的硬截止**，尤其并发搜索时存在尾部等待与结束处理。不要只用平均 visits 或只用延迟一项判断强弱；过多线程也可能降低 MCTS 搜索质量。
-- [ ] 继续固定访问量 `--visits 20 --max-time 60` 的配对实验，排除时间截断造成的误差，然后再决定 APP 默认搜索线程数。
-- [ ] 设备兼容性仍待处理：Android 手机 `10AFB21HP5002ZK` 的 GPU 运行在动态链接阶段报 `libGLES_mali.so` verneed/DT_NEEDED 错误，先完成 RK3588 性能测试，再研究一份 ARM64 GPU 程序的通用 OpenCL 加载方案。
+- [x] 固定访问量 `--visits 20 --max-time 60` 的 CPU/GPU 完整配对实验已完成，见上一节 240 步测量；APP 默认线程数仍待端到端验证。
+- [x] 旧的 `libGLES_mali.so` + `OPENCL_1.0` 固定依赖已通过独立 `openclportable` ARM64 PIE 解决，vivo 与 RK3588 ADB Shell 实际 GPU 推理均通过；后续还须验证真正 JNI 库。
 
 ### 2026-10-10 RK3588 与 vivo OpenCL ELF ABI 对比及实验构建
 
@@ -112,7 +112,8 @@
 - [x] Manifest 添加 `<uses-native-library android:name="libOpenCL.so" android:required="false" />`（targetSdk 34；不支持 OpenCL 的设备仍能安装应用）。
 - [x] `MainActivity` 只在 ADB intent 传入 `--ez katago_probe true` 时使用后台线程检查，日志 Tag `KataGoOpenCLProbe`；普通启动、不启用探针时原有 Java + PIE 对弈路径保持不变。
 - [x] **vivo X300 Pro / Android 16 APP 进程实测通过**：已用 `-PenableKataGoProbe=true` 构建、安装并从 `MainActivity` 触发 JNI；2026-10-10 11:06:44 日志为 `KataGoOpenCLProbe: libOpenCL.so: loaded; clGetPlatformIDs error=0, platforms=1`。已证明 APP 内 `System.loadLibrary("katago_probe")`、`dlopen("libOpenCL.so")`、`dlsym("clGetPlatformIDs")`、查询 OpenCL 平台成功，但不意味着 APP 内完成完整模型推理。
-- [ ] **下一项**：在 RK3588 Android 12 安装同一 APK，运行 APP 内 JNI/OpenCL 探针并检查 `dlopen` 返回、平台数量。确认两台设备均可访问后，开始真正的 CPU EngineSession/JNI 化；保留原有 `ProcessBuilder` 回退。
+- [x] **RK3588 / LubanCat-4IO / Android 12 APP 进程实测通过**：安装与 vivo 相同的 APK，ADB `am start ... --ez katago_probe true`；2026-10-10 11:08:23 日志：`KataGoOpenCLProbe: libOpenCL.so: loaded; clGetPlatformIDs error=0, platforms=1`。**两台设备 APP 内均成功通过 JNI 调用 OpenCL 平台枚举**。
+- [ ] 下一个里程碑：CPU/Eigen 的真正 KataGo JNI `EngineSession`（加载模型/对弈/搜索/取消/释放），保留 `ProcessBuilder` 回退；现有探针仅验证 APP 加载库与 OpenCL 平台枚举，还没有执行 NN 运算或建立 GPU context。
 
 探针验证：
 
@@ -124,6 +125,13 @@ adb -s 10AFB21HP5002ZK shell am force-stop com.badukai.java
 adb -s 10AFB21HP5002ZK shell am start -n com.badukai.java/com.badukai.MainActivity --ez katago_probe true
 adb -s 10AFB21HP5002ZK logcat -d -s KataGoOpenCLProbe:I '*:S'
 ```
+
+### 下一步实施顺序（2026-10-10 已完成双设备 APP OpenCL 探针后）
+
+1. 原生核心拆分：`native/KataGo/cpp/CMakeLists.txt` 目前的 `add_executable(katago ... main.cpp)` 把引擎、GTP、工具命令一起链接成 PIE；需拆出可复用的核心目标，再单独建 JNI `SHARED` 目标，不能改文件名冒充 JNI。
+2. GTP 会话拆分：`command/gtp.cpp` 当前为 `while(getline(cin,line))` 并依赖异步 `cout`，需要可传入命令、异步事件/结果回调的长生命周期 EngineSession。不能为每个命令重新执行一个 GTP main，也不能全局 `std::cin/std::cout` 重定向。
+3. 先完成 CPU/Eigen 生命周期：Java `start(model, config)`、`sendCommand`、`stopSearch`、`destroy`，确认 `name`、`boardsize`、`play`、`genmove`、`undo`、分析；两套会话的全局状态需要核查。
+4. CPU JNI 真机验证通过前，现有 `KataGoEngine.java` 的 `ProcessBuilder` 默认入口和 Gradle PIE 打包保持不变。CPU 迁移后再让 GPU OpenCL 后端进入同一个 JNI 主库；**现阶段未创建真正的 `libkatago.so`**。
 
 ## 阶段 1：CPU/Eigen 真正 JNI 化 —— 首先实现
 
