@@ -105,6 +105,26 @@
 
 注意：这个实验先保留两个独立的 Android PIE 可执行文件，不代表阶段 3 的「同一个 JNI `.so` CPU/GPU 运行时切换」已经完成。Android NDK 不自带厂商 OpenCL 库；库是否对 APP 可见还需要设备侧验证。
 
+### JNI 改造前置验证：Android APP 内的 OpenCL 动态加载（2026-10-10）
+
+- [x] 新增独立 `app/src/main/cpp/katago_probe.cpp` 和 Java `KataGoOpenCLProbe`，通过真正 JNI `libkatago_probe.so` 执行 `dlopen("libOpenCL.so")`、`dlsym("clGetPlatformIDs")`、平台数查询，输出清晰的加载错误。
+- [x] `app/build.gradle.kts` 通过 `-PenableKataGoProbe=true` **可选**启用 `externalNativeBuild`。正常 APK 构建不触发新的 JNI 工程。
+- [x] Manifest 添加 `<uses-native-library android:name="libOpenCL.so" android:required="false" />`（targetSdk 34；不支持 OpenCL 的设备仍能安装应用）。
+- [x] `MainActivity` 只在 ADB intent 传入 `--ez katago_probe true` 时使用后台线程检查，日志 Tag `KataGoOpenCLProbe`；普通启动、不启用探针时原有 Java + PIE 对弈路径保持不变。
+- [ ] **Ubuntu/Gradle 构建验证、两台手机/开发板 APP 进程的 OpenCL 探针日志尚未实测**。成功加载探针≠已经 JNI 化 KataGo；成功 `clGetPlatformIDs`≠可完成 10b 模型推理。
+- [ ] 先在 RK3588 和 vivo 上验证 APP 能否访问厂商 OpenCL，再动现有引擎功能。
+
+探针验证：
+
+```bash
+./build.sh -PenableKataGoProbe=true
+adb -s 10AFB21HP5002ZK install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s 10AFB21HP5002ZK logcat -c
+adb -s 10AFB21HP5002ZK shell am force-stop com.badukai.java
+adb -s 10AFB21HP5002ZK shell am start -n com.badukai.java/com.badukai.MainActivity --ez katago_probe true
+adb -s 10AFB21HP5002ZK logcat -d -s KataGoOpenCLProbe:I '*:S'
+```
+
 ## 阶段 1：CPU/Eigen 真正 JNI 化 —— 首先实现
 
 **目标**：构建可加载的 `libkatago.so`，Java 在 APP 进程内调用 KataGo；先不接 GPU/NPU。
