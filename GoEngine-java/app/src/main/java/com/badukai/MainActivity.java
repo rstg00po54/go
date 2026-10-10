@@ -126,8 +126,13 @@ public class MainActivity extends AppCompatActivity {
         if (jniGtpSmoke || jniGtpRepeat)
             new Thread(() -> runJniGtpSmoke(jniGtpRepeat), "KataGo-JNI-GTP").start();
         setContentView(R.layout.activity_main);
-        engine = new KataGoEngine(getApplicationContext());
+        // Main-game CPU/Human SL prefers JNI when libkatago.so is bundled.
+        // Rescue switch: adb shell am start ... --ez katago_legacy true
+        boolean forceLegacy = getIntent() != null && getIntent().getBooleanExtra("katago_legacy", false);
+        engine = new KataGoEngine(getApplicationContext(), "engine", !forceLegacy);
         winRateEngine = new KataGoEngine(getApplicationContext(), "engine_winrate");
+        Log.i(TAG, "Game engine preference=" + (forceLegacy ? "PIE forced" : "JNI if bundled")
+                + "; winrate engine=PIE");
         bindViews();
         TencentHomeScaler.install((ViewGroup) mainPageContainer);
         boardView.setOnIntersectionClickListener(this::onBoardTap);
