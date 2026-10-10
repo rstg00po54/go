@@ -14,7 +14,8 @@ public final class KataGoNative {
      * own library before calling any other KataGoNative method.
      */
     public static synchronized void selectIsolatedGpuLibrary() {
-        if (loadedLibrary != null) throw new IllegalStateException("KataGo JNI already loaded: " + loadedLibrary);
+        if (loadedLibrary != null && !"katago_gpu".equals(loadedLibrary))
+            throw new IllegalStateException("Cannot select GPU JNI after loading " + loadedLibrary);
         selectedLibrary = "katago_gpu";
     }
 
