@@ -129,28 +129,45 @@ ConvLayerDesc::ConvLayerDesc(istream& in, bool binaryFloats) {
   if(convXSize % 2 != 1 || convYSize % 2 != 1)
     throw StringError(name + ": convolution filter sizes must be odd, found even sizes");
 
-  // Model file order is y,x,ic,oc
-  // Cuda's order is oc,ic,y,x
-  int numWeights = convYSize * convXSize * inChannels * outChannels;
+  // Model file order: [y,x,ic,oc]. Internal layout: [oc,ic,y,x].
+  const size_t kernelArea = (size_t)convYSize * convXSize;
+  const size_t numWeights = kernelArea * inChannels * outChannels;
   weights.resize(numWeights);
-  int ocStride = convYSize * convXSize * inChannels;
-  int icStride = convYSize * convXSize;
-  int yStride = convXSize;
-  int xStride = 1;
-
   vector<float> floats;
-  readFloats(in, (size_t)convYSize * convXSize * inChannels * outChannels, binaryFloats, name, floats);
-  size_t idx = 0;
-  for(int y = 0; y < convYSize; y++) {
-    for(int x = 0; x < convXSize; x++) {
-      for(int ic = 0; ic < inChannels; ic++) {
-        for(int oc = 0; oc < outChannels; oc++) {
-          float w = floats[idx++];
-          weights[oc * ocStride + ic * icStride + y * yStride + x * xStride] = w;
+  readFloats(in,numWeights,binaryFloats,name,floats);
+#if defined(USE_OPENCL_BACKEND) && defined(__ANDROID__)
+  // Block the transpose on Android. Adjacent output channels in the source
+  // share cache lines, while each destination channel writes a contiguous
+  // kernel. This changes only memory access order, not any float arithmetic.
+  static constexpr int ocBlockSize = 16;
+  static constexpr int icBlockSize = 8;
+  for(int ocBase = 0; ocBase < outChannels; ocBase += ocBlockSize) {
+    int ocEnd = std::min(ocBase + ocBlockSize,outChannels);
+    for(int icBase = 0; icBase < inChannels; icBase += icBlockSize) {
+      int icEnd = std::min(icBase + icBlockSize,inChannels);
+      for(int ic = icBase; ic < icEnd; ic++) {
+        for(int oc = ocBase; oc < ocEnd; oc++) {
+          float* dst = weights.data() + ((size_t)oc * inChannels + ic) * kernelArea;
+          const float* src = floats.data() + (size_t)ic * outChannels + oc;
+          for(size_t yx = 0; yx < kernelArea; yx++)
+            dst[yx] = src[yx * inChannels * outChannels];
         }
       }
     }
   }
+#else
+  size_t idx = 0;
+  const size_t ocStride = kernelArea * inChannels;
+  for(int y = 0; y < convYSize; y++) {
+    for(int x = 0; x < convXSize; x++) {
+      for(int ic = 0; ic < inChannels; ic++) {
+        for(int oc = 0; oc < outChannels; oc++) {
+          weights[(size_t)oc * ocStride + ic * kernelArea + y * convXSize + x] = floats[idx++];
+        }
+      }
+    }
+  }
+#endif
   if(in.fail())
     throw StringError(name + ": convlayer failed to expected number of float weights");
 }
@@ -190,15 +207,13 @@ BatchNormLayerDesc::BatchNormLayerDesc(istream& in, bool binaryFloats) {
   if(epsilon <= 0)
     throw StringError(name + ": epsilon (" + Global::floatToString(epsilon) + ") <= 0");
 
-  vector<float> floats;
-  readFloats(in, (size_t)numChannels, binaryFloats, name, floats);
-  mean = floats;
-  readFloats(in, (size_t)numChannels, binaryFloats, name, floats);
-  variance = floats;
+  // The parser already reads each binary float block in one operation.
+  // Decode into its final vector instead of copying a temporary vector.
+  readFloats(in,(size_t)numChannels,binaryFloats,name,mean);
+  readFloats(in,(size_t)numChannels,binaryFloats,name,variance);
 
   if(hasScale) {
-    readFloats(in, (size_t)numChannels, binaryFloats, name, floats);
-    scale = floats;
+    readFloats(in,(size_t)numChannels,binaryFloats,name,scale);
   }
   else {
     scale.resize(numChannels);
@@ -207,8 +222,7 @@ BatchNormLayerDesc::BatchNormLayerDesc(istream& in, bool binaryFloats) {
   }
 
   if(hasBias) {
-    readFloats(in, (size_t)numChannels, binaryFloats, name, floats);
-    bias = floats;
+    readFloats(in,(size_t)numChannels,binaryFloats,name,bias);
   }
   else {
     bias.resize(numChannels);
@@ -287,22 +301,8 @@ MatMulLayerDesc::MatMulLayerDesc(istream& in, bool binaryFloats) {
   if(inChannels <= 0 || outChannels <= 0)
     throw StringError(name + ": number of in and out channels must be positive");
 
-  // Model file order is ic,oc
-  // Cublas order used is also ic,oc since we transpose
-  int numWeights = inChannels * outChannels;
-  weights.resize(numWeights);
-  int icStride = outChannels;
-  int ocStride = 1;
-
-  vector<float> floats;
-  readFloats(in, (size_t)inChannels * outChannels, binaryFloats, name, floats);
-  size_t idx = 0;
-  for(int ic = 0; ic < inChannels; ic++) {
-    for(int oc = 0; oc < outChannels; oc++) {
-      float w = floats[idx++];
-      weights[oc * ocStride + ic * icStride] = w;
-    }
-  }
+  // File and internal orders are both [ic,oc]; no transpose is needed.
+  readFloats(in,(size_t)inChannels * outChannels,binaryFloats,name,weights);
   if(in.fail())
     throw StringError(name + ": matmullayer failed to parse expected number of matmul weights");
 }
@@ -332,11 +332,7 @@ MatBiasLayerDesc::MatBiasLayerDesc(istream& in, bool binaryFloats) {
   if(numChannels <= 0)
     throw StringError(name + ": number of channels must be positive");
 
-  weights.resize(numChannels);
-
-  vector<float> floats;
-  readFloats(in, (size_t)numChannels, binaryFloats, name, floats);
-  weights = floats;
+  readFloats(in,(size_t)numChannels,binaryFloats,name,weights);
 
   if(in.fail())
     throw StringError(name + ": matbiaslayer failed to parse expected number of matbias weights");
