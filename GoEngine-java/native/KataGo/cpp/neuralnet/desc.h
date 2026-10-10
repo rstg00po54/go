@@ -337,6 +337,8 @@ struct ModelDesc {
   //Loads a model from a file that may or may not be gzipped, storing it in descBuf
   //If expectedSha256 is nonempty, will also verify sha256 of the loaded data.
   static void loadFromFileMaybeGZipped(const std::string& fileName, ModelDesc& descBuf, const std::string& expectedSha256);
+  // Last load on this thread: separately account for file I/O/SHA and descriptor parsing.
+  static void getLastLoadTiming(double& fileIoAndShaMs, double& descriptorParseMs);
 
   //Return the "nearest" supported ruleset to desiredRules by this model.
   //Fills supported with true if desiredRules itself was exactly supported, false if some modifications had to be made.
