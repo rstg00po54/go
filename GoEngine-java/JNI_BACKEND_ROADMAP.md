@@ -26,7 +26,7 @@
 - [ ] **另行验证 Android APP/JNI 场景的 linker namespace 和 SELinux 访问权限**；ADB Shell 能跑不代表 APK 内可直接访问供应商驱动。
 - [x] **2026-10-10 多线程复测完成**：19x19、10b、200 visits、5 positions，搜索线程 2/4/6/8；GPU 在 8 线程达到 115.91 visits/s，相比 CPU 同为 8 线程的 79.33 visits/s 快约 46.1%；2 线程时 GPU 略慢。
 - [ ] 对 APP 实际的短时落子设置（当前 config `maxVisits=20`、`maxTime=0.4`）验证用户可感知延迟；关注更长测试时的发热、耗电和降频，不能直接将 benchmark 的 8 线程结果认定为 APP 最佳配置。
-- [x] 已提供 Android 真机 GTP `genmove` 延迟测试脚本：`bash tools/benchmark_katago_genmove_android.sh`，默认 CPU→GPU，16/24/32 搜索线程、19x19、20 visits/步、maxTime 0.4s，预热后针对 10 个固定开局局面各测试 2 次；统计 mean/median/P90/max，每步落子保存 `moves.csv`，汇总 `summary.csv`；**待用户真机运行验证**。该测试使用 ADB Shell GTP 往返时间，不代表 Android APP GUI 全链路落子延迟。
+- [x] Android 真机 GTP `genmove` 延迟脚本已运行成功：`bash tools/benchmark_katago_genmove_android.sh`（CPU→GPU，16/24/32 搜索线程、19x19、20 visits/步、maxTime 0.4s，10 局面×2 次）；本次 CPU 平均 433–441ms、GPU 约 439ms，所有结果接近 400ms 时间上限，**不能据此得出两后端推理速度相同的结论**。已新增从 KataGo `ogsChatToStderr` 的 `MALKOVICH:Visits` 输出记录每步真实 root visits、平均 visits 与触及访问上限比例（此增强待真机复测）。下一步使用 `bash tools/benchmark_katago_genmove_android.sh --max-time 60 --threads 2,4,6,8,16,24,32` 排除 0.4s 截断，再按 APP 限时负载评估实际体验；本脚本测的是 ADB Shell GTP 往返耗时，而非 APP UI 全链路。
 
 ### 2026-10-10 手机多线程 benchmark 原始对比
 
