@@ -698,6 +698,11 @@ struct OpenCLWeightUploadStats {
   size_t bufferBytes = 0;
   double fp16ConvertMs = 0;
   double fp16BufferInitMs = 0;
+  std::unique_ptr<uint16_t[]> fp16Scratch;
+  size_t fp16ScratchCapacity = 0;
+  size_t fp16ScratchGrows = 0;
+  size_t fp16ScratchReuses = 0;
+  size_t fp16ScratchPeakBytes = 0;
   size_t neonConvertedBytes = 0;
   double copyHostPtrMs = 0;
   double winogradBufferInitMs = 0;
@@ -774,16 +779,33 @@ static cl_mem createReadOnlyBuffer(ComputeHandleInternal* handle, const float* d
 #if defined(__aarch64__) && defined(__linux__) && defined(__clang__)
     usedNeon = canConvertWeightFP16Neon();
 #endif
-    std::unique_ptr<uint16_t[]> neonData;
+    std::unique_ptr<uint16_t[]> localNeonData;
+    uint16_t* neonData = nullptr;
     vector<half_t> fallbackData;
-    if(usedNeon)
-      neonData.reset(new uint16_t[count]);  // No zero fill. Every element is written by NEON.
+    if(usedNeon && activeWeightStats != nullptr) {
+      // CL_MEM_COPY_HOST_PTR copies host data before clCreateBuffer returns.
+      // This allows model layers to reuse one fully overwritten staging buffer.
+      if(activeWeightStats->fp16ScratchCapacity < count) {
+        activeWeightStats->fp16Scratch.reset(new uint16_t[count]);
+        activeWeightStats->fp16ScratchCapacity = count;
+        activeWeightStats->fp16ScratchGrows++;
+        activeWeightStats->fp16ScratchPeakBytes = std::max(
+          activeWeightStats->fp16ScratchPeakBytes,count * sizeof(uint16_t));
+      }
+      else
+        activeWeightStats->fp16ScratchReuses++;
+      neonData = activeWeightStats->fp16Scratch.get();
+    }
+    else if(usedNeon) {
+      localNeonData.reset(new uint16_t[count]);
+      neonData = localNeonData.get();
+    }
     else
-      fallbackData.resize(count);           // Preserve the original portable half conversion.
+      fallbackData.resize(count);  // Keep the existing non-NEON conversion path.
     const double fp16BufferInitMs = openclMsSince(convertStart);
 #if defined(__aarch64__) && defined(__linux__) && defined(__clang__)
     if(usedNeon)
-      convertWeightFP16Neon(data,neonData.get(),count);
+      convertWeightFP16Neon(data,neonData,count);
 #endif
     if(!usedNeon) {
       for(size_t i = 0; i < count; i++)
@@ -792,7 +814,7 @@ static cl_mem createReadOnlyBuffer(ComputeHandleInternal* handle, const float* d
     const double convertMs = openclMsSince(convertStart);
     const auto copyStart = OpenCLClock::now();
     cl_int err;
-    void* hostPtr = usedNeon ? static_cast<void*>(neonData.get()) : static_cast<void*>(fallbackData.data());
+    void* hostPtr = usedNeon ? static_cast<void*>(neonData) : static_cast<void*>(fallbackData.data());
     cl_mem buffer = clCreateBuffer(handle->clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                    count * sizeof(half_t), hostPtr, &err);
     CHECK_ERR(err);
@@ -2999,6 +3021,8 @@ struct ComputeHandle {
     // Keep the temporary staging buffer only during model construction.
     weightStats.winogradScratch.reset();
     weightStats.winogradScratchCapacity = 0;
+    weightStats.fp16Scratch.reset();
+    weightStats.fp16ScratchCapacity = 0;
     modelBuildMs = openclMsSince(modelStart);
     const auto scratchStart = OpenCLClock::now();
     scratch = std::make_unique<ScratchBuffers>(handle.get(), maxBatchSize, nnXLen, nnYLen);
@@ -3047,6 +3071,9 @@ ComputeHandle* NeuralNet::createComputeHandle(
                   " layers=" + std::to_string(handle->weightStats.winogradLayerCount));
     logger->write(prefix + " phase=weight_fp16_convert ms=" + std::to_string(handle->weightStats.fp16ConvertMs));
     logger->write(prefix + " phase=weight_fp16_buffer_init ms=" + std::to_string(handle->weightStats.fp16BufferInitMs));
+    logger->write(prefix + " phase=weight_fp16_buffer_reuse grows=" + std::to_string(handle->weightStats.fp16ScratchGrows) +
+                  " reuses=" + std::to_string(handle->weightStats.fp16ScratchReuses) +
+                  " peak_bytes=" + std::to_string(handle->weightStats.fp16ScratchPeakBytes));
     logger->write(prefix + " phase=winograd_buffer_init ms=" + std::to_string(handle->weightStats.winogradBufferInitMs) +
                   " bytes=" + std::to_string(handle->weightStats.winogradBufferInitBytes));
     logger->write(prefix + " phase=winograd_buffer_reuse grows=" + std::to_string(handle->weightStats.winogradScratchGrows) +
