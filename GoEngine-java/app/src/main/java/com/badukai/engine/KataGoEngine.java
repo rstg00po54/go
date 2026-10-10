@@ -905,7 +905,12 @@ public class KataGoEngine {
             }
         }
         List<SearchRecommendation> candidates = new ArrayList<>(latest.values());
-        // Display ①②③ by the current player\'s win rate, highest first. KataGo\'s\n        // internal search order is only a tie-breaker, not the displayed ranking.\n        candidates.sort((a, b) -> {\n            int result = Double.compare(b.winrate, a.winrate);\n            return result != 0 ? result : Integer.compare(a.order, b.order);\n        });
+        // Rank displayed suggestions by the current player's win rate (high to low).
+        // Use KataGo's original search order to break ties.
+        candidates.sort((a, b) -> {
+            int result = Double.compare(b.winrate, a.winrate);
+            return result != 0 ? result : Integer.compare(a.order, b.order);
+        });
         return candidates;
     }
 
