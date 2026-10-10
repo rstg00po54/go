@@ -17,6 +17,15 @@
 #include <chrono>
 #include <cstring>
 #include <memory>
+#include <fstream>
+#include <cstdio>
+#include <cstdint>
+#if defined(__ANDROID__)
+#include <sys/stat.h>
+#include <unistd.h>
+#include <thread>
+#include <functional>
+#endif
 #include <type_traits>
 #if defined(__aarch64__) && defined(__linux__) && defined(__clang__)
 #include <arm_neon.h>
@@ -124,8 +133,9 @@ void NeuralNet::globalCleanup() {
 
 struct LoadedModel {
   ModelDesc modelDesc;
+  const string sourceFile;
 
-  LoadedModel(const string& fileName, const string& expectedSha256) {
+  LoadedModel(const string& fileName, const string& expectedSha256) : sourceFile(fileName) {
     ModelDesc::loadFromFileMaybeGZipped(fileName,modelDesc,expectedSha256);
   }
 
@@ -693,6 +703,160 @@ struct ComputeHandleInternal {
 
 };
 
+
+#if defined(__ANDROID__)
+// Persist the final FP16 Winograd filter layout, not the much larger FP32 scratch.
+// The file lives next to the app-private model. Bump version whenever the
+// Winograd matrices, half conversion, or filter storage layout changes.
+struct WinogradFP16CacheLayer {
+  uint32_t convX, convY, inChannels, outChannels, inPadded, outPadded;
+  uint32_t inTileX, inTileY, outTileX, outTileY;
+  uint64_t elements;
+};
+static_assert(sizeof(WinogradFP16CacheLayer) == 48, "Unexpected Winograd cache layer layout");
+
+struct WinogradFP16CacheHeader {
+  uint64_t magic;
+  uint32_t version, boardX, boardY, layerCount;
+  uint64_t sourceBytes, sourceStamp, dataBytes;
+};
+
+struct WinogradFP16Cache {
+  static constexpr uint64_t magic = 0x57474F4650313643ULL;
+  static constexpr uint32_t version = 1;
+  string sourcePath, cachePath, tempPath;
+  std::ifstream reader;
+  std::ofstream writer;
+  WinogradFP16CacheHeader header{};
+  uint32_t readLayers = 0, writtenLayers = 0, hitLayers = 0, missLayers = 0;
+  uint64_t readBytes = 0, writtenBytes = 0;
+  double readMs = 0.0, writeMs = 0.0;
+  bool saved = false;
+
+  static uint64_t stamp(const struct stat& st) {
+    return static_cast<uint64_t>(st.st_mtime) * 1000000000ULL + static_cast<uint64_t>(st.st_mtim.tv_nsec);
+  }
+
+  WinogradFP16Cache(const string& modelFile, int boardX, int boardY) : sourcePath(modelFile) {
+    if(modelFile.size() < 4 || modelFile.substr(modelFile.size()-4) != ".bin") return;
+    struct stat modelStat{};
+    if(::stat(modelFile.c_str(),&modelStat) != 0 || modelStat.st_size <= 0) return;
+    cachePath = modelFile + ".wgfp16.v1." + std::to_string(boardX) + "x" + std::to_string(boardY) + ".cache";
+    header.magic = magic;
+    header.version = version;
+    header.boardX = static_cast<uint32_t>(boardX);
+    header.boardY = static_cast<uint32_t>(boardY);
+    header.sourceBytes = static_cast<uint64_t>(modelStat.st_size);
+    header.sourceStamp = stamp(modelStat);
+
+    reader.open(cachePath,std::ios::binary);
+    if(reader.is_open()) {
+      WinogradFP16CacheHeader disk{};
+      struct stat cacheStat{};
+      reader.read(reinterpret_cast<char*>(&disk),sizeof(disk));
+      bool valid = bool(reader) && ::stat(cachePath.c_str(),&cacheStat) == 0 &&
+        disk.magic == magic && disk.version == version &&
+        disk.boardX == header.boardX && disk.boardY == header.boardY &&
+        disk.sourceBytes == header.sourceBytes && disk.sourceStamp == header.sourceStamp &&
+        disk.layerCount > 0 && disk.layerCount < 1024 &&
+        cacheStat.st_size >= static_cast<off_t>(sizeof(disk)) &&
+        disk.dataBytes == static_cast<uint64_t>(cacheStat.st_size) - sizeof(disk);
+      if(valid) {
+        header.layerCount = disk.layerCount;
+        header.dataBytes = disk.dataBytes;
+        return;
+      }
+      reader.close();
+      std::remove(cachePath.c_str());
+    }
+    beginWrite();
+  }
+
+  void beginWrite() {
+    if(cachePath.empty()) return;
+    // Independent temp names avoid collisions between workers/processes.
+    tempPath = cachePath + ".tmp." + std::to_string(getpid()) + "." +
+      std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id()));
+    writer.open(tempPath,std::ios::binary | std::ios::trunc);
+    if(writer.is_open()) {
+      writer.write(reinterpret_cast<const char*>(&header),sizeof(header));
+      if(!writer) abortWrite();
+    }
+  }
+
+  void abortWrite() {
+    if(writer.is_open()) writer.close();
+    if(!tempPath.empty()) std::remove(tempPath.c_str());
+  }
+
+  void invalidateRead() {
+    if(reader.is_open()) reader.close();
+    if(!cachePath.empty()) std::remove(cachePath.c_str());
+    // If no cached layers have been used yet, regenerate immediately.
+    // Otherwise recompute remaining layers; next launch recreates a complete cache.
+    if(hitLayers == 0) beginWrite();
+  }
+
+  bool read(const WinogradFP16CacheLayer& expected, void* dest, size_t bytes) {
+    if(!reader.is_open()) return false;
+    const auto start = OpenCLClock::now();
+    WinogradFP16CacheLayer actual{};
+    reader.read(reinterpret_cast<char*>(&actual),sizeof(actual));
+    const bool matches = bool(reader) && readLayers < header.layerCount &&
+      std::memcmp(&actual,&expected,sizeof(actual)) == 0 &&
+      bytes == expected.elements * sizeof(uint16_t);
+    if(matches) reader.read(reinterpret_cast<char*>(dest),bytes);
+    if(!matches || !reader) {
+      readMs += openclMsSince(start);
+      invalidateRead();
+      return false;
+    }
+    readLayers++;
+    hitLayers++;
+    readBytes += bytes;
+    readMs += openclMsSince(start);
+    return true;
+  }
+
+  void write(const WinogradFP16CacheLayer& entry, const void* bytes, size_t count) {
+    if(!writer.is_open()) return;
+    const auto start = OpenCLClock::now();
+    writer.write(reinterpret_cast<const char*>(&entry),sizeof(entry));
+    writer.write(reinterpret_cast<const char*>(bytes),count);
+    writeMs += openclMsSince(start);
+    if(!writer) { abortWrite(); return; }
+    writtenLayers++;
+    writtenBytes += count;
+  }
+
+  void finish() {
+    if(reader.is_open()) {
+      if(readLayers != header.layerCount) invalidateRead();
+      else reader.close();
+    }
+    if(!writer.is_open()) return;
+    if(writtenLayers == 0) { abortWrite(); return; }
+    header.layerCount = writtenLayers;
+    header.dataBytes = writtenBytes + static_cast<uint64_t>(writtenLayers) * sizeof(WinogradFP16CacheLayer);
+    writer.seekp(0,std::ios::beg);
+    writer.write(reinterpret_cast<const char*>(&header),sizeof(header));
+    writer.flush();
+    const bool okay = bool(writer);
+    writer.close();
+    struct stat st{};
+    if(okay && ::stat(sourcePath.c_str(),&st) == 0 &&
+       static_cast<uint64_t>(st.st_size) == header.sourceBytes && stamp(st) == header.sourceStamp &&
+       std::rename(tempPath.c_str(),cachePath.c_str()) == 0) {
+      saved = true;
+      return;
+    }
+    abortWrite();
+  }
+
+  ~WinogradFP16Cache() { abortWrite(); }
+};
+#endif
+
 struct OpenCLWeightUploadStats {
   size_t bufferCount = 0;
   size_t bufferBytes = 0;
@@ -714,6 +878,9 @@ struct OpenCLWeightUploadStats {
   size_t winogradScratchPeakBytes = 0;
   double winogradTransformMs = 0;
   size_t winogradLayerCount = 0;
+#if defined(__ANDROID__)
+  std::unique_ptr<WinogradFP16Cache> winogradCache;
+#endif
 };
 static thread_local OpenCLWeightUploadStats* activeWeightStats = nullptr;
 struct OpenCLWeightUploadScope {
@@ -769,10 +936,26 @@ static bool canConvertWeightFP16Neon() {
 }
 #endif
 
+static uint16_t* getFP16UploadScratch(OpenCLWeightUploadStats* stats, size_t count) {
+  if(stats->fp16ScratchCapacity < count) {
+    stats->fp16Scratch.reset(new uint16_t[count]);
+    stats->fp16ScratchCapacity = count;
+    stats->fp16ScratchGrows++;
+    stats->fp16ScratchPeakBytes = std::max(stats->fp16ScratchPeakBytes,count * sizeof(uint16_t));
+  }
+  else
+    stats->fp16ScratchReuses++;
+  return stats->fp16Scratch.get();
+}
+
 // Read-only model weights are overwritten completely before CL_MEM_COPY_HOST_PTR.
 // On FP16-capable ARM64, use uninitialized uint16_t storage for NEON output instead
 // of spending time zero-initializing half objects that are immediately replaced.
-static cl_mem createReadOnlyBuffer(ComputeHandleInternal* handle, const float* data, size_t count, bool useFP16) {
+static cl_mem createReadOnlyBuffer(ComputeHandleInternal* handle, const float* data, size_t count, bool useFP16
+#if defined(__ANDROID__)
+                                   ,const WinogradFP16CacheLayer* winogradEntry = nullptr
+#endif
+) {
   if(useFP16) {
     const auto convertStart = OpenCLClock::now();
     bool usedNeon = false;
@@ -782,20 +965,8 @@ static cl_mem createReadOnlyBuffer(ComputeHandleInternal* handle, const float* d
     std::unique_ptr<uint16_t[]> localNeonData;
     uint16_t* neonData = nullptr;
     vector<half_t> fallbackData;
-    if(usedNeon && activeWeightStats != nullptr) {
-      // CL_MEM_COPY_HOST_PTR copies host data before clCreateBuffer returns.
-      // This allows model layers to reuse one fully overwritten staging buffer.
-      if(activeWeightStats->fp16ScratchCapacity < count) {
-        activeWeightStats->fp16Scratch.reset(new uint16_t[count]);
-        activeWeightStats->fp16ScratchCapacity = count;
-        activeWeightStats->fp16ScratchGrows++;
-        activeWeightStats->fp16ScratchPeakBytes = std::max(
-          activeWeightStats->fp16ScratchPeakBytes,count * sizeof(uint16_t));
-      }
-      else
-        activeWeightStats->fp16ScratchReuses++;
-      neonData = activeWeightStats->fp16Scratch.get();
-    }
+    if(usedNeon && activeWeightStats != nullptr)
+      neonData = getFP16UploadScratch(activeWeightStats,count);
     else if(usedNeon) {
       localNeonData.reset(new uint16_t[count]);
       neonData = localNeonData.get();
@@ -815,6 +986,10 @@ static cl_mem createReadOnlyBuffer(ComputeHandleInternal* handle, const float* d
     const auto copyStart = OpenCLClock::now();
     cl_int err;
     void* hostPtr = usedNeon ? static_cast<void*>(neonData) : static_cast<void*>(fallbackData.data());
+#if defined(__ANDROID__)
+    if(winogradEntry != nullptr && activeWeightStats != nullptr && activeWeightStats->winogradCache)
+      activeWeightStats->winogradCache->write(*winogradEntry,hostPtr,count * sizeof(half_t));
+#endif
     cl_mem buffer = clCreateBuffer(handle->clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                    count * sizeof(half_t), hostPtr, &err);
     CHECK_ERR(err);
@@ -1233,8 +1408,38 @@ struct ConvLayer {
       assert((convXSize == 5 && convYSize == 5) ? (inTileYSize == 6 && outTileYSize == 2) : true);
 
       //INTILE_YSIZE, INTILE_XSIZE, ic, oc
-      const auto bufferInitStart = OpenCLClock::now();
       const size_t transWeightCount = (size_t)inTileXYSize * inChannelsPadded * outChannelsPadded;
+#if defined(__ANDROID__)
+      WinogradFP16CacheLayer cacheKey{};
+      if(useFP16 && activeWeightStats != nullptr && activeWeightStats->winogradCache) {
+        cacheKey = {
+          static_cast<uint32_t>(convXSize),static_cast<uint32_t>(convYSize),
+          static_cast<uint32_t>(inChannels),static_cast<uint32_t>(outChannels),
+          static_cast<uint32_t>(inChannelsPadded),static_cast<uint32_t>(outChannelsPadded),
+          static_cast<uint32_t>(inTileXSize),static_cast<uint32_t>(inTileYSize),
+          static_cast<uint32_t>(outTileXSize),static_cast<uint32_t>(outTileYSize),
+          static_cast<uint64_t>(transWeightCount)
+        };
+        auto* stats = activeWeightStats;
+        if(stats->winogradCache->reader.is_open()) {
+          uint16_t* cachedData = getFP16UploadScratch(stats,transWeightCount);
+          if(stats->winogradCache->read(cacheKey,cachedData,transWeightCount * sizeof(uint16_t))) {
+            const auto copyStart = OpenCLClock::now();
+            cl_int err;
+            filter = clCreateBuffer(handle->clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                    transWeightCount * sizeof(uint16_t),cachedData,&err);
+            CHECK_ERR(err);
+            stats->bufferCount++;
+            stats->bufferBytes += transWeightCount * sizeof(uint16_t);
+            stats->copyHostPtrMs += openclMsSince(copyStart);
+            stats->winogradLayerCount++;
+            return;
+          }
+        }
+        stats->winogradCache->missLayers++;
+      }
+#endif
+      const auto bufferInitStart = OpenCLClock::now();
       std::unique_ptr<float[]> localTransWeights;
       float* transWeights = nullptr;
       if(activeWeightStats != nullptr) {
@@ -1365,7 +1570,12 @@ struct ConvLayer {
         activeWeightStats->winogradLayerCount++;
       }
 
+#if defined(__ANDROID__)
+      filter = createReadOnlyBuffer(handle,transWeights,transWeightCount,useFP16,
+        (useFP16 && activeWeightStats && activeWeightStats->winogradCache) ? &cacheKey : nullptr);
+#else
       filter = createReadOnlyBuffer(handle,transWeights,transWeightCount,useFP16);
+#endif
     }
     else {
       vector<float> weights = desc->weights;
@@ -3014,10 +3224,17 @@ struct ComputeHandle {
     handle = std::make_unique<ComputeHandleInternal>(context, gpuIdx, inputsUseNHWC, useNHWC);
     kernelObjectsMs = openclMsSince(kernelsStart);
     const auto modelStart = OpenCLClock::now();
+#if defined(__ANDROID__)
+    if(handle->usingFP16Storage)
+      weightStats.winogradCache.reset(new WinogradFP16Cache(loadedModel->sourceFile,nnXLen,nnYLen));
+#endif
     {
       OpenCLWeightUploadScope weightScope(&weightStats);
       model = std::make_unique<Model>(handle.get(), &(loadedModel->modelDesc), maxBatchSize, nnXLen, nnYLen);
     }
+#if defined(__ANDROID__)
+    if(weightStats.winogradCache) weightStats.winogradCache->finish();
+#endif
     // Keep the temporary staging buffer only during model construction.
     weightStats.winogradScratch.reset();
     weightStats.winogradScratchCapacity = 0;
@@ -3069,6 +3286,18 @@ ComputeHandle* NeuralNet::createComputeHandle(
     logger->write(prefix + " phase=kernel_objects ms=" + std::to_string(handle->kernelObjectsMs));
     logger->write(prefix + " phase=winograd_weight_transform ms=" + std::to_string(handle->weightStats.winogradTransformMs) +
                   " layers=" + std::to_string(handle->weightStats.winogradLayerCount));
+#if defined(__ANDROID__)
+    if(handle->weightStats.winogradCache) {
+      const auto& wc = *handle->weightStats.winogradCache;
+      logger->write(prefix + " phase=winograd_fp16_cache hit_layers=" + std::to_string(wc.hitLayers) +
+                    " miss_layers=" + std::to_string(wc.missLayers) +
+                    " read_ms=" + std::to_string(wc.readMs) +
+                    " write_ms=" + std::to_string(wc.writeMs) +
+                    " read_bytes=" + std::to_string(wc.readBytes) +
+                    " written_bytes=" + std::to_string(wc.writtenBytes) +
+                    " saved=" + std::to_string(wc.saved));
+    }
+#endif
     logger->write(prefix + " phase=weight_fp16_convert ms=" + std::to_string(handle->weightStats.fp16ConvertMs));
     logger->write(prefix + " phase=weight_fp16_buffer_init ms=" + std::to_string(handle->weightStats.fp16BufferInitMs));
     logger->write(prefix + " phase=weight_fp16_buffer_reuse grows=" + std::to_string(handle->weightStats.fp16ScratchGrows) +
