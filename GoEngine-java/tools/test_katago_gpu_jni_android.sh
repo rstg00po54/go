@@ -24,16 +24,27 @@ REPORT_DIR="$PROJECT_DIR/build/katago_gpu_jni_test"
 mkdir -p "$REPORT_DIR"
 REPORT="$REPORT_DIR/${SERIAL}_$(date +%Y%m%d_%H%M%S).log"
 echo "Waiting for OpenCL GPU JNI genmove and raw NN on $SERIAL; report: $REPORT"
+echo "Live GPU JNI log follows (first GPU tuning can take a while):"
+last_count=0
 for attempt in $(seq 1 480); do
     "$ADB" -s "$SERIAL" logcat -d -s KataGoGpuJni:I AndroidRuntime:E linker:E '*:S' > "$REPORT"
+    current_count=$(wc -l < "$REPORT")
+    if (( current_count < last_count )); then last_count=0; fi
+    if (( current_count > last_count )); then
+        sed -n "$((last_count + 1)),${current_count}p" "$REPORT"
+        last_count=$current_count
+    fi
     if grep -Fq 'PASS: GPU JNI OpenCL' "$REPORT"; then
-        cat "$REPORT"
+        echo "GPU JNI PASS; full log: $REPORT"
         exit 0
     fi
     if grep -Fq 'FAIL: GPU JNI OpenCL' "$REPORT" || grep -Fq 'FATAL EXCEPTION' "$REPORT"; then
-        cat "$REPORT"
+        echo "GPU JNI FAIL; full log: $REPORT" >&2
         "$ADB" -s "$SERIAL" logcat -d -b crash -v threadtime | tail -100 >&2 || true
         exit 1
+    fi
+    if (( attempt % 15 == 0 )); then
+        echo "[${attempt}s] GPU JNI test still running; collecting logs..."
     fi
     # A native OpenCL crash may kill the process without a Java exception or FAIL log.
     if (( attempt > 10 )) && ! "$ADB" -s "$SERIAL" shell pidof com.badukai.java:katago_gpu | grep -Eq '[0-9]'; then
