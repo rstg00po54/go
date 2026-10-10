@@ -47,6 +47,12 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
+    private static final int[] BOARD_SIZES = {9, 11, 13, 15, 19};
+
+    private static boolean isSupportedBoardSize(int size) {
+        for (int supported : BOARD_SIZES) if (size == supported) return true;
+        return false;
+    }
     private final ExecutorService engineExecutor = Executors.newSingleThreadExecutor();
     private final ExecutorService winRateExecutor = Executors.newSingleThreadExecutor();
     private volatile long winRateSession;
@@ -132,14 +138,19 @@ public class MainActivity extends AppCompatActivity {
         // Rescue switch: adb shell am start ... --ez katago_legacy true
         boolean forceLegacy = getIntent() != null && getIntent().getBooleanExtra("katago_legacy", false);
         forceLegacyBackend = forceLegacy;
+        // Preload the same board dimensions as the user's last confirmed game.
+        android.content.SharedPreferences settings = getSharedPreferences("katago_settings", MODE_PRIVATE);
+        int savedBoardSize = settings.getInt("board_size", 19);
+        boardSize = isSupportedBoardSize(savedBoardSize) ? savedBoardSize : 19;
+        board = new GoBoard(boardSize);
         engine = new KataGoEngine(getApplicationContext(), "engine", !forceLegacy);
-        selectedBackend = "GPU".equals(getSharedPreferences("katago_settings", MODE_PRIVATE).getString("backend", "CPU"))
+        selectedBackend = "GPU".equals(settings.getString("backend", "CPU"))
                 ? KataGoEngine.BackendPreference.GPU : KataGoEngine.BackendPreference.CPU;
         if (forceLegacy) selectedBackend = KataGoEngine.BackendPreference.CPU;
         engine.setBackendPreference(selectedBackend);
         winRateEngine = new KataGoEngine(getApplicationContext(), "engine_winrate");
         Log.i(TAG, "Game engine preference=" + (forceLegacy ? "PIE forced" : "JNI if bundled")
-                + "; winrate engine=PIE");
+                + "; preload boardSize=" + boardSize + "; backend=" + selectedBackend + "; winrate engine=PIE");
         bindViews();
         TencentHomeScaler.install((ViewGroup) mainPageContainer);
         boardView.setOnIntersectionClickListener(this::onBoardTap);
@@ -925,7 +936,7 @@ public class MainActivity extends AppCompatActivity {
         Button startButton = content.findViewById(R.id.startGameButton);
         Button closeButton = content.findViewById(R.id.closeDialogButton);
 
-        int[] boardSizes = {9, 11, 13, 15, 19};
+        int[] boardSizes = BOARD_SIZES;
         ArrayAdapter<String> sizeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{"9路", "11路", "13路", "15路", "19路"});
         sizeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         sizeSpinner.setAdapter(sizeAdapter);
@@ -958,7 +969,7 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog dialog = new AlertDialog.Builder(this).setView(content).create();
         closeButton.setOnClickListener(v -> dialog.dismiss());
         startButton.setOnClickListener(v -> {
-            boardSize = boardSizes[sizeSpinner.getSelectedItemPosition()];
+            final int requestedBoardSize = boardSizes[sizeSpinner.getSelectedItemPosition()];
 
             int colorId = colorGroup.getCheckedRadioButtonId();
             if (colorId == R.id.whiteRadio) playerColor = StoneColor.WHITE;
@@ -970,10 +981,13 @@ public class MainActivity extends AppCompatActivity {
             KataGoEngine.BackendPreference requested = gpuBundled && backendSpinner.getSelectedItemPosition() == 1
                     ? KataGoEngine.BackendPreference.GPU : KataGoEngine.BackendPreference.CPU;
             Runnable begin = () -> {
+                boardSize = requestedBoardSize;
                 aiKyu = selectedKyu;
                 gameCondition = selectedCondition;
                 selectedBackend = requested;
-                getSharedPreferences("katago_settings", MODE_PRIVATE).edit().putString("backend", requested.name()).apply();
+                getSharedPreferences("katago_settings", MODE_PRIVATE).edit()
+                        .putInt("board_size", boardSize).putString("backend", requested.name()).apply();
+                Log.i(TAG, "Saved new-game preference boardSize=" + boardSize + " backend=" + requested);
                 showGamePage();
                 startNewGame();
                 dialog.dismiss();
