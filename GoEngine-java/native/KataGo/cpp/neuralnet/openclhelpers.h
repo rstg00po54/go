@@ -82,6 +82,27 @@ namespace OpenCLHelpers {
   void checkErrors(cl_int error, const char* file, const char* func, int line);
 
   struct CompileError final : public StringError { CompileError(const char* msg):StringError(msg) {}; CompileError(const std::string& msg):StringError(msg) {}; };
+  struct OpenCLProgramCacheStats {
+    int hits = 0;
+    int misses = 0;
+    int invalid = 0;
+    int saved = 0;
+    double binaryLoadMs = 0;
+    double sourceBuildMs = 0;
+  };
+
+  // Enabled only for real inference programs, never for OpenCL autotuner probes.
+  // Each file is keyed by source, options, device identity, and driver version.
+  cl_program compileProgramCached(
+    const std::string& name,
+    cl_context context,
+    const std::vector<cl_device_id>& devices,
+    const std::string& str,
+    const std::string& options,
+    const std::string& cacheDir,
+    OpenCLProgramCacheStats* stats
+  );
+
   cl_program compileProgram(
     const std::string& name,
     cl_context context,
