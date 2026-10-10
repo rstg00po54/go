@@ -130,16 +130,15 @@ private:
 
 class Session {
 public:
-    Session(std::string model, std::string config)
+    Session(std::string model, std::string config, std::string humanModel)
         : input_(&inputBuf_), output_(&outputBuf_),
-          worker_([this, model, config] {
+          worker_([this, model, config, humanModel] {
               try {
                   // TCLAP removes args[0] as the executable/subcommand name.
                   // Omitting "gtp" caused it to treat "-model" as the name,
                   // fail on the model path, and call exit(1) on the Android APP.
-                  const std::vector<std::string> args = {
-                      "gtp", "-model", model, "-config", config
-                  };
+                  std::vector<std::string> args = {"gtp", "-model", model, "-config", config};
+                  if (!humanModel.empty()) { args.push_back("-human-model"); args.push_back(humanModel); }
                   const int result = MainCmds::gtpWithIO(args, input_, output_);
                   if (result != 0) outputBuf_.message("? JNI GTP exited with code " + std::to_string(result) + "\n\n");
               } catch (const std::exception& e) {
@@ -194,15 +193,16 @@ std::string toUtf8(JNIEnv* env, jstring value) {
 } // namespace
 
 extern "C" JNIEXPORT jlong JNICALL
-Java_com_badukai_engine_KataGoNative_nativeCreateSession(JNIEnv* env, jclass, jstring model, jstring config) {
+Java_com_badukai_engine_KataGoNative_nativeCreateSession(JNIEnv* env, jclass, jstring model, jstring config, jstring humanModel) {
     const std::string modelPath = toUtf8(env, model);
     const std::string configPath = toUtf8(env, config);
+    const std::string humanModelPath = toUtf8(env, humanModel);
     if (modelPath.empty() || configPath.empty()) return 0;
     std::lock_guard<std::mutex> lock(sessionsMutex);
     if (!sessions.empty()) return 0;
     try {
         const jlong handle = nextHandle++;
-        sessions.emplace(handle, std::make_shared<Session>(modelPath, configPath));
+        sessions.emplace(handle, std::make_shared<Session>(modelPath, configPath, humanModelPath));
         return handle;
     } catch (...) {
         return 0;
