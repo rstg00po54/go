@@ -122,6 +122,7 @@ class GtpEngine:
 
     def close(self):
         if self.process.poll() is None:
+            self.timeout = min(self.timeout, 3.0)
             try:
                 self.command("quit")
             except (OSError, RuntimeError, TimeoutError):
@@ -280,6 +281,10 @@ def main():
                                 csv_file.flush()
                                 print("  repeat %d position %02d/%02d: %7.1f ms, move %s" %
                                       (repeat, position+1, args.positions, latency_ms, move), flush=True)
+                    except (OSError, RuntimeError, TimeoutError):
+                        print("Engine details: %s/%s_%d.stderr.log" %
+                              (report_dir, backend, thread), file=sys.stderr)
+                        raise
                     finally:
                         engine.close()
             summarize(report_dir, measurements, threads, backends)
