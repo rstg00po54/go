@@ -202,7 +202,9 @@ struct CompiledPrograms {
     bool useFP16Storage,
     bool useFP16Compute,
     bool useFP16TensorCores,
-    bool useFP16TensorCoresFor1x1
+    bool useFP16TensorCoresFor1x1,
+    const string& cacheDir,
+    Logger* logger
   ) :
     tuneParams(tParams),
     usingFP16Storage(useFP16Storage),
@@ -210,6 +212,13 @@ struct CompiledPrograms {
     usingFP16TensorCores(useFP16TensorCores),
     usingFP16TensorCoresFor1x1(useFP16TensorCoresFor1x1)
   {
+    OpenCLProgramCacheStats cacheStats;
+    // Only inference programs use the disk cache. Autotuner candidates keep
+    // calling the original compileProgram(), so tuning does not fill the disk.
+    auto compileProgram = [&](const string& name, cl_context ctx, const vector<cl_device_id>& ds,
+                              const string& source, const string& options) {
+      return OpenCLHelpers::compileProgramCached(name,ctx,ds,source,options,cacheDir,&cacheStats);
+    };
     string maybeFP16CompileOptions = "";
     if(useFP16Storage)
       maybeFP16CompileOptions += OpenCLKernels::fp16StorageDefine;
@@ -333,6 +342,13 @@ struct CompiledPrograms {
         tuneParams.xGemm.compileOptions() + maybeFP16CompileOptions
       );
     }
+    if(logger != NULL)
+      logger->write("OPENCL_CACHE hits=" + std::to_string(cacheStats.hits) +
+                    " misses=" + std::to_string(cacheStats.misses) +
+                    " invalid=" + std::to_string(cacheStats.invalid) +
+                    " saved=" + std::to_string(cacheStats.saved) +
+                    " binary_load_ms=" + std::to_string(cacheStats.binaryLoadMs) +
+                    " source_build_ms=" + std::to_string(cacheStats.sourceBuildMs));
   }
 
   ~CompiledPrograms() {
@@ -368,7 +384,8 @@ struct ComputeContext {
     enabled_t useFP16Mode,
     enabled_t useNHWCMode,
     std::function<OpenCLTuneParams(const string&,int)> getParamsForDeviceName,
-    const string& modelName
+    const string& modelName,
+    const string& homeDataDirOverride
   ) :
     nnXLen(nnX),
     nnYLen(nnY),
@@ -420,7 +437,8 @@ struct ComputeContext {
       const auto compileStart = OpenCLClock::now();
       CompiledPrograms* compiledPrograms = new CompiledPrograms(
         device->context, deviceIds, tuneParams,
-        useFP16Storage, useFP16Compute, useFP16TensorCores, useFP16TensorCoresFor1x1
+        useFP16Storage, useFP16Compute, useFP16TensorCores, useFP16TensorCoresFor1x1,
+        homeDataDirOverride.empty() ? "" : homeDataDirOverride + "/openclprograms", logger
       );
       compiledProgramsByDeviceId[device->info.deviceId] = compiledPrograms;
       if(logger != NULL)
@@ -463,7 +481,7 @@ static ComputeContext* createComputeContextForTesting(
     //params.shouldUseFP16TensorCores = true;
     return params;
   };
-  return new ComputeContext(gpuIdxs,logger,nnXLen,nnYLen,useFP16Mode,useNHWCMode,getParamsForDeviceName,"test");
+  return new ComputeContext(gpuIdxs,logger,nnXLen,nnYLen,useFP16Mode,useNHWCMode,getParamsForDeviceName,"test","");
 }
 
 ComputeContext* NeuralNet::createComputeContext(
@@ -506,7 +524,7 @@ ComputeContext* NeuralNet::createComputeContext(
       full
     );
   };
-  return new ComputeContext(gpuIdxs,logger,nnXLen,nnYLen,useFP16Mode,useNHWCMode,getParamsForDeviceName,loadedModel->modelDesc.name);
+  return new ComputeContext(gpuIdxs,logger,nnXLen,nnYLen,useFP16Mode,useNHWCMode,getParamsForDeviceName,loadedModel->modelDesc.name,homeDataDirOverride);
 }
 
 void NeuralNet::freeComputeContext(ComputeContext* computeContext) {
