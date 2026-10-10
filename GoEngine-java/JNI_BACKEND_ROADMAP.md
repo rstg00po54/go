@@ -163,7 +163,7 @@ adb -s 10AFB21HP5002ZK shell am start -n com.badukai.java/com.badukai.MainActivi
 adb -s 10AFB21HP5002ZK logcat -d -s KataGoJniCore:I '*:S'
 ```
 
-### 2026-10-10 RK3588 JNI GTP APP 重启循环定位与修复（待复测）
+### 2026-10-10 RK3588 JNI GTP APP 重启循环定位与修复（真机验证通过）
 
 - 用户 RK3588 试编通过 `eigenjni`（`[3/3] Linking CXX shared library libkatago.so`），Gradle `BUILD SUCCESSFUL`，APK 安装成功。
 - `--ez katago_gtp true` 首次实测不断重启：11:39:44 起每隔约 0.23 秒生成新 PID，仅打印 `Starting JNI CPU/Eigen GTP session`。完整 Logcat 显示 `Zygote: Process ... exited cleanly (1)`，并无报告 native SIGSEGV/SIGABRT。
@@ -171,7 +171,7 @@ adb -s 10AFB21HP5002ZK logcat -d -s KataGoJniCore:I '*:S'
 - [x] 修复会话 argv 为 `{"gtp", "-model", model, "-config", config}`，对应原来 `main.cpp` 向 `MainCmds::gtp` 传入的参数结构。
 - [x] JNI 注入流路径通过 `cmd.setExceptionHandling(false)` 禁止 TCLAP 的进程级 `exit(1)`，而原来命令行 `gtp(std::cin,std::cout)` 保持已有 TCLAP 处理方式。
 - [x] 测试入口增加 `JNI session created` 和每条 `Sending ...` 的进度日志；测试脚本检测 3 次连续 APP 重启后提前报错而不是一直等待。
-- [ ] **这些修复还没有在 RK3588 上重新编译、验证 GTP/10b/genmove**；需用户更新代码并复测，后续若有其他错误根据 `KataGoJniGtp` 和 `logcat` 定位。
+- [x] **RK3588 复测通过**：2026-10-10 11:47:44–11:47:45，单进程 PID 5340，JNI 载入 12003218 字节 10b 模型，成功返回 `name = KataGo`、`boardsize 9`、`komi 7.5`、`play B D4`、`genmove W = F6`、`undo`、`clear_board`，日志 `PASS: JNI GTP name/boardsize/komi/play/genmove/undo/clear_board`。说明 CPU/Eigen JNI 实际对弈推理成功，仍需生命周期和并发验证。
 
 复测：
 ```bash
@@ -181,13 +181,13 @@ bash tools/build_katago_from_source.sh eigenjni
 bash tools/test_katago_jni_gtp_android.sh
 ```
 
-### 阶段 1B：KataGo GTP JNI 单会话实验（代码已提交，尚待 RK3588 编译/真机验证）
+### 阶段 1B：KataGo GTP JNI 单会话实验（RK3588 9×9 首次真机验证通过）
 
 - [x] `native/KataGo/cpp/command/gtp_io.h` 新增 `MainCmds::gtpWithIO(args, input, output)`；`gtp.cpp` 将单一 `getline(cin, line)` 改为注入流，GTP 响应及异步分析输出改为会话持有的 `std::ostream`；原 `MainCmds::gtp` 仍用 CLI 标准输入输出。**没有重定向进程全局 `cin/cout`**。
 - [x] `app/src/main/cpp/EngineSession.cpp` 加入线程安全输入队列、输出缓冲、一个本地 GTP 工作线程与按句柄管理的 JNI `createSession / sendCommand / readOutput / stopSearch / destroySession`；Java 包装 `KataGoNative.GtpSession implements AutoCloseable`。
 - [x] 初期严格限制**单个 JNI GTP 会话**，避免上游 `ScoreValue::freeTables` / `NeuralNet::globalCleanup` 等进程级初始化清理在双会话间互相干扰。旧 `ProcessBuilder` 进程不受影响。
 - [x] `MainActivity` 新增仅供 ADB 的 `--ez katago_gtp true` 测试入口，普通 APP 仍启动原引擎。调试入口自动准备单独模型/配置文件，顺序测试 `name`、`boardsize 9`、`komi 7.5`、`play B D4`、`genmove W`、`undo`、`clear_board`，Logcat 标签为 `KataGoJniGtp`。
-- [ ] **用户 Ubuntu 还未编译这些新改动，RK3588 的 JNI GTP 模型加载及落子尚未真机验证**；新增源文件可能需要处理编译/链接/启动错误。不要把已写代码当作通过验收。
+- [x] **Ubuntu/Android NDK 构建与 RK3588 9×9 实际对弈通过**：`name → KataGo`，`play B D4 → =`，`genmove W → = F6`，并成功悔棋、清空棋盘（详见上方 2026-10-10 11:47 日志）。该测试只验一个 JNI 会话、一个 9×9 局面，未覆盖所有 APP UI 功能。
 - [ ] `stopSearch` 当前仅把 GTP `stop` 命令排队：对同步 `genmove` 不能抢占；双会话并发、异步 Java 通知、长时间分析协议完整性、线程安全压力测试还没完成。不应据此切换 APP 默认引擎。
 - [ ] JNI smoke 通过后再逐步对接 Java 原有 `KataGoEngine`，保留 `ProcessBuilder` 回退，并继续验证 Human SL、胜率分析和棋局恢复。
 
