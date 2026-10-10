@@ -186,6 +186,8 @@ adb -s 8719e18a71a2a66c shell am start -n com.badukai.java/com.badukai.MainActiv
 adb -s 8719e18a71a2a66c logcat -d -s KataGoJniGtp:I '*:S'
 ```
 
+或者在编译完成后用新增的 `bash tools/test_katago_jni_gtp_android.sh` 一条命令完成安装、启动、等待 PASS/FAIL 并保存 `build/katago_jni_gtp_test/` 日志。
+
 ## 阶段 1：CPU/Eigen 真正 JNI 化 —— 首先实现
 
 **目标**：构建可加载的 `libkatago.so`，Java 在 APP 进程内调用 KataGo；先不接 GPU/NPU。
