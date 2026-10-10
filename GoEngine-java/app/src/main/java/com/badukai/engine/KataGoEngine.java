@@ -73,7 +73,8 @@ public class KataGoEngine {
 
     private final Context context;
     private final String engineDirectoryName;
-    private final LinkedBlockingQueue<String> responseQueue = new LinkedBlockingQueue<>();
+    // Each engine start uses a new queue so old reader threads cannot feed a new session.
+    private volatile LinkedBlockingQueue<String> responseQueue = new LinkedBlockingQueue<>();
     private final AtomicBoolean running = new AtomicBoolean(false);
     private Process process;
     private volatile KataGoNative.GtpSession jniSession;
@@ -150,6 +151,7 @@ public class KataGoEngine {
             stop(); // Different engine mode or an engine process/session died.
         }
         configuredBoardSize = -1;
+        responseQueue = new LinkedBlockingQueue<>();
         Log.i(TAG, "=== JAVA KATAGO ENGINE / ANDROID ARM64 ===");
         try {
             long phaseNs = System.nanoTime();
@@ -374,6 +376,7 @@ public class KataGoEngine {
         final BufferedReader sessionReader = reader;
         final Process expectedProcess = process;
         final long generation = sessionGeneration;
+        final LinkedBlockingQueue<String> sessionResponses = responseQueue;
         readerThread = new Thread(() -> {
             StringBuilder buffer = new StringBuilder();
             try {
@@ -384,7 +387,7 @@ public class KataGoEngine {
                     Log.d(TAG, "KataGo stdout: " + line);
                     buffer.append(line).append('\n');
                     if (line.isEmpty() && buffer.length() > 0) {
-                        responseQueue.offer(buffer.toString());
+                        sessionResponses.offer(buffer.toString());
                         buffer.setLength(0);
                     }
                 }
@@ -398,6 +401,7 @@ public class KataGoEngine {
     private void startJniReaderThread() {
         final KataGoNative.GtpSession session = jniSession;
         final long generation = sessionGeneration;
+        final LinkedBlockingQueue<String> sessionResponses = responseQueue;
         readerThread = new Thread(() -> {
             StringBuilder buffer = new StringBuilder();
             try {
@@ -412,7 +416,7 @@ public class KataGoEngine {
                         String response = buffer.substring(0, end + 2);
                         buffer.delete(0, end + 2);
                         Log.d(TAG, "KataGo JNI GTP response: " + response.trim());
-                        responseQueue.offer(response);
+                        sessionResponses.offer(response);
                     }
                     if (buffer.length() > 8 * 1024 * 1024) throw new IOException("JNI GTP reply too large");
                 }
@@ -427,6 +431,7 @@ public class KataGoEngine {
     private void startGpuReaderThread() {
         final KataGoGpuNative.GtpSession session = gpuSession;
         final long generation = sessionGeneration;
+        final LinkedBlockingQueue<String> sessionResponses = responseQueue;
         readerThread = new Thread(() -> {
             StringBuilder buffer = new StringBuilder();
             try {
@@ -439,7 +444,7 @@ public class KataGoEngine {
                         String response = buffer.substring(0, end + 2);
                         buffer.delete(0, end + 2);
                         Log.d(TAG, "GPU JNI GTP response: " + response.trim());
-                        responseQueue.offer(response);
+                        sessionResponses.offer(response);
                     }
                     if (buffer.length() > 8 * 1024 * 1024) throw new IOException("GPU GTP reply too large");
                 }
