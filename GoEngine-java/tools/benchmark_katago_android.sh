@@ -102,7 +102,7 @@ fi
 WORK_DIR="${KATAGO_WORKDIR:-$HOME/.cache/goengine_katago}"
 CPU_BINARY="$PROJECT_DIR/app/build/generated/katagoJniLibs/arm64-v8a/libkatago_exec.so"
 [[ -f "$CPU_BINARY" ]] || CPU_BINARY="$WORK_DIR/build_android_arm64_eigen/katago"
-GPU_BINARY="$PROJECT_DIR/build/katago_android_arm64_opencl/libkatago_exec_opencl.so"
+GPU_BINARY="${KATAGO_BENCH_GPU_BINARY:-$PROJECT_DIR/build/katago_android_arm64_opencl/libkatago_exec_opencl.so}"
 if [[ "$MODE" != "gpu" && ! -f "$CPU_BINARY" ]]; then
     echo "CPU executable not found: $CPU_BINARY" >&2
     exit 1
@@ -161,9 +161,18 @@ run_benchmark() {
 
     # Mali vendor libOpenCL.so may declare SONAME=libGLES_mali.so.
     # Stage it in the test dir without changing /vendor or the APK.
-    if [[ "$mode" == "gpu" ]] && readelf -d "$binary" | grep -Fq '[libGLES_mali.so]'; then
-        echo "Staging Mali OpenCL runtime"
-        "$ADB" -s "$SERIAL" shell "cp /vendor/lib64/libOpenCL.so $REMOTE/libGLES_mali.so"
+    if [[ "$mode" == "gpu" ]] && readelf -W -d "$binary" | grep -Fq '(NEEDED)             Shared library: [libGLES_mali.so]'; then
+        echo "Staging legacy RK3588 Mali OpenCL runtime"
+        # The old binary requires Mali's versioned OPENCL_1.0 symbols.
+        # Never rename a phone's SONAME=libOpenCL.so loader as libGLES_mali.so.
+        vendor_soname="$("$ADB" -s "$SERIAL" shell "readelf -d /vendor/lib64/libOpenCL.so 2>/dev/null | grep SONAME" || true)"
+        if [[ "$vendor_soname" == *'[libGLES_mali.so]'* ]]; then
+            "$ADB" -s "$SERIAL" shell "cp /vendor/lib64/libOpenCL.so $REMOTE/libGLES_mali.so"
+        else
+            echo "ERROR: this GPU binary is linked to RK3588 libGLES_mali.so." >&2
+            echo "Use openclportable GPU output with KATAGO_BENCH_GPU_BINARY." >&2
+            return 1
+        fi
     fi
 
     # Keep a complete log but display only useful progress and benchmark lines.
