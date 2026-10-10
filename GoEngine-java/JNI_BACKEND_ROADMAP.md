@@ -330,6 +330,14 @@ bash tools/test_katago_gpu_jni_android.sh 8719e18a71a2a66c
 
 正常 CPU APK 继续使用旧参数 `./build.sh -PenableKataGoJniCore=true`。GPU smoke 的独立 activity 在不启用 `-PenableKataGoGpuJni=true` 时由 manifest 禁用，不会影响正常主界面。
 
+### 2026-10-10 RK3588 GPU + Human SL 首次 OpenCL 调优定位及超时修复
+
+- [x] 14:00:59 APP 选择 GPU/OpenCL IPC 成功启动 `:katago_gpu` 进程并创建 GTP 会话，**不是 JNI 加载或 IPC 故障**。
+- [x] 原生日志证实 10b 在 14:01:00 命中已有 `c128_mv8` 19×19 调优缓存并于 14:01:03 加载成功；Human SL `c384_mv15` 19×19 在 14:01:04 未找到有效缓存，触发 OpenCL autotuning。
+- [x] 14:03:59 APP 180s 超时回退 CPU；**14:04:02 Human SL OpenCL autotuning 完成，参数保存到 `files/jni_gpu_smoke/home/opencltuning/tune11_gpuMaliG610r0p0_x19_y19_c384_mv15.txt`**；14:04:07 C++ 原生日志显示 10b + Human SL 双模型已加载且 `GTP ready`。时间上 GPU 只晚约 8s，不能误诊为 GPU Hang。
+- [x] GPU 首次启动 `name` 等待由 180s 增至 360s；GPU 首次切换棋盘大小 `boardsize` 等待由 90s 增至 360s，以涵盖尺寸专属调优，**CPU JNI 的 120s 启动/90s boardsize 和 PIE 保持原样**。新局进入 GPU 时 UI 明示「首次调优可能需要数分钟」。
+- [ ] **缓存保存后的第二次 19×19 GPU + Human SL 真实新局尚未回归**；预期会命中 c384 调优缓存而加快启动，但需要以新的 `Loaded tuning parameters`、`GPU/OPENCL JNI ENGINE STARTED SUCCESSFULLY`、`Game backend requested=GPU actual=GPU/OpenCL JNI ready=true` 真机日志确认为准。
+
 ### 阶段 1G：APP 新局 CPU / GPU 后端选择（代码已提交，待 RK3588 UI 实测）
 
 - [x] 新局弹窗 `dialog_new_game.xml` 新增「AI 运行」下拉框：`CPU / Eigen`、`GPU / OpenCL`；没有打包 GPU JNI 的 APK 只显示 CPU，避免伪装可用。
