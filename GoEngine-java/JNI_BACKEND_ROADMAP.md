@@ -111,8 +111,8 @@
 - [x] `app/build.gradle.kts` 通过 `-PenableKataGoProbe=true` **可选**启用 `externalNativeBuild`。正常 APK 构建不触发新的 JNI 工程。
 - [x] Manifest 添加 `<uses-native-library android:name="libOpenCL.so" android:required="false" />`（targetSdk 34；不支持 OpenCL 的设备仍能安装应用）。
 - [x] `MainActivity` 只在 ADB intent 传入 `--ez katago_probe true` 时使用后台线程检查，日志 Tag `KataGoOpenCLProbe`；普通启动、不启用探针时原有 Java + PIE 对弈路径保持不变。
-- [ ] **Ubuntu/Gradle 构建验证、两台手机/开发板 APP 进程的 OpenCL 探针日志尚未实测**。成功加载探针≠已经 JNI 化 KataGo；成功 `clGetPlatformIDs`≠可完成 10b 模型推理。
-- [ ] 先在 RK3588 和 vivo 上验证 APP 能否访问厂商 OpenCL，再动现有引擎功能。
+- [x] **vivo X300 Pro / Android 16 APP 进程实测通过**：已用 `-PenableKataGoProbe=true` 构建、安装并从 `MainActivity` 触发 JNI；2026-10-10 11:06:44 日志为 `KataGoOpenCLProbe: libOpenCL.so: loaded; clGetPlatformIDs error=0, platforms=1`。已证明 APP 内 `System.loadLibrary("katago_probe")`、`dlopen("libOpenCL.so")`、`dlsym("clGetPlatformIDs")`、查询 OpenCL 平台成功，但不意味着 APP 内完成完整模型推理。
+- [ ] **下一项**：在 RK3588 Android 12 安装同一 APK，运行 APP 内 JNI/OpenCL 探针并检查 `dlopen` 返回、平台数量。确认两台设备均可访问后，开始真正的 CPU EngineSession/JNI 化；保留原有 `ProcessBuilder` 回退。
 
 探针验证：
 
