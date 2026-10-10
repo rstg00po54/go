@@ -390,6 +390,9 @@ void NNEvaluator::setNumThreads(const vector<int>& gpuIdxByServerThr) {
 void NNEvaluator::spawnServerThreads() {
   if(serverThreads.size() != 0)
     throw StringError("NNEvaluator::spawnServerThreads called when threads were already running!");
+#ifdef USE_OPENCL_BACKEND
+  const auto workerStartupStart = std::chrono::steady_clock::now();
+#endif
 
   {
     lock_guard<std::mutex> lock(bufferMutex);
@@ -412,6 +415,14 @@ void NNEvaluator::spawnServerThreads() {
   unique_lock<std::mutex> lock(bufferMutex);
   while(numServerThreadsStartingUp > 0)
     mainThreadWaitingForSpawn.wait(lock);
+  lock.unlock();
+#ifdef USE_OPENCL_BACKEND
+  if(logger != NULL)
+    logger->write("OPENCL_TIMING model_file=" + modelFileName + " board=" + std::to_string(nnXLen) +
+                  "x" + std::to_string(nnYLen) + " phase=worker_startup_total ms=" +
+                  std::to_string(std::chrono::duration<double,std::milli>(
+                    std::chrono::steady_clock::now() - workerStartupStart).count()));
+#endif
 }
 
 void NNEvaluator::killServerThreads() {
