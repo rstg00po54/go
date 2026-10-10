@@ -16,6 +16,7 @@
 #include "../core/test.h"
 #include <chrono>
 #include <cstring>
+#include <memory>
 #include <type_traits>
 #if defined(__aarch64__) && defined(__linux__) && defined(__clang__)
 #include <arm_neon.h>
@@ -716,7 +717,7 @@ struct OpenCLWeightUploadScope {
 // The baseline source is still compiled for ARMv8-A, so other devices retain half_cast.
 #if defined(__aarch64__) && defined(__linux__) && defined(__clang__)
 __attribute__((target("+fp16")))
-static void convertWeightFP16Neon(const float* source, half_t* dest, size_t count) {
+static void convertWeightFP16Neon(const float* source, uint16_t* dest, size_t count) {
   static_assert(sizeof(half_t) == sizeof(uint16_t), "half must use binary16 storage");
   static_assert(std::is_trivially_copyable<half_t>::value, "half must be trivially copyable");
   size_t i = 0;
@@ -725,12 +726,12 @@ static void convertWeightFP16Neon(const float* source, half_t* dest, size_t coun
     const float32x4_t second = vld1q_f32(source+i+4);
     const uint16x8_t packed = vcombine_u16(vreinterpret_u16_f16(vcvt_f16_f32(first)),
                                            vreinterpret_u16_f16(vcvt_f16_f32(second)));
-    uint16_t bits[8];
-    vst1q_u16(bits,packed);
-    std::memcpy(dest+i,bits,sizeof(bits));
+    vst1q_u16(dest+i,packed);
   }
-  for(; i < count; i++)
-    dest[i] = half_float::half_cast<half_t>(source[i]);
+  for(; i < count; i++) {
+    const half_t value = half_float::half_cast<half_t>(source[i]);
+    std::memcpy(dest+i,&value,sizeof(value));
+  }
 }
 
 static bool canConvertWeightFP16Neon() {
@@ -745,7 +746,7 @@ static bool canConvertWeightFP16Neon() {
       -0.000000059604644775390625f,1.00048828125f,-1.00048828125f,
       0.00006103515625f,-0.00006103515625f
     };
-    half_t actual[16];
+    uint16_t actual[16];
     convertWeightFP16Neon(samples,actual,16);
     for(size_t i = 0; i < 16; i++) {
       const half_t expected = half_float::half_cast<half_t>(samples[i]);
@@ -758,44 +759,65 @@ static bool canConvertWeightFP16Neon() {
 }
 #endif
 
-static cl_mem createReadOnlyBuffer(ComputeHandleInternal* handle, vector<float>& data, bool useFP16) {
+// Read-only model weights are overwritten completely before CL_MEM_COPY_HOST_PTR.
+// On FP16-capable ARM64, use uninitialized uint16_t storage for NEON output instead
+// of spending time zero-initializing half objects that are immediately replaced.
+static cl_mem createReadOnlyBuffer(ComputeHandleInternal* handle, const float* data, size_t count, bool useFP16) {
   if(useFP16) {
     const auto convertStart = OpenCLClock::now();
-    vector<half_t> dataHalf(data.size());
-    const double fp16BufferInitMs = openclMsSince(convertStart);
     bool usedNeon = false;
 #if defined(__aarch64__) && defined(__linux__) && defined(__clang__)
-    if(canConvertWeightFP16Neon()) {
-      convertWeightFP16Neon(data.data(),dataHalf.data(),data.size());
-      usedNeon = true;
-    }
+    usedNeon = canConvertWeightFP16Neon();
+#endif
+    std::unique_ptr<uint16_t[]> neonData;
+    vector<half_t> fallbackData;
+    if(usedNeon)
+      neonData.reset(new uint16_t[count]);  // No zero fill. Every element is written by NEON.
+    else
+      fallbackData.resize(count);           // Preserve the original portable half conversion.
+    const double fp16BufferInitMs = openclMsSince(convertStart);
+#if defined(__aarch64__) && defined(__linux__) && defined(__clang__)
+    if(usedNeon)
+      convertWeightFP16Neon(data,neonData.get(),count);
 #endif
     if(!usedNeon) {
-      for(size_t i = 0; i<data.size(); i++)
-        dataHalf[i] = half_float::half_cast<half_t>(data[i]);
+      for(size_t i = 0; i < count; i++)
+        fallbackData[i] = half_float::half_cast<half_t>(data[i]);
     }
     const double convertMs = openclMsSince(convertStart);
     const auto copyStart = OpenCLClock::now();
-    cl_mem buffer = createReadOnlyBuffer(handle->clContext,dataHalf);
+    cl_int err;
+    void* hostPtr = usedNeon ? static_cast<void*>(neonData.get()) : static_cast<void*>(fallbackData.data());
+    cl_mem buffer = clCreateBuffer(handle->clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                   count * sizeof(half_t), hostPtr, &err);
+    CHECK_ERR(err);
     if(activeWeightStats != nullptr) {
       activeWeightStats->bufferCount++;
-      activeWeightStats->bufferBytes += dataHalf.size() * sizeof(half_t);
+      activeWeightStats->bufferBytes += count * sizeof(half_t);
       activeWeightStats->fp16ConvertMs += convertMs;
       activeWeightStats->fp16BufferInitMs += fp16BufferInitMs;
-      if(usedNeon) activeWeightStats->neonConvertedBytes += dataHalf.size() * sizeof(half_t);
+      if(usedNeon) activeWeightStats->neonConvertedBytes += count * sizeof(half_t);
       activeWeightStats->copyHostPtrMs += openclMsSince(copyStart);
     }
     return buffer;
   }
+
   const auto copyStart = OpenCLClock::now();
-  cl_mem buffer = createReadOnlyBuffer(handle->clContext,data);
+  cl_int err;
+  cl_mem buffer = clCreateBuffer(handle->clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                 count * sizeof(float), const_cast<float*>(data), &err);
+  CHECK_ERR(err);
   if(activeWeightStats != nullptr) {
     activeWeightStats->bufferCount++;
-    activeWeightStats->bufferBytes += data.size() * sizeof(float);
+    activeWeightStats->bufferBytes += count * sizeof(float);
     activeWeightStats->copyHostPtrMs += openclMsSince(copyStart);
   }
   return buffer;
 }
+static cl_mem createReadOnlyBuffer(ComputeHandleInternal* handle, vector<float>& data, bool useFP16) {
+  return createReadOnlyBuffer(handle,data.data(),data.size(),useFP16);
+}
+
 static cl_mem createReadWriteBuffer(ComputeHandleInternal* handle, vector<float>& data, bool useFP16) {
   if(useFP16) {
     vector<half_t> dataHalf(data.size());
@@ -1185,10 +1207,11 @@ struct ConvLayer {
 
       //INTILE_YSIZE, INTILE_XSIZE, ic, oc
       const auto bufferInitStart = OpenCLClock::now();
-      vector<float> transWeights(inTileXYSize * inChannelsPadded * outChannelsPadded);
+      const size_t transWeightCount = (size_t)inTileXYSize * inChannelsPadded * outChannelsPadded;
+      std::unique_ptr<float[]> transWeights(new float[transWeightCount]); // No zero fill; every padded element is written.
       if(activeWeightStats != nullptr) {
         activeWeightStats->winogradBufferInitMs += openclMsSince(bufferInitStart);
-        activeWeightStats->winogradBufferInitBytes += transWeights.size() * sizeof(float);
+        activeWeightStats->winogradBufferInitBytes += transWeightCount * sizeof(float);
       }
       auto transform3x3_4 = [](float& a0, float& a1, float& a2, float& a3) {
         float z0 = a0; float z1 = a1; float z2 = a2;
@@ -1298,7 +1321,7 @@ struct ConvLayer {
         activeWeightStats->winogradLayerCount++;
       }
 
-      filter = createReadOnlyBuffer(handle,transWeights,useFP16);
+      filter = createReadOnlyBuffer(handle,transWeights.get(),transWeightCount,useFP16);
     }
     else {
       vector<float> weights = desc->weights;
