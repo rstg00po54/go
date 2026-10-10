@@ -252,5 +252,5 @@ if [[ "$BACKEND" == "opencl" ]]; then
 fi
 echo "No files were changed under app/src/main/jniLibs."
 if [[ "$BUILD_VARIANT" == "eigenjni" ]]; then
-    echo "JNI linkage smoke-test only: playable GTP EngineSession is NOT implemented."
+    echo "Experimental JNI GTP EngineSession built; RK3588 device smoke test is still required."
 fi
