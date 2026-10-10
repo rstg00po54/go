@@ -15,6 +15,12 @@
 #include "../core/simpleallocator.h"
 #include "../core/test.h"
 #include <chrono>
+#include <cstring>
+#include <type_traits>
+#if defined(__aarch64__) && defined(__linux__) && defined(__clang__)
+#include <arm_neon.h>
+#include <sys/auxv.h>
+#endif
 
 //------------------------
 #include "../core/using.h"
@@ -690,6 +696,7 @@ struct OpenCLWeightUploadStats {
   size_t bufferCount = 0;
   size_t bufferBytes = 0;
   double fp16ConvertMs = 0;
+  size_t neonConvertedBytes = 0;
   double copyHostPtrMs = 0;
   double winogradTransformMs = 0;
   size_t winogradLayerCount = 0;
@@ -701,12 +708,68 @@ struct OpenCLWeightUploadScope {
   ~OpenCLWeightUploadScope() { activeWeightStats = previous; }
 };
 
+
+// Android ARM64: use SIMD FP32->FP16 when the CPU advertises ASIMDHP.
+// The baseline source is still compiled for ARMv8-A, so other devices retain half_cast.
+#if defined(__aarch64__) && defined(__linux__) && defined(__clang__)
+__attribute__((target("+fp16")))
+static void convertWeightFP16Neon(const float* source, half_t* dest, size_t count) {
+  static_assert(sizeof(half_t) == sizeof(uint16_t), "half must use binary16 storage");
+  static_assert(std::is_trivially_copyable<half_t>::value, "half must be trivially copyable");
+  size_t i = 0;
+  for(; i + 8 <= count; i += 8) {
+    const float32x4_t first = vld1q_f32(source+i);
+    const float32x4_t second = vld1q_f32(source+i+4);
+    const uint16x8_t packed = vcombine_u16(vreinterpret_u16_f16(vcvt_f16_f32(first)),
+                                           vreinterpret_u16_f16(vcvt_f16_f32(second)));
+    uint16_t bits[8];
+    vst1q_u16(bits,packed);
+    std::memcpy(dest+i,bits,sizeof(bits));
+  }
+  for(; i < count; i++)
+    dest[i] = half_float::half_cast<half_t>(source[i]);
+}
+
+static bool canConvertWeightFP16Neon() {
+  // Linux AArch64 HWCAP_ASIMDHP = bit 10. Never execute an FP16 instruction without it.
+  static const bool enabled = []() {
+    if((getauxval(AT_HWCAP) & (1UL << 10)) == 0)
+      return false;
+    // Check that hardware rounding agrees with the existing half library before enabling it.
+    const float samples[16] = {
+      0.0f,-0.0f,1.0f,-1.0f,0.3333f,-0.3333f,0.0001f,-0.0001f,
+      65504.0f,-65504.0f,0.000000059604644775390625f,
+      -0.000000059604644775390625f,1.00048828125f,-1.00048828125f,
+      0.00006103515625f,-0.00006103515625f
+    };
+    half_t actual[16];
+    convertWeightFP16Neon(samples,actual,16);
+    for(size_t i = 0; i < 16; i++) {
+      const half_t expected = half_float::half_cast<half_t>(samples[i]);
+      if(std::memcmp(&actual[i],&expected,sizeof(half_t)) != 0)
+        return false;
+    }
+    return true;
+  }();
+  return enabled;
+}
+#endif
+
 static cl_mem createReadOnlyBuffer(ComputeHandleInternal* handle, vector<float>& data, bool useFP16) {
   if(useFP16) {
     const auto convertStart = OpenCLClock::now();
     vector<half_t> dataHalf(data.size());
-    for(size_t i = 0; i<data.size(); i++)
-      dataHalf[i] = half_float::half_cast<half_t>(data[i]);
+    bool usedNeon = false;
+#if defined(__aarch64__) && defined(__linux__) && defined(__clang__)
+    if(canConvertWeightFP16Neon()) {
+      convertWeightFP16Neon(data.data(),dataHalf.data(),data.size());
+      usedNeon = true;
+    }
+#endif
+    if(!usedNeon) {
+      for(size_t i = 0; i<data.size(); i++)
+        dataHalf[i] = half_float::half_cast<half_t>(data[i]);
+    }
     const double convertMs = openclMsSince(convertStart);
     const auto copyStart = OpenCLClock::now();
     cl_mem buffer = createReadOnlyBuffer(handle->clContext,dataHalf);
@@ -714,6 +777,7 @@ static cl_mem createReadOnlyBuffer(ComputeHandleInternal* handle, vector<float>&
       activeWeightStats->bufferCount++;
       activeWeightStats->bufferBytes += dataHalf.size() * sizeof(half_t);
       activeWeightStats->fp16ConvertMs += convertMs;
+      if(usedNeon) activeWeightStats->neonConvertedBytes += dataHalf.size() * sizeof(half_t);
       activeWeightStats->copyHostPtrMs += openclMsSince(copyStart);
     }
     return buffer;
@@ -2901,6 +2965,7 @@ ComputeHandle* NeuralNet::createComputeHandle(
     logger->write(prefix + " phase=winograd_weight_transform ms=" + std::to_string(handle->weightStats.winogradTransformMs) +
                   " layers=" + std::to_string(handle->weightStats.winogradLayerCount));
     logger->write(prefix + " phase=weight_fp16_convert ms=" + std::to_string(handle->weightStats.fp16ConvertMs));
+    logger->write(prefix + " phase=weight_fp16_neon bytes=" + std::to_string(handle->weightStats.neonConvertedBytes));
     logger->write(prefix + " phase=weight_copy_host_ptr ms=" + std::to_string(handle->weightStats.copyHostPtrMs) +
                   " buffers=" + std::to_string(handle->weightStats.bufferCount) +
                   " bytes=" + std::to_string(handle->weightStats.bufferBytes));
