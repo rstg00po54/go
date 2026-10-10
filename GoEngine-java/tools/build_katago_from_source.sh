@@ -213,7 +213,7 @@ if [[ "$BUILD_VARIANT" == "eigenjni" ]]; then
         echo "ERROR: JNI ELF does not have libkatago.so SONAME." >&2
         exit 1
     fi
-    if ! "$READELF" -W --dyn-syms "$BIN" | grep -Fq Java_com_badukai_engine_KataGoNative_nativeBuildStatus; then
+    if ! "$READELF" -W --dyn-syms "$BIN" | grep -F Java_com_badukai_engine_KataGoNative_nativeBuildStatus >/dev/null; then
         echo "ERROR: JNI nativeBuildStatus symbol not exported." >&2
         exit 1
     fi
