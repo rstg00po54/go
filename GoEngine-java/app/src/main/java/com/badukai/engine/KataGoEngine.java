@@ -32,6 +32,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class KataGoEngine {
     private static final String TAG = "KataGoEngine";
+
+    private static void startupTiming(String phase, long startNs) {
+        Log.i(TAG, "STARTUP_TIMING phase=" + phase + " ms=" + (System.nanoTime() - startNs) / 1000000.0);
+    }
     private static final String NATIVE_BINARY = "libkatago_exec.so";
     private static final String CONFIG_ASSET = "engine/default_gtp.cfg";
     private static final String DEFAULT_MODEL_ASSET = "engine/10b.bin";
@@ -137,6 +141,7 @@ public class KataGoEngine {
     public synchronized boolean start(Model model) { return start(model, false); }
 
     public synchronized boolean start(Model model, boolean useHumanSL) {
+        long totalStartNs = System.nanoTime();
         DebugLog.enter(TAG, "start in, model=" + model + ", running=" + running.get());
         if (running.get()) {
             if (isReady() && humanSLRunning == useHumanSL) return true;
@@ -145,6 +150,7 @@ public class KataGoEngine {
         configuredBoardSize = -1;
         Log.i(TAG, "=== JAVA KATAGO ENGINE / ANDROID ARM64 ===");
         try {
+            long phaseNs = System.nanoTime();
             File engineDir = new File(context.getFilesDir(), engineDirectoryName);
             if (!engineDir.exists() && !engineDir.mkdirs()) throw new IOException("Cannot create engine dir: " + engineDir);
 
@@ -163,6 +169,8 @@ public class KataGoEngine {
                 throw new IOException("KataGo binary not installed in nativeLibraryDir: " + binaryFile);
             if (!useJni && !useGpu && !binaryFile.canExecute())
                 throw new IOException("KataGo binary is not executable: " + binaryFile);
+            startupTiming("engine_backend_and_paths", phaseNs);
+            phaseNs = System.nanoTime();
             copyAssetToFile(useHumanSL ? HUMAN_CONFIG_ASSET : CONFIG_ASSET, configFile);
             if (useJni || useGpu) {
                 // Reuse the RK3588 OpenCL tuning cache created by the validated GPU JNI smoke test.
@@ -192,6 +200,8 @@ public class KataGoEngine {
             java.nio.file.Files.write(configFile.toPath(), startupConfig.getBytes(java.nio.charset.StandardCharsets.UTF_8),
                     java.nio.file.StandardOpenOption.APPEND);
             Log.i(TAG, "Native GTP defaultBoardSize=" + startupBoardSize);
+            startupTiming("engine_prepare_config", phaseNs);
+            phaseNs = System.nanoTime();
 
             String modelAsset = "engine/" + model.fileName;
             try {
@@ -202,6 +212,8 @@ public class KataGoEngine {
                 modelFile = new File(engineDir, "10b.bin");
                 copyAssetToFile(DEFAULT_MODEL_ASSET, modelFile);
             }
+            startupTiming("engine_prepare_model_asset", phaseNs);
+            phaseNs = System.nanoTime();
 
             File humanFile = null;
             if (useHumanSL) {
@@ -209,6 +221,7 @@ public class KataGoEngine {
                 if (humanFile == null) throw new IOException("Human SL model unavailable; prepare it first");
                 Log.i(TAG, "Human SL model: " + humanFile.getAbsolutePath() + " size=" + humanFile.length());
             }
+            startupTiming("engine_find_human_model", phaseNs);
 
             Log.i(TAG, "Model: " + modelFile.getAbsolutePath() + " size=" + modelFile.length());
             Log.i(TAG, "Config: " + configFile.getAbsolutePath());
@@ -216,16 +229,27 @@ public class KataGoEngine {
 
             if (useGpu) {
                 try {
+                    phaseNs = System.nanoTime();
                     gpuSession = GpuRemoteSession.connect(context, modelFile, configFile, humanFile);
+                    startupTiming("engine_gpu_service_connect", phaseNs);
+                    phaseNs = System.nanoTime();
                     running.set(true);
                     humanSLRunning = useHumanSL;
                     startReaderThread();
                     responseQueue.clear();
-                    if (!sendCommandSync("name") || !waitForStartupResponse(360000))
-                        throw new IOException("GPU OpenCL JNI GTP did not become ready");
+                    startupTiming("engine_gpu_reader_setup", phaseNs);
+                    phaseNs = System.nanoTime();
+                    boolean nameSent = sendCommandSync("name");
+                    startupTiming("engine_gpu_gtp_name_send", phaseNs);
+                    phaseNs = System.nanoTime();
+                    boolean nameReady = nameSent && waitForStartupResponse(360000);
+                    startupTiming("engine_gpu_gtp_name_wait", phaseNs);
+                    if (!nameReady) throw new IOException("GPU OpenCL JNI GTP did not become ready");
+                    startupTiming("engine_java_start_total", totalStartNs);
                     Log.i(TAG, "=== GPU/OPENCL JNI ENGINE STARTED SUCCESSFULLY ===");
                     return true;
                 } catch (Exception | LinkageError e) {
+                    startupTiming("engine_gpu_start_failed", totalStartNs);
                     Log.e(TAG, "GPU JNI startup failed; falling back to CPU", e);
                     gpuDisabledForProcess = true;
                     stop();
@@ -302,6 +326,7 @@ public class KataGoEngine {
             Log.i(TAG, "=== ENGINE STARTED SUCCESSFULLY ===");
             return true;
         } catch (Exception | LinkageError e) {
+            startupTiming("engine_java_start_failed", totalStartNs);
             Log.e(TAG, "Failed to start engine", e);
             if (jniSession != null) {
                 jniDisabledForProcess = true;
