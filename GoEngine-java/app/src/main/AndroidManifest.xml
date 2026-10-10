@@ -23,6 +23,13 @@
         <!-- Optional OpenCL, so devices without a public vendor library can still install the CPU APK. -->
         <uses-native-library android:name="libOpenCL.so" android:required="false" />
 
+        <!-- Bound-only GPU gameplay service shares the isolated GPU process with the smoke activity. -->
+        <service
+            android:name="com.badukai.engine.GpuGtpService"
+            android:enabled="${gpuJniSmokeEnabled}"
+            android:exported="false"
+            android:process=":katago_gpu" />
+
         <!-- GPU-only JNI smoke runs in a separate process, disabled in normal APKs. -->
         <activity
             android:name=".GpuSmokeActivity"
