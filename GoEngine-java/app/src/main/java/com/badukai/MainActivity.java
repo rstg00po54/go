@@ -181,10 +181,12 @@ public class MainActivity extends AppCompatActivity {
             Log.i(tag, "Starting JNI CPU/Eigen GTP session");
             try (KataGoNative.GtpSession session = KataGoNative.createSession(model, configFile)) {
                 if (session == null) throw new IllegalStateException("createSession returned null");
+                Log.i(tag, "JNI session created, model=" + model.length() + " bytes");
                 StringBuilder responseBuffer = new StringBuilder();
                 String[] commands = {"name", "boardsize 9", "komi 7.5", "play B D4",
                                      "genmove W", "undo", "clear_board"};
                 for (String command : commands) {
+                    Log.i(tag, "Sending " + command);
                     if (!session.send(command)) throw new IllegalStateException("send failed: " + command);
                     long deadline = android.os.SystemClock.uptimeMillis() + 90000;
                     String response = null;
