@@ -20,6 +20,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.badukai.engine.KataGoEngine;
+import com.badukai.engine.KataGoOpenCLProbe;
 import com.badukai.game.GoBoard;
 import com.badukai.game.Intersection;
 import com.badukai.game.Move;
@@ -105,6 +106,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         DebugLog.enter(TAG, "onCreate in, savedInstanceState=" + savedInstanceState);
         super.onCreate(savedInstanceState);
+        // Explicit ADB intent extra only; ordinary APP starts never run the probe.
+        if (getIntent() != null && getIntent().getBooleanExtra("katago_probe", false)) {
+            new Thread(() -> Log.i("KataGoOpenCLProbe", KataGoOpenCLProbe.check()),
+                    "KataGo-OpenCL-Probe").start();
+        }
         setContentView(R.layout.activity_main);
         engine = new KataGoEngine(getApplicationContext());
         winRateEngine = new KataGoEngine(getApplicationContext(), "engine_winrate");
