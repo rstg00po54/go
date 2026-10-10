@@ -6,9 +6,12 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 SOURCE_DIR="${KATAGO_SOURCE_DIR:-$PROJECT_DIR/native/KataGo}"
-BACKEND="${1:-eigen}"
+BUILD_VARIANT="${1:-eigen}"
+BACKEND="$BUILD_VARIANT"
+PORTABLE_OPENCL=false
+if [[ "$BUILD_VARIANT" == "openclportable" ]]; then BACKEND="opencl"; PORTABLE_OPENCL=true; fi
 if [[ $# -gt 1 || ("$BACKEND" != "eigen" && "$BACKEND" != "opencl") ]]; then
-    echo "Usage: $0 [eigen|opencl]" >&2
+    echo "Usage: $0 [eigen|opencl|openclportable]" >&2
     exit 2
 fi
 if [[ ! -f "$SOURCE_DIR/cpp/CMakeLists.txt" ]]; then
@@ -60,8 +63,8 @@ READELF="$(command -v readelf || true)"
 [[ -n "$READELF" ]] || { echo "readelf (binutils) not found" >&2; exit 1; }
 
 WORK_DIR="${KATAGO_WORKDIR:-$HOME/.cache/goengine_katago}"
-BUILD_DIR="$WORK_DIR/build_android_arm64_${BACKEND}"
-OUTPUT_DIR="$PROJECT_DIR/build/katago_android_arm64_${BACKEND}"
+BUILD_DIR="$WORK_DIR/build_android_arm64_${BUILD_VARIANT}"
+OUTPUT_DIR="$PROJECT_DIR/build/katago_android_arm64_${BUILD_VARIANT}"
 mkdir -p "$OUTPUT_DIR"
 
 ARGS=(
@@ -98,7 +101,11 @@ else
     cp -a "$OPENCL_INCLUDE_DIR/CL/." "$OPENCL_STAGE_DIR/CL/"
     OPENCL_INCLUDE_DIR="$OPENCL_STAGE_DIR"
 
-    OPENCL_LIBRARY="${OPENCL_LIBRARY:-$WORK_DIR/opencl_arm64/libOpenCL.so}"
+    if [[ "$PORTABLE_OPENCL" == true ]]; then
+        OPENCL_LIBRARY="${OPENCL_LIBRARY:-$WORK_DIR/opencl_arm64_portable/libOpenCL.so}"
+    else
+        OPENCL_LIBRARY="${OPENCL_LIBRARY:-$WORK_DIR/opencl_arm64/libOpenCL.so}"
+    fi
     if [[ ! -f "$OPENCL_LIBRARY" ]]; then
         echo "Android ARM64 libOpenCL.so not cached: $OPENCL_LIBRARY"
         if command -v adb >/dev/null 2>&1; then
@@ -130,6 +137,26 @@ else
         echo "ERROR: OPENCL_LIBRARY is not Android ARM64: $OPENCL_LIBRARY" >&2
         exit 1
     fi
+    if [[ "$PORTABLE_OPENCL" == true ]]; then
+        # A portable executable must NOT inherit the RK3588 Mali SONAME or
+        # versioned OPENCL_1.0 imports. Phone /vendor/lib64/libOpenCL.so is
+        # a small unversioned loader and is used only during linking.
+        LIB_SONAME="$("$READELF" -W -d "$OPENCL_LIBRARY" | sed -nE 's/.*\(SONAME\).*\[([^]]+)\].*/\1/p' | head -n 1)"
+        if [[ "$LIB_SONAME" != "libOpenCL.so" ]]; then
+            echo "ERROR: portable link library must have SONAME=libOpenCL.so (got '${LIB_SONAME:-none}')." >&2
+            echo "Use the phone's /vendor/lib64/libOpenCL.so, not the RK3588 driver." >&2
+            exit 1
+        fi
+        if "$READELF" -W -V "$OPENCL_LIBRARY" | grep -Eq 'Name: OPENCL_[0-9]'; then
+            echo "ERROR: portable link library uses versioned OpenCL symbols." >&2
+            exit 1
+        fi
+        if ! "$READELF" -W --dyn-syms "$OPENCL_LIBRARY" | grep -Eq '[[:space:]]clGetPlatformIDs([[:space:]]|$)'; then
+            echo "ERROR: portable link library does not export clGetPlatformIDs." >&2
+            exit 1
+        fi
+        echo "Portable OpenCL link stub verified: $OPENCL_LIBRARY"
+    fi
     echo "OpenCL: headers=$OPENCL_INCLUDE_DIR library=$OPENCL_LIBRARY"
     ARGS+=(-DOpenCL_INCLUDE_DIR="$OPENCL_INCLUDE_DIR" -DOpenCL_LIBRARY="$OPENCL_LIBRARY")
 fi
@@ -152,6 +179,17 @@ if [[ "$BACKEND" == "opencl" ]]; then
     OUT="$OUTPUT_DIR/libkatago_exec_opencl.so"
 else
     OUT="$OUTPUT_DIR/libkatago_exec.so"
+fi
+if [[ "$PORTABLE_OPENCL" == true ]]; then
+    if ! "$READELF" -W -d "$BIN" | grep -Fq '(NEEDED)             Shared library: [libOpenCL.so]'; then
+        echo "ERROR: portable GPU build must depend on libOpenCL.so." >&2
+        "$READELF" -W -d "$BIN" | grep NEEDED >&2 || true
+        exit 1
+    fi
+    if "$READELF" -W -V "$BIN" | grep -Eq 'Name: OPENCL_[0-9]|File: libGLES_mali.so'; then
+        echo "ERROR: portable GPU build still requires Mali versioned symbols." >&2
+        exit 1
+    fi
 fi
 cp "$BIN" "$OUT"
 echo "Built $OUT"
