@@ -167,6 +167,7 @@ endif()
 #--------------------------- KATAGO COMPILING AND LINKING --------------------------------------------------------------
 
 set(KATAGO_SOURCE_FILES
+  version.cpp
   core/global.cpp
   core/base64.cpp
   core/bsearch.cpp
