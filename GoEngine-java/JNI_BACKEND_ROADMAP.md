@@ -223,6 +223,26 @@ bash tools/test_katago_jni_gtp_android.sh 8719e18a71a2a66c repeat
 
 本次仅改 Java Smoke 与 ADB 脚本，没有更改 native C++，因此正常情况下可省略手动运行 `bash tools/build_katago_from_source.sh eigenjni`，继续使用上一轮已编译并通过验证的 `libkatago.so`。
 
+### 2026-10-10 RK3588 APP JNI/Human SL 实测与 GTP 发送锁饥饿修复（待复测）
+
+- [x] **用户 RK3588 11:59:58–12:00:39 主 APP 真机启动 JNI + 10b + Human SL 通过**：`Backend requested: JNI/Eigen`，`KataGo JNI GTP response: = KataGo`，`=== JNI/EIGEN ENGINE STARTED SUCCESSFULLY ===`。Human SL 文件 107185997 字节，10b 文件 12003218 字节。
+- [x] 真机发现性能故障：`12:00:39.955 sendCommandSync in, command=boardsize 19` 到 `12:01:51.981 waitForResponse in` 相隔 **约 72 秒**，`boardsize 19` 返回 `=`，之后提交 `clear_board`。等待发生在 **调用 `waitForResponse` 之前**，不是 `waitForResponse(5000)` 超时。
+- [x] 源码识别阻塞/饥饿风险：`KataGoNative.GtpSession.read(1000)` 和 `send()` 共用实例 `synchronized` Java monitor，GTP reader 在 native 阻塞读取时持续持锁并快速再次获取，可能使 GTP send 长时间抢不到锁。原生层已在输入队列、输出队列和 session registry 做锁保护；移除 Java `read/send/stopSearch` 的 `synchronized`，保留 `close()` 的幂等同步及 `volatile handle`。**此为符合日志的代码根因推断，需真机复测验证**。
+- [x] `KataGoEngine.sendCommandSync` 加入 `queued, enqueueMs` 日志，`enqueueMs > 200` 触发 WARNING，方便区分发送阻塞与 KataGo 模型计算。
+- [ ] **修复后的正常 APP 尚未真机复测**，不能据此声称 72 秒卡顿已解决；需要确认 `boardsize`、`clear_board`、`kata-set-rules`、贴目、`Initial engine ready=true` 和完整新局对弈。
+
+复测仅改 Java，沿用已构建的 `libkatago.so`：
+
+```bash
+git pull --ff-only github rk3588-engine
+./build.sh -PenableKataGoJniCore=true
+adb -s 8719e18a71a2a66c install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s 8719e18a71a2a66c logcat -c
+adb -s 8719e18a71a2a66c shell am force-stop com.badukai.java
+adb -s 8719e18a71a2a66c shell am start -n com.badukai.java/com.badukai.MainActivity
+adb -s 8719e18a71a2a66c logcat -d -s KataGoEngine:V MainActivity:I '*:S' | tail -100
+```
+
 ### 阶段 1D：主 APP 对弈接入真正 JNI，保留 PIE 回退（代码已提交，未经过 RK3588 真机回归）
 
 - [x] `KataGoEngine.java` 原有 GTP 高层接口保持不变，主引擎 `engine` 在 APK 含 `libkatago.so` 时**优先 JNI/Eigen**，共享 `responseQueue` 及 GTP 解析；通过 JNI `send` 和独立 reader thread 按 `\n\n` 解析 GTP 应答，不再依赖 `ProcessBuilder` 运行主对弈。未打包 `libkatago.so` 时保持原 PIE 行为。
