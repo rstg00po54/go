@@ -223,7 +223,7 @@ if [[ "$BUILD_VARIANT" == "eigenjni" || "$BUILD_VARIANT" == "opencljni" ]]; then
     fi
     if [[ "$BUILD_VARIANT" == "opencljni" ]]; then
         for symbol in nativeCreateSession nativeSendCommand nativeReadOutput nativeIsSessionAlive nativeStopSearch nativeDestroySession; do
-            if ! "$READELF" -W --dyn-syms "$BIN" | grep -Fq "Java_com_badukai_engine_KataGoGpuNative_$symbol"; then
+            if ! "$READELF" -W --dyn-syms "$BIN" | grep -F "Java_com_badukai_engine_KataGoGpuNative_$symbol" >/dev/null; then
                 echo "ERROR: GPU-specific JNI symbol missing: $symbol" >&2
                 exit 1
             fi
