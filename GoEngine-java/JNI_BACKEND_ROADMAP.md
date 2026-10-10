@@ -229,6 +229,7 @@ bash tools/test_katago_jni_gtp_android.sh 8719e18a71a2a66c repeat
 - [x] 真机发现性能故障：`12:00:39.955 sendCommandSync in, command=boardsize 19` 到 `12:01:51.981 waitForResponse in` 相隔 **约 72 秒**，`boardsize 19` 返回 `=`，之后提交 `clear_board`。等待发生在 **调用 `waitForResponse` 之前**，不是 `waitForResponse(5000)` 超时。
 - [x] 源码识别阻塞/饥饿风险：`KataGoNative.GtpSession.read(1000)` 和 `send()` 共用实例 `synchronized` Java monitor，GTP reader 在 native 阻塞读取时持续持锁并快速再次获取，可能使 GTP send 长时间抢不到锁。原生层已在输入队列、输出队列和 session registry 做锁保护；移除 Java `read/send/stopSearch` 的 `synchronized`，保留 `close()` 的幂等同步及 `volatile handle`。**此为符合日志的代码根因推断，需真机复测验证**。
 - [x] `KataGoEngine.sendCommandSync` 加入 `queued, enqueueMs` 日志，`enqueueMs > 200` 触发 WARNING，方便区分发送阻塞与 KataGo 模型计算。
+- [x] 修复潜在的首次模型加载超时：旧 JNI `waitForStartupResponse(30000)` 可能在移除 Java 发送锁后于模型真实加载约 41 秒期间提前失败；JNI 启动等待改为 120 秒（PIE 仍 30 秒），JNI 切换棋盘尺寸可能触发神经网络重建，`boardsize` 等待提高为 90 秒（PIE 仍 5 秒）。
 - [ ] **修复后的正常 APP 尚未真机复测**，不能据此声称 72 秒卡顿已解决；需要确认 `boardsize`、`clear_board`、`kata-set-rules`、贴目、`Initial engine ready=true` 和完整新局对弈。
 
 复测仅改 Java，沿用已构建的 `libkatago.so`：
