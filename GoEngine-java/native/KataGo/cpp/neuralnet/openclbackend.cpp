@@ -15,7 +15,6 @@
 #include "../core/simpleallocator.h"
 #include "../core/test.h"
 #include <chrono>
-#include <future>
 
 //------------------------
 #include "../core/using.h"
@@ -1152,10 +1151,7 @@ struct ConvLayer {
       };
 
       const auto winogradStart = OpenCLClock::now();
-      // Each oc owns distinct output elements; the floating-point operations
-      // on each filter are unchanged. Parallelize only large conv matrices.
-      auto transformOcRange = [&](int startOc, int endOc) {
-        for(int oc = startOc; oc < endOc; oc++) {
+      for(int oc = 0; oc < outChannelsPadded; oc++) {
         for(int ic = 0; ic < inChannelsPadded; ic++) {
           float tmp[maxTileYSize][maxTileXSize];
           for(int subY = 0; subY < convYSize; subY++) {
@@ -1199,26 +1195,6 @@ struct ConvLayer {
             }
           }
         }
-      }
-      };
-      const size_t numFilters = (size_t)outChannelsPadded * inChannelsPadded;
-      if(numFilters >= 32768 && outChannelsPadded >= 64) {
-        constexpr int numWorkers = 4;
-        const int chunk = (outChannelsPadded + numWorkers - 1) / numWorkers;
-        std::vector<std::future<void>> workers;
-        workers.reserve(numWorkers - 1);
-        for(int i = 1; i < numWorkers; i++) {
-          const int from = i * chunk;
-          const int to = std::min(outChannelsPadded,from + chunk);
-          if(from < to)
-            workers.push_back(std::async(std::launch::async,transformOcRange,from,to));
-        }
-        transformOcRange(0,std::min(chunk,outChannelsPadded));
-        for(auto& worker : workers)
-          worker.get();
-      }
-      else {
-        transformOcRange(0,outChannelsPadded);
       }
       if(activeWeightStats != nullptr) {
         activeWeightStats->winogradTransformMs += openclMsSince(winogradStart);
