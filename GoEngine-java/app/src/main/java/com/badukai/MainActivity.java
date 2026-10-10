@@ -122,7 +122,9 @@ public class MainActivity extends AppCompatActivity {
                     "KataGo-JNI-Core").start();
         }
         final boolean jniGtpSmoke = getIntent() != null && getIntent().getBooleanExtra("katago_gtp", false);
-        if (jniGtpSmoke) new Thread(this::runJniGtpSmoke, "KataGo-JNI-GTP").start();
+        final boolean jniGtpRepeat = getIntent() != null && getIntent().getBooleanExtra("katago_gtp_repeat", false);
+        if (jniGtpSmoke || jniGtpRepeat)
+            new Thread(() -> runJniGtpSmoke(jniGtpRepeat), "KataGo-JNI-GTP").start();
         setContentView(R.layout.activity_main);
         engine = new KataGoEngine(getApplicationContext());
         winRateEngine = new KataGoEngine(getApplicationContext(), "engine_winrate");
@@ -144,10 +146,10 @@ public class MainActivity extends AppCompatActivity {
         variationButton.setOnClickListener(v -> showVariations());
         render("正在启动 AI...");
         showMainPage();
-        if (!jniGtpSmoke) startEngine();
+        if (!jniGtpSmoke && !jniGtpRepeat) startEngine();
     }
 
-    private void runJniGtpSmoke() {
+    private void runJniGtpSmoke(boolean repeat) {
         final String tag = "KataGoJniGtp";
         try {
             File dir = new File(getFilesDir(), "jni_gtp");
@@ -178,35 +180,43 @@ public class MainActivity extends AppCompatActivity {
             config += "\nhomeDataDir = " + home.getAbsolutePath() + "\n";
             Files.write(configFile.toPath(), config.getBytes(StandardCharsets.UTF_8));
 
-            Log.i(tag, "Starting JNI CPU/Eigen GTP session");
-            try (KataGoNative.GtpSession session = KataGoNative.createSession(model, configFile)) {
-                if (session == null) throw new IllegalStateException("createSession returned null");
-                Log.i(tag, "JNI session created, model=" + model.length() + " bytes");
-                StringBuilder responseBuffer = new StringBuilder();
-                String[] commands = {"name", "boardsize 9", "komi 7.5", "play B D4",
-                                     "genmove W", "undo", "clear_board"};
-                for (String command : commands) {
-                    Log.i(tag, "Sending " + command);
-                    if (!session.send(command)) throw new IllegalStateException("send failed: " + command);
-                    long deadline = android.os.SystemClock.uptimeMillis() + 90000;
-                    String response = null;
-                    while (android.os.SystemClock.uptimeMillis() < deadline) {
-                        int end = responseBuffer.indexOf("\n\n");
-                        if (end >= 0) {
-                            response = responseBuffer.substring(0, end).trim();
-                            responseBuffer.delete(0, end + 2);
-                            break;
+
+            Log.i(tag, "Starting JNI CPU/Eigen GTP session, repeat=" + repeat);
+            int[] boardSizes = repeat ? new int[]{9, 13, 19} : new int[]{9};
+            for (int boardSize : boardSizes) {
+                Log.i(tag, "Creating JNI session for " + boardSize + "x" + boardSize);
+                try (KataGoNative.GtpSession session = KataGoNative.createSession(model, configFile)) {
+                    if (session == null) throw new IllegalStateException("createSession returned null for boardSize=" + boardSize);
+                    Log.i(tag, "JNI session created, model=" + model.length() + " bytes");
+                    StringBuilder responseBuffer = new StringBuilder();
+                    String[] commands = {"name", "boardsize " + boardSize, "komi 7.5", "play B D4",
+                                         "genmove W", "undo", "clear_board"};
+                    for (String command : commands) {
+                        Log.i(tag, "Sending " + command);
+                        if (!session.send(command)) throw new IllegalStateException("send failed: " + command);
+                        long deadline = android.os.SystemClock.uptimeMillis() + 90000;
+                        String response = null;
+                        while (android.os.SystemClock.uptimeMillis() < deadline) {
+                            int end = responseBuffer.indexOf("\n\n");
+                            if (end >= 0) {
+                                response = responseBuffer.substring(0, end).trim();
+                                responseBuffer.delete(0, end + 2);
+                                break;
+                            }
+                            String chunk = session.read(1000);
+                            if (chunk == null) throw new IllegalStateException("JNI GTP ended before " + command);
+                            responseBuffer.append(chunk.replace("\r\n", "\n"));
                         }
-                        String chunk = session.read(1000);
-                        if (chunk == null) throw new IllegalStateException("JNI GTP ended before " + command);
-                        responseBuffer.append(chunk.replace("\r\n", "\n"));
+                        if (response == null || !response.startsWith("="))
+                            throw new IllegalStateException("GTP " + command + " failed: " + response);
+                        Log.i(tag, command + " -> " + response.replace('\n', ' ').substring(0, Math.min(140, response.length())));
                     }
-                    if (response == null || !response.startsWith("="))
-                        throw new IllegalStateException("GTP " + command + " failed: " + response);
-                    Log.i(tag, command + " -> " + response.replace('\n', ' ').substring(0, Math.min(140, response.length())));
+                    Log.i(tag, "Cycle OK: board=" + boardSize + "x" + boardSize + "; closing session");
                 }
-                Log.i(tag, "PASS: JNI GTP name/boardsize/komi/play/genmove/undo/clear_board");
+                Log.i(tag, "Session destroyed: board=" + boardSize + "x" + boardSize);
             }
+            Log.i(tag, repeat ? "PASS: JNI GTP repeated sessions 9x9, 13x13, 19x19" :
+                                  "PASS: JNI GTP name/boardsize/komi/play/genmove/undo/clear_board");
         } catch (Exception | LinkageError e) {
             Log.e(tag, "FAIL: JNI GTP smoke test", e);
         }
