@@ -223,14 +223,15 @@ bash tools/test_katago_jni_gtp_android.sh 8719e18a71a2a66c repeat
 
 本次仅改 Java Smoke 与 ADB 脚本，没有更改 native C++，因此正常情况下可省略手动运行 `bash tools/build_katago_from_source.sh eigenjni`，继续使用上一轮已编译并通过验证的 `libkatago.so`。
 
-### 2026-10-10 RK3588 APP JNI/Human SL 实测与 GTP 发送锁饥饿修复（待复测）
+### 2026-10-10 RK3588 APP JNI/Human SL 实测与 GTP 发送锁饥饿修复（已通过启动回归）
 
 - [x] **用户 RK3588 11:59:58–12:00:39 主 APP 真机启动 JNI + 10b + Human SL 通过**：`Backend requested: JNI/Eigen`，`KataGo JNI GTP response: = KataGo`，`=== JNI/EIGEN ENGINE STARTED SUCCESSFULLY ===`。Human SL 文件 107185997 字节，10b 文件 12003218 字节。
 - [x] 真机发现性能故障：`12:00:39.955 sendCommandSync in, command=boardsize 19` 到 `12:01:51.981 waitForResponse in` 相隔 **约 72 秒**，`boardsize 19` 返回 `=`，之后提交 `clear_board`。等待发生在 **调用 `waitForResponse` 之前**，不是 `waitForResponse(5000)` 超时。
-- [x] 源码识别阻塞/饥饿风险：`KataGoNative.GtpSession.read(1000)` 和 `send()` 共用实例 `synchronized` Java monitor，GTP reader 在 native 阻塞读取时持续持锁并快速再次获取，可能使 GTP send 长时间抢不到锁。原生层已在输入队列、输出队列和 session registry 做锁保护；移除 Java `read/send/stopSearch` 的 `synchronized`，保留 `close()` 的幂等同步及 `volatile handle`。**此为符合日志的代码根因推断，需真机复测验证**。
+- [x] 源码识别阻塞/饥饿风险：`KataGoNative.GtpSession.read(1000)` 和 `send()` 共用实例 `synchronized` Java monitor，GTP reader 在 native 阻塞读取时持续持锁并快速再次获取，可能使 GTP send 长时间抢不到锁。原生层已在输入队列、输出队列和 session registry 做锁保护；移除 Java `read/send/stopSearch` 的 `synchronized`，保留 `close()` 的幂等同步及 `volatile handle`。**经后续真机日志对照，发送延迟已降为 0ms；高度支持该锁饥饿诊断**。
 - [x] `KataGoEngine.sendCommandSync` 加入 `queued, enqueueMs` 日志，`enqueueMs > 200` 触发 WARNING，方便区分发送阻塞与 KataGo 模型计算。
 - [x] 修复潜在的首次模型加载超时：旧 JNI `waitForStartupResponse(30000)` 可能在移除 Java 发送锁后于模型真实加载约 41 秒期间提前失败；JNI 启动等待改为 120 秒（PIE 仍 30 秒），JNI 切换棋盘尺寸可能触发神经网络重建，`boardsize` 等待提高为 90 秒（PIE 仍 5 秒）。
-- [ ] **修复后的正常 APP 尚未真机复测**，不能据此声称 72 秒卡顿已解决；需要确认 `boardsize`、`clear_board`、`kata-set-rules`、贴目、`Initial engine ready=true` 和完整新局对弈。
+- [x] **修复后 RK3588 正常 APP 初始化回归通过**：12:06:38.139–12:06:40.504，10b + Human SL，JNI `name` 2.34 秒返回，`boardsize 19`、`clear_board`、`kata-set-rules chinese`、`kata-get-rules`、`komi 7.5` 均成功；`Chinese rules verified=true`；`Initial engine ready=true humanSL=true elapsedMs=2470`。`boardsize 19` 的 `enqueueMs=0`，相比上次 72 秒发送卡顿已消失。
+- [ ] 尚需用户在 APP 内**真正新开一局**，测试 Human SL `rank_XXk` 设置、AI 落子、悔棋、形势判断和独立胜率引擎 PIE；不能仅依据初始化成功判定对弈与胜率功能全部通过。
 
 复测仅改 Java，沿用已构建的 `libkatago.so`：
 
@@ -244,7 +245,7 @@ adb -s 8719e18a71a2a66c shell am start -n com.badukai.java/com.badukai.MainActiv
 adb -s 8719e18a71a2a66c logcat -d -s KataGoEngine:V MainActivity:I '*:S' | tail -100
 ```
 
-### 阶段 1D：主 APP 对弈接入真正 JNI，保留 PIE 回退（代码已提交，未经过 RK3588 真机回归）
+### 阶段 1D：主 APP 对弈接入真正 JNI，保留 PIE 回退（RK3588 正常启动验证通过，完整对弈待测）
 
 - [x] `KataGoEngine.java` 原有 GTP 高层接口保持不变，主引擎 `engine` 在 APK 含 `libkatago.so` 时**优先 JNI/Eigen**，共享 `responseQueue` 及 GTP 解析；通过 JNI `send` 和独立 reader thread 按 `\n\n` 解析 GTP 应答，不再依赖 `ProcessBuilder` 运行主对弈。未打包 `libkatago.so` 时保持原 PIE 行为。
 - [x] 原生 `EngineSession.cpp` 与 Java `KataGoNative.java` 扩展 `createSession(model, config, humanModel)`，支持 `-human-model` 参数。主界面新局需 Human SL（`engine.start(Model.HUMAN,true)`），因此不能只接 10b 模型；JNI 使用原来的 `human_gtp.cfg` + Human SL 模型路径、动态 `humanSLProfile` 指令。
@@ -253,7 +254,8 @@ adb -s 8719e18a71a2a66c logcat -d -s KataGoEngine:V MainActivity:I '*:S' | tail 
 - [x] JNI **启动失败**时（链接错误、native create 失败、启动 30 秒内收不到合法 `name`）禁用本 APP 进程中的 JNI 尝试并自动重试旧 `ProcessBuilder`；不能捕获/回退已发生的 native SIGSEGV/SIGABRT。
 - [x] 独立的 `engine_winrate` **保持 PIE**，因为 JNI 原生层只允许一个会话且 KataGo 进程级全局清理/初始化还未隔离；不删除 `libkatago_exec.so`。
 - [x] `MainActivity` 支持启动参数 `--ez katago_legacy true`，强制主引擎用 PIE（便于 APP JNI 真机故障时回退）。正常启动仅在打包 `libkatago.so` 时优先使用 JNI。
-- [ ] **尚未在用户 Ubuntu 构建、RK3588 普通 APP 或 Human SL 真机对弈回归！** 不应将阶段 1D 视为已验收。阶段 1C 的 9/13/19 多会话重复测试同样尚未收到真机通过结果。
+- [x] **用户已完成 Ubuntu 构建及 RK3588 普通 APP 的 JNI + Human SL 初始化验证**：2026-10-10 12:06:40 日志 `Initial engine ready=true humanSL=true elapsedMs=2470`；GTP 初始棋盘、规则和贴目设置成功。
+- [ ] **尚未收到 Human SL 真正对局落子和完整 UI 回归通过的结果**；阶段 1C 的 9/13/19 重复会话测试也仍待复测。
 - [ ] 还需测试 Human SL 下载/模型启动/棋力切换、普通对局与独立胜率 PIE 并行、悔棋/重开局、形势判断/胜率分析、退出及反复加载。同步 `genmove` 中断、原生 fatal crash 恢复以及 JNI 双会话仍未解决。
 
 第一次 RK3588 APP 迁移测试：
