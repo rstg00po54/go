@@ -72,7 +72,7 @@ public class KataGoEngine {
     private final LinkedBlockingQueue<String> responseQueue = new LinkedBlockingQueue<>();
     private final AtomicBoolean running = new AtomicBoolean(false);
     private Process process;
-    private KataGoNative.GtpSession jniSession;
+    private volatile KataGoNative.GtpSession jniSession;
     private final boolean preferJni;
     private volatile boolean jniDisabledForProcess;
     private BufferedWriter writer;
@@ -259,6 +259,7 @@ public class KataGoEngine {
     private boolean waitForStartupResponse(int timeoutMs) {
         long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs);
         while (System.nanoTime() < deadline) {
+            if (jniSession != null && !jniSession.isAlive()) return false;
             if (jniSession == null && (process == null || !process.isAlive())) return false;
             try {
                 String response = responseQueue.poll(200, TimeUnit.MILLISECONDS);
@@ -561,7 +562,8 @@ public class KataGoEngine {
 
     public boolean isReady() {
         DebugLog.enter(TAG, "isReady in, running=" + running.get());
-        return running.get() && (jniSession != null || (process != null && process.isAlive()));
+        KataGoNative.GtpSession session = jniSession;
+        return running.get() && (session != null ? session.isAlive() : (process != null && process.isAlive()));
     }
 
     /**
