@@ -33,6 +33,7 @@ set_property(CACHE USE_BACKEND PROPERTY STRINGS "" CUDA TENSORRT OPENCL EIGEN)
 set(USE_TCMALLOC 0 CACHE BOOL "Use TCMalloc")
 set(NO_GIT_REVISION 0 CACHE BOOL "Disable embedding the git revision into the compiled exe")
 set(USE_AVX2 0 CACHE BOOL "Compile with AVX2")
+option(KATAGO_BUILD_JNI_LIBRARY "Build a genuine Android JNI shared library instead of the command-line executable" OFF)
 set(USE_BIGGER_BOARDS_EXPENSIVE 0 CACHE BOOL "Allow boards up to size 29. Compiling with this will use more memory and slow down KataGo, even when playing on boards of size 19.")
 
 set(USE_CACHE_TENSORRT_PLAN 0 CACHE BOOL "Use TENSORRT plan cache. May use a lot of disk space. Only applies when USE_BACKEND is TENSORRT.")
@@ -165,7 +166,7 @@ endif()
 
 #--------------------------- KATAGO COMPILING AND LINKING --------------------------------------------------------------
 
-add_executable(katago
+set(KATAGO_SOURCE_FILES
   core/global.cpp
   core/base64.cpp
   core/bsearch.cpp
@@ -279,8 +280,20 @@ add_executable(katago
   command/selfplay.cpp
   command/tune.cpp
   command/writetrainingdata.cpp
-  main.cpp
   )
+
+# Keep the known-working PIE executable as the default. In the experimental
+# JNI configuration, compile the same engine source into a real shared library
+# without main(). This step validates source linkage only; GTP sessions still
+# require a separate lifecycle refactor before use from the Android UI.
+if(KATAGO_BUILD_JNI_LIBRARY)
+  if(NOT ANDROID)
+    message(FATAL_ERROR "KATAGO_BUILD_JNI_LIBRARY currently supports Android only")
+  endif()
+  add_library(katago SHARED ${KATAGO_SOURCE_FILES} ${CMAKE_CURRENT_LIST_DIR}/../../../app/src/main/cpp/katago_jni.cpp)
+else()
+  add_executable(katago ${KATAGO_SOURCE_FILES} main.cpp)
+endif()
 
 if(USE_BACKEND STREQUAL "CUDA")
   target_compile_definitions(katago PRIVATE USE_CUDA_BACKEND)
