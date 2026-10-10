@@ -298,12 +298,13 @@ public class KataGoEngine {
     }
 
     private void startJniReaderThread() {
+        final KataGoNative.GtpSession session = jniSession;
         readerThread = new Thread(() -> {
             StringBuilder buffer = new StringBuilder();
             try {
-                while (running.get()) {
-                    KataGoNative.GtpSession session = jniSession;
-                    if (session == null) break;
+                // Bind this reader to its original session: an old reader must
+                // never consume a new session's output during a quick restart.
+                while (running.get() && jniSession == session) {
                     String chunk = session.read(1000);
                     if (chunk == null) break;
                     buffer.append(chunk.replace("\r\n", "\n"));
