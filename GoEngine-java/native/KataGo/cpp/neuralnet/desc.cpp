@@ -2,6 +2,8 @@
 
 #include <cmath>
 #include <chrono>
+#include <future>
+#include "../core/sha2.h"
 #include <fstream>
 #include <zlib.h>
 
@@ -1342,17 +1344,24 @@ struct NonCopyingStreamBuf : public std::streambuf
   }
 };
 
-static thread_local double latestModelIoShaMs = 0.0;
+static thread_local double latestModelIoMs = 0.0;
+static thread_local double latestModelShaMs = 0.0;
 static thread_local double latestModelDescriptorParseMs = 0.0;
+static thread_local double latestModelShaWaitMs = 0.0;
 
-void ModelDesc::getLastLoadTiming(double& fileIoAndShaMs, double& descriptorParseMs) {
-  fileIoAndShaMs = latestModelIoShaMs;
+void ModelDesc::getLastLoadTiming(double& fileIoMs, double& sha256Ms, double& descriptorParseMs, double& shaWaitMs) {
+  fileIoMs = latestModelIoMs;
+  sha256Ms = latestModelShaMs;
   descriptorParseMs = latestModelDescriptorParseMs;
+  shaWaitMs = latestModelShaWaitMs;
 }
 
 void ModelDesc::loadFromFileMaybeGZipped(const string& fileName, ModelDesc& descBuf, const string& expectedSha256) {
   const auto loadStart = std::chrono::steady_clock::now();
   double fileMs = 0.0;
+  double shaMs = 0.0;
+  double shaWaitMs = 0.0;
+  double explicitParseMs = -1.0;
   try {
     string lower = Global::toLower(fileName);
     //Read model file with no compression if it's directly named .txt or .bin
@@ -1370,11 +1379,42 @@ void ModelDesc::loadFromFileMaybeGZipped(const string& fileName, ModelDesc& desc
       bool binaryFloats = true;
       string uncompressed;
       string sha256Buf;
+#ifdef USE_OPENCL_BACKEND
+      // Load bytes once, then hash and parse the immutable bytes concurrently.
+      // Preserve the SHA-256 validation and final ModelDesc::sha256 assignment.
+      FileUtils::loadFileIntoString(fileName,"",uncompressed,nullptr);
+      fileMs = std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-loadStart).count();
+      auto hashFuture = std::async(std::launch::async, [&uncompressed]() {
+        const auto hashStart = std::chrono::steady_clock::now();
+        char hashChars[65];
+        SHA2::get256(reinterpret_cast<const uint8_t*>(uncompressed.data()),uncompressed.size(),hashChars);
+        const double hashMs = std::chrono::duration<double,std::milli>(
+          std::chrono::steady_clock::now()-hashStart).count();
+        return std::make_pair(string(hashChars),hashMs);
+      });
+      const auto parseStart = std::chrono::steady_clock::now();
+      NonCopyingStreamBuf uncompressedStreamBuf(uncompressed);
+      std::istream uncompressedIn(&uncompressedStreamBuf);
+      descBuf = ModelDesc(uncompressedIn,"",binaryFloats);
+      explicitParseMs = std::chrono::duration<double,std::milli>(
+        std::chrono::steady_clock::now()-parseStart).count();
+      const auto waitStart = std::chrono::steady_clock::now();
+      auto hashResult = hashFuture.get();
+      shaWaitMs = std::chrono::duration<double,std::milli>(
+        std::chrono::steady_clock::now()-waitStart).count();
+      sha256Buf = hashResult.first;
+      shaMs = hashResult.second;
+      if(!expectedSha256.empty() && Global::toLower(expectedSha256) != Global::toLower(sha256Buf))
+        throw StringError("File " + fileName + " sha256 was " + sha256Buf +
+                          " which does not match the expected sha256 " + expectedSha256);
+      descBuf.sha256 = sha256Buf;
+#else
       FileUtils::loadFileIntoString(fileName,expectedSha256,uncompressed,&sha256Buf);
       fileMs = std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-loadStart).count();
       NonCopyingStreamBuf uncompressedStreamBuf(uncompressed);
       std::istream uncompressedIn(&uncompressedStreamBuf);
       descBuf = ModelDesc(uncompressedIn,sha256Buf,binaryFloats);
+#endif
     }
     else if(Global::isSuffix(lower,".txt.gz") || Global::isSuffix(lower,".bin.gz") || Global::isSuffix(lower,".gz")) {
       string uncompressed;
@@ -1411,9 +1451,11 @@ void ModelDesc::loadFromFileMaybeGZipped(const string& fileName, ModelDesc& desc
     else {
       throw StringError("Model file should end with .txt, .bin, .txt.gz, .bin.gz, or possibly just .gz. (If it doesn't have one of these extensions already, it's probably the wrong file, renaming will probably NOT help).");
     }
-    latestModelIoShaMs = fileMs;
-    latestModelDescriptorParseMs = std::chrono::duration<double,std::milli>(
-      std::chrono::steady_clock::now() - loadStart).count() - fileMs;
+    latestModelIoMs = fileMs;
+    latestModelShaMs = shaMs;
+    latestModelShaWaitMs = shaWaitMs;
+    latestModelDescriptorParseMs = explicitParseMs >= 0.0 ? explicitParseMs :
+      std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now() - loadStart).count() - fileMs;
   }
   catch(const StringError& e) {
     throw StringError("Error loading or parsing model file " + fileName + ": " + e.what());
