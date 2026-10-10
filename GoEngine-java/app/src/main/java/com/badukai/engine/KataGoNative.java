@@ -29,20 +29,23 @@ public final class KataGoNative {
     }
 
     public static final class GtpSession implements AutoCloseable {
+        // Reads can block while waiting for native output. Never hold the Java monitor
+        // during a read: it starves send() and can stall the UI/gameplay for minutes.
+        // The C++ session registry/queues protect concurrent reads, sends and close.
         private volatile long handle;
 
         private GtpSession(long handle) { this.handle = handle; }
 
         /** Sends one GTP command without a newline. */
-        public synchronized boolean send(String command) {
-            if (handle == 0) return false;
-            return nativeSendCommand(handle, command);
+        public boolean send(String command) {
+            long id = handle;
+            return id != 0 && nativeSendCommand(id, command);
         }
 
         /** Returns a chunk of GTP stdout; empty string on timeout, null at native EOF. */
-        public synchronized String read(int timeoutMs) {
-            if (handle == 0) return null;
-            return nativeReadOutput(handle, timeoutMs);
+        public String read(int timeoutMs) {
+            long id = handle;
+            return id == 0 ? null : nativeReadOutput(id, timeoutMs);
         }
 
         /** True while the native GTP worker has not exited. */
@@ -52,8 +55,9 @@ public final class KataGoNative {
         }
 
         /** Enqueues GTP stop; synchronous genmove cannot be interrupted until it returns. */
-        public synchronized boolean stopSearch() {
-            return handle != 0 && nativeStopSearch(handle);
+        public boolean stopSearch() {
+            long id = handle;
+            return id != 0 && nativeStopSearch(id);
         }
 
         @Override public synchronized void close() {
