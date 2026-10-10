@@ -8,14 +8,12 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
+import android.widget.FrameLayout;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -25,6 +23,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.badukai.engine.KataGoEngine;
 import com.badukai.engine.GpuTuneCache;
+import com.badukai.engine.GpuStartupLogProgress;
 import com.badukai.engine.KataGoOpenCLProbe;
 import com.badukai.engine.KataGoNative;
 import com.badukai.game.GoBoard;
@@ -33,6 +32,7 @@ import com.badukai.game.Move;
 import com.badukai.game.Point;
 import com.badukai.game.StoneColor;
 import com.badukai.ui.GoBoardView;
+import com.badukai.ui.InkLoadingView;
 import com.badukai.ui.WinRateChartView;
 import com.badukai.ui.TencentHomeScaler;
 import com.badukai.util.DebugLog;
@@ -102,10 +102,9 @@ public class MainActivity extends AppCompatActivity {
     private View gamePageContainer;
     private GoBoardView boardView;
     private TextView statusText;
-    private AlertDialog gpuTuningDialog;
-    private TextView gpuTuningStatus;
-    private int gpuStartupSize;
-    private boolean gpuStartupRequiresTuning;
+    private InkLoadingView gpuStartupScreen;
+    private GpuStartupLogProgress gpuProgressTracker;
+    private int gpuStartupGeneration;
     private long gpuStartupStartedMs;
     private TextView aiWinRateText;
     private TextView playerWinRateText;
@@ -301,7 +300,9 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     // Preload once on the home screen. New games then reuse this process.
                     engine.prepareHumanModel(null);
+                    advanceGpuStartup(11, "模型文件准备完成");
                     ok = engine.start(KataGoEngine.Model.HUMAN, true);
+                    if (ok) advanceGpuStartup(96, "正在初始化棋盘规则...");
                     humanPreloaded = ok;
                 } catch (Exception e) {
                     Log.e(TAG, "Human SL preload failed; new game will retry", e);
@@ -1091,15 +1092,21 @@ public class MainActivity extends AppCompatActivity {
             try {
                 engine.setStartupBoardSize(size);
                 engine.setBackendPreference(requestedBackend);
+                advanceGpuStartup(8, "正在准备对弈模型...");
                 if (!engine.isHumanSLRunning()) {
                     engine.prepareHumanModel((done, total) -> {
                         int percent = (int) (done * 100 / total);
                         mainHandler.post(() -> {
-                            if (engineStarting) render("正在准备棋力模型 " + percent + "%");
+                            if (engineStarting) {
+                                render("正在准备棋力模型 " + percent + "%");
+                                if (gpuStartupScreen != null)
+                                    gpuStartupScreen.setProgress(8 + percent / 20, "正在准备 Human SL 模型...");
+                            }
                         });
                     });
                     engine.stop();
                     if (!engine.start(KataGoEngine.Model.HUMAN, true)) throw new IllegalStateException("Human SL 引擎启动失败");
+                    advanceGpuStartup(96, "正在初始化棋盘规则...");
                 } else {
                     Log.i(TAG, "Reusing running Human SL KataGo process for new game");
                 }
@@ -1154,81 +1161,60 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /** Show feedback for every cold GPU start, without starting an extra tuning session. */
+    /** Full-screen ink-wash loading screen, reused for cold GPU preloads and new games. */
     private void showGpuStartupScreen(int size, KataGoEngine.BackendPreference backend) {
         if (backend != KataGoEngine.BackendPreference.GPU || forceLegacyBackend) return;
         if (!new File(getApplicationInfo().nativeLibraryDir, "libkatago_gpu.so").isFile()) return;
-        if (gpuTuningDialog != null && gpuTuningDialog.isShowing()) return;
+        if (gpuStartupScreen != null) return;
 
-        gpuStartupSize = size;
         int tuneMask = GpuTuneCache.cachedModelMask(this, size);
-        gpuStartupRequiresTuning = tuneMask != GpuTuneCache.BOTH_MODELS;
+        boolean needsTuning = tuneMask != GpuTuneCache.BOTH_MODELS;
         gpuStartupStartedMs = SystemClock.elapsedRealtime();
+        final int sessionId = ++gpuStartupGeneration;
         Log.i(TAG, "GPU tuning preflight boardSize=" + size + " cachedMask=" + tuneMask
                 + " requiredMask=" + GpuTuneCache.BOTH_MODELS + " showStartupScreen=true");
 
-        int padding = (int) (24 * getResources().getDisplayMetrics().density + 0.5f);
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(padding, padding / 2, padding, padding);
-        ProgressBar progress = new ProgressBar(this);
-        LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        progressParams.gravity = Gravity.CENTER_HORIZONTAL;
-        layout.addView(progress, progressParams);
-        gpuTuningStatus = new TextView(this);
-        gpuTuningStatus.setTextSize(15f);
-        gpuTuningStatus.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        labelParams.topMargin = padding / 2;
-        layout.addView(gpuTuningStatus, labelParams);
-        TextView info = new TextView(this);
-        info.setText(gpuStartupRequiresTuning
-                ? "首次使用当前 GPU 需要调优，可能持续数分钟。结果将保存到本机，完成后自动进入对弈。"
-                : "正在载入调优参数、OpenCL 内核与 AI 模型。首次生成内核二进制缓存后，后续启动可能更快。");
-        info.setTextSize(12f);
-        info.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams infoParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        infoParams.topMargin = padding / 2;
-        layout.addView(info, infoParams);
-
-        gpuTuningDialog = new AlertDialog.Builder(this)
-                .setTitle(gpuStartupRequiresTuning ? "首次 GPU 自动调优" : "正在启动 GPU AI")
-                .setView(layout).setCancelable(false).create();
-        gpuTuningDialog.show();
-        Log.i(TAG, "GPU startup screen shown boardSize=" + size + " needsTuning=" + gpuStartupRequiresTuning);
-        mainHandler.removeCallbacks(gpuTuneProgressUpdater);
-        mainHandler.post(gpuTuneProgressUpdater);
+        InkLoadingView loading = new InkLoadingView(this);
+        loading.setClickable(true);
+        loading.setFocusable(true);
+        loading.setTuning(needsTuning);
+        loading.setProgress(3, needsTuning ? "正在检查 GPU 调优参数..." : "正在读取 GPU 缓存...");
+        FrameLayout root = findViewById(android.R.id.content);
+        root.addView(loading, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        loading.bringToFront();
+        gpuStartupScreen = loading;
+        gpuProgressTracker = new GpuStartupLogProgress(getApplicationContext(), (percent, stage) ->
+                mainHandler.post(() -> {
+                    if (sessionId == gpuStartupGeneration && gpuStartupScreen == loading)
+                        gpuStartupScreen.setProgress(percent, stage);
+                }));
+        Log.i(TAG, "GPU startup screen shown boardSize=" + size + " needsTuning=" + needsTuning);
     }
 
-    private final Runnable gpuTuneProgressUpdater = new Runnable() {
-        @Override public void run() {
-            if (gpuTuningDialog == null || !gpuTuningDialog.isShowing()) return;
-            String stage;
-            if (gpuStartupRequiresTuning) {
-                int mask = GpuTuneCache.cachedModelMask(MainActivity.this, gpuStartupSize);
-                stage = (mask & GpuTuneCache.MAIN_MODEL) == 0 ? "第 1 / 2 阶段：正在调优 10b 模型..."
-                        : (mask & GpuTuneCache.HUMAN_MODEL) == 0 ? "第 2 / 2 阶段：正在调优 Human SL 模型..."
-                        : "调优完成，正在加载 OpenCL 内核与模型...";
-            }
-            else stage = "正在加载 OpenCL 内核与 AI 模型...";
-            long seconds = (SystemClock.elapsedRealtime() - gpuStartupStartedMs) / 1000;
-            if (gpuTuningStatus != null) gpuTuningStatus.setText(stage + "\n已等待 " + seconds + " 秒");
-            mainHandler.postDelayed(this, 1000);
-        }
-    };
+    private void advanceGpuStartup(int percent, String stage) {
+        mainHandler.post(() -> {
+            if (gpuStartupScreen != null) gpuStartupScreen.setProgress(percent, stage);
+        });
+    }
 
     private void dismissGpuTuning() {
-        mainHandler.removeCallbacks(gpuTuneProgressUpdater);
-        if (gpuTuningDialog != null) {
-            gpuTuningDialog.dismiss();
-            gpuTuningDialog = null;
-            gpuTuningStatus = null;
-            Log.i(TAG, "GPU startup screen dismissed elapsedMs=" +
-                    (SystemClock.elapsedRealtime() - gpuStartupStartedMs));
+        if (gpuProgressTracker != null) {
+            gpuProgressTracker.close();
+            gpuProgressTracker = null;
         }
+        gpuStartupGeneration++;
+        InkLoadingView loading = gpuStartupScreen;
+        gpuStartupScreen = null;
+        if (loading == null) return;
+        loading.setProgress(100, "AI 准备完成");
+        Log.i(TAG, "GPU startup screen dismissed elapsedMs=" +
+                (SystemClock.elapsedRealtime() - gpuStartupStartedMs));
+        // Briefly show 100% before returning to the real home/game screen.
+        mainHandler.postDelayed(() -> {
+            if (loading.getParent() instanceof ViewGroup)
+                ((ViewGroup) loading.getParent()).removeView(loading);
+        }, 140);
     }
 
     private float komiFor(int size) {
