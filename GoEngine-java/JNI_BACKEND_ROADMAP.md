@@ -231,7 +231,8 @@ bash tools/test_katago_jni_gtp_android.sh 8719e18a71a2a66c repeat
 - [x] `KataGoEngine.sendCommandSync` 加入 `queued, enqueueMs` 日志，`enqueueMs > 200` 触发 WARNING，方便区分发送阻塞与 KataGo 模型计算。
 - [x] 修复潜在的首次模型加载超时：旧 JNI `waitForStartupResponse(30000)` 可能在移除 Java 发送锁后于模型真实加载约 41 秒期间提前失败；JNI 启动等待改为 120 秒（PIE 仍 30 秒），JNI 切换棋盘尺寸可能触发神经网络重建，`boardsize` 等待提高为 90 秒（PIE 仍 5 秒）。
 - [x] **修复后 RK3588 正常 APP 初始化回归通过**：12:06:38.139–12:06:40.504，10b + Human SL，JNI `name` 2.34 秒返回，`boardsize 19`、`clear_board`、`kata-set-rules chinese`、`kata-get-rules`、`komi 7.5` 均成功；`Chinese rules verified=true`；`Initial engine ready=true humanSL=true elapsedMs=2470`。`boardsize 19` 的 `enqueueMs=0`，相比上次 72 秒发送卡顿已消失。
-- [ ] 尚需用户在 APP 内**真正新开一局**，测试 Human SL `rank_XXk` 设置、AI 落子、悔棋、形势判断和独立胜率引擎 PIE；不能仅依据初始化成功判定对弈与胜率功能全部通过。
+- [x] **RK3588 APP 9×9 实际新局部分功能通过（2026-10-10 12:09:53–12:09:54）**：主 JNI/Eigen `genmove white → G5`，Java 日志 `elapsedMs=856`；独立 PIE 胜率分析进程接收 `play white G5` 同步，随后 `kata-search_analyze black ... rootInfo true` 返回 `rootVisits=49`、黑胜率约 36.9%、白胜率约 63.1%；JNI `kata-raw-nn 0` 形势判断返回 `whiteWin=0.594147`、`whiteLead=1.007`，`evaluatePosition size=9 elapsedMs=45`，Java 输出 ownership estimate。说明主 JNI 实际 AI 落子、独立 PIE 胜率评估、JNI 形势判断的日志路径均工作。
+- [ ] 仍需核实 **Human SL 等级 `rank_XXk` 的回读设置、悔棋、新局重建、长时间对弈、13×13/19×19 UI 与退出后重新创建**；尚不能宣布全部 UI 回归完成。
 
 复测仅改 Java，沿用已构建的 `libkatago.so`：
 
@@ -255,7 +256,8 @@ adb -s 8719e18a71a2a66c logcat -d -s KataGoEngine:V MainActivity:I '*:S' | tail 
 - [x] 独立的 `engine_winrate` **保持 PIE**，因为 JNI 原生层只允许一个会话且 KataGo 进程级全局清理/初始化还未隔离；不删除 `libkatago_exec.so`。
 - [x] `MainActivity` 支持启动参数 `--ez katago_legacy true`，强制主引擎用 PIE（便于 APP JNI 真机故障时回退）。正常启动仅在打包 `libkatago.so` 时优先使用 JNI。
 - [x] **用户已完成 Ubuntu 构建及 RK3588 普通 APP 的 JNI + Human SL 初始化验证**：2026-10-10 12:06:40 日志 `Initial engine ready=true humanSL=true elapsedMs=2470`；GTP 初始棋盘、规则和贴目设置成功。
-- [ ] **尚未收到 Human SL 真正对局落子和完整 UI 回归通过的结果**；阶段 1C 的 9/13/19 重复会话测试也仍待复测。
+- [x] **已收到 RK3588 9×9 Human SL 主 JNI 实际落子与独立 PIE 胜率分析日志**：12:09:53 主 JNI 白棋落 `G5`（856ms）；胜率 PIE 同步棋步并报告 black=0.369、white=0.631；JNI `kata-raw-nn` 形势结果可用（45ms）。
+- [ ] 全 UI 测试仍不完整：Human SL 分级设置、悔棋、重开局与阶段 1C 的 9/13/19 多次创建/销毁待实测。
 - [ ] 还需测试 Human SL 下载/模型启动/棋力切换、普通对局与独立胜率 PIE 并行、悔棋/重开局、形势判断/胜率分析、退出及反复加载。同步 `genmove` 中断、原生 fatal crash 恢复以及 JNI 双会话仍未解决。
 
 第一次 RK3588 APP 迁移测试：
