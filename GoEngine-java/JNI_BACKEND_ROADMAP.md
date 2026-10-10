@@ -163,6 +163,24 @@ adb -s 10AFB21HP5002ZK shell am start -n com.badukai.java/com.badukai.MainActivi
 adb -s 10AFB21HP5002ZK logcat -d -s KataGoJniCore:I '*:S'
 ```
 
+### 2026-10-10 RK3588 JNI GTP APP 重启循环定位与修复（待复测）
+
+- 用户 RK3588 试编通过 `eigenjni`（`[3/3] Linking CXX shared library libkatago.so`），Gradle `BUILD SUCCESSFUL`，APK 安装成功。
+- `--ez katago_gtp true` 首次实测不断重启：11:39:44 起每隔约 0.23 秒生成新 PID，仅打印 `Starting JNI CPU/Eigen GTP session`。完整 Logcat 显示 `Zygote: Process ... exited cleanly (1)`，并无报告 native SIGSEGV/SIGABRT。
+- **根因已在源码中确认**：`EngineSession.cpp` 组装 argv 为 `{"-model", model, "-config", config}`；`TCLAP::CmdLine::parse(vector)` 总是将 `args.front()` 当作程序名删掉，因而误把 `-model` 作为 argv0，随后遇到裸模型路径判定为未知参数；内置 TCLAP 默认 `exit(1)` 直接终止整个 Android APP。
+- [x] 修复会话 argv 为 `{"gtp", "-model", model, "-config", config}`，对应原来 `main.cpp` 向 `MainCmds::gtp` 传入的参数结构。
+- [x] JNI 注入流路径通过 `cmd.setExceptionHandling(false)` 禁止 TCLAP 的进程级 `exit(1)`，而原来命令行 `gtp(std::cin,std::cout)` 保持已有 TCLAP 处理方式。
+- [x] 测试入口增加 `JNI session created` 和每条 `Sending ...` 的进度日志；测试脚本检测 3 次连续 APP 重启后提前报错而不是一直等待。
+- [ ] **这些修复还没有在 RK3588 上重新编译、验证 GTP/10b/genmove**；需用户更新代码并复测，后续若有其他错误根据 `KataGoJniGtp` 和 `logcat` 定位。
+
+复测：
+```bash
+git pull --ff-only github rk3588-engine
+bash tools/build_katago_from_source.sh eigenjni
+./build.sh -PenableKataGoJniCore=true
+bash tools/test_katago_jni_gtp_android.sh
+```
+
 ### 阶段 1B：KataGo GTP JNI 单会话实验（代码已提交，尚待 RK3588 编译/真机验证）
 
 - [x] `native/KataGo/cpp/command/gtp_io.h` 新增 `MainCmds::gtpWithIO(args, input, output)`；`gtp.cpp` 将单一 `getline(cin, line)` 改为注入流，GTP 响应及异步分析输出改为会话持有的 `std::ostream`；原 `MainCmds::gtp` 仍用 CLI 标准输入输出。**没有重定向进程全局 `cin/cout`**。
