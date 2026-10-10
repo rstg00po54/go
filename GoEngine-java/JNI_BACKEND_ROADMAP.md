@@ -99,6 +99,8 @@
 
 已添加 **隔离的 openclportable 试验模式**：`ANDROID_SERIAL=10AFB21HP5002ZK bash tools/build_katago_from_source.sh openclportable`，首次自动把该手机的 loader 库缓存为本地 **仅链接用** 的 `~/.cache/goengine_katago/opencl_arm64_portable/libOpenCL.so`（不进仓库、不打进 APK）。生成 `build/katago_android_arm64_openclportable/libkatago_exec_opencl.so`，不覆盖旧的 RK3588 版本，也不修改 CPU 或 APK。脚本核验新 ELF 只需求 `libOpenCL.so`，且没有 Mali 专属 OpenCL 版本依赖。
 
+2026-10-10 手机首次执行 `openclportable`：下载到 V2502A 的 166712 字节 `/vendor/lib64/libOpenCL.so` 后，构建脚本发现其动态符号表中没有可匹配的 `clGetPlatformIDs` 导出而中止（未进入 CMake/NDK 构建）。新增回退分支自动尝试下载 `/vendor/lib64/egl/libGLES_mali.so`（约 53 MB）并核对其是否导出标准 OpenCL 入口、内部 SONAME 与是否有 `OPENCL_*` 符号版本依赖。只有核验通过才进行隔离构建；新 ELF 允许 `DT_NEEDED libGLES_mali.so`，但不允许 `VERNEED OPENCL_*`。对应 CPU/GPU 基准工具按版本依赖选择 RK3588 legacy staging 或设备自己的 EGL Mali 库。**仍未有任何手机 portable 编译/运行成功的实测结论。**
+
 测试方式：使用 `KATAGO_BENCH_GPU_BINARY="$PWD/build/katago_android_arm64_openclportable/libkatago_exec_opencl.so"` 指定替代版，再分别指定 `ANDROID_SERIAL` 对手机、RK3588 跑 `bash tools/benchmark_katago_android.sh gpu`。GTP 真实落子脚本也支持 `--gpu-binary <path>`。**上述通用 ELF 的真机加载、GPU 推理尚未完成测试**，APP linker namespace / SELinux 更须单独验证。
 
 注意：这个实验先保留两个独立的 Android PIE 可执行文件，不代表阶段 3 的「同一个 JNI `.so` CPU/GPU 运行时切换」已经完成。Android NDK 不自带厂商 OpenCL 库；库是否对 APP 可见还需要设备侧验证。
