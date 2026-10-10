@@ -8,6 +8,9 @@ plugins {
     id("com.android.application")
 }
 
+val enableKataGoProbe = providers.gradleProperty("enableKataGoProbe")
+    .map { it.equals("true", ignoreCase = true) }.getOrElse(false)
+
 android {
     namespace = "com.badukai"
     compileSdk = 34
@@ -18,6 +21,7 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0-java"
+        if (enableKataGoProbe) ndk { abiFilters += "arm64-v8a" }
     }
 
     buildTypes {
@@ -32,6 +36,14 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+
+    // Opt-in JNI/OpenCL visibility check. Normal APK builds keep their old
+    // ProcessBuilder baseline and do not configure an extra CMake project.
+    if (enableKataGoProbe) {
+        externalNativeBuild {
+            cmake { path = file("src/main/cpp/CMakeLists.txt") }
+        }
+    }
 
     // KataGo is a PIE executable (not a JNI shared library). Gradle packages the
     // generated libkatago_exec.so as an extracted native library for ProcessBuilder.
