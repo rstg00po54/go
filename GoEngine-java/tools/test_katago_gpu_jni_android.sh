@@ -35,6 +35,13 @@ for attempt in $(seq 1 480); do
         "$ADB" -s "$SERIAL" logcat -d -b crash -v threadtime | tail -100 >&2 || true
         exit 1
     fi
+    # A native OpenCL crash may kill the process without a Java exception or FAIL log.
+    if (( attempt > 10 )) && ! "$ADB" -s "$SERIAL" shell pidof com.badukai.java:katago_gpu | grep -Eq '[0-9]'; then
+        cat "$REPORT"
+        echo "ERROR: Isolated GPU process exited before PASS (likely native crash)." >&2
+        "$ADB" -s "$SERIAL" logcat -d -b crash -v threadtime | tail -100 >&2 || true
+        exit 1
+    fi
     sleep 1
 done
 cat "$REPORT"
