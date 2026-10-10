@@ -324,7 +324,7 @@ public class MainActivity extends AppCompatActivity {
                 engineStarting = false;
                 engineReady = ready;
                 aiBattleButton.setEnabled(true);
-                dismissGpuTuning();
+                dismissGpuTuning(ready);
                 if (ready && selectedBackend == KataGoEngine.BackendPreference.GPU
                         && !engine.getBackendName().startsWith("GPU"))
                     Toast.makeText(this, "GPU 初始化失败，已使用 " + engine.getBackendName(), Toast.LENGTH_LONG).show();
@@ -1147,7 +1147,7 @@ public class MainActivity extends AppCompatActivity {
                 engineStarting = false;
                 engineReady = running;
                 gameReady = ready;
-                dismissGpuTuning();
+                dismissGpuTuning(ready);
                 if (!ready) {
                     render("棋力模型准备失败：" + failure);
                     Toast.makeText(this, "未进入对局，请重试下载或检查日志", Toast.LENGTH_LONG).show();
@@ -1198,7 +1198,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void dismissGpuTuning() {
+    private void dismissGpuTuning(boolean ready) {
         if (gpuProgressTracker != null) {
             gpuProgressTracker.close();
             gpuProgressTracker = null;
@@ -1207,14 +1207,16 @@ public class MainActivity extends AppCompatActivity {
         InkLoadingView loading = gpuStartupScreen;
         gpuStartupScreen = null;
         if (loading == null) return;
-        loading.setProgress(100, "AI 准备完成");
+        if (ready) loading.setProgress(100, "AI 准备完成");
         Log.i(TAG, "GPU startup screen dismissed elapsedMs=" +
-                (SystemClock.elapsedRealtime() - gpuStartupStartedMs));
-        // Briefly show 100% before returning to the real home/game screen.
-        mainHandler.postDelayed(() -> {
+                (SystemClock.elapsedRealtime() - gpuStartupStartedMs) + " ready=" + ready);
+        // Display 100% briefly on success; failures remove the overlay immediately.
+        Runnable remove = () -> {
             if (loading.getParent() instanceof ViewGroup)
                 ((ViewGroup) loading.getParent()).removeView(loading);
-        }, 140);
+        };
+        if (ready) mainHandler.postDelayed(remove, 140);
+        else remove.run();
     }
 
     private float komiFor(int size) {
@@ -1283,7 +1285,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         DebugLog.enter(TAG, "onDestroy in");
-        dismissGpuTuning();
+        dismissGpuTuning(false);
         super.onDestroy();
         engineExecutor.execute(() -> engine.stop());
         winRateExecutor.execute(() -> winRateEngine.stop());
