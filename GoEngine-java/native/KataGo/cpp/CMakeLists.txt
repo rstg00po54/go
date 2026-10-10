@@ -296,6 +296,12 @@ if(KATAGO_BUILD_JNI_LIBRARY)
     ${CMAKE_CURRENT_LIST_DIR}/../../../app/src/main/cpp/EngineSession.cpp
   )
   target_include_directories(katago PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+  if(USE_BACKEND STREQUAL "OPENCL")
+    # In-process GPU and CPU JNI libraries must have distinct ELF SONAMEs.
+    # Previously the GPU APK only renamed libkatago.so, which is unsafe when
+    # both backends are loaded by the same Android classloader/process.
+    set_target_properties(katago PROPERTIES OUTPUT_NAME katago_gpu)
+  endif()
 else()
   add_executable(katago ${KATAGO_SOURCE_FILES} main.cpp)
 endif()
