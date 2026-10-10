@@ -991,8 +991,17 @@ public class KataGoEngine {
         DebugLog.enter(TAG, "sendCommandSync in, command=" + command + ", running=" + running.get());
         if (!running.get() && !"quit".equals(command)) return false;
         if (jniSession != null) {
-            try { return jniSession.send(command); }
-            catch (Exception | LinkageError e) { Log.e(TAG, "JNI GTP send failed: " + command, e); return false; }
+            long startedNs = System.nanoTime();
+            try {
+                boolean sent = jniSession.send(command);
+                long enqueueMs = (System.nanoTime() - startedNs) / 1000000L;
+                Log.d(TAG, "JNI GTP command=" + command + " queued=" + sent + " enqueueMs=" + enqueueMs);
+                if (enqueueMs > 200) Log.w(TAG, "JNI GTP command send unexpectedly slow: " + command + " (" + enqueueMs + "ms)");
+                return sent;
+            } catch (Exception | LinkageError e) {
+                Log.e(TAG, "JNI GTP send failed: " + command, e);
+                return false;
+            }
         }
         if (writer == null) return false;
         try {
