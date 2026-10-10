@@ -32,6 +32,11 @@ import com.badukai.ui.WinRateChartView;
 import com.badukai.ui.TencentHomeScaler;
 import com.badukai.util.DebugLog;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashSet;
@@ -116,6 +121,8 @@ public class MainActivity extends AppCompatActivity {
             new Thread(() -> Log.i("KataGoJniCore", KataGoNative.checkCoreLinkage()),
                     "KataGo-JNI-Core").start();
         }
+        final boolean jniGtpSmoke = getIntent() != null && getIntent().getBooleanExtra("katago_gtp", false);
+        if (jniGtpSmoke) new Thread(this::runJniGtpSmoke, "KataGo-JNI-GTP").start();
         setContentView(R.layout.activity_main);
         engine = new KataGoEngine(getApplicationContext());
         winRateEngine = new KataGoEngine(getApplicationContext(), "engine_winrate");
@@ -137,7 +144,70 @@ public class MainActivity extends AppCompatActivity {
         variationButton.setOnClickListener(v -> showVariations());
         render("正在启动 AI...");
         showMainPage();
-        startEngine();
+        if (!jniGtpSmoke) startEngine();
+    }
+
+    private void runJniGtpSmoke() {
+        final String tag = "KataGoJniGtp";
+        try {
+            File dir = new File(getFilesDir(), "jni_gtp");
+            File logs = new File(dir, "gtp_logs");
+            File home = new File(dir, "home");
+            if (!dir.exists() && !dir.mkdirs()) throw new IllegalStateException("Cannot create " + dir);
+            logs.mkdirs();
+            home.mkdirs();
+            File model = new File(dir, "10b.bin");
+            if (!model.isFile() || model.length() != 12003218L) {
+                try (InputStream src = getAssets().open("engine/10b.bin");
+                     FileOutputStream dst = new FileOutputStream(model)) {
+                    byte[] buf = new byte[65536];
+                    int n;
+                    while ((n = src.read(buf)) != -1) dst.write(buf, 0, n);
+                }
+            }
+            File configFile = new File(dir, "default_gtp.cfg");
+            String config;
+            try (InputStream in = getAssets().open("engine/default_gtp.cfg")) {
+                byte[] data = new byte[32768];
+                java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                int n;
+                while ((n = in.read(data)) != -1) out.write(data, 0, n);
+                config = out.toString("UTF-8");
+            }
+            config = config.replace("logDir = gtp_logs", "logDir = " + logs.getAbsolutePath());
+            config += "\\nhomeDataDir = " + home.getAbsolutePath() + "\\n";
+            Files.write(configFile.toPath(), config.getBytes(StandardCharsets.UTF_8));
+
+            Log.i(tag, "Starting JNI CPU/Eigen GTP session");
+            try (KataGoNative.GtpSession session = KataGoNative.createSession(model, configFile)) {
+                if (session == null) throw new IllegalStateException("createSession returned null");
+                StringBuilder responseBuffer = new StringBuilder();
+                String[] commands = {"name", "boardsize 9", "komi 7.5", "play B D4",
+                                     "genmove W", "undo", "clear_board"};
+                for (String command : commands) {
+                    if (!session.send(command)) throw new IllegalStateException("send failed: " + command);
+                    long deadline = android.os.SystemClock.uptimeMillis() + 90000;
+                    String response = null;
+                    while (android.os.SystemClock.uptimeMillis() < deadline) {
+                        int end = responseBuffer.indexOf("\\n\\n");
+                        if (end >= 0) {
+                            response = responseBuffer.substring(0, end).trim();
+                            responseBuffer.delete(0, end + 2);
+                            break;
+                        }
+                        String chunk = session.read(1000);
+                        if (chunk == null) throw new IllegalStateException("JNI GTP ended before " + command);
+                        responseBuffer.append(chunk.replace("\\r\\n", "\\n"));
+                    }
+                    if (response == null || !response.startsWith("="))
+                        throw new IllegalStateException("GTP " + command + " failed: " + response);
+                    Log.i(tag, command + " -> " + response.replace('\\n', ' ').substring(0, Math.min(140, response.length())));
+                }
+                Log.i(tag, "PASS: JNI GTP name/boardsize/komi/play/genmove/undo/clear_board");
+            }
+        } catch (Exception | LinkageError e) {
+            Log.e(tag, "FAIL: JNI GTP smoke test", e);
+        }
     }
 
     private void bindViews() {
