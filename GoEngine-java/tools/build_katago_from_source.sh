@@ -138,24 +138,48 @@ else
         exit 1
     fi
     if [[ "$PORTABLE_OPENCL" == true ]]; then
-        # A portable executable must NOT inherit the RK3588 Mali SONAME or
-        # versioned OPENCL_1.0 imports. Phone /vendor/lib64/libOpenCL.so is
-        # a small unversioned loader and is used only during linking.
+        # The MediaTek /vendor/lib64/libOpenCL.so can be a dispatcher without
+        # directly exported OpenCL C entry points. Inspect defined dynsym
+        # entries and optionally link against the actual EGL Mali driver.
+        has_opencl_api() {
+            "$READELF" -W --dyn-syms "$1" | awk '
+                $7 != "UND" && $8 ~ /^clGetPlatformIDs(@.*)?$/ { found=1 }
+                END { exit !found }'
+        }
+        if ! has_opencl_api "$OPENCL_LIBRARY"; then
+            echo "The vendor OpenCL loader does not directly export clGetPlatformIDs: $OPENCL_LIBRARY"
+            echo "Trying the phone's EGL Mali driver as the link input..."
+            MALI_LINK_LIB="$WORK_DIR/opencl_arm64_portable/libGLES_mali.so"
+            if [[ ! -f "$MALI_LINK_LIB" ]]; then
+                SERIAL="${ANDROID_SERIAL:-}"
+                if [[ -z "$SERIAL" ]]; then
+                    mapfile -t connected < <(adb devices | awk 'NR > 1 && $2 == "device" {print $1}')
+                    if [[ "${#connected[@]}" -eq 1 ]]; then SERIAL="${connected[0]}"; fi
+                fi
+                if [[ -z "$SERIAL" ]] || ! adb -s "$SERIAL" pull /vendor/lib64/egl/libGLES_mali.so "$MALI_LINK_LIB"; then
+                    echo "ERROR: cannot read phone Mali library. Use ANDROID_SERIAL or provide OPENCL_LIBRARY." >&2
+                    exit 1
+                fi
+            fi
+            OPENCL_LIBRARY="$(realpath "$MALI_LINK_LIB")"
+            if ! has_opencl_api "$OPENCL_LIBRARY"; then
+                echo "ERROR: neither phone libOpenCL.so nor EGL libGLES_mali.so exports clGetPlatformIDs." >&2
+                echo "Defined cl* symbols in the Mali driver:" >&2
+                "$READELF" -W --dyn-syms "$OPENCL_LIBRARY" | grep -E ' cl[A-Z]' | head -n 20 >&2 || true
+                echo "A runtime OpenCL dispatch implementation may be necessary; not safe to link blindly." >&2
+                exit 1
+            fi
+        fi
         LIB_SONAME="$("$READELF" -W -d "$OPENCL_LIBRARY" | sed -nE 's/.*\(SONAME\).*\[([^]]+)\].*/\1/p' | head -n 1)"
-        if [[ "$LIB_SONAME" != "libOpenCL.so" ]]; then
-            echo "ERROR: portable link library must have SONAME=libOpenCL.so (got '${LIB_SONAME:-none}')." >&2
-            echo "Use the phone's /vendor/lib64/libOpenCL.so, not the RK3588 driver." >&2
+        if [[ "$LIB_SONAME" != "libOpenCL.so" && "$LIB_SONAME" != "libGLES_mali.so" ]]; then
+            echo "ERROR: unexpected OpenCL link SONAME '${LIB_SONAME:-none}'." >&2
             exit 1
         fi
         if "$READELF" -W -V "$OPENCL_LIBRARY" | grep -Eq 'Name: OPENCL_[0-9]'; then
-            echo "ERROR: portable link library uses versioned OpenCL symbols." >&2
+            echo "ERROR: selected OpenCL link library uses versioned OPENCL_ symbols." >&2
             exit 1
         fi
-        if ! "$READELF" -W --dyn-syms "$OPENCL_LIBRARY" | grep -Eq '[[:space:]]clGetPlatformIDs([[:space:]]|$)'; then
-            echo "ERROR: portable link library does not export clGetPlatformIDs." >&2
-            exit 1
-        fi
-        echo "Portable OpenCL link library verified: $OPENCL_LIBRARY"
+        echo "Portable OpenCL link input verified: $OPENCL_LIBRARY (SONAME=$LIB_SONAME)"
     fi
     echo "OpenCL: headers=$OPENCL_INCLUDE_DIR library=$OPENCL_LIBRARY"
     ARGS+=(-DOpenCL_INCLUDE_DIR="$OPENCL_INCLUDE_DIR" -DOpenCL_LIBRARY="$OPENCL_LIBRARY")
@@ -181,13 +205,13 @@ else
     OUT="$OUTPUT_DIR/libkatago_exec.so"
 fi
 if [[ "$PORTABLE_OPENCL" == true ]]; then
-    if ! "$READELF" -W -d "$BIN" | sed -nE 's/.*\(NEEDED\).*\[([^]]+)\].*/\1/p' | grep -Fxq 'libOpenCL.so'; then
-        echo "ERROR: portable GPU build must depend on libOpenCL.so." >&2
+    if ! "$READELF" -W -d "$BIN" | sed -nE 's/.*\(NEEDED\).*\[([^]]+)\].*/\1/p' | grep -Fxq "$LIB_SONAME"; then
+        echo "ERROR: portable GPU build must depend on $LIB_SONAME." >&2
         "$READELF" -W -d "$BIN" | grep NEEDED >&2 || true
         exit 1
     fi
     if "$READELF" -W -V "$BIN" | grep -Eq 'Name: OPENCL_[0-9]|File: libGLES_mali.so'; then
-        echo "ERROR: portable GPU build still requires Mali versioned symbols." >&2
+        echo "ERROR: portable GPU build still requires RK3588-specific OpenCL symbol versions." >&2
         exit 1
     fi
 fi
