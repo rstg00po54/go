@@ -206,11 +206,11 @@ adb -s 8719e18a71a2a66c logcat -d -s KataGoJniGtp:I '*:S'
 
 或者在编译完成后用新增的 `bash tools/test_katago_jni_gtp_android.sh` 一条命令完成安装、启动、等待 PASS/FAIL 并保存 `build/katago_jni_gtp_test/` 日志。
 
-### 阶段 1C：JNI 会话生命周期 / 9×9、13×13、19×19 回归（代码已提交，待 RK3588 真机执行）
+### 阶段 1C：JNI 会话生命周期 / 9×9、13×13、19×19 回归（RK3588 真机全部通过）
 
 - [x] `MainActivity` 添加独立 `--ez katago_gtp_repeat true` 测试入口（不改变普通启动或原 9×9 smoke），在**同一个 Android 进程内**逐个创建/销毁 3 个 JNI 会话，分别对 9×9、13×13、19×19 调用 `name`、`boardsize`、`komi`、`play`、`genmove`、`undo`、`clear_board`。
 - [x] `tools/test_katago_jni_gtp_android.sh` 增加第二参数 `repeat`，按模式传递 `katago_gtp_repeat` intent 参数，脚本只在全部三轮完成后接受 `PASS: JNI GTP repeated sessions 9x9, 13x13, 19x19`。
-- [ ] **这组多次创建销毁/多棋盘尺寸的测试尚未真机验证**；用户提供的 11:47:45 PASS 只代表前一个 9×9 单会话测试成功。
+- [x] **RK3588 真机 2026-10-10 13:19:49–13:19:52 已验证通过**：同一 APP 进程 PID 5867，依次创建/释放三个独立 JNI GTP 会话；9×9 白棋 `genmove = F6`（281ms）、13×13 `K10`（337ms）、19×19 `D16`（416ms），每一轮 `name`、`boardsize`、`komi`、`play`、`genmove`、`undo`、`clear_board` 都得到成功响应，结束日志 `PASS: JNI GTP repeated sessions 9x9, 13x13, 19x19`。三个会话总耗时约 2.8 秒。仍未覆盖并发双会话、运行中断搜索及长期稳定性。
 - [ ] 对长时间分析/停止/并发、Human SL、完整 APP 迁移暂不宣称通过。
 
 RK3588 下一轮命令：
@@ -257,7 +257,7 @@ adb -s 8719e18a71a2a66c logcat -d -s KataGoEngine:V MainActivity:I '*:S' | tail 
 - [x] `MainActivity` 支持启动参数 `--ez katago_legacy true`，强制主引擎用 PIE（便于 APP JNI 真机故障时回退）。正常启动仅在打包 `libkatago.so` 时优先使用 JNI。
 - [x] **用户已完成 Ubuntu 构建及 RK3588 普通 APP 的 JNI + Human SL 初始化验证**：2026-10-10 12:06:40 日志 `Initial engine ready=true humanSL=true elapsedMs=2470`；GTP 初始棋盘、规则和贴目设置成功。
 - [x] **已收到 RK3588 9×9 Human SL 主 JNI 实际落子与独立 PIE 胜率分析日志**：12:09:53 主 JNI 白棋落 `G5`（856ms）；胜率 PIE 同步棋步并报告 black=0.369、white=0.631；JNI `kata-raw-nn` 形势结果可用（45ms）。
-- [ ] 全 UI 测试仍不完整：Human SL 分级设置、悔棋、重开局与阶段 1C 的 9/13/19 多次创建/销毁待实测。
+- [ ] 全 UI 测试仍不完整：Human SL 分级设置、UI 悔棋、重开局待实测。**阶段 1C 的 9/13/19 多次 JNI 创建/销毁已经真机通过**。
 - [ ] 还需测试 Human SL 下载/模型启动/棋力切换、普通对局与独立胜率 PIE 并行、悔棋/重开局、形势判断/胜率分析、退出及反复加载。同步 `genmove` 中断、原生 fatal crash 恢复以及 JNI 双会话仍未解决。
 
 第一次 RK3588 APP 迁移测试：
