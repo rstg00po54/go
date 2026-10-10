@@ -163,6 +163,29 @@ adb -s 10AFB21HP5002ZK shell am start -n com.badukai.java/com.badukai.MainActivi
 adb -s 10AFB21HP5002ZK logcat -d -s KataGoJniCore:I '*:S'
 ```
 
+### 阶段 1B：KataGo GTP JNI 单会话实验（代码已提交，尚待 RK3588 编译/真机验证）
+
+- [x] `native/KataGo/cpp/command/gtp_io.h` 新增 `MainCmds::gtpWithIO(args, input, output)`；`gtp.cpp` 将单一 `getline(cin, line)` 改为注入流，GTP 响应及异步分析输出改为会话持有的 `std::ostream`；原 `MainCmds::gtp` 仍用 CLI 标准输入输出。**没有重定向进程全局 `cin/cout`**。
+- [x] `app/src/main/cpp/EngineSession.cpp` 加入线程安全输入队列、输出缓冲、一个本地 GTP 工作线程与按句柄管理的 JNI `createSession / sendCommand / readOutput / stopSearch / destroySession`；Java 包装 `KataGoNative.GtpSession implements AutoCloseable`。
+- [x] 初期严格限制**单个 JNI GTP 会话**，避免上游 `ScoreValue::freeTables` / `NeuralNet::globalCleanup` 等进程级初始化清理在双会话间互相干扰。旧 `ProcessBuilder` 进程不受影响。
+- [x] `MainActivity` 新增仅供 ADB 的 `--ez katago_gtp true` 测试入口，普通 APP 仍启动原引擎。调试入口自动准备单独模型/配置文件，顺序测试 `name`、`boardsize 9`、`komi 7.5`、`play B D4`、`genmove W`、`undo`、`clear_board`，Logcat 标签为 `KataGoJniGtp`。
+- [ ] **用户 Ubuntu 还未编译这些新改动，RK3588 的 JNI GTP 模型加载及落子尚未真机验证**；新增源文件可能需要处理编译/链接/启动错误。不要把已写代码当作通过验收。
+- [ ] `stopSearch` 当前仅把 GTP `stop` 命令排队：对同步 `genmove` 不能抢占；双会话并发、异步 Java 通知、长时间分析协议完整性、线程安全压力测试还没完成。不应据此切换 APP 默认引擎。
+- [ ] JNI smoke 通过后再逐步对接 Java 原有 `KataGoEngine`，保留 `ProcessBuilder` 回退，并继续验证 Human SL、胜率分析和棋局恢复。
+
+RK3588 验证（已有 `libkatago_exec.so` 默认路径保留）：
+
+```bash
+git pull --ff-only github rk3588-engine
+bash tools/build_katago_from_source.sh eigenjni
+./build.sh -PenableKataGoJniCore=true
+adb -s 8719e18a71a2a66c install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s 8719e18a71a2a66c logcat -c
+adb -s 8719e18a71a2a66c shell am force-stop com.badukai.java
+adb -s 8719e18a71a2a66c shell am start -n com.badukai.java/com.badukai.MainActivity --ez katago_gtp true
+adb -s 8719e18a71a2a66c logcat -d -s KataGoJniGtp:I '*:S'
+```
+
 ## 阶段 1：CPU/Eigen 真正 JNI 化 —— 首先实现
 
 **目标**：构建可加载的 `libkatago.so`，Java 在 APP 进程内调用 KataGo；先不接 GPU/NPU。
