@@ -505,3 +505,19 @@ adb logcat -d -s MainActivity:I KataGoEngine:I '*:S' | grep -E 'GPU startup scre
 ```
 
 This change is committed but has not been built or benchmarked on the target devices yet.
+
+### Ink-style fullscreen GPU loading page (2026-10-10)
+
+- GPU cold startup now creates `InkLoadingView` as an opaque **full-screen Android overlay** instead of an `AlertDialog` spinner. Artwork (ink-wash mountains, bamboo, lotus, original Go-board motif) and the green textured brushstroke bar are drawn by `Canvas` with no third-party assets or Tencent logos.
+- The percentage is **stage-based**, not a fake elapsed-time percentage. `GpuStartupLogProgress` tails only the GTP log from the current startup, reacts to the two model parse/tune/kernel-build/worker-ready markers, and posts progress to the main thread. The bar reaches 100% only when Java finishes initialization. During a lengthy native autotune the textured bar keeps gently animating, but the numeric stage percentage pauses until a real phase completes.
+- Existing GPU tuning-cache selection and OpenCL binary program cache are unchanged. Switching to GPU from the new-game dialog also uses the same full-screen splash; an already-running engine is reused without a splash. CPU mode is not affected.
+- This is a Java-only/UI-only modification. To test it, pull the branch and rebuild the APK using the already-built JNI libraries:
+
+```bash
+git pull
+./build.sh -PenableKataGoJniCore=true -PenableKataGoGpuJni=true
+adb -s 8719e18a71a2a66c install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s 8719e18a71a2a66c logcat -d -s MainActivity:I KataGoEngine:I '*:S' | grep -E 'GPU startup screen|Initial engine ready'
+```
+
+- Code committed to GitHub, but Android device compilation and visual validation must still be performed on the user's environment.
