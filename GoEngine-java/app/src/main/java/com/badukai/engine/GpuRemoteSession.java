@@ -33,6 +33,12 @@ public final class GpuRemoteSession implements AutoCloseable {
     private Messenger remote, receiver;
     private volatile boolean alive, closed, bound;
     private volatile String error;
+    private final long connectStartNs = System.nanoTime();
+    private volatile long bindRequestNs, callbackNs, startSentNs;
+
+    private static void startupTiming(String phase, long startNs) {
+        Log.i(TAG, "STARTUP_TIMING phase=" + phase + " ms=" + (System.nanoTime() - startNs) / 1000000.0);
+    }
 
     private GpuRemoteSession(Context context, File model, File config, File human) {
         this.context = context.getApplicationContext();
@@ -43,6 +49,8 @@ public final class GpuRemoteSession implements AutoCloseable {
         receiver = new Messenger(new Handler(repliesThread.getLooper(), this::handleReply));
         connection = new ServiceConnection() {
             @Override public void onServiceConnected(ComponentName name, IBinder binder) {
+                callbackNs = System.nanoTime();
+                startupTiming("gpu_service_bind_to_callback", bindRequestNs);
                 if (closed) return;
                 remote = new Messenger(binder);
                 Message message = Message.obtain(null, GpuGtpService.START);
@@ -53,8 +61,11 @@ public final class GpuRemoteSession implements AutoCloseable {
                     args.putString(GpuGtpService.HUMAN, GpuRemoteSession.this.human.getAbsolutePath());
                 message.setData(args);
                 message.replyTo = receiver;
-                try { remote.send(message); }
-                catch (RemoteException e) { fail("GPU JNI start IPC failed: " + e); }
+                try {
+                    remote.send(message);
+                    startSentNs = System.nanoTime();
+                    startupTiming("gpu_service_start_ipc_send", callbackNs);
+                } catch (RemoteException e) { fail("GPU JNI start IPC failed: " + e); }
             }
 
             @Override public void onServiceDisconnected(ComponentName name) {
@@ -70,16 +81,23 @@ public final class GpuRemoteSession implements AutoCloseable {
     public static GpuRemoteSession connect(Context context, File model, File config, File human) throws Exception {
         GpuRemoteSession session = new GpuRemoteSession(context, model, config, human);
         try {
+            startupTiming("gpu_remote_session_setup", session.connectStartNs);
             Intent intent = new Intent(context, GpuGtpService.class);
-            if (!session.context.bindService(intent, session.connection, Context.BIND_AUTO_CREATE))
-                throw new IllegalStateException("Cannot bind GPU JNI service (is GPU JNI APK enabled?)");
+            session.bindRequestNs = System.nanoTime();
+            boolean bound = session.context.bindService(intent, session.connection, Context.BIND_AUTO_CREATE);
+            startupTiming("gpu_service_bind_call", session.bindRequestNs);
+            if (!bound) throw new IllegalStateException("Cannot bind GPU JNI service (is GPU JNI APK enabled?)");
             session.bound = true;
-            if (!session.started.await(20000, TimeUnit.MILLISECONDS))
-                throw new IllegalStateException("Timed out connecting to GPU JNI service");
+            long awaitNs = System.nanoTime();
+            boolean started = session.started.await(20000, TimeUnit.MILLISECONDS);
+            startupTiming("gpu_service_wait_started", awaitNs);
+            if (!started) throw new IllegalStateException("Timed out connecting to GPU JNI service");
             if (!session.alive) throw new IllegalStateException(session.error == null ? "GPU JNI service failed" : session.error);
+            startupTiming("gpu_remote_connect_total", session.connectStartNs);
             Log.i(TAG, "Connected to GPU/OpenCL JNI service");
             return session;
         } catch (Exception e) {
+            startupTiming("gpu_remote_connect_failed", session.connectStartNs);
             session.close();
             throw e;
         }
@@ -88,6 +106,8 @@ public final class GpuRemoteSession implements AutoCloseable {
     private boolean handleReply(Message message) {
         switch (message.what) {
             case GpuGtpService.STARTED:
+                startupTiming("gpu_service_ipc_started_reply", startSentNs > 0 ? startSentNs : connectStartNs);
+                startupTiming("gpu_service_bind_to_ready", bindRequestNs > 0 ? bindRequestNs : connectStartNs);
                 alive = true;
                 started.countDown();
                 break;
