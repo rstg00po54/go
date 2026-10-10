@@ -1379,9 +1379,21 @@ void ModelDesc::loadFromFileMaybeGZipped(const string& fileName, ModelDesc& desc
       bool binaryFloats = true;
       string uncompressed;
       string sha256Buf;
-#ifdef USE_OPENCL_BACKEND
+#if defined(USE_OPENCL_BACKEND) && defined(__ANDROID__)
+      // Personal Android OpenCL app: load local .bin models without computing SHA-256.
+      // This intentionally skips even an optional expected SHA-256 comparison.
+      // Keep ModelDesc::sha256 empty instead of inventing an unverified digest.
+      FileUtils::loadFileIntoString(fileName,"",uncompressed,nullptr);
+      fileMs = std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-loadStart).count();
+      const auto parseStart = std::chrono::steady_clock::now();
+      NonCopyingStreamBuf uncompressedStreamBuf(uncompressed);
+      std::istream uncompressedIn(&uncompressedStreamBuf);
+      descBuf = ModelDesc(uncompressedIn,"",binaryFloats);
+      explicitParseMs = std::chrono::duration<double,std::milli>(
+        std::chrono::steady_clock::now()-parseStart).count();
+#elif defined(USE_OPENCL_BACKEND)
+      // Keep full SHA-256 verification on non-Android OpenCL platforms.
       // Load bytes once, then hash and parse the immutable bytes concurrently.
-      // Preserve the SHA-256 validation and final ModelDesc::sha256 assignment.
       FileUtils::loadFileIntoString(fileName,"",uncompressed,nullptr);
       fileMs = std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-loadStart).count();
       auto hashFuture = std::async(std::launch::async, [&uncompressed]() {
