@@ -47,6 +47,7 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
+    private static final int DEFAULT_BOARD_SIZE = 9;
     private static final int[] BOARD_SIZES = {9, 11, 13, 15, 19};
 
     private static boolean isSupportedBoardSize(int size) {
@@ -62,10 +63,10 @@ public class MainActivity extends AppCompatActivity {
 
     private KataGoEngine engine;
     private KataGoEngine winRateEngine;
-    private GoBoard board = new GoBoard(19);
+    private GoBoard board = new GoBoard(DEFAULT_BOARD_SIZE);
     private StoneColor playerColor = StoneColor.BLACK;
     private StoneColor currentPlayer = StoneColor.BLACK;
-    private int boardSize = 19;
+    private int boardSize = DEFAULT_BOARD_SIZE;
     private int aiKyu = 12;
     private KataGoEngine.BackendPreference selectedBackend = KataGoEngine.BackendPreference.CPU;
     private boolean forceLegacyBackend;
@@ -140,10 +141,11 @@ public class MainActivity extends AppCompatActivity {
         forceLegacyBackend = forceLegacy;
         // Preload the same board dimensions as the user's last confirmed game.
         android.content.SharedPreferences settings = getSharedPreferences("katago_settings", MODE_PRIVATE);
-        int savedBoardSize = settings.getInt("board_size", 19);
-        boardSize = isSupportedBoardSize(savedBoardSize) ? savedBoardSize : 19;
+        int savedBoardSize = settings.getInt("board_size", DEFAULT_BOARD_SIZE);
+        boardSize = isSupportedBoardSize(savedBoardSize) ? savedBoardSize : DEFAULT_BOARD_SIZE;
         board = new GoBoard(boardSize);
         engine = new KataGoEngine(getApplicationContext(), "engine", !forceLegacy);
+        engine.setStartupBoardSize(boardSize);
         selectedBackend = "GPU".equals(settings.getString("backend", "CPU"))
                 ? KataGoEngine.BackendPreference.GPU : KataGoEngine.BackendPreference.CPU;
         if (forceLegacy) selectedBackend = KataGoEngine.BackendPreference.CPU;
@@ -321,6 +323,7 @@ public class MainActivity extends AppCompatActivity {
         winRateExecutor.execute(() -> {
             if (session != winRateSession) return;
             // Calling start twice on an already-running engine reuses its GTP process.
+            winRateEngine.setStartupBoardSize(size);
             boolean ready = winRateEngine.start(KataGoEngine.Model.HUMAN);
             if (ready) ready = winRateEngine.setBoardSize(size);
             if (ready) ready = winRateEngine.clearBoard();
@@ -940,7 +943,7 @@ public class MainActivity extends AppCompatActivity {
         ArrayAdapter<String> sizeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{"9路", "11路", "13路", "15路", "19路"});
         sizeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         sizeSpinner.setAdapter(sizeAdapter);
-        int selectedSize = 4;
+        int selectedSize = 0;
         for (int i = 0; i < boardSizes.length; i++) if (boardSizes[i] == boardSize) selectedSize = i;
         sizeSpinner.setSelection(selectedSize);
 
@@ -1068,6 +1071,7 @@ public class MainActivity extends AppCompatActivity {
         engineExecutor.execute(() -> {
             String error = null;
             try {
+                engine.setStartupBoardSize(size);
                 engine.setBackendPreference(requestedBackend);
                 if (!engine.isHumanSLRunning()) {
                     engine.prepareHumanModel((done, total) -> {
