@@ -88,6 +88,7 @@ public class KataGoEngine {
     private volatile boolean humanSLRunning;
     // GTP boardsize changes the board dimensions; clear_board alone resets a same-size game.
     private volatile int configuredBoardSize = -1;
+    private volatile int startupBoardSize = 9;
     private volatile File verifiedHumanModel;
     private volatile long verifiedHumanModelLength;
     private volatile long verifiedHumanModelModified;
@@ -115,6 +116,12 @@ public class KataGoEngine {
 
     public String getBackendName() {
         return gpuSession != null ? "GPU/OpenCL JNI" : jniSession != null ? "CPU/Eigen JNI" : "PIE/ProcessBuilder";
+    }
+
+    /** Native KataGo reads defaultBoardSize before loading any OpenCL model. */
+    public void setStartupBoardSize(int size) {
+        if (size < 2 || size > 19) throw new IllegalArgumentException("Unsupported startup board size: " + size);
+        startupBoardSize = size;
     }
 
     /** Change only between games; restarting a selected GPU recreates the native session. */
@@ -178,6 +185,13 @@ public class KataGoEngine {
                 config = config.replace("numSearchThreads = 6", "numSearchThreads = 2");
                 java.nio.file.Files.write(configFile.toPath(), config.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             }
+
+            // Without this native GTP initially builds 19x19 networks, then boardsize 9
+            // tears them down and builds 9x9 networks a second time.
+            String startupConfig = "\ndefaultBoardSize = " + startupBoardSize + "\n";
+            java.nio.file.Files.write(configFile.toPath(), startupConfig.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                    java.nio.file.StandardOpenOption.APPEND);
+            Log.i(TAG, "Native GTP defaultBoardSize=" + startupBoardSize);
 
             String modelAsset = "engine/" + model.fileName;
             try {
