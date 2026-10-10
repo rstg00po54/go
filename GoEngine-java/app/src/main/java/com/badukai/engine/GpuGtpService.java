@@ -88,8 +88,13 @@ public final class GpuGtpService extends Service {
     }
 
     private void sendCommand(String command) {
-        if (session == null || command == null || !session.send(command))
-            notifyClient(FAILED, "GPU GTP send failed: " + command);
+        try {
+            if (session == null || command == null || !session.send(command))
+                notifyClient(FAILED, "GPU GTP send failed: " + command);
+        } catch (Exception | LinkageError e) {
+            Log.e(TAG, "GPU JNI GTP send crashed", e);
+            notifyClient(FAILED, "GPU GTP send exception: " + e);
+        }
     }
 
     private void notifyClient(int what, String data) {
