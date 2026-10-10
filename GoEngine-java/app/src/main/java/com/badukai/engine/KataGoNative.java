@@ -1,9 +1,11 @@
 package com.badukai.engine;
 
 import java.io.File;
+import android.util.Log;
 
 /** Experimental in-process KataGo CPU/Eigen GTP session. */
 public final class KataGoNative {
+    private static final String TAG = "KataGoNative";
     private KataGoNative() {}
 
     private static String selectedLibrary = "katago";
@@ -21,7 +23,10 @@ public final class KataGoNative {
 
     private static synchronized void load() {
         if (loadedLibrary == null) {
+            long startNs = System.nanoTime();
             System.loadLibrary(selectedLibrary);
+            Log.i(TAG, "STARTUP_TIMING phase=jni_load_library ms=" +
+                    (System.nanoTime() - startNs) / 1000000.0 + " library=" + selectedLibrary);
             loadedLibrary = selectedLibrary;
         }
     }
@@ -40,9 +45,15 @@ public final class KataGoNative {
 
     /** An optional Human SL model enables rank-style GTP play in the same JNI session. */
     public static GtpSession createSession(File model, File config, File humanModel) {
+        long totalNs = System.nanoTime();
         load();
+        long nativeNs = System.nanoTime();
         long handle = nativeCreateSession(model.getAbsolutePath(), config.getAbsolutePath(),
                 humanModel == null ? null : humanModel.getAbsolutePath());
+        Log.i(TAG, "STARTUP_TIMING phase=jni_native_create_session ms=" +
+                (System.nanoTime() - nativeNs) / 1000000.0 + " humanSL=" + (humanModel != null) + " ok=" + (handle != 0));
+        Log.i(TAG, "STARTUP_TIMING phase=jni_create_session_total ms=" +
+                (System.nanoTime() - totalNs) / 1000000.0);
         return handle == 0 ? null : new GtpSession(handle);
     }
 
