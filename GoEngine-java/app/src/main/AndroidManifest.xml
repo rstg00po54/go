@@ -20,6 +20,9 @@
         android:extractNativeLibs="true"
         tools:targetApi="34">
 
+        <!-- Optional OpenCL, so devices without a public vendor library can still install the CPU APK. -->
+        <uses-native-library android:name="libOpenCL.so" android:required="false" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
