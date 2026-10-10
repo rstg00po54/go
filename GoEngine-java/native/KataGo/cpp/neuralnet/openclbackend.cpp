@@ -702,6 +702,11 @@ struct OpenCLWeightUploadStats {
   double copyHostPtrMs = 0;
   double winogradBufferInitMs = 0;
   size_t winogradBufferInitBytes = 0;
+  std::unique_ptr<float[]> winogradScratch;
+  size_t winogradScratchCapacity = 0;
+  size_t winogradScratchGrows = 0;
+  size_t winogradScratchReuses = 0;
+  size_t winogradScratchPeakBytes = 0;
   double winogradTransformMs = 0;
   size_t winogradLayerCount = 0;
 };
@@ -1208,10 +1213,27 @@ struct ConvLayer {
       //INTILE_YSIZE, INTILE_XSIZE, ic, oc
       const auto bufferInitStart = OpenCLClock::now();
       const size_t transWeightCount = (size_t)inTileXYSize * inChannelsPadded * outChannelsPadded;
-      std::unique_ptr<float[]> transWeights(new float[transWeightCount]); // No zero fill; every padded element is written.
+      std::unique_ptr<float[]> localTransWeights;
+      float* transWeights = nullptr;
       if(activeWeightStats != nullptr) {
+        // Each layer fully overwrites this FP32 staging buffer, and
+        // CL_MEM_COPY_HOST_PTR copies the data before returning.
+        if(activeWeightStats->winogradScratchCapacity < transWeightCount) {
+          activeWeightStats->winogradScratch.reset(new float[transWeightCount]);
+          activeWeightStats->winogradScratchCapacity = transWeightCount;
+          activeWeightStats->winogradScratchGrows++;
+          activeWeightStats->winogradScratchPeakBytes = std::max(
+            activeWeightStats->winogradScratchPeakBytes,transWeightCount * sizeof(float));
+        }
+        else
+          activeWeightStats->winogradScratchReuses++;
+        transWeights = activeWeightStats->winogradScratch.get();
         activeWeightStats->winogradBufferInitMs += openclMsSince(bufferInitStart);
         activeWeightStats->winogradBufferInitBytes += transWeightCount * sizeof(float);
+      }
+      else {
+        localTransWeights.reset(new float[transWeightCount]);
+        transWeights = localTransWeights.get();
       }
       auto transform3x3_4 = [](float& a0, float& a1, float& a2, float& a3) {
         float z0 = a0; float z1 = a1; float z2 = a2;
@@ -1321,7 +1343,7 @@ struct ConvLayer {
         activeWeightStats->winogradLayerCount++;
       }
 
-      filter = createReadOnlyBuffer(handle,transWeights.get(),transWeightCount,useFP16);
+      filter = createReadOnlyBuffer(handle,transWeights,transWeightCount,useFP16);
     }
     else {
       vector<float> weights = desc->weights;
@@ -2974,6 +2996,9 @@ struct ComputeHandle {
       OpenCLWeightUploadScope weightScope(&weightStats);
       model = std::make_unique<Model>(handle.get(), &(loadedModel->modelDesc), maxBatchSize, nnXLen, nnYLen);
     }
+    // Keep the temporary staging buffer only during model construction.
+    weightStats.winogradScratch.reset();
+    weightStats.winogradScratchCapacity = 0;
     modelBuildMs = openclMsSince(modelStart);
     const auto scratchStart = OpenCLClock::now();
     scratch = std::make_unique<ScratchBuffers>(handle.get(), maxBatchSize, nnXLen, nnYLen);
@@ -3024,6 +3049,9 @@ ComputeHandle* NeuralNet::createComputeHandle(
     logger->write(prefix + " phase=weight_fp16_buffer_init ms=" + std::to_string(handle->weightStats.fp16BufferInitMs));
     logger->write(prefix + " phase=winograd_buffer_init ms=" + std::to_string(handle->weightStats.winogradBufferInitMs) +
                   " bytes=" + std::to_string(handle->weightStats.winogradBufferInitBytes));
+    logger->write(prefix + " phase=winograd_buffer_reuse grows=" + std::to_string(handle->weightStats.winogradScratchGrows) +
+                  " reuses=" + std::to_string(handle->weightStats.winogradScratchReuses) +
+                  " peak_bytes=" + std::to_string(handle->weightStats.winogradScratchPeakBytes));
     logger->write(prefix + " phase=weight_fp16_neon bytes=" + std::to_string(handle->weightStats.neonConvertedBytes));
     logger->write(prefix + " phase=weight_copy_host_ptr ms=" + std::to_string(handle->weightStats.copyHostPtrMs) +
                   " buffers=" + std::to_string(handle->weightStats.bufferCount) +
