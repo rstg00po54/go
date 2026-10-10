@@ -10,8 +10,9 @@ BUILD_VARIANT="${1:-eigen}"
 BACKEND="$BUILD_VARIANT"
 PORTABLE_OPENCL=false
 if [[ "$BUILD_VARIANT" == "openclportable" ]]; then BACKEND="opencl"; PORTABLE_OPENCL=true; fi
+if [[ "$BUILD_VARIANT" == "eigenjni" ]]; then BACKEND="eigen"; fi
 if [[ $# -gt 1 || ("$BACKEND" != "eigen" && "$BACKEND" != "opencl") ]]; then
-    echo "Usage: $0 [eigen|opencl|openclportable]" >&2
+    echo "Usage: $0 [eigen|opencl|openclportable|eigenjni]" >&2
     exit 2
 fi
 if [[ ! -f "$SOURCE_DIR/cpp/CMakeLists.txt" ]]; then
@@ -75,6 +76,9 @@ ARGS=(
     -DBUILD_DISTRIBUTED=OFF -DNO_GIT_REVISION=ON -DUSE_AVX2=OFF -DUSE_TCMALLOC=OFF
     -DCMAKE_CXX_FLAGS="-DLITTLE_ENDIAN=1234 -DBIG_ENDIAN=4321 -DBYTE_ORDER=1234"
 )
+if [[ "$BUILD_VARIANT" == "eigenjni" ]]; then
+    ARGS+=(-DKATAGO_BUILD_JNI_LIBRARY=ON)
+fi
 if [[ "$BACKEND" == "eigen" ]]; then
     EIGEN_CMAKE_DIR="$(find_eigen_cmake_dir)"
     echo "Eigen3 CMake dir: $EIGEN_CMAKE_DIR"
@@ -187,19 +191,33 @@ fi
 
 cmake -Wno-deprecated -S "$SOURCE_DIR/cpp" -B "$BUILD_DIR" -G Ninja "${ARGS[@]}"
 cmake --build "$BUILD_DIR" --parallel "${KATAGO_JOBS:-8}"
-BIN="$BUILD_DIR/katago"
+if [[ "$BUILD_VARIANT" == "eigenjni" ]]; then
+    BIN="$BUILD_DIR/libkatago.so"
+else
+    BIN="$BUILD_DIR/katago"
+fi
 [[ -f "$BIN" ]] || { echo "Missing compiled binary $BIN" >&2; exit 1; }
 HEADER="$(LC_ALL=C "$READELF" -h "$BIN")"
 echo "$HEADER" | grep -E '^[[:space:]]*(Type|Machine):' || true
 if ! grep -Eq '^[[:space:]]*Machine:[[:space:]]*AArch64([[:space:]]|$)' <<< "$HEADER" || \
    ! grep -Eq '^[[:space:]]*Type:[[:space:]]*DYN([[:space:]]|$)' <<< "$HEADER"; then
-    echo "ERROR: expected Android ARM64 PIE executable (AArch64, ET_DYN)." >&2
+    echo "ERROR: expected Android ARM64 ET_DYN ELF (PIE executable or JNI shared library)." >&2
     echo "Actual ELF header:" >&2
     echo "$HEADER" >&2
     echo "Check NDK toolchain, target architecture, and PIE linker flags." >&2
     exit 1
 fi
-if [[ "$BACKEND" == "opencl" ]]; then
+if [[ "$BUILD_VARIANT" == "eigenjni" ]]; then
+    OUT="$OUTPUT_DIR/libkatago.so"
+    if ! "$READELF" -W -d "$BIN" | grep -Fq '[libkatago.so]'; then
+        echo "ERROR: JNI ELF does not have libkatago.so SONAME." >&2
+        exit 1
+    fi
+    if ! "$READELF" -W --dyn-syms "$BIN" | grep -Fq Java_com_badukai_engine_KataGoNative_nativeBuildStatus; then
+        echo "ERROR: JNI nativeBuildStatus symbol not exported." >&2
+        exit 1
+    fi
+elif [[ "$BACKEND" == "opencl" ]]; then
     OUT="$OUTPUT_DIR/libkatago_exec_opencl.so"
 else
     OUT="$OUTPUT_DIR/libkatago_exec.so"
@@ -233,3 +251,6 @@ if [[ "$BACKEND" == "opencl" ]]; then
     fi
 fi
 echo "No files were changed under app/src/main/jniLibs."
+if [[ "$BUILD_VARIANT" == "eigenjni" ]]; then
+    echo "JNI linkage smoke-test only: playable GTP EngineSession is NOT implemented."
+fi
