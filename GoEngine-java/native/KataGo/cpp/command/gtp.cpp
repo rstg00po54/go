@@ -1894,6 +1894,11 @@ int MainCmds::gtpWithIO(const vector<string>& args, std::istream& gtpInput, std:
   string humanModelFile;
   string overrideVersion;
   KataGoCommandLine cmd("Run KataGo main GTP engine for playing games or casual analysis.");
+  // TCLAP's default error handler calls exit(1) on invalid arguments.
+  // Never allow an in-process JNI session to terminate the whole Android APP.
+  // Keep the historical CLI behavior for MainCmds::gtp(std::cin, std::cout).
+  if(&gtpInput != &std::cin)
+    cmd.setExceptionHandling(false);
   try {
     cmd.addConfigFileArg(KataGoCommandLine::defaultGtpConfigFileName(),"gtp_example.cfg");
     cmd.addModelFileArg();
