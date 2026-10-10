@@ -69,7 +69,7 @@
 - CPU 最快 2 线程（564.23ms）；GPU 最快 4 线程（536.29ms），跨后端最优值之比 GPU 减少约 5.0% 延迟。GPU 4/16/32 平均值相差仅 6.08ms，需多轮、随机化测试顺序才可能稳定区分。
 - 对比另一组 `--visits 1000 --max-time 0.4` 的结果，GPU 16/24/32 搜索吞吐明显优于 CPU；**高吞吐的最佳线程数不等于 20-visits 短搜索的最低延迟线程数**。
 - 测试前每步执行 `clear_board`、`clear_cache`，因此模拟的是冷搜索而非 APP 连续对弈保留缓存的实际体验。CPU→GPU 固定顺序也可能有温度/负载偏差。
-- [ ] 进入设备通用 OpenCL ABI 验证：先检查两个设备的 `readelf -d/-V`、实际 `SONAME`、`DT_NEEDED`、符号版本、Android linker namespace；尚不声称已实现单一通用 GPU 程序。
+- [x] 已在 RK3588 和 vivo 上核验 `readelf -d/-V`、`SONAME`、`DT_NEEDED`、符号版本，且用同一份 `openclportable` ARM64 PIE 程序完成双设备 ADB Shell GPU 推理；Android APP 的 linker namespace / SELinux 访问验证仍待完成。
 
 ### 2026-10-10 RK3588 GTP 固定时间测试（20 次/配置）
 
@@ -99,9 +99,9 @@
 
 已添加 **隔离的 openclportable 试验模式**：`ANDROID_SERIAL=10AFB21HP5002ZK bash tools/build_katago_from_source.sh openclportable`，首次自动把该手机的 loader 库缓存为本地 **仅链接用** 的 `~/.cache/goengine_katago/opencl_arm64_portable/libOpenCL.so`（不进仓库、不打进 APK）。生成 `build/katago_android_arm64_openclportable/libkatago_exec_opencl.so`，不覆盖旧的 RK3588 版本，也不修改 CPU 或 APK。脚本核验新 ELF 只需求 `libOpenCL.so`，且没有 Mali 专属 OpenCL 版本依赖。
 
-2026-10-10 vivo 手机 `openclportable` 已成功编译并运行：早期的 `clGetPlatformIDs` 检查误报（检测形式过于严格），修订后实际使用缓存的 166712 字节 `/vendor/lib64/libOpenCL.so` 成功链接；**未使用 53 MB EGL Mali 库回退**。NDK Clang 18 完成 `[117/117] Linking CXX executable katago`，新 ARM64 PIE ELF `DT_NEEDED libOpenCL.so`，无旧 RK3588 专有 `VERNEED OPENCL_1.0`。首次 GPU benchmark 在自动调优中途退出 255（原因未确认）；第二次自动调优完成并保存缓存，识别 **Mali-G1-Ultra MC12 r0p1 / OpenCL 3.0**，加载 10b 模型，GPU 2 搜索线程、19×19、30 visits ×1 position 获得 **66.00 visits/s、66.00 NN evals/s、batch 1.03**（样本很短，仅验证启动和基础计算）。对应 CPU/GPU 基准工具按符号版本依赖选择 RK3588 legacy staging 或设备 EGL Mali 库。下一步不重新编译，用这个**同一份 ELF** 在 RK3588 运行验证；ANDROID APP 的 linker namespace / SELinux 仍须单独验证。
+2026-10-10 vivo 手机 `openclportable` 已成功编译并运行：早期的 `clGetPlatformIDs` 检查误报（检测形式过于严格），修订后实际使用缓存的 166712 字节 `/vendor/lib64/libOpenCL.so` 成功链接；**未使用 53 MB EGL Mali 库回退**。NDK Clang 18 完成 `[117/117] Linking CXX executable katago`，新 ARM64 PIE ELF `DT_NEEDED libOpenCL.so`，无旧 RK3588 专有 `VERNEED OPENCL_1.0`。首次 GPU benchmark 在自动调优中途退出 255（原因未确认）；第二次自动调优完成并保存缓存，识别 **Mali-G1-Ultra MC12 r0p1 / OpenCL 3.0**，加载 10b 模型，GPU 2 搜索线程、19×19、30 visits ×1 position 获得 **66.00 visits/s、66.00 NN evals/s、batch 1.03**（样本很短，仅验证启动和基础计算）。对应 CPU/GPU 基准工具按符号版本依赖选择 RK3588 legacy staging 或设备 EGL Mali 库。随后未重新编译，直接将这份 **同一 ELF** 推送到 RK3588 LubanCat-4IO（Android 12）：识别 **Mali-G610 r0p0 / OpenCL 3.0**，复用其已存在调优缓存，FP16Storage/FP16Compute 为 true，10b 模型加载成功。GPU 2 搜索线程、19×19、30 visits ×1 position 获得 **39.66 visits/s、39.66 NN evals/s、batch 1.00**，退出状态正常。**跨两台设备的 ADB Shell GPU 推理兼容性已实测通过**；手机 66.00 vs RK3588 39.66 visits/s 只是各 1 个局面的烟雾测试，不应当作正式 GPU 性能对比；Android APP 进程的 linker namespace / SELinux 仍须单独验证。
 
-测试方式：使用 `KATAGO_BENCH_GPU_BINARY="$PWD/build/katago_android_arm64_openclportable/libkatago_exec_opencl.so"` 指定替代版，再分别指定 `ANDROID_SERIAL` 对手机、RK3588 跑 `bash tools/benchmark_katago_android.sh gpu`。GTP 真实落子脚本也支持 `--gpu-binary <path>`。**vivo 手机已验证该 ELF 可启动并完成 GPU 推理；RK3588 对同一份 ELF 的测试仍待验证**，APP linker namespace / SELinux 更须单独验证。
+测试方式：使用 `KATAGO_BENCH_GPU_BINARY="$PWD/build/katago_android_arm64_openclportable/libkatago_exec_opencl.so"` 指定替代版，再分别指定 `ANDROID_SERIAL` 对手机、RK3588 跑 `bash tools/benchmark_katago_android.sh gpu`。GTP 真实落子脚本也支持 `--gpu-binary <path>`。**同一份 ARM64 PIE ELF 已在 vivo Android 16 和 RK3588 Android 12 的 ADB Shell 环境成功完成 GPU 推理**，APP linker namespace / SELinux 更须单独验证。
 
 注意：这个实验先保留两个独立的 Android PIE 可执行文件，不代表阶段 3 的「同一个 JNI `.so` CPU/GPU 运行时切换」已经完成。Android NDK 不自带厂商 OpenCL 库；库是否对 APP 可见还需要设备侧验证。
 
