@@ -206,6 +206,23 @@ adb -s 8719e18a71a2a66c logcat -d -s KataGoJniGtp:I '*:S'
 
 或者在编译完成后用新增的 `bash tools/test_katago_jni_gtp_android.sh` 一条命令完成安装、启动、等待 PASS/FAIL 并保存 `build/katago_jni_gtp_test/` 日志。
 
+### 阶段 1C：JNI 会话生命周期 / 9×9、13×13、19×19 回归（代码已提交，待 RK3588 真机执行）
+
+- [x] `MainActivity` 添加独立 `--ez katago_gtp_repeat true` 测试入口（不改变普通启动或原 9×9 smoke），在**同一个 Android 进程内**逐个创建/销毁 3 个 JNI 会话，分别对 9×9、13×13、19×19 调用 `name`、`boardsize`、`komi`、`play`、`genmove`、`undo`、`clear_board`。
+- [x] `tools/test_katago_jni_gtp_android.sh` 增加第二参数 `repeat`，按模式传递 `katago_gtp_repeat` intent 参数，脚本只在全部三轮完成后接受 `PASS: JNI GTP repeated sessions 9x9, 13x13, 19x19`。
+- [ ] **这组多次创建销毁/多棋盘尺寸的测试尚未真机验证**；用户提供的 11:47:45 PASS 只代表前一个 9×9 单会话测试成功。
+- [ ] 对长时间分析/停止/并发、Human SL、完整 APP 迁移暂不宣称通过。
+
+RK3588 下一轮命令：
+
+```bash
+git pull --ff-only github rk3588-engine
+./build.sh -PenableKataGoJniCore=true
+bash tools/test_katago_jni_gtp_android.sh 8719e18a71a2a66c repeat
+```
+
+本次仅改 Java Smoke 与 ADB 脚本，没有更改 native C++，因此正常情况下可省略手动运行 `bash tools/build_katago_from_source.sh eigenjni`，继续使用上一轮已编译并通过验证的 `libkatago.so`。
+
 ## 阶段 1：CPU/Eigen 真正 JNI 化 —— 首先实现
 
 **目标**：构建可加载的 `libkatago.so`，Java 在 APP 进程内调用 KataGo；先不接 GPU/NPU。
