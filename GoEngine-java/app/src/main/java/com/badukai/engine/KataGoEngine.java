@@ -77,7 +77,7 @@ public class KataGoEngine {
     private final AtomicBoolean running = new AtomicBoolean(false);
     private Process process;
     private volatile KataGoNative.GtpSession jniSession;
-    private volatile GpuRemoteSession gpuSession;
+    private volatile KataGoGpuNative.GtpSession gpuSession;
     public enum BackendPreference { CPU, GPU }
     private volatile BackendPreference backendPreference = BackendPreference.CPU;
     private volatile boolean gpuDisabledForProcess;
@@ -225,13 +225,14 @@ public class KataGoEngine {
 
             Log.i(TAG, "Model: " + modelFile.getAbsolutePath() + " size=" + modelFile.length());
             Log.i(TAG, "Config: " + configFile.getAbsolutePath());
-            Log.i(TAG, "Backend requested: " + (useGpu ? "GPU/OpenCL IPC" : useJni ? "CPU/JNI Eigen" : "PIE/ProcessBuilder"));
+            Log.i(TAG, "Backend requested: " + (useGpu ? "GPU/OpenCL in-process JNI" : useJni ? "CPU/JNI Eigen" : "PIE/ProcessBuilder"));
 
             if (useGpu) {
                 try {
                     phaseNs = System.nanoTime();
-                    gpuSession = GpuRemoteSession.connect(context, modelFile, configFile, humanFile);
-                    startupTiming("engine_gpu_service_connect", phaseNs);
+                    gpuSession = KataGoGpuNative.createSession(modelFile, configFile, humanFile);
+                    startupTiming("engine_gpu_native_create", phaseNs);
+                    if (gpuSession == null) throw new IOException("GPU JNI createSession returned null");
                     phaseNs = System.nanoTime();
                     running.set(true);
                     humanSLRunning = useHumanSL;
@@ -250,7 +251,7 @@ public class KataGoEngine {
                     return true;
                 } catch (Exception | LinkageError e) {
                     startupTiming("engine_gpu_start_failed", totalStartNs);
-                    Log.e(TAG, "GPU JNI startup failed; falling back to CPU", e);
+                    Log.e(TAG, "GPU in-process JNI startup failed; falling back to CPU", e);
                     gpuDisabledForProcess = true;
                     stop();
                     return start(model, useHumanSL);
@@ -412,7 +413,7 @@ public class KataGoEngine {
     }
 
     private void startGpuReaderThread() {
-        final GpuRemoteSession session = gpuSession;
+        final KataGoGpuNative.GtpSession session = gpuSession;
         readerThread = new Thread(() -> {
             StringBuilder buffer = new StringBuilder();
             try {
@@ -433,7 +434,7 @@ public class KataGoEngine {
             } catch (Exception e) {
                 if (running.get()) Log.e(TAG, "GPU GTP output reader failed", e);
             }
-        }, "KataGo-GPU-IPC-stdout");
+        }, "KataGo-GPU-JNI-stdout");
         readerThread.start();
     }
 
@@ -477,7 +478,7 @@ public class KataGoEngine {
         humanSLRunning = false;
         configuredBoardSize = -1;
         if (gpuSession != null) {
-            GpuRemoteSession old = gpuSession;
+            KataGoGpuNative.GtpSession old = gpuSession;
             gpuSession = null;
             old.close();
             responseQueue.clear();
@@ -686,7 +687,7 @@ public class KataGoEngine {
     public boolean isReady() {
         DebugLog.enter(TAG, "isReady in, running=" + running.get());
         KataGoNative.GtpSession session = jniSession;
-        GpuRemoteSession remote = gpuSession;
+        KataGoGpuNative.GtpSession remote = gpuSession;
         return running.get() && (remote != null ? remote.isAlive() : session != null ? session.isAlive() : (process != null && process.isAlive()));
     }
 
@@ -1128,7 +1129,7 @@ public class KataGoEngine {
         if (!running.get() && !"quit".equals(command)) return false;
         if (gpuSession != null) {
             boolean queued = gpuSession.send(command);
-            Log.d(TAG, "GPU JNI GTP command=" + command + " queued=" + queued);
+            Log.d(TAG, "GPU in-process JNI GTP command=" + command + " queued=" + queued);
             return queued;
         }
         if (jniSession != null) {
@@ -1165,9 +1166,9 @@ public class KataGoEngine {
                 long remainingMs = Math.max(1, TimeUnit.NANOSECONDS.toMillis(deadline - System.nanoTime()));
                 String response = responseQueue.poll(Math.min(200, remainingMs), TimeUnit.MILLISECONDS);
                 if (response != null) return response;
-                GpuRemoteSession remote = gpuSession;
+                KataGoGpuNative.GtpSession remote = gpuSession;
                 if (remote != null && !remote.isAlive()) {
-                    Log.e(TAG, "GPU GTP service died while waiting for a reply");
+                    Log.e(TAG, "GPU JNI GTP worker stopped while waiting for a reply");
                     return "";
                 }
             }
