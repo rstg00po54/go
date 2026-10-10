@@ -1,5 +1,6 @@
 #include "../neuralnet/nneval.h"
 #include "../neuralnet/modelversion.h"
+#include <chrono>
 
 using namespace std;
 
@@ -132,7 +133,18 @@ NNEvaluator::NNEvaluator(
     std::sort(gpuIdxs.begin(), gpuIdxs.end());
     auto last = std::unique(gpuIdxs.begin(), gpuIdxs.end());
     gpuIdxs.erase(last,gpuIdxs.end());
+#ifdef USE_OPENCL_BACKEND
+    const auto modelParseStart = std::chrono::steady_clock::now();
+#endif
     loadedModel = NeuralNet::loadModelFile(modelFileName,expectedSha256);
+#ifdef USE_OPENCL_BACKEND
+    if(logger != NULL)
+      logger->write("OPENCL_TIMING model_file=" + modelFileName + " board=" + std::to_string(nnXLen) +
+                    "x" + std::to_string(nnYLen) + " phase=model_file_parse ms=" +
+                    std::to_string(std::chrono::duration<double,std::milli>(
+                      std::chrono::steady_clock::now() - modelParseStart).count()));
+    const auto contextStart = std::chrono::steady_clock::now();
+#endif
     modelVersion = NeuralNet::getModelVersion(loadedModel);
     inputsVersion = NNModelVersion::getInputsVersion(modelVersion);
     numInputMetaChannels = NeuralNet::getNumInputMetaChannels(loadedModel);
@@ -142,6 +154,13 @@ NNEvaluator::NNEvaluator(
       openCLTunerFile,homeDataDirOverride,openCLReTunePerBoardSize,
       usingFP16Mode,usingNHWCMode,loadedModel
     );
+#ifdef USE_OPENCL_BACKEND
+    if(logger != NULL)
+      logger->write("OPENCL_TIMING model_file=" + modelFileName + " board=" + std::to_string(nnXLen) +
+                    "x" + std::to_string(nnYLen) + " phase=compute_context_total ms=" +
+                    std::to_string(std::chrono::duration<double,std::milli>(
+                      std::chrono::steady_clock::now() - contextStart).count()));
+#endif
   }
   else {
     modelVersion = NNModelVersion::defaultModelVersion;
