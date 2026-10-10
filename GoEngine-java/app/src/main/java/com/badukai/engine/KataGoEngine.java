@@ -88,6 +88,8 @@ public class KataGoEngine {
     private BufferedReader errorReader;
     private Thread readerThread;
     private Thread errorReaderThread;
+    // Invalidate readers of an old JNI/PIE session during fast backend switches.
+    private volatile long sessionGeneration;
     private volatile SearchStats currentSearchStats;
     private volatile boolean humanSLRunning;
     // GTP boardsize changes the board dimensions; clear_board alone resets a same-size game.
@@ -350,8 +352,12 @@ public class KataGoEngine {
             try {
                 String response = responseQueue.poll(200, TimeUnit.MILLISECONDS);
                 if (response != null) {
-                    Log.i(TAG, "KataGo GTP ready response: " + response.trim());
-                    return response.startsWith("=");
+                    String reply = response.trim();
+                    if (reply.startsWith("=") && reply.substring(1).trim().equals("KataGo")) {
+                        Log.i(TAG, "KataGo GTP ready response: " + reply);
+                        return true;
+                    }
+                    Log.w(TAG, "Ignoring stale/non-name GTP startup response: " + reply);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -365,11 +371,16 @@ public class KataGoEngine {
         DebugLog.enter(TAG, "startReaderThread in");
         if (gpuSession != null) { startGpuReaderThread(); return; }
         if (jniSession != null) { startJniReaderThread(); return; }
+        final BufferedReader sessionReader = reader;
+        final Process expectedProcess = process;
+        final long generation = sessionGeneration;
         readerThread = new Thread(() -> {
             StringBuilder buffer = new StringBuilder();
             try {
                 String line;
-                while (running.get() && (line = reader.readLine()) != null) {
+                while (running.get() && generation == sessionGeneration && expectedProcess == process
+                        && (line = sessionReader.readLine()) != null) {
+                    if (!running.get() || generation != sessionGeneration || expectedProcess != process) break;
                     Log.d(TAG, "KataGo stdout: " + line);
                     buffer.append(line).append('\n');
                     if (line.isEmpty() && buffer.length() > 0) {
@@ -386,14 +397,15 @@ public class KataGoEngine {
 
     private void startJniReaderThread() {
         final KataGoNative.GtpSession session = jniSession;
+        final long generation = sessionGeneration;
         readerThread = new Thread(() -> {
             StringBuilder buffer = new StringBuilder();
             try {
                 // Bind this reader to its original session: an old reader must
                 // never consume a new session's output during a quick restart.
-                while (running.get() && jniSession == session) {
+                while (running.get() && generation == sessionGeneration && jniSession == session) {
                     String chunk = session.read(1000);
-                    if (chunk == null) break;
+                    if (chunk == null || !running.get() || generation != sessionGeneration || jniSession != session) break;
                     buffer.append(chunk.replace("\r\n", "\n"));
                     int end;
                     while ((end = buffer.indexOf("\n\n")) >= 0) {
@@ -414,12 +426,13 @@ public class KataGoEngine {
 
     private void startGpuReaderThread() {
         final KataGoGpuNative.GtpSession session = gpuSession;
+        final long generation = sessionGeneration;
         readerThread = new Thread(() -> {
             StringBuilder buffer = new StringBuilder();
             try {
-                while (running.get() && gpuSession == session) {
+                while (running.get() && generation == sessionGeneration && gpuSession == session) {
                     String chunk = session.read(1000);
-                    if (chunk == null) break;
+                    if (chunk == null || !running.get() || generation != sessionGeneration || gpuSession != session) break;
                     buffer.append(chunk.replace("\r\n", "\n"));
                     int end;
                     while ((end = buffer.indexOf("\n\n")) >= 0) {
@@ -473,6 +486,7 @@ public class KataGoEngine {
     public synchronized void stop() {
         DebugLog.enter(TAG, "stop in, running=" + running.get() + ", process=" + process);
         if (!running.get() && process == null && jniSession == null && gpuSession == null) return;
+        sessionGeneration++;
         try { sendCommandSync("quit"); } catch (Exception ignored) {}
         running.set(false);
         humanSLRunning = false;
