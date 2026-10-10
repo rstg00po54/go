@@ -238,6 +238,9 @@ def main():
     parser.add_argument("--timeout", type=float, default=90.0, help="Timeout per GTP command")
     parser.add_argument("--adb", default=os.getenv("ADB") or shutil.which("adb"))
     parser.add_argument("--serial", default=os.getenv("ANDROID_SERIAL"))
+    parser.add_argument("--gpu-binary", type=Path, default=Path(os.getenv("KATAGO_BENCH_GPU_BINARY") or
+                        str(PROJECT / "build/katago_android_arm64_opencl/libkatago_exec_opencl.so")),
+                        help="Alternate GPU executable, e.g. portable OpenCL build")
     parser.add_argument("--report-dir", type=Path)
     parser.add_argument("--resume", action="store_true", help="Resume an interrupted run using --report-dir")
     args = parser.parse_args()
@@ -261,7 +264,7 @@ def main():
         cpu = PROJECT / "app/build/generated/katagoJniLibs/arm64-v8a/libkatago_exec.so"
         if not cpu.is_file():
             cpu = Path(os.getenv("KATAGO_WORKDIR", str(Path.home() / ".cache/goengine_katago"))) / "build_android_arm64_eigen/katago"
-        gpu = PROJECT / "build/katago_android_arm64_opencl/libkatago_exec_opencl.so"
+        gpu = args.gpu_binary
         binaries = {"cpu": cpu, "gpu": gpu}
         for backend in backends:
             if not binaries[backend].is_file():
@@ -283,9 +286,12 @@ def main():
             run([args.adb, "-s", serial, "push", binaries[backend], "%s/katago_%s" % (REMOTE, backend)])
             run([args.adb, "-s", serial, "shell", "chmod 755 %s/katago_%s" % (REMOTE, backend)])
         if "gpu" in backends:
-            # The Mali OpenCL vendor runtime declares SONAME libGLES_mali.so.
-            run([args.adb, "-s", serial, "shell",
-                 "cp /vendor/lib64/libOpenCL.so %s/libGLES_mali.so" % REMOTE])
+            # Legacy RK3588 binary needs libGLES_mali.so; portable builds
+            # request libOpenCL.so directly from each device's vendor path.
+            deps = run(["readelf", "-W", "-d", binaries["gpu"]], capture=True)
+            if "Shared library: [libGLES_mali.so]" in deps:
+                run([args.adb, "-s", serial, "shell",
+                     "cp /vendor/lib64/libOpenCL.so %s/libGLES_mali.so" % REMOTE])
 
         measurements = []
         completed = set()
