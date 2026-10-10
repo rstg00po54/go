@@ -57,7 +57,7 @@ def percentile(values, percent):
 
 
 class GtpEngine:
-    def __init__(self, adb, serial, backend, threads, visits, max_time, log_dir, timeout):
+    def __init__(self, adb, serial, backend, threads, visits, max_time, log_dir, timeout, use_egl_mali=False):
         overrides = ",".join((
             "numSearchThreads=%d" % threads,
             "maxVisits=%d" % visits,
@@ -69,9 +69,11 @@ class GtpEngine:
             "logToStderr=false",
             "ogsChatToStderr=true",  # One compact 'MALKOVICH:Visits N' diagnostic per genmove.
         ))
-        remote_cmd = ("cd %s && HOME=%s TMPDIR=%s LD_LIBRARY_PATH=%s:/vendor/lib64:/system/vendor/lib64 "
+        ld_path = "/vendor/lib64/egl:%s:/vendor/lib64:/system/vendor/lib64" % REMOTE if use_egl_mali else (
+            "%s:/vendor/lib64:/system/vendor/lib64" % REMOTE)
+        remote_cmd = ("cd %s && HOME=%s TMPDIR=%s LD_LIBRARY_PATH=%s "
                       "%s/katago_%s gtp -model 10b.bin -config default_gtp.cfg -override-config %s" %
-                      (REMOTE, REMOTE, REMOTE, REMOTE, REMOTE, backend, overrides))
+                      (REMOTE, REMOTE, REMOTE, ld_path, REMOTE, backend, overrides))
         self.stderr_path = log_dir / ("%s_%d.stderr.log" % (backend, threads))
         self.stderr_file = self.stderr_path.open("wb")
         self.stderr_read_pos = 0
@@ -285,13 +287,20 @@ def main():
         for backend in backends:
             run([args.adb, "-s", serial, "push", binaries[backend], "%s/katago_%s" % (REMOTE, backend)])
             run([args.adb, "-s", serial, "shell", "chmod 755 %s/katago_%s" % (REMOTE, backend)])
+        gpu_egl_first = False
         if "gpu" in backends:
-            # Legacy RK3588 binary needs libGLES_mali.so; portable builds
-            # request libOpenCL.so directly from each device's vendor path.
             deps = run(["readelf", "-W", "-d", binaries["gpu"]], capture=True)
             if "Shared library: [libGLES_mali.so]" in deps:
-                run([args.adb, "-s", serial, "shell",
-                     "cp /vendor/lib64/libOpenCL.so %s/libGLES_mali.so" % REMOTE])
+                versions = run(["readelf", "-W", "-V", binaries["gpu"]], capture=True)
+                if re.search(r"Name: OPENCL_[0-9]", versions):
+                    # Legacy RK3588 ELF has versioned Mali OpenCL symbols.
+                    run([args.adb, "-s", serial, "shell",
+                         "cp /vendor/lib64/libOpenCL.so %s/libGLES_mali.so" % REMOTE])
+                else:
+                    # Unversioned Mali imports: prefer the device EGL driver,
+                    # not a stale same-named staging file in our test folder.
+                    gpu_egl_first = True
+                    print("Using device /vendor/lib64/egl/libGLES_mali.so", flush=True)
 
         measurements = []
         completed = set()
@@ -334,7 +343,8 @@ def main():
                     print("\n======== %s / %d search threads (%d remaining) ========" %
                           (backend.upper(), thread, len(unfinished)), flush=True)
                     engine = GtpEngine(args.adb, serial, backend, thread, args.visits,
-                                       args.max_time, report_dir, args.timeout)
+                                       args.max_time, report_dir, args.timeout,
+                                       use_egl_mali=(backend == "gpu" and gpu_egl_first))
                     try:
                         engine.command("boardsize 19")
                         engine.command("komi 7.5")
