@@ -217,11 +217,17 @@ if [[ "$BUILD_VARIANT" == "eigenjni" || "$BUILD_VARIANT" == "opencljni" ]]; then
         echo "ERROR: JNI ELF does not have $EXPECTED_JNI_SONAME SONAME." >&2
         exit 1
     fi
-    if ! "$READELF" -W --dyn-syms "$BIN" | grep -F Java_com_badukai_engine_KataGoNative_nativeBuildStatus >/dev/null; then
-        echo "ERROR: JNI nativeBuildStatus symbol not exported." >&2
+    JNI_CLASS="KataGoNative"
+    if [[ "$BUILD_VARIANT" == "opencljni" ]]; then JNI_CLASS="KataGoGpuNative"; fi
+    if ! "$READELF" -W --dyn-syms "$BIN" | grep -F "Java_com_badukai_engine_${JNI_CLASS}_nativeBuildStatus" >/dev/null; then
+        echo "ERROR: $JNI_CLASS nativeBuildStatus symbol not exported." >&2
         exit 1
     fi
     if [[ "$BUILD_VARIANT" == "opencljni" ]]; then
+        if "$READELF" -W --dyn-syms "$BIN" | grep -F "Java_com_badukai_engine_KataGoNative_nativeCreateSession" >/dev/null; then
+            echo "ERROR: GPU library still exports the CPU JNI session entrypoint." >&2
+            exit 1
+        fi
         for symbol in nativeCreateSession nativeSendCommand nativeReadOutput nativeIsSessionAlive nativeStopSearch nativeDestroySession; do
             if ! "$READELF" -W --dyn-syms "$BIN" | grep -F "Java_com_badukai_engine_KataGoGpuNative_$symbol" >/dev/null; then
                 echo "ERROR: GPU-specific JNI symbol missing: $symbol" >&2
