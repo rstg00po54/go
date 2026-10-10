@@ -815,7 +815,7 @@ public class KataGoEngine {
             }
         }
         List<SearchRecommendation> candidates = new ArrayList<>(latest.values());
-        Collections.sort(candidates, (a, b) -> Integer.compare(a.order, b.order));
+        // Display ①②③ by the current player\'s win rate, highest first. KataGo\'s\n        // internal search order is only a tie-breaker, not the displayed ranking.\n        candidates.sort((a, b) -> {\n            int result = Double.compare(b.winrate, a.winrate);\n            return result != 0 ? result : Integer.compare(a.order, b.order);\n        });
         return candidates;
     }
 
