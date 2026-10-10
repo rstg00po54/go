@@ -696,8 +696,11 @@ struct OpenCLWeightUploadStats {
   size_t bufferCount = 0;
   size_t bufferBytes = 0;
   double fp16ConvertMs = 0;
+  double fp16BufferInitMs = 0;
   size_t neonConvertedBytes = 0;
   double copyHostPtrMs = 0;
+  double winogradBufferInitMs = 0;
+  size_t winogradBufferInitBytes = 0;
   double winogradTransformMs = 0;
   size_t winogradLayerCount = 0;
 };
@@ -759,6 +762,7 @@ static cl_mem createReadOnlyBuffer(ComputeHandleInternal* handle, vector<float>&
   if(useFP16) {
     const auto convertStart = OpenCLClock::now();
     vector<half_t> dataHalf(data.size());
+    const double fp16BufferInitMs = openclMsSince(convertStart);
     bool usedNeon = false;
 #if defined(__aarch64__) && defined(__linux__) && defined(__clang__)
     if(canConvertWeightFP16Neon()) {
@@ -777,6 +781,7 @@ static cl_mem createReadOnlyBuffer(ComputeHandleInternal* handle, vector<float>&
       activeWeightStats->bufferCount++;
       activeWeightStats->bufferBytes += dataHalf.size() * sizeof(half_t);
       activeWeightStats->fp16ConvertMs += convertMs;
+      activeWeightStats->fp16BufferInitMs += fp16BufferInitMs;
       if(usedNeon) activeWeightStats->neonConvertedBytes += dataHalf.size() * sizeof(half_t);
       activeWeightStats->copyHostPtrMs += openclMsSince(copyStart);
     }
@@ -1179,7 +1184,12 @@ struct ConvLayer {
       assert((convXSize == 5 && convYSize == 5) ? (inTileYSize == 6 && outTileYSize == 2) : true);
 
       //INTILE_YSIZE, INTILE_XSIZE, ic, oc
+      const auto bufferInitStart = OpenCLClock::now();
       vector<float> transWeights(inTileXYSize * inChannelsPadded * outChannelsPadded);
+      if(activeWeightStats != nullptr) {
+        activeWeightStats->winogradBufferInitMs += openclMsSince(bufferInitStart);
+        activeWeightStats->winogradBufferInitBytes += transWeights.size() * sizeof(float);
+      }
       auto transform3x3_4 = [](float& a0, float& a1, float& a2, float& a3) {
         float z0 = a0; float z1 = a1; float z2 = a2;
         a0 = z0;
@@ -2988,11 +2998,18 @@ ComputeHandle* NeuralNet::createComputeHandle(
     logger->write(prefix + " phase=winograd_weight_transform ms=" + std::to_string(handle->weightStats.winogradTransformMs) +
                   " layers=" + std::to_string(handle->weightStats.winogradLayerCount));
     logger->write(prefix + " phase=weight_fp16_convert ms=" + std::to_string(handle->weightStats.fp16ConvertMs));
+    logger->write(prefix + " phase=weight_fp16_buffer_init ms=" + std::to_string(handle->weightStats.fp16BufferInitMs));
+    logger->write(prefix + " phase=winograd_buffer_init ms=" + std::to_string(handle->weightStats.winogradBufferInitMs) +
+                  " bytes=" + std::to_string(handle->weightStats.winogradBufferInitBytes));
     logger->write(prefix + " phase=weight_fp16_neon bytes=" + std::to_string(handle->weightStats.neonConvertedBytes));
     logger->write(prefix + " phase=weight_copy_host_ptr ms=" + std::to_string(handle->weightStats.copyHostPtrMs) +
                   " buffers=" + std::to_string(handle->weightStats.bufferCount) +
                   " bytes=" + std::to_string(handle->weightStats.bufferBytes));
     logger->write(prefix + " phase=model_build_total ms=" + std::to_string(handle->modelBuildMs));
+    logger->write(prefix + " phase=model_build_other ms=" +
+                  std::to_string(handle->modelBuildMs - handle->weightStats.winogradTransformMs -
+                  handle->weightStats.fp16ConvertMs - handle->weightStats.copyHostPtrMs -
+                  handle->weightStats.winogradBufferInitMs));
     logger->write(prefix + " phase=model_trunk_build ms=" + std::to_string(handle->model->trunkBuildMs));
     logger->write(prefix + " phase=model_trunk_blocks ms=" + std::to_string(handle->model->trunk->blocksBuildMs) +
                   " count=" + std::to_string(handle->model->trunk->blocks.numBlocks));
