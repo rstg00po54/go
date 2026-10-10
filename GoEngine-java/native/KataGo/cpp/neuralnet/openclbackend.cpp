@@ -14,6 +14,7 @@
 
 #include "../core/simpleallocator.h"
 #include "../core/test.h"
+#include <chrono>
 
 //------------------------
 #include "../core/using.h"
@@ -22,6 +23,12 @@
 using namespace OpenCLHelpers;
 
 using half_t = half_float::half;
+
+// Wall-clock stage timings; no clFinish() is added, so GPU execution behavior is unchanged.
+using OpenCLClock = std::chrono::steady_clock;
+static double openclMsSince(const OpenCLClock::time_point& start) {
+  return std::chrono::duration<double,std::milli>(OpenCLClock::now() - start).count();
+}
 
 //======================================================================================================
 /*
@@ -360,22 +367,31 @@ struct ComputeContext {
     int nnY,
     enabled_t useFP16Mode,
     enabled_t useNHWCMode,
-    std::function<OpenCLTuneParams(const string&,int)> getParamsForDeviceName
+    std::function<OpenCLTuneParams(const string&,int)> getParamsForDeviceName,
+    const string& modelName
   ) :
     nnXLen(nnX),
     nnYLen(nnY),
     usingFP16Mode(useFP16Mode),
     usingNHWCMode(useNHWCMode)
   {
+    const auto contextStart = OpenCLClock::now();
     vector<DeviceInfo> allDeviceInfos = DeviceInfo::getAllDeviceInfosOnSystem(logger);
     devicesContext = new DevicesContext(allDeviceInfos,gIdxs,logger,liveProfilingKernels);
+    if(logger != NULL)
+      logger->write("OPENCL_TIMING model=" + modelName + " board=" + std::to_string(nnXLen) + "x" +
+                    std::to_string(nnYLen) + " phase=context_init ms=" + std::to_string(openclMsSince(contextStart)));
 
     for(int i = 0; i<devicesContext->devicesToUse.size(); i++) {
       const InitializedDevice* device = devicesContext->devicesToUse[i];
       const string& name = device->info.name;
       vector<cl_device_id> deviceIds = { device->info.deviceId };
 
+      const auto tuningStart = OpenCLClock::now();
       OpenCLTuneParams tuneParams = getParamsForDeviceName(name, device->info.gpuIdx);
+      if(logger != NULL)
+        logger->write("OPENCL_TIMING model=" + modelName + " device=" + name +
+                      " phase=tuning_lookup_or_autotune ms=" + std::to_string(openclMsSince(tuningStart)));
 
       bool useFP16Storage = false;
       bool useFP16Compute = false;
@@ -401,11 +417,15 @@ struct ComputeContext {
         useFP16TensorCoresFor1x1 = tuneParams.shouldUseFP16TensorCoresFor1x1;
       }
 
+      const auto compileStart = OpenCLClock::now();
       CompiledPrograms* compiledPrograms = new CompiledPrograms(
         device->context, deviceIds, tuneParams,
         useFP16Storage, useFP16Compute, useFP16TensorCores, useFP16TensorCoresFor1x1
       );
       compiledProgramsByDeviceId[device->info.deviceId] = compiledPrograms;
+      if(logger != NULL)
+        logger->write("OPENCL_TIMING model=" + modelName + " device=" + name +
+                      " phase=kernel_program_build ms=" + std::to_string(openclMsSince(compileStart)));
     }
   }
 
@@ -443,7 +463,7 @@ static ComputeContext* createComputeContextForTesting(
     //params.shouldUseFP16TensorCores = true;
     return params;
   };
-  return new ComputeContext(gpuIdxs,logger,nnXLen,nnYLen,useFP16Mode,useNHWCMode,getParamsForDeviceName);
+  return new ComputeContext(gpuIdxs,logger,nnXLen,nnYLen,useFP16Mode,useNHWCMode,getParamsForDeviceName,"test");
 }
 
 ComputeContext* NeuralNet::createComputeContext(
@@ -486,7 +506,7 @@ ComputeContext* NeuralNet::createComputeContext(
       full
     );
   };
-  return new ComputeContext(gpuIdxs,logger,nnXLen,nnYLen,useFP16Mode,useNHWCMode,getParamsForDeviceName);
+  return new ComputeContext(gpuIdxs,logger,nnXLen,nnYLen,useFP16Mode,useNHWCMode,getParamsForDeviceName,loadedModel->modelDesc.name);
 }
 
 void NeuralNet::freeComputeContext(ComputeContext* computeContext) {
@@ -648,15 +668,44 @@ struct ComputeHandleInternal {
 
 };
 
+struct OpenCLWeightUploadStats {
+  size_t bufferCount = 0;
+  size_t bufferBytes = 0;
+  double fp16ConvertMs = 0;
+  double copyHostPtrMs = 0;
+};
+static thread_local OpenCLWeightUploadStats* activeWeightStats = nullptr;
+struct OpenCLWeightUploadScope {
+  OpenCLWeightUploadStats* previous;
+  explicit OpenCLWeightUploadScope(OpenCLWeightUploadStats* stats) : previous(activeWeightStats) { activeWeightStats = stats; }
+  ~OpenCLWeightUploadScope() { activeWeightStats = previous; }
+};
+
 static cl_mem createReadOnlyBuffer(ComputeHandleInternal* handle, vector<float>& data, bool useFP16) {
   if(useFP16) {
+    const auto convertStart = OpenCLClock::now();
     vector<half_t> dataHalf(data.size());
     for(size_t i = 0; i<data.size(); i++)
       dataHalf[i] = half_float::half_cast<half_t>(data[i]);
-    return createReadOnlyBuffer(handle->clContext,dataHalf);
+    const double convertMs = openclMsSince(convertStart);
+    const auto copyStart = OpenCLClock::now();
+    cl_mem buffer = createReadOnlyBuffer(handle->clContext,dataHalf);
+    if(activeWeightStats != nullptr) {
+      activeWeightStats->bufferCount++;
+      activeWeightStats->bufferBytes += dataHalf.size() * sizeof(half_t);
+      activeWeightStats->fp16ConvertMs += convertMs;
+      activeWeightStats->copyHostPtrMs += openclMsSince(copyStart);
+    }
+    return buffer;
   }
-  else
-    return createReadOnlyBuffer(handle->clContext,data);
+  const auto copyStart = OpenCLClock::now();
+  cl_mem buffer = createReadOnlyBuffer(handle->clContext,data);
+  if(activeWeightStats != nullptr) {
+    activeWeightStats->bufferCount++;
+    activeWeightStats->bufferBytes += data.size() * sizeof(float);
+    activeWeightStats->copyHostPtrMs += openclMsSince(copyStart);
+  }
+  return buffer;
 }
 static cl_mem createReadWriteBuffer(ComputeHandleInternal* handle, vector<float>& data, bool useFP16) {
   if(useFP16) {
@@ -2735,6 +2784,10 @@ struct ComputeHandle {
   const int nnYLen;
   const int policySize;
   const bool inputsUseNHWC;
+  double kernelObjectsMs = 0;
+  double modelBuildMs = 0;
+  double scratchAllocMs = 0;
+  OpenCLWeightUploadStats weightStats;
 
   ComputeHandle(
     ComputeContext* context, const LoadedModel* loadedModel, int maxBatchSize, int gpuIdx, bool inputsUseNHWC_
@@ -2745,10 +2798,19 @@ struct ComputeHandle {
     inputsUseNHWC(inputsUseNHWC_)
   {
     bool useNHWC = context->usingNHWCMode == enabled_t::True ? true : false;
+    const auto kernelsStart = OpenCLClock::now();
     handle = std::make_unique<ComputeHandleInternal>(context, gpuIdx, inputsUseNHWC, useNHWC);
-    model = std::make_unique<Model>(handle.get(), &(loadedModel->modelDesc), maxBatchSize, nnXLen, nnYLen);
+    kernelObjectsMs = openclMsSince(kernelsStart);
+    const auto modelStart = OpenCLClock::now();
+    {
+      OpenCLWeightUploadScope weightScope(&weightStats);
+      model = std::make_unique<Model>(handle.get(), &(loadedModel->modelDesc), maxBatchSize, nnXLen, nnYLen);
+    }
+    modelBuildMs = openclMsSince(modelStart);
+    const auto scratchStart = OpenCLClock::now();
     scratch = std::make_unique<ScratchBuffers>(handle.get(), maxBatchSize, nnXLen, nnYLen);
     buffers = std::make_unique<Buffers>(handle.get(), *model);
+    scratchAllocMs = openclMsSince(scratchStart);
   }
 
   ~ComputeHandle() {
@@ -2783,6 +2845,18 @@ ComputeHandle* NeuralNet::createComputeHandle(
   //Current implementation always tolerates excess nn len
   (void)requireExactNNLen;
   ComputeHandle* handle = new ComputeHandle(context,loadedModel,maxBatchSize,gpuIdxForThisThread,inputsUseNHWC);
+
+  if(logger != NULL) {
+    const string prefix = "OPENCL_TIMING model=" + loadedModel->modelDesc.name + " board=" +
+                          std::to_string(context->nnXLen) + "x" + std::to_string(context->nnYLen);
+    logger->write(prefix + " phase=kernel_objects ms=" + std::to_string(handle->kernelObjectsMs));
+    logger->write(prefix + " phase=weight_fp16_convert ms=" + std::to_string(handle->weightStats.fp16ConvertMs));
+    logger->write(prefix + " phase=weight_copy_host_ptr ms=" + std::to_string(handle->weightStats.copyHostPtrMs) +
+                  " buffers=" + std::to_string(handle->weightStats.bufferCount) +
+                  " bytes=" + std::to_string(handle->weightStats.bufferBytes));
+    logger->write(prefix + " phase=model_build_total ms=" + std::to_string(handle->modelBuildMs));
+    logger->write(prefix + " phase=scratch_buffers ms=" + std::to_string(handle->scratchAllocMs));
+  }
 
   if(logger != NULL) {
     logger->write(
