@@ -95,7 +95,7 @@ val katagoExecutable = File(katagoBuildDir, "katago")
 val katagoGeneratedJniDir = layout.buildDirectory.dir("generated/katagoJniLibs").get().asFile
 val katagoPrebuiltDir = file("src/main/jniLibs/arm64-v8a")
 val katagoJniCoreFile = rootProject.file("build/katago_android_arm64_eigenjni/libkatago.so")
-val katagoGpuJniFile = rootProject.file("build/katago_android_arm64_opencljni/libkatago.so")
+val katagoGpuJniFile = rootProject.file("build/katago_android_arm64_opencljni/libkatago_gpu.so")
 
 val configureKataGoNative = tasks.register<Exec>("configureKataGoNative") {
     group = "build"
@@ -197,8 +197,7 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
         if (enableKataGoGpuJni) {
             if (!katagoGpuJniFile.isFile) throw GradleException(
                 "GPU JNI library missing: $katagoGpuJniFile. Run bash tools/build_katago_from_source.sh opencljni first.")
-            // Filename alias only: the GPU smoke Activity uses its own OS process.
-            // It loads ONLY this variant; native library's SONAME remains libkatago.so.
+            // GPU JNI has its own SONAME and symbols, safe alongside the CPU JNI in one process.
             stageFile(katagoGpuJniFile, "libkatago_gpu.so")
         } else {
             File(abiDir, "libkatago_gpu.so").delete()
