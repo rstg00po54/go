@@ -296,6 +296,9 @@ if(KATAGO_BUILD_JNI_LIBRARY)
     ${CMAKE_CURRENT_LIST_DIR}/../../../app/src/main/cpp/EngineSession.cpp
   )
   target_include_directories(katago PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+  # Both CPU and GPU JNI libraries may coexist in one process. Keep all
+  # internal KataGo C++ symbols local; JNIEXPORT remains publicly visible.
+  set_target_properties(katago PROPERTIES CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN YES)
   if(USE_BACKEND STREQUAL "OPENCL")
     # In-process GPU and CPU JNI libraries must have distinct ELF SONAMEs.
     # Previously the GPU APK only renamed libkatago.so, which is unsafe when
