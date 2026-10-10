@@ -16,6 +16,7 @@
 #include "../tests/tests.h"
 #include "../command/commandline.h"
 #include "../main.h"
+#include "gtp_io.h"
 
 using namespace std;
 
@@ -347,6 +348,7 @@ struct GTPEngine {
   double normalAvoidRepeatedPatternUtility;
   double handicapAvoidRepeatedPatternUtility;
 
+  std::ostream& gtpOutput;
   NNEvaluator* nnEval;
   NNEvaluator* humanEval;
   AsyncBot* bot;
@@ -394,7 +396,8 @@ struct GTPEngine {
     double normAvoidRepeatedPatternUtility, double hcapAvoidRepeatedPatternUtility,
     double delayScale, double delayMax,
     Player persp, int pvLen,
-    std::unique_ptr<PatternBonusTable>&& pbTable
+    std::unique_ptr<PatternBonusTable>&& pbTable,
+    std::ostream& output
   )
     :nnModelFile(modelFile),
      humanModelFile(hModelFile),
@@ -406,6 +409,7 @@ struct GTPEngine {
      staticPDATakesPrecedence(staticPDAPrecedence),
      normalAvoidRepeatedPatternUtility(normAvoidRepeatedPatternUtility),
      handicapAvoidRepeatedPatternUtility(hcapAvoidRepeatedPatternUtility),
+     gtpOutput(output),
      nnEval(NULL),
      humanEval(NULL),
      bot(NULL),
@@ -768,7 +772,7 @@ struct GTPEngine {
         const Board board = search->getRootBoard();
         for(int i = 0; i<buf.size(); i++) {
           if(i > 0)
-            cout << " ";
+            gtpOutput << " ";
           const AnalysisData& data = buf[i];
           double winrate = 0.5 * (1.0 + data.winLossValue);
           double lcb = PlayUtils::getHackedLCBForWinrate(search,data,pla);
@@ -776,34 +780,34 @@ struct GTPEngine {
             winrate = 1.0-winrate;
             lcb = 1.0 - lcb;
           }
-          cout << "info";
-          cout << " move " << Location::toString(data.move,board);
-          cout << " visits " << data.childVisits;
-          cout << " winrate " << round(winrate * 10000.0);
-          cout << " prior " << round(data.policyPrior * 10000.0);
-          cout << " lcb " << round(lcb * 10000.0);
-          cout << " order " << data.order;
-          cout << " pv ";
+          gtpOutput << "info";
+          gtpOutput << " move " << Location::toString(data.move,board);
+          gtpOutput << " visits " << data.childVisits;
+          gtpOutput << " winrate " << round(winrate * 10000.0);
+          gtpOutput << " prior " << round(data.policyPrior * 10000.0);
+          gtpOutput << " lcb " << round(lcb * 10000.0);
+          gtpOutput << " order " << data.order;
+          gtpOutput << " pv ";
           if(preventEncore && data.pvContainsPass())
-            data.writePVUpToPhaseEnd(cout,board,search->getRootHist(),search->getRootPla());
+            data.writePVUpToPhaseEnd(gtpOutput,board,search->getRootHist(),search->getRootPla());
           else
-            data.writePV(cout,board);
+            data.writePV(gtpOutput,board);
           if(args.showPVVisits) {
-            cout << " pvVisits ";
+            gtpOutput << " pvVisits ";
             if(preventEncore && data.pvContainsPass())
-              data.writePVVisitsUpToPhaseEnd(cout,board,search->getRootHist(),search->getRootPla());
+              data.writePVVisitsUpToPhaseEnd(gtpOutput,board,search->getRootHist(),search->getRootPla());
             else
-              data.writePVVisits(cout);
+              data.writePVVisits(gtpOutput);
           }
           if(args.showPVEdgeVisits) {
-            cout << " pvEdgeVisits ";
+            gtpOutput << " pvEdgeVisits ";
             if(preventEncore && data.pvContainsPass())
-              data.writePVEdgeVisitsUpToPhaseEnd(cout,board,search->getRootHist(),search->getRootPla());
+              data.writePVEdgeVisitsUpToPhaseEnd(gtpOutput,board,search->getRootHist(),search->getRootPla());
             else
-              data.writePVEdgeVisits(cout);
+              data.writePVEdgeVisits(gtpOutput);
           }
         }
-        cout << endl;
+        gtpOutput << endl;
       };
     }
     //kata-analyze, analyze (sabaki)
@@ -996,7 +1000,7 @@ struct GTPEngine {
           }
         }
 
-        cout << out.str() << endl;
+        gtpOutput << out.str() << endl;
       };
     }
     return callback;
@@ -1877,6 +1881,10 @@ static GTPEngine::AnalyzeArgs parseAnalyzeCommand(
 
 
 int MainCmds::gtp(const vector<string>& args) {
+  return gtpWithIO(args, std::cin, std::cout);
+}
+
+int MainCmds::gtpWithIO(const vector<string>& args, std::istream& gtpInput, std::ostream& gtpOutput) {
   Board::initHash();
   ScoreValue::initTables();
   Rand seedRand;
@@ -2042,7 +2050,8 @@ int MainCmds::gtp(const vector<string>& args) {
     normalAvoidRepeatedPatternUtility, handicapAvoidRepeatedPatternUtility,
     initialDelayMoveScale,initialDelayMoveMax,
     perspective,analysisPVLen,
-    std::move(patternBonusTable)
+    std::move(patternBonusTable),
+    gtpOutput
   );
   engine->setOrResetBoardSize(cfg,logger,seedRand,defaultBoardXSize,defaultBoardYSize,logger.isLoggingToStderr());
 
@@ -2106,7 +2115,7 @@ int MainCmds::gtp(const vector<string>& args) {
   bool currentlyGenmoving = false;
   bool currentlyAnalyzing = false;
   string line;
-  while(getline(cin,line)) {
+  while(getline(gtpInput,line)) {
     //Parse command, extracting out the command itself, the arguments, and any GTP id number for the command.
     string command;
     vector<string> pieces;
@@ -2121,7 +2130,7 @@ int MainCmds::gtp(const vector<string>& args) {
       if(currentlyAnalyzing) {
         currentlyAnalyzing = false;
         engine->stopAndWait();
-        cout << endl;
+        gtpOutput << endl;
       }
       if(currentlyGenmoving) {
         currentlyGenmoving = false;
@@ -2144,7 +2153,7 @@ int MainCmds::gtp(const vector<string>& args) {
           id = Global::parseDigits(line,0,digitPrefixLen);
         }
         catch(const IOError& e) {
-          cout << "? GTP id '" << id << "' could not be parsed: " << e.what() << endl;
+          gtpOutput << "? GTP id '" << id << "' could not be parsed: " << e.what() << endl;
           continue;
         }
         line = line.substr(digitPrefixLen);
@@ -2152,7 +2161,7 @@ int MainCmds::gtp(const vector<string>& args) {
 
       line = Global::trim(line);
       if(line.length() <= 0) {
-        cout << "? empty command" << endl;
+        gtpOutput << "? empty command" << endl;
         continue;
       }
 
@@ -2165,7 +2174,7 @@ int MainCmds::gtp(const vector<string>& args) {
       pieces.erase(pieces.begin());
     }
 
-    auto printGTPResponse = [hasId,id,&logger,logAllGTPCommunication](const string& response, bool responseIsError) {
+    auto printGTPResponse = [hasId,id,&logger,logAllGTPCommunication,&gtpOutput](const string& response, bool responseIsError) {
       string postProcessed = response;
       if(hasId)
         postProcessed = Global::intToString(id) + " " + postProcessed;
@@ -2177,34 +2186,34 @@ int MainCmds::gtp(const vector<string>& args) {
       else
         postProcessed = "=" + postProcessed;
 
-      cout << postProcessed << endl;
-      cout << endl;
+      gtpOutput << postProcessed << endl;
+      gtpOutput << endl;
 
       if(logAllGTPCommunication)
         logger.write(postProcessed);
     };
-    auto printGTPResponseHeader = [hasId,id,&logger,logAllGTPCommunication]() {
+    auto printGTPResponseHeader = [hasId,id,&logger,logAllGTPCommunication,&gtpOutput]() {
       if(hasId) {
         string s = "=" + Global::intToString(id);
-        cout << s << endl;
+        gtpOutput << s << endl;
         if(logAllGTPCommunication)
           logger.write(s);
       }
       else {
-        cout << "=" << endl;
+        gtpOutput << "=" << endl;
         if(logAllGTPCommunication)
           logger.write("=");
       }
     };
 
-    auto printGTPResponseNoHeader = [hasId,id,&logger,logAllGTPCommunication](const string& response, bool responseIsError) {
+    auto printGTPResponseNoHeader = [hasId,id,&logger,logAllGTPCommunication,&gtpOutput](const string& response, bool responseIsError) {
       //Postprocessing of response in the case where we already printed the "=" and a newline ahead of time via printGTPResponseHeader.
       if(!responseIsError) {
-        cout << response << endl;
-        cout << endl;
+        gtpOutput << response << endl;
+        gtpOutput << endl;
       }
       else {
-        cout << endl;
+        gtpOutput << endl;
         if(!logger.isLoggingToStderr())
           cerr << response << endl;
       }
@@ -3629,7 +3638,7 @@ int MainCmds::gtp(const vector<string>& args) {
               //Act of benchmarking will write to stdout with a newline at the end, so we just need one more newline ourselves
               //to complete GTP protocol.
               suppressResponse = true;
-              cout << endl;
+              gtpOutput << endl;
             }
           }
         }
@@ -3661,7 +3670,7 @@ int MainCmds::gtp(const vector<string>& args) {
   if(currentlyAnalyzing) {
     currentlyAnalyzing = false;
     engine->stopAndWait();
-    cout << endl;
+    gtpOutput << endl;
   }
   if(currentlyGenmoving) {
     currentlyGenmoving = false;
