@@ -12,6 +12,8 @@ val enableKataGoProbe = providers.gradleProperty("enableKataGoProbe")
     .map { it.equals("true", ignoreCase = true) }.getOrElse(false)
 val enableKataGoJniCore = providers.gradleProperty("enableKataGoJniCore")
     .map { it.equals("true", ignoreCase = true) }.getOrElse(false)
+val enableKataGoGpuJni = providers.gradleProperty("enableKataGoGpuJni")
+    .map { it.equals("true", ignoreCase = true) }.getOrElse(false)
 
 android {
     namespace = "com.badukai"
@@ -23,6 +25,7 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0-java"
+        manifestPlaceholders["gpuJniSmokeEnabled"] = enableKataGoGpuJni.toString()
         if (enableKataGoProbe) ndk { abiFilters += "arm64-v8a" }
     }
 
@@ -62,7 +65,7 @@ android {
         jniLibs {
             useLegacyPackaging = true
             // Keep the PIE executable intact; these binaries are intentionally not stripped.
-            keepDebugSymbols += setOf("**/libkatago_exec.so", "**/libc++_shared.so")
+            keepDebugSymbols += setOf("**/libkatago_exec.so", "**/libkatago_gpu.so", "**/libc++_shared.so")
         }
     }
 
@@ -92,6 +95,7 @@ val katagoExecutable = File(katagoBuildDir, "katago")
 val katagoGeneratedJniDir = layout.buildDirectory.dir("generated/katagoJniLibs").get().asFile
 val katagoPrebuiltDir = file("src/main/jniLibs/arm64-v8a")
 val katagoJniCoreFile = rootProject.file("build/katago_android_arm64_eigenjni/libkatago.so")
+val katagoGpuJniFile = rootProject.file("build/katago_android_arm64_opencljni/libkatago.so")
 
 val configureKataGoNative = tasks.register<Exec>("configureKataGoNative") {
     group = "build"
@@ -152,7 +156,9 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
     val sharedCpp = File(katagoPrebuiltDir, "libc++_shared.so")
     if (sharedCpp.isFile) inputs.file(sharedCpp)
     inputs.property("enableKataGoJniCore", enableKataGoJniCore)
+    inputs.property("enableKataGoGpuJni", enableKataGoGpuJni)
     if (enableKataGoJniCore) inputs.file(katagoJniCoreFile)
+    if (enableKataGoGpuJni) inputs.file(katagoGpuJniFile)
     outputs.dir(katagoGeneratedJniDir)
     doLast {
         if (!inputExe.isFile) throw GradleException("KataGo native executable missing: $inputExe")
@@ -187,6 +193,15 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
             // An ordinary APK build must not accidentally retain an earlier
             // opt-in JNI experiment in the persistent generated output folder.
             File(abiDir, "libkatago.so").delete()
+        }
+        if (enableKataGoGpuJni) {
+            if (!katagoGpuJniFile.isFile) throw GradleException(
+                "GPU JNI library missing: $katagoGpuJniFile. Run bash tools/build_katago_from_source.sh opencljni first.")
+            // Filename alias only: the GPU smoke Activity uses its own OS process.
+            // It loads ONLY this variant; native library's SONAME remains libkatago.so.
+            stageFile(katagoGpuJniFile, "libkatago_gpu.so")
+        } else {
+            File(abiDir, "libkatago_gpu.so").delete()
         }
         println("KataGo native binary ready: ${File(abiDir, "libkatago_exec.so")}")
     }
