@@ -1,6 +1,7 @@
 #include "../neuralnet/desc.h"
 
 #include <cmath>
+#include <chrono>
 #include <fstream>
 #include <zlib.h>
 
@@ -1341,7 +1342,17 @@ struct NonCopyingStreamBuf : public std::streambuf
   }
 };
 
+static thread_local double latestModelIoShaMs = 0.0;
+static thread_local double latestModelDescriptorParseMs = 0.0;
+
+void ModelDesc::getLastLoadTiming(double& fileIoAndShaMs, double& descriptorParseMs) {
+  fileIoAndShaMs = latestModelIoShaMs;
+  descriptorParseMs = latestModelDescriptorParseMs;
+}
+
 void ModelDesc::loadFromFileMaybeGZipped(const string& fileName, ModelDesc& descBuf, const string& expectedSha256) {
+  const auto loadStart = std::chrono::steady_clock::now();
+  double fileMs = 0.0;
   try {
     string lower = Global::toLower(fileName);
     //Read model file with no compression if it's directly named .txt or .bin
@@ -1350,6 +1361,7 @@ void ModelDesc::loadFromFileMaybeGZipped(const string& fileName, ModelDesc& desc
       string uncompressed;
       string sha256Buf;
       FileUtils::loadFileIntoString(fileName,expectedSha256,uncompressed,&sha256Buf);
+      fileMs = std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-loadStart).count();
       NonCopyingStreamBuf uncompressedStreamBuf(uncompressed);
       std::istream uncompressedIn(&uncompressedStreamBuf);
       descBuf = ModelDesc(uncompressedIn,sha256Buf,binaryFloats);
@@ -1359,6 +1371,7 @@ void ModelDesc::loadFromFileMaybeGZipped(const string& fileName, ModelDesc& desc
       string uncompressed;
       string sha256Buf;
       FileUtils::loadFileIntoString(fileName,expectedSha256,uncompressed,&sha256Buf);
+      fileMs = std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-loadStart).count();
       NonCopyingStreamBuf uncompressedStreamBuf(uncompressed);
       std::istream uncompressedIn(&uncompressedStreamBuf);
       descBuf = ModelDesc(uncompressedIn,sha256Buf,binaryFloats);
@@ -1367,6 +1380,7 @@ void ModelDesc::loadFromFileMaybeGZipped(const string& fileName, ModelDesc& desc
       string uncompressed;
       string sha256Buf;
       FileUtils::uncompressAndLoadFileIntoString(fileName,expectedSha256,uncompressed,&sha256Buf);
+      fileMs = std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-loadStart).count();
 
       bool binaryFloats = !Global::isSuffix(lower,".txt.gz");
       try {
@@ -1397,6 +1411,9 @@ void ModelDesc::loadFromFileMaybeGZipped(const string& fileName, ModelDesc& desc
     else {
       throw StringError("Model file should end with .txt, .bin, .txt.gz, .bin.gz, or possibly just .gz. (If it doesn't have one of these extensions already, it's probably the wrong file, renaming will probably NOT help).");
     }
+    latestModelIoShaMs = fileMs;
+    latestModelDescriptorParseMs = std::chrono::duration<double,std::milli>(
+      std::chrono::steady_clock::now() - loadStart).count() - fileMs;
   }
   catch(const StringError& e) {
     throw StringError("Error loading or parsing model file " + fileName + ": " + e.what());
