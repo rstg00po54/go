@@ -223,6 +223,33 @@ bash tools/test_katago_jni_gtp_android.sh 8719e18a71a2a66c repeat
 
 本次仅改 Java Smoke 与 ADB 脚本，没有更改 native C++，因此正常情况下可省略手动运行 `bash tools/build_katago_from_source.sh eigenjni`，继续使用上一轮已编译并通过验证的 `libkatago.so`。
 
+### 阶段 1D：主 APP 对弈接入真正 JNI，保留 PIE 回退（代码已提交，未经过 RK3588 真机回归）
+
+- [x] `KataGoEngine.java` 原有 GTP 高层接口保持不变，主引擎 `engine` 在 APK 含 `libkatago.so` 时**优先 JNI/Eigen**，共享 `responseQueue` 及 GTP 解析；通过 JNI `send` 和独立 reader thread 按 `\n\n` 解析 GTP 应答，不再依赖 `ProcessBuilder` 运行主对弈。未打包 `libkatago.so` 时保持原 PIE 行为。
+- [x] 原生 `EngineSession.cpp` 与 Java `KataGoNative.java` 扩展 `createSession(model, config, humanModel)`，支持 `-human-model` 参数。主界面新局需 Human SL（`engine.start(Model.HUMAN,true)`），因此不能只接 10b 模型；JNI 使用原来的 `human_gtp.cfg` + Human SL 模型路径、动态 `humanSLProfile` 指令。
+- [x] 对 JNI 配置的 `logDir` 和 `homeDataDir` 写入 APP 私有绝对路径，防止 JNI 没有 PIE 进程的工作目录时使用相对路径失败。
+- [x] Java `isReady()` 与启动等待检查原生工作线程存活，JNI `genmove` 不再依赖旧 PIE `genmove_debug` 的 stderr 统计，避免无谓等待；已有围棋 UI `play`、`undo`、`setHumanRank`、`kata-raw-nn` 等仍通过统一 Java/GTP 协议调用。
+- [x] JNI **启动失败**时（链接错误、native create 失败、启动 30 秒内收不到合法 `name`）禁用本 APP 进程中的 JNI 尝试并自动重试旧 `ProcessBuilder`；不能捕获/回退已发生的 native SIGSEGV/SIGABRT。
+- [x] 独立的 `engine_winrate` **保持 PIE**，因为 JNI 原生层只允许一个会话且 KataGo 进程级全局清理/初始化还未隔离；不删除 `libkatago_exec.so`。
+- [x] `MainActivity` 支持启动参数 `--ez katago_legacy true`，强制主引擎用 PIE（便于 APP JNI 真机故障时回退）。正常启动仅在打包 `libkatago.so` 时优先使用 JNI。
+- [ ] **尚未在用户 Ubuntu 构建、RK3588 普通 APP 或 Human SL 真机对弈回归！** 不应将阶段 1D 视为已验收。阶段 1C 的 9/13/19 多会话重复测试同样尚未收到真机通过结果。
+- [ ] 还需测试 Human SL 下载/模型启动/棋力切换、普通对局与独立胜率 PIE 并行、悔棋/重开局、形势判断/胜率分析、退出及反复加载。同步 `genmove` 中断、原生 fatal crash 恢复以及 JNI 双会话仍未解决。
+
+第一次 RK3588 APP 迁移测试：
+
+```bash
+git pull --ff-only github rk3588-engine
+bash tools/build_katago_from_source.sh eigenjni
+./build.sh -PenableKataGoJniCore=true
+adb -s 8719e18a71a2a66c install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s 8719e18a71a2a66c logcat -c
+adb -s 8719e18a71a2a66c shell am force-stop com.badukai.java
+adb -s 8719e18a71a2a66c shell am start -n com.badukai.java/com.badukai.MainActivity
+adb -s 8719e18a71a2a66c logcat -d -s KataGoEngine:I MainActivity:I '*:S'
+```
+
+强制 PIE 救援：`adb -s 8719e18a71a2a66c shell am force-stop com.badukai.java`，然后 `adb -s 8719e18a71a2a66c shell am start -n com.badukai.java/com.badukai.MainActivity --ez katago_legacy true`。
+
 ## 阶段 1：CPU/Eigen 真正 JNI 化 —— 首先实现
 
 **目标**：构建可加载的 `libkatago.so`，Java 在 APP 进程内调用 KataGo；先不接 GPU/NPU。
