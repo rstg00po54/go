@@ -15,7 +15,7 @@
 ## 前置实验：Android GPU/OpenCL 性能测试（不改变现有 CPU APK）
 
 - [x] 提供独立 OpenCL 交叉编译脚本：`bash tools/build_katago_from_source.sh opencl`，使用单独的 OpenCL 构建/输出目录，不覆盖 CPU 产物。
-- [x] 提供同型号设备 CPU/GPU benchmark 脚本：`bash tools/benchmark_katago_android.sh gpu` / `cpu`。
+- [x] 提供自动 CPU→GPU benchmark 脚本：`bash tools/benchmark_katago_android.sh` 默认依次测试 CPU 和 GPU，按搜索线程统计 visits/s、nnEvals/s、batch 与 GPU 提升率，保存 `cpu.log`、`gpu.log`、`summary.csv`；原 `cpu` / `gpu` 单独测试参数仍可用。
 - [x] 从 Android ARM64 设备读取 `/vendor/lib64/libOpenCL.so` 到本地缓存（约 42 MB），本机已找到 OpenCL 头文件；不提交供应商库。
 - [x] 用户 Ubuntu + Android NDK 27.2.12479018 已完成 KataGo OpenCL AArch64 PIE 编译与链接（`[117/117] Linking CXX executable katago`），输出 `build/katago_android_arm64_opencl/libkatago_exec_opencl.so`。
 - [x] Android 真机上的 GPU KataGo 已加载厂商 OpenCL Runtime，识别 Mali-G610 r0p0 / OpenCL 3.0，创建 OpenCL context；原先 `libGLES_mali.so` SONAME 找不到的问题已通过临时复制 vendor OpenCL 库解决。
