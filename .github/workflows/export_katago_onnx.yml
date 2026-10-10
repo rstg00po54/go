@@ -1,0 +1,73 @@
+name: Export KataGo 10b ONNX
+
+on:
+  push:
+    paths:
+      - .github/workflows/export_katago_onnx.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install runtime dependencies and download KataGo
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq unzip libssl3 libzip4 libgomp1
+          mkdir -p /tmp/kg
+          curl -fL --retry 3 -o /tmp/kg/katago.zip 'https://github.com/lightvector/KataGo/releases/download/v1.18.1/katago-v1.18.1-onnx-openvino-linux-x64.zip'
+          unzip -q /tmp/kg/katago.zip -d /tmp/kg
+          APP="$(find /tmp/kg -maxdepth 4 -type f \( -name katago -o -name '*.AppImage' \) | head -n 1)"
+          test -n "$APP"
+          chmod +x "$APP"
+          ( cd /tmp/kg && "$APP" --appimage-extract >/dev/null )
+          /tmp/kg/squashfs-root/AppRun version
+
+      - name: Export and verify 19x19 ONNX
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s 10b.bin
+          mkdir -p models
+          /tmp/kg/squashfs-root/AppRun dumponnx -model "$GITHUB_WORKSPACE/10b.bin" -out "$GITHUB_WORKSPACE/models/10b_19x19.onnx"
+          python3 -m pip install -q onnx
+          python3 - <<'PY'
+          import os, onnx
+          p = 'models/10b_19x19.onnx'
+          m = onnx.load(p)
+          onnx.checker.check_model(m)
+          print('Validated ONNX:', p, 'size:', os.path.getsize(p), 'bytes')
+          print('IR version:', m.ir_version, 'Opsets:', [(o.domain, o.version) for o in m.opset_import])
+          print('Inputs:', [(x.name, [d.dim_value or d.dim_param for d in x.type.tensor_type.shape.dim]) for x in m.graph.input])
+          print('Outputs:', [x.name for x in m.graph.output])
+          print('KataGo metadata:', [(x.key, x.value) for x in m.metadata_props])
+          PY
+          sha256sum models/10b_19x19.onnx > models/10b_19x19.onnx.sha256
+
+      - name: Attach ONNX to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG='katago-10b-onnx-v1'
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --title 'KataGo 10b ONNX (19x19)' --notes 'Exported from repository 10b.bin using KataGo v1.18.1 dumponnx (ONNX backend). Validated by onnx.checker. Original precision, no quantization. The ONNX graph is NOT an RKNN or MediaTek NPU model and may need further conversion.'
+          fi
+          gh release upload "$TAG" models/10b_19x19.onnx models/10b_19x19.onnx.sha256 --clobber
+
+      - name: Preserve model as Actions artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: katago-10b-onnx-19x19
+          path: models/10b_19x19.onnx*
+          if-no-files-found: ignore
