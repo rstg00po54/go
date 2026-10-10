@@ -73,6 +73,10 @@ public class KataGoEngine {
     private final AtomicBoolean running = new AtomicBoolean(false);
     private Process process;
     private volatile KataGoNative.GtpSession jniSession;
+    private volatile GpuRemoteSession gpuSession;
+    public enum BackendPreference { CPU, GPU }
+    private volatile BackendPreference backendPreference = BackendPreference.CPU;
+    private volatile boolean gpuDisabledForProcess;
     private final boolean preferJni;
     private volatile boolean jniDisabledForProcess;
     private BufferedWriter writer;
@@ -107,7 +111,19 @@ public class KataGoEngine {
             throw new IllegalArgumentException("Unsupported engine directory: " + engineDirectoryName);
     }
 
-    public String getBackendName() { return jniSession != null ? "JNI/Eigen" : "PIE/ProcessBuilder"; }
+    public String getBackendName() {
+        return gpuSession != null ? "GPU/OpenCL JNI" : jniSession != null ? "CPU/Eigen JNI" : "PIE/ProcessBuilder";
+    }
+
+    /** Change only between games; restarting a selected GPU recreates the native session. */
+    public synchronized void setBackendPreference(BackendPreference preference) {
+        if (!preferJni) return;
+        if (preference == null) preference = BackendPreference.CPU;
+        if (backendPreference != preference || (preference == BackendPreference.GPU && running.get() && gpuSession == null))
+            stop();
+        backendPreference = preference;
+        if (preference == BackendPreference.GPU) gpuDisabledForProcess = false;
+    }
 
     public synchronized boolean start(Model model) { return start(model, false); }
 
@@ -127,15 +143,19 @@ public class KataGoEngine {
             File configFile = new File(engineDir, useHumanSL ? "human_gtp.cfg" : "default_gtp.cfg");
             File modelFile = new File(engineDir, model.fileName);
 
-            boolean useJni = preferJni && !jniDisabledForProcess
+            boolean gpuAvailable = new File(nativeLibDir, "libkatago_gpu.so").isFile();
+            boolean useGpu = preferJni && backendPreference == BackendPreference.GPU && !gpuDisabledForProcess && gpuAvailable;
+            if (preferJni && backendPreference == BackendPreference.GPU && !gpuAvailable)
+                Log.w(TAG, "GPU JNI library not bundled; using CPU instead");
+            boolean useJni = preferJni && !useGpu && !jniDisabledForProcess
                     && new File(nativeLibDir, "libkatago.so").isFile();
-            if (!useJni && !binaryFile.isFile())
+            if (!useJni && !useGpu && !binaryFile.isFile())
                 throw new IOException("KataGo binary not installed in nativeLibraryDir: " + binaryFile);
-            if (!useJni && !binaryFile.canExecute())
+            if (!useJni && !useGpu && !binaryFile.canExecute())
                 throw new IOException("KataGo binary is not executable: " + binaryFile);
             copyAssetToFile(useHumanSL ? HUMAN_CONFIG_ASSET : CONFIG_ASSET, configFile);
-            if (useJni) {
-                File homeDir = new File(engineDir, "jni_home");
+            if (useJni || useGpu) {
+                File homeDir = new File(engineDir, useGpu ? "gpu_home" : "jni_home");
                 File logsDir = new File(engineDir, "gtp_logs");
                 if (!homeDir.exists() && !homeDir.mkdirs()) throw new IOException("Cannot create JNI home dir: " + homeDir);
                 if (!logsDir.exists() && !logsDir.mkdirs()) throw new IOException("Cannot create GTP log dir: " + logsDir);
@@ -172,7 +192,26 @@ public class KataGoEngine {
 
             Log.i(TAG, "Model: " + modelFile.getAbsolutePath() + " size=" + modelFile.length());
             Log.i(TAG, "Config: " + configFile.getAbsolutePath());
-            Log.i(TAG, "Backend requested: " + (useJni ? "JNI/Eigen" : "PIE/ProcessBuilder"));
+            Log.i(TAG, "Backend requested: " + (useGpu ? "GPU/OpenCL IPC" : useJni ? "CPU/JNI Eigen" : "PIE/ProcessBuilder"));
+
+            if (useGpu) {
+                try {
+                    gpuSession = GpuRemoteSession.connect(context, modelFile, configFile, humanFile);
+                    running.set(true);
+                    humanSLRunning = useHumanSL;
+                    startReaderThread();
+                    responseQueue.clear();
+                    if (!sendCommandSync("name") || !waitForStartupResponse(180000))
+                        throw new IOException("GPU OpenCL JNI GTP did not become ready");
+                    Log.i(TAG, "=== GPU/OPENCL JNI ENGINE STARTED SUCCESSFULLY ===");
+                    return true;
+                } catch (Exception | LinkageError e) {
+                    Log.e(TAG, "GPU JNI startup failed; falling back to CPU", e);
+                    gpuDisabledForProcess = true;
+                    stop();
+                    return start(model, useHumanSL);
+                }
+            }
 
             if (useJni) {
                 try {
@@ -260,7 +299,8 @@ public class KataGoEngine {
         long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs);
         while (System.nanoTime() < deadline) {
             if (jniSession != null && !jniSession.isAlive()) return false;
-            if (jniSession == null && (process == null || !process.isAlive())) return false;
+            if (gpuSession != null && !gpuSession.isAlive()) return false;
+            if (jniSession == null && gpuSession == null && (process == null || !process.isAlive())) return false;
             try {
                 String response = responseQueue.poll(200, TimeUnit.MILLISECONDS);
                 if (response != null) {
@@ -277,6 +317,7 @@ public class KataGoEngine {
 
     private void startReaderThread() {
         DebugLog.enter(TAG, "startReaderThread in");
+        if (gpuSession != null) { startGpuReaderThread(); return; }
         if (jniSession != null) { startJniReaderThread(); return; }
         readerThread = new Thread(() -> {
             StringBuilder buffer = new StringBuilder();
@@ -325,6 +366,32 @@ public class KataGoEngine {
         readerThread.start();
     }
 
+    private void startGpuReaderThread() {
+        final GpuRemoteSession session = gpuSession;
+        readerThread = new Thread(() -> {
+            StringBuilder buffer = new StringBuilder();
+            try {
+                while (running.get() && gpuSession == session) {
+                    String chunk = session.read(1000);
+                    if (chunk == null) break;
+                    buffer.append(chunk.replace("\\r\\n", "\\n"));
+                    int end;
+                    while ((end = buffer.indexOf("\\n\\n")) >= 0) {
+                        String response = buffer.substring(0, end + 2);
+                        buffer.delete(0, end + 2);
+                        Log.d(TAG, "GPU JNI GTP response: " + response.trim());
+                        responseQueue.offer(response);
+                    }
+                    if (buffer.length() > 8 * 1024 * 1024) throw new IOException("GPU GTP reply too large");
+                }
+                if (running.get()) Log.w(TAG, "GPU JNI GTP reader reached EOF");
+            } catch (Exception e) {
+                if (running.get()) Log.e(TAG, "GPU GTP output reader failed", e);
+            }
+        }, "KataGo-GPU-IPC-stdout");
+        readerThread.start();
+    }
+
     private void startErrorReaderThread() {
         DebugLog.enter(TAG, "startErrorReaderThread in");
         errorReaderThread = new Thread(() -> {
@@ -359,10 +426,17 @@ public class KataGoEngine {
 
     public synchronized void stop() {
         DebugLog.enter(TAG, "stop in, running=" + running.get() + ", process=" + process);
-        if (!running.get() && process == null && jniSession == null) return;
+        if (!running.get() && process == null && jniSession == null && gpuSession == null) return;
         try { sendCommandSync("quit"); } catch (Exception ignored) {}
         running.set(false);
         humanSLRunning = false;
+        if (gpuSession != null) {
+            GpuRemoteSession old = gpuSession;
+            gpuSession = null;
+            old.close();
+            responseQueue.clear();
+            Log.i(TAG, "GPU/OpenCL JNI session stopped");
+        }
         if (jniSession != null) {
             KataGoNative.GtpSession old = jniSession;
             jniSession = null;
@@ -564,7 +638,8 @@ public class KataGoEngine {
     public boolean isReady() {
         DebugLog.enter(TAG, "isReady in, running=" + running.get());
         KataGoNative.GtpSession session = jniSession;
-        return running.get() && (session != null ? session.isAlive() : (process != null && process.isAlive()));
+        GpuRemoteSession remote = gpuSession;
+        return running.get() && (remote != null ? remote.isAlive() : session != null ? session.isAlive() : (process != null && process.isAlive()));
     }
 
     /**
@@ -622,7 +697,7 @@ public class KataGoEngine {
         long startedNs = System.nanoTime();
         try {
             // KataGo v1.14.1: same move as genmove, with exact root visit stats on stderr.
-            boolean isJni = jniSession != null;
+            boolean isJni = jniSession != null || gpuSession != null;
             if (!sendCommandSync((isJni ? "genmove " : "genmove_debug ") + color)) return null;
             String response = waitForResponse(60000);
             long elapsedMs = (System.nanoTime() - startedNs) / 1000000L;
@@ -670,7 +745,7 @@ public class KataGoEngine {
 
     public boolean setBoardSize(int size) {
         DebugLog.enter(TAG, "setBoardSize in, size=" + size);
-        return simpleCommand("boardsize " + size, jniSession != null ? 90000 : 5000);
+        return simpleCommand("boardsize " + size, (jniSession != null || gpuSession != null) ? 90000 : 5000);
     }
 
     /** Initialize KataGo with the same fixed handicap positions as the Java board. */
@@ -990,6 +1065,11 @@ public class KataGoEngine {
     private synchronized boolean sendCommandSync(String command) {
         DebugLog.enter(TAG, "sendCommandSync in, command=" + command + ", running=" + running.get());
         if (!running.get() && !"quit".equals(command)) return false;
+        if (gpuSession != null) {
+            boolean queued = gpuSession.send(command);
+            Log.d(TAG, "GPU JNI GTP command=" + command + " queued=" + queued);
+            return queued;
+        }
         if (jniSession != null) {
             long startedNs = System.nanoTime();
             try {
