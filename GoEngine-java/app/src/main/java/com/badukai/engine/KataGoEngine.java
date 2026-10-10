@@ -86,6 +86,8 @@ public class KataGoEngine {
     private Thread errorReaderThread;
     private volatile SearchStats currentSearchStats;
     private volatile boolean humanSLRunning;
+    // GTP boardsize changes the board dimensions; clear_board alone resets a same-size game.
+    private volatile int configuredBoardSize = -1;
     private volatile File verifiedHumanModel;
     private volatile long verifiedHumanModelLength;
     private volatile long verifiedHumanModelModified;
@@ -133,6 +135,7 @@ public class KataGoEngine {
             if (isReady() && humanSLRunning == useHumanSL) return true;
             stop(); // Different engine mode or an engine process/session died.
         }
+        configuredBoardSize = -1;
         Log.i(TAG, "=== JAVA KATAGO ENGINE / ANDROID ARM64 ===");
         try {
             File engineDir = new File(context.getFilesDir(), engineDirectoryName);
@@ -433,6 +436,7 @@ public class KataGoEngine {
         try { sendCommandSync("quit"); } catch (Exception ignored) {}
         running.set(false);
         humanSLRunning = false;
+        configuredBoardSize = -1;
         if (gpuSession != null) {
             GpuRemoteSession old = gpuSession;
             gpuSession = null;
@@ -748,7 +752,15 @@ public class KataGoEngine {
 
     public boolean setBoardSize(int size) {
         DebugLog.enter(TAG, "setBoardSize in, size=" + size);
-        return simpleCommand("boardsize " + size, gpuSession != null ? 360000 : jniSession != null ? 90000 : 5000);
+        if (isReady() && configuredBoardSize == size) {
+            Log.i(TAG, "Reuse existing GTP boardsize=" + size + "; clear_board will reset game state");
+            return true;
+        }
+        long startedNs = System.nanoTime();
+        boolean ok = simpleCommand("boardsize " + size, gpuSession != null ? 360000 : jniSession != null ? 90000 : 5000);
+        if (ok) configuredBoardSize = size;
+        Log.i(TAG, "GTP boardsize=" + size + " ok=" + ok + " elapsedMs=" + (System.nanoTime() - startedNs) / 1000000L);
+        return ok;
     }
 
     /** Initialize KataGo with the same fixed handicap positions as the Java board. */
