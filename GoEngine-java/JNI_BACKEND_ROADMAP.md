@@ -51,7 +51,25 @@
 
 - [x] 更新 `tools/benchmark_katago_genmove_android.py`：轮询等待 ADB stderr 输出最多 1.5 秒，仍未收到 `MALKOVICH:Visits` 时将 `root_visits` 记为缺失（N/A），**保留有效落子耗时**并继续测试；缺失 visit 不参与 visits 平均值。
 - [x] 新增 `--resume --report-dir`，读取已保存 `moves.csv`、跳过完成的配置与局面，剩余测完后生成完整 summary。续跑必须使用与原始实验相同的 `--threads`、`--visits`、`--max-time` 等配置；不自动核验跨运行的模型/参数一致性。
-- [ ] 使用续跑命令在 RK3588 验证 CPU16/24/32 + 全部 GPU 固定访问量测试结果，并检查是否再出现 stderr 统计缺失。
+- [x] RK3588 已通过 `--resume` 从原有 60 步继续完成 CPU16/24/32 及全部 GPU（合计 240 步）固定 20-visits 测试。实际每步 root visits 为 21，GPU 最快 4 线程均值 536.29ms；CPU 最快 2 线程 564.23ms。此前 stderr 日志读取中断的问题未再出现。
+
+### 2026-10-10 RK3588 固定访问量测试：完整结果
+
+运行 `--threads 2,4,8,16,24,32 --visits 20 --max-time 60`，中断后 `--resume --report-dir build/katago_genmove/20261010_101718` 已恢复并完成；20 步×6 线程×CPU/GPU=240 步（每组 20 步）。每次 `MALKOVICH:Visits` 返回 21，20 visits 预算完整执行，root visits 包含额外的根节点计数差异。以下是 **GTP 命令往返平均延迟**，不是 APP 全流程帧耗时。
+
+| 搜索线程 | CPU 平均延迟(ms) | GPU 平均延迟(ms) | GPU 同线程延迟降低 |
+|---:|---:|---:|---:|
+| 2 | 564.23 | 546.02 | 3.2% |
+| 4 | 577.98 | 536.29 | 7.2% |
+| 8 | 611.10 | 546.28 | 10.6% |
+| 16 | 593.84 | 539.93 | 9.1% |
+| 24 | 594.83 | 545.61 | 8.3% |
+| 32 | 607.44 | 542.37 | 10.7% |
+
+- CPU 最快 2 线程（564.23ms）；GPU 最快 4 线程（536.29ms），跨后端最优值之比 GPU 减少约 5.0% 延迟。GPU 4/16/32 平均值相差仅 6.08ms，需多轮、随机化测试顺序才可能稳定区分。
+- 对比另一组 `--visits 1000 --max-time 0.4` 的结果，GPU 16/24/32 搜索吞吐明显优于 CPU；**高吞吐的最佳线程数不等于 20-visits 短搜索的最低延迟线程数**。
+- 测试前每步执行 `clear_board`、`clear_cache`，因此模拟的是冷搜索而非 APP 连续对弈保留缓存的实际体验。CPU→GPU 固定顺序也可能有温度/负载偏差。
+- [ ] 进入设备通用 OpenCL ABI 验证：先检查两个设备的 `readelf -d/-V`、实际 `SONAME`、`DT_NEEDED`、符号版本、Android linker namespace；尚不声称已实现单一通用 GPU 程序。
 
 ### 2026-10-10 RK3588 GTP 固定时间测试（20 次/配置）
 
