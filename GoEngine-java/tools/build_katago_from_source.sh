@@ -191,7 +191,9 @@ fi
 
 cmake -Wno-deprecated -S "$SOURCE_DIR/cpp" -B "$BUILD_DIR" -G Ninja "${ARGS[@]}"
 cmake --build "$BUILD_DIR" --parallel "${KATAGO_JOBS:-8}"
-if [[ "$BUILD_VARIANT" == "eigenjni" || "$BUILD_VARIANT" == "opencljni" ]]; then
+if [[ "$BUILD_VARIANT" == "opencljni" ]]; then
+    BIN="$BUILD_DIR/libkatago_gpu.so"
+elif [[ "$BUILD_VARIANT" == "eigenjni" ]]; then
     BIN="$BUILD_DIR/libkatago.so"
 else
     BIN="$BUILD_DIR/katago"
@@ -208,14 +210,24 @@ if ! grep -Eq '^[[:space:]]*Machine:[[:space:]]*AArch64([[:space:]]|$)' <<< "$HE
     exit 1
 fi
 if [[ "$BUILD_VARIANT" == "eigenjni" || "$BUILD_VARIANT" == "opencljni" ]]; then
-    OUT="$OUTPUT_DIR/libkatago.so"
-    if ! "$READELF" -W -d "$BIN" | grep -Fq '[libkatago.so]'; then
-        echo "ERROR: JNI ELF does not have libkatago.so SONAME." >&2
+    EXPECTED_JNI_SONAME="libkatago.so"
+    if [[ "$BUILD_VARIANT" == "opencljni" ]]; then EXPECTED_JNI_SONAME="libkatago_gpu.so"; fi
+    OUT="$OUTPUT_DIR/$EXPECTED_JNI_SONAME"
+    if ! "$READELF" -W -d "$BIN" | grep -Fq "[$EXPECTED_JNI_SONAME]"; then
+        echo "ERROR: JNI ELF does not have $EXPECTED_JNI_SONAME SONAME." >&2
         exit 1
     fi
     if ! "$READELF" -W --dyn-syms "$BIN" | grep -F Java_com_badukai_engine_KataGoNative_nativeBuildStatus >/dev/null; then
         echo "ERROR: JNI nativeBuildStatus symbol not exported." >&2
         exit 1
+    fi
+    if [[ "$BUILD_VARIANT" == "opencljni" ]]; then
+        for symbol in nativeCreateSession nativeSendCommand nativeReadOutput nativeIsSessionAlive nativeStopSearch nativeDestroySession; do
+            if ! "$READELF" -W --dyn-syms "$BIN" | grep -Fq "Java_com_badukai_engine_KataGoGpuNative_$symbol"; then
+                echo "ERROR: GPU-specific JNI symbol missing: $symbol" >&2
+                exit 1
+            fi
+        done
     fi
 elif [[ "$BACKEND" == "opencl" ]]; then
     OUT="$OUTPUT_DIR/libkatago_exec_opencl.so"
@@ -259,6 +271,6 @@ echo "No files were changed under app/src/main/jniLibs."
 if [[ "$BUILD_VARIANT" == "eigenjni" ]]; then
     echo "CPU/Eigen JNI library built. Use Gradle -PenableKataGoJniCore=true to package it."
 elif [[ "$BUILD_VARIANT" == "opencljni" ]]; then
-    echo "Experimental GPU/OpenCL JNI ELF built in its OWN directory (CPU JNI untouched)."
-    echo "NOT packaged in APK and NOT verified on an Android device; GPU runtime loading must be tested before app switching."
+    echo "GPU/OpenCL JNI ELF built with independent SONAME and JNI method names."
+    echo "Run bash build.sh to package and test it on Android."
 fi
