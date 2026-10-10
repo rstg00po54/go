@@ -29,7 +29,7 @@ public final class KataGoNative {
     }
 
     public static final class GtpSession implements AutoCloseable {
-        private long handle;
+        private volatile long handle;
 
         private GtpSession(long handle) { this.handle = handle; }
 
@@ -46,8 +46,9 @@ public final class KataGoNative {
         }
 
         /** True while the native GTP worker has not exited. */
-        public synchronized boolean isAlive() {
-            return handle != 0 && nativeIsSessionAlive(handle);
+        public boolean isAlive() {
+            long id = handle;
+            return id != 0 && nativeIsSessionAlive(id);
         }
 
         /** Enqueues GTP stop; synchronous genmove cannot be interrupted until it returns. */
