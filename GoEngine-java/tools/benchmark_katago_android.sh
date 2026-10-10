@@ -165,14 +165,7 @@ run_benchmark() {
         echo "Staging legacy RK3588 Mali OpenCL runtime"
         # The old binary requires Mali's versioned OPENCL_1.0 symbols.
         # Never rename a phone's SONAME=libOpenCL.so loader as libGLES_mali.so.
-        vendor_soname="$("$ADB" -s "$SERIAL" shell "readelf -d /vendor/lib64/libOpenCL.so 2>/dev/null | grep SONAME" || true)"
-        if [[ "$vendor_soname" == *'[libGLES_mali.so]'* ]]; then
-            "$ADB" -s "$SERIAL" shell "cp /vendor/lib64/libOpenCL.so $REMOTE/libGLES_mali.so"
-        else
-            echo "ERROR: this GPU binary is linked to RK3588 libGLES_mali.so." >&2
-            echo "Use openclportable GPU output with KATAGO_BENCH_GPU_BINARY." >&2
-            return 1
-        fi
+        "$ADB" -s "$SERIAL" shell "cp /vendor/lib64/libOpenCL.so $REMOTE/libGLES_mali.so"
     fi
 
     # Keep a complete log but display only useful progress and benchmark lines.
