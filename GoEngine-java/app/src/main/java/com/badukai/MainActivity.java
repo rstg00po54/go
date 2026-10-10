@@ -7,11 +7,14 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -20,6 +23,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.badukai.engine.KataGoEngine;
+import com.badukai.engine.GpuTuneCache;
 import com.badukai.engine.KataGoOpenCLProbe;
 import com.badukai.engine.KataGoNative;
 import com.badukai.game.GoBoard;
@@ -97,6 +101,8 @@ public class MainActivity extends AppCompatActivity {
     private View gamePageContainer;
     private GoBoardView boardView;
     private TextView statusText;
+    private AlertDialog gpuTuningDialog;
+    private TextView gpuTuningStatus;
     private TextView aiWinRateText;
     private TextView playerWinRateText;
     private TextView aiCaptureText;
@@ -171,7 +177,10 @@ public class MainActivity extends AppCompatActivity {
         variationButton.setOnClickListener(v -> showVariations());
         render("正在启动 AI...");
         showMainPage();
-        if (!jniGtpSmoke && !jniGtpRepeat) startEngine();
+        if (!jniGtpSmoke && !jniGtpRepeat) {
+            showGpuTuningIfNeeded(boardSize, selectedBackend);
+            startEngine();
+        }
     }
 
     private void runJniGtpSmoke(boolean repeat) {
@@ -310,6 +319,7 @@ public class MainActivity extends AppCompatActivity {
                 engineStarting = false;
                 engineReady = ready;
                 aiBattleButton.setEnabled(true);
+                dismissGpuTuning();
                 render(ready ? "准备好了" : "AI 启动失败，可重试新局");
             });
         });
@@ -1067,6 +1077,7 @@ public class MainActivity extends AppCompatActivity {
                 && (selectedBackend == KataGoEngine.BackendPreference.GPU) == engine.getBackendName().startsWith("GPU");
         render(reusingHumanEngine ? "正在初始化棋局..." : requestedBackend == KataGoEngine.BackendPreference.GPU
                 ? "GPU 初始化中，首次调优可能需要数分钟..." : "正在准备人类棋力模型...");
+        if (!reusingHumanEngine) showGpuTuningIfNeeded(size, requestedBackend);
 
         engineExecutor.execute(() -> {
             String error = null;
@@ -1122,6 +1133,7 @@ public class MainActivity extends AppCompatActivity {
                 engineStarting = false;
                 engineReady = running;
                 gameReady = ready;
+                dismissGpuTuning();
                 if (!ready) {
                     render("棋力模型准备失败：" + failure);
                     Toast.makeText(this, "未进入对局，请重试下载或检查日志", Toast.LENGTH_LONG).show();
@@ -1133,6 +1145,68 @@ public class MainActivity extends AppCompatActivity {
                 else requestAiMove();
             });
         });
+    }
+
+    /** First-run GPU tuning is part of the existing preloaded GTP startup, not a second engine. */
+    private void showGpuTuningIfNeeded(int size, KataGoEngine.BackendPreference backend) {
+        if (backend != KataGoEngine.BackendPreference.GPU || forceLegacyBackend) return;
+        if (!new File(getApplicationInfo().nativeLibraryDir, "libkatago_gpu.so").isFile()) return;
+        if (!engine.hasHumanModel() || !GpuTuneCache.needsTuning(this, size)) return;
+        if (gpuTuningDialog != null && gpuTuningDialog.isShowing()) return;
+
+        int padding = (int) (24 * getResources().getDisplayMetrics().density + 0.5f);
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(padding, padding / 2, padding, padding);
+        ProgressBar progress = new ProgressBar(this);
+        LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        progressParams.gravity = Gravity.CENTER_HORIZONTAL;
+        layout.addView(progress, progressParams);
+        gpuTuningStatus = new TextView(this);
+        gpuTuningStatus.setTextSize(15f);
+        gpuTuningStatus.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams labelParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        labelParams.topMargin = padding / 2;
+        layout.addView(gpuTuningStatus, labelParams);
+        TextView info = new TextView(this);
+        info.setText("当前设备首次使用 GPU 时需要调优。过程可能持续数分钟，完成后会自动保存结果，下次启动直接跳过。");
+        info.setTextSize(12f);
+        info.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams infoParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        infoParams.topMargin = padding / 2;
+        layout.addView(info, infoParams);
+
+        gpuTuningDialog = new AlertDialog.Builder(this).setTitle("首次 GPU 自动调优")
+                .setView(layout).setCancelable(false).create();
+        gpuTuningDialog.show();
+        Log.i(TAG, "GPU tuning screen shown for boardSize=" + size);
+        mainHandler.removeCallbacks(gpuTuneProgressUpdater);
+        mainHandler.post(gpuTuneProgressUpdater);
+    }
+
+    private final Runnable gpuTuneProgressUpdater = new Runnable() {
+        @Override public void run() {
+            if (gpuTuningDialog == null || !gpuTuningDialog.isShowing()) return;
+            int mask = GpuTuneCache.cachedModelMask(MainActivity.this, boardSize);
+            String stage = (mask & GpuTuneCache.MAIN_MODEL) == 0 ? "第 1 / 2 阶段：正在调优 10b 模型..."
+                    : (mask & GpuTuneCache.HUMAN_MODEL) == 0 ? "第 2 / 2 阶段：正在调优 Human SL 模型..."
+                    : "调优缓存已保存，正在编译内核并加载模型...";
+            if (gpuTuningStatus != null) gpuTuningStatus.setText(stage);
+            mainHandler.postDelayed(this, 1000);
+        }
+    };
+
+    private void dismissGpuTuning() {
+        mainHandler.removeCallbacks(gpuTuneProgressUpdater);
+        if (gpuTuningDialog != null) {
+            gpuTuningDialog.dismiss();
+            gpuTuningDialog = null;
+            gpuTuningStatus = null;
+            Log.i(TAG, "GPU tuning screen dismissed");
+        }
     }
 
     private float komiFor(int size) {
@@ -1201,6 +1275,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         DebugLog.enter(TAG, "onDestroy in");
+        dismissGpuTuning();
         super.onDestroy();
         engineExecutor.execute(() -> engine.stop());
         winRateExecutor.execute(() -> winRateEngine.stop());
