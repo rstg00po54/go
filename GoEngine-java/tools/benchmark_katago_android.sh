@@ -89,6 +89,7 @@ if [[ "$MODE" == "summary" ]]; then
     REPORT_DIR="$2"
     THREADS="${KATAGO_BENCH_THREADS:-2,4,6,8}"
     [[ -d "$REPORT_DIR" ]] || { echo "No such report directory: $REPORT_DIR" >&2; exit 1; }
+    MODE="both"
     summarize_results
     exit 0
 fi
