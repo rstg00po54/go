@@ -338,7 +338,7 @@ struct ModelDesc {
   //If expectedSha256 is nonempty, will also verify sha256 of the loaded data.
   static void loadFromFileMaybeGZipped(const std::string& fileName, ModelDesc& descBuf, const std::string& expectedSha256);
   // Last load on this thread: separately account for file I/O/SHA and descriptor parsing.
-  static void getLastLoadTiming(double& fileIoAndShaMs, double& descriptorParseMs);
+  static void getLastLoadTiming(double& fileIoMs, double& sha256Ms, double& descriptorParseMs, double& shaWaitMs);
 
   //Return the "nearest" supported ruleset to desiredRules by this model.
   //Fills supported with true if desiredRules itself was exactly supported, false if some modifications had to be made.
