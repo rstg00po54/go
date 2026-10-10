@@ -155,7 +155,7 @@ else
             echo "ERROR: portable link library does not export clGetPlatformIDs." >&2
             exit 1
         fi
-        echo "Portable OpenCL link stub verified: $OPENCL_LIBRARY"
+        echo "Portable OpenCL link library verified: $OPENCL_LIBRARY"
     fi
     echo "OpenCL: headers=$OPENCL_INCLUDE_DIR library=$OPENCL_LIBRARY"
     ARGS+=(-DOpenCL_INCLUDE_DIR="$OPENCL_INCLUDE_DIR" -DOpenCL_LIBRARY="$OPENCL_LIBRARY")
@@ -181,7 +181,7 @@ else
     OUT="$OUTPUT_DIR/libkatago_exec.so"
 fi
 if [[ "$PORTABLE_OPENCL" == true ]]; then
-    if ! "$READELF" -W -d "$BIN" | grep -Fq '(NEEDED)             Shared library: [libOpenCL.so]'; then
+    if ! "$READELF" -W -d "$BIN" | sed -nE 's/.*\(NEEDED\).*\[([^]]+)\].*/\1/p' | grep -Fxq 'libOpenCL.so'; then
         echo "ERROR: portable GPU build must depend on libOpenCL.so." >&2
         "$READELF" -W -d "$BIN" | grep NEEDED >&2 || true
         exit 1
