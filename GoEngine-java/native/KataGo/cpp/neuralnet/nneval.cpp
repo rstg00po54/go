@@ -1,5 +1,6 @@
 #include "../neuralnet/nneval.h"
 #include "../neuralnet/modelversion.h"
+#include "../neuralnet/desc.h"
 #include <chrono>
 
 using namespace std;
@@ -138,6 +139,14 @@ NNEvaluator::NNEvaluator(
 #endif
     loadedModel = NeuralNet::loadModelFile(modelFileName,expectedSha256);
 #ifdef USE_OPENCL_BACKEND
+    if(logger != NULL) {
+      double ioShaMs = 0.0, parseMs = 0.0;
+      ModelDesc::getLastLoadTiming(ioShaMs,parseMs);
+      const string modelPrefix = "OPENCL_TIMING model_file=" + modelFileName + " board=" +
+                                 std::to_string(nnXLen) + "x" + std::to_string(nnYLen);
+      logger->write(modelPrefix + " phase=model_file_io_sha ms=" + std::to_string(ioShaMs));
+      logger->write(modelPrefix + " phase=model_descriptor_parse ms=" + std::to_string(parseMs));
+    }
     if(logger != NULL)
       logger->write("OPENCL_TIMING model_file=" + modelFileName + " board=" + std::to_string(nnXLen) +
                     "x" + std::to_string(nnYLen) + " phase=model_file_parse ms=" +
