@@ -299,9 +299,13 @@ public class MainActivity extends AppCompatActivity {
             if (engine.hasHumanModel()) {
                 try {
                     // Preload once on the home screen. New games then reuse this process.
+                    long phaseNs = System.nanoTime();
                     engine.prepareHumanModel(null);
+                    Log.i(TAG, "Initial engine phase=human_model_prepare elapsedMs=" + (System.nanoTime() - phaseNs) / 1000000L);
                     advanceGpuStartup(11, "模型文件准备完成");
+                    phaseNs = System.nanoTime();
                     ok = engine.start(KataGoEngine.Model.HUMAN, true);
+                    Log.i(TAG, "Initial engine phase=engine_start elapsedMs=" + (System.nanoTime() - phaseNs) / 1000000L + " ok=" + ok);
                     if (ok) advanceGpuStartup(96, "正在初始化棋盘规则...");
                     humanPreloaded = ok;
                 } catch (Exception e) {
@@ -310,11 +314,15 @@ public class MainActivity extends AppCompatActivity {
             }
             if (!ok) {
                 engine.stop();
+                long phaseNs = System.nanoTime();
                 ok = engine.start(KataGoEngine.Model.HUMAN);
+                Log.i(TAG, "Initial engine phase=fallback_start elapsedMs=" + (System.nanoTime() - phaseNs) / 1000000L + " ok=" + ok);
             }
             if (ok) {
+                long phaseNs = System.nanoTime();
                 ok = engine.setBoardSize(boardSize) && engine.clearBoard()
                         && engine.setChineseRules() && engine.setKomi(komiFor(boardSize));
+                Log.i(TAG, "Initial engine phase=gtp_board_setup elapsedMs=" + (System.nanoTime() - phaseNs) / 1000000L + " ok=" + ok);
                 if (!ok) engine.stop();
             }
             final boolean ready = ok, preloaded = humanPreloaded;
