@@ -45,6 +45,14 @@
 
 
 
+### 2026-10-10 RK3588 固定访问量测试及中断修复
+
+`--threads 2,4,8,16,24,32 --visits 20 --max-time 60`：CPU 2/4/8 各完成 20 次落子；每次报告 root visits 为 21（初始化根节点 + 搜索计数），平均 GTP 延迟分别约 **564.23ms / 577.99ms / 611.10ms**，短搜索配置的并行线程越多不一定越快。CPU 16 线程测试尚未产出有效行，因为在预热阶段 `read_root_visits` 未及时读取 stderr 诊断输出，脚本误将非关键统计信息缺失视为致命错误。
+
+- [x] 更新 `tools/benchmark_katago_genmove_android.py`：轮询等待 ADB stderr 输出最多 1.5 秒，仍未收到 `MALKOVICH:Visits` 时将 `root_visits` 记为缺失（N/A），**保留有效落子耗时**并继续测试；缺失 visit 不参与 visits 平均值。
+- [x] 新增 `--resume --report-dir`，读取已保存 `moves.csv`、跳过完成的配置与局面，剩余测完后生成完整 summary。续跑必须使用与原始实验相同的 `--threads`、`--visits`、`--max-time` 等配置；不自动核验跨运行的模型/参数一致性。
+- [ ] 使用续跑命令在 RK3588 验证 CPU16/24/32 + 全部 GPU 固定访问量测试结果，并检查是否再出现 stderr 统计缺失。
+
 ### 2026-10-10 RK3588 GTP 固定时间测试（20 次/配置）
 
 真机序列号 `8719e18a71a2a66c`；`--threads 2,4,8,16,24,32 --visits 1000 --max-time 0.4`；19x19、10b 模型、10 个固定局面各重复 2 次。实际搜索 visits 均低于 1000，确认访问上限未触发。脚本已能通过 GTP 的 `MALKOVICH:Visits` 记录每次实际 root visits。
