@@ -1,5 +1,6 @@
 #include "../neuralnet/desc.h"
 
+#include <algorithm>
 #include <cmath>
 #include <chrono>
 #include <future>
