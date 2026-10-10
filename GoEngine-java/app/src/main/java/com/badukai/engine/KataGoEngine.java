@@ -379,7 +379,7 @@ public class KataGoEngine {
                     if (chunk == null) break;
                     buffer.append(chunk.replace("\r\n", "\n"));
                     int end;
-                    while ((end = buffer.indexOf("\\n\\n")) >= 0) {
+                    while ((end = buffer.indexOf("\n\n")) >= 0) {
                         String response = buffer.substring(0, end + 2);
                         buffer.delete(0, end + 2);
                         Log.d(TAG, "GPU JNI GTP response: " + response.trim());
