@@ -21,7 +21,6 @@ public final class InkLoadingView extends View {
 
     public InkLoadingView(Context context) {
         super(context);
-        setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         setProgress(3, stage);
     }
 
@@ -45,7 +44,7 @@ public final class InkLoadingView extends View {
         drawProgress(canvas);
         canvas.restore();
         // The paint-sweep texture remains subtly animated even while native tuning is busy.
-        if (progress < 100) { frame++; postInvalidateDelayed(120); }
+        if (progress < 100) { frame++; postInvalidateDelayed(250); }
     }
 
     private void fill(Paint.Style style, int color) {
