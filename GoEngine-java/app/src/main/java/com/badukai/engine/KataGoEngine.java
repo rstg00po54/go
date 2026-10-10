@@ -155,7 +155,10 @@ public class KataGoEngine {
                 throw new IOException("KataGo binary is not executable: " + binaryFile);
             copyAssetToFile(useHumanSL ? HUMAN_CONFIG_ASSET : CONFIG_ASSET, configFile);
             if (useJni || useGpu) {
-                File homeDir = new File(engineDir, useGpu ? "gpu_home" : "jni_home");
+                // Reuse the RK3588 OpenCL tuning cache created by the validated GPU JNI smoke test.
+                File smokeGpuHome = new File(context.getFilesDir(), "jni_gpu_smoke/home");
+                File homeDir = useGpu && smokeGpuHome.isDirectory() ? smokeGpuHome
+                        : new File(engineDir, useGpu ? "gpu_home" : "jni_home");
                 File logsDir = new File(engineDir, "gtp_logs");
                 if (!homeDir.exists() && !homeDir.mkdirs()) throw new IOException("Cannot create JNI home dir: " + homeDir);
                 if (!logsDir.exists() && !logsDir.mkdirs()) throw new IOException("Cannot create GTP log dir: " + logsDir);
