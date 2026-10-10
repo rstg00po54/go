@@ -290,6 +290,23 @@ adb -s 8719e18a71a2a66c logcat -d -s KataGoEngine:I MainActivity:I '*:S'
 
 **阶段验收**：`System.loadLibrary("katago")` 可用，CPU 可实际对弈及分析；不再需要通过 `ProcessBuilder` 使用 KataGo（旧路径仍可作为回退）。
 
+### 阶段 1E：GPU/OpenCL JNI 独立 ELF 构建（已提交构建模式，待 Ubuntu 编译）
+
+- [x] 新增 `bash tools/build_katago_from_source.sh opencljni`：使用原 KataGo `KATAGO_BUILD_JNI_LIBRARY=ON` + `USE_BACKEND=OPENCL` 编译真正的 `libkatago.so`，复用已验证的 Android OpenCL 可移植链接库校验。
+- [x] GPU JNI 构建输出独立于 CPU：`~/.cache/goengine_katago/build_android_arm64_opencljni/` 与 `build/katago_android_arm64_opencljni/libkatago.so`；不会覆盖 CPU `build/katago_android_arm64_eigenjni/libkatago.so`、现有 APK、`libkatago_exec.so`。
+- [x] 检查 JNI ELF 的 AArch64/ET_DYN、`libkatago.so` SONAME、JNI 导出符号，GPU 依赖必须是非版本化 `libOpenCL.so`，拒绝 vendor-private `libGLES_mali.so` SONAME 以及依赖 `OPENCL_1.0` 等版本化符号。
+- [ ] **GPU JNI 还没有在用户 Ubuntu 上编译、也没有打包、没有在 RK3588 APP 里加载或进行 GPU 计算**；这一阶段只是隔离编译候选，绝非已经实现 CPU/GPU 可切换。
+- [ ] GPU APP 侧验证需要独立 JNI 名称/加载路径，不能将这份 OpenCL `libkatago.so` 直接替换工作中的 CPU 主库，否则会覆盖已验证的 CPU 路径，也可能在 APP 的 linker namespace 上失败。
+- [ ] 最终仍要实现**同一 JNI 主库的运行时 CPU/GPU 切换**，而不是长期保留两个编译时固定后端的 JNI 库。
+
+初次构建（沿用已有缓存的可移植 ARM64 `libOpenCL.so`）：
+
+```bash
+git pull --ff-only github rk3588-engine
+bash tools/build_katago_from_source.sh opencljni
+readelf -d build/katago_android_arm64_opencljni/libkatago.so | grep -E 'NEEDED|SONAME'
+```
+
 ## 阶段 2：抽象运行时 BackendManager —— 先只有 CPU
 
 **目标**：今后增加计算后端不用改 Java/GTP/MCTS 核心协议。
