@@ -61,6 +61,8 @@ public class MainActivity extends AppCompatActivity {
     private StoneColor currentPlayer = StoneColor.BLACK;
     private int boardSize = 19;
     private int aiKyu = 12;
+    private KataGoEngine.BackendPreference selectedBackend = KataGoEngine.BackendPreference.CPU;
+    private boolean forceLegacyBackend;
     // 0=even game, 1=black plays first without komi, 2..9=fixed black handicap stones.
     private int gameCondition = 0;
     // Human SL selects moves from its rank profile; search primarily assists pass/resign decisions.
@@ -129,7 +131,12 @@ public class MainActivity extends AppCompatActivity {
         // Main-game CPU/Human SL prefers JNI when libkatago.so is bundled.
         // Rescue switch: adb shell am start ... --ez katago_legacy true
         boolean forceLegacy = getIntent() != null && getIntent().getBooleanExtra("katago_legacy", false);
+        forceLegacyBackend = forceLegacy;
         engine = new KataGoEngine(getApplicationContext(), "engine", !forceLegacy);
+        selectedBackend = "GPU".equals(getSharedPreferences("katago_settings", MODE_PRIVATE).getString("backend", "CPU"))
+                ? KataGoEngine.BackendPreference.GPU : KataGoEngine.BackendPreference.CPU;
+        if (forceLegacy) selectedBackend = KataGoEngine.BackendPreference.CPU;
+        engine.setBackendPreference(selectedBackend);
         winRateEngine = new KataGoEngine(getApplicationContext(), "engine_winrate");
         Log.i(TAG, "Game engine preference=" + (forceLegacy ? "PIE forced" : "JNI if bundled")
                 + "; winrate engine=PIE");
@@ -907,6 +914,7 @@ public class MainActivity extends AppCompatActivity {
         RadioGroup colorGroup = content.findViewById(R.id.colorGroup);
         Spinner difficultySpinner = content.findViewById(R.id.difficultySpinner);
         Spinner conditionSpinner = content.findViewById(R.id.conditionSpinner);
+        Spinner backendSpinner = content.findViewById(R.id.backendSpinner);
         Button startButton = content.findViewById(R.id.startGameButton);
         Button closeButton = content.findViewById(R.id.closeDialogButton);
 
@@ -923,6 +931,14 @@ public class MainActivity extends AppCompatActivity {
         conditionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         conditionSpinner.setAdapter(conditionAdapter);
         conditionSpinner.setSelection(gameCondition);
+
+        boolean gpuBundled = new File(getApplicationInfo().nativeLibraryDir, "libkatago_gpu.so").isFile();
+        String[] backendNames = gpuBundled ? new String[]{"CPU / Eigen", "GPU / OpenCL"} : new String[]{"CPU / Eigen（GPU 未打包）"};
+        ArrayAdapter<String> backendAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, backendNames);
+        backendAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        backendSpinner.setAdapter(backendAdapter);
+        backendSpinner.setSelection(gpuBundled && selectedBackend == KataGoEngine.BackendPreference.GPU ? 1 : 0);
+        backendSpinner.setEnabled(gpuBundled && !forceLegacyBackend);
 
         colorGroup.check(playerColor == StoneColor.WHITE ? R.id.whiteRadio : R.id.blackRadio);
         String[] kyuLabels = new String[18];
@@ -944,9 +960,13 @@ public class MainActivity extends AppCompatActivity {
 
             int selectedKyu = 18 - difficultySpinner.getSelectedItemPosition();
             int selectedCondition = conditionSpinner.getSelectedItemPosition();
+            KataGoEngine.BackendPreference requested = gpuBundled && backendSpinner.getSelectedItemPosition() == 1
+                    ? KataGoEngine.BackendPreference.GPU : KataGoEngine.BackendPreference.CPU;
             Runnable begin = () -> {
                 aiKyu = selectedKyu;
                 gameCondition = selectedCondition;
+                selectedBackend = requested;
+                getSharedPreferences("katago_settings", MODE_PRIVATE).edit().putString("backend", requested.name()).apply();
                 showGamePage();
                 startNewGame();
                 dialog.dismiss();
@@ -1018,11 +1038,13 @@ public class MainActivity extends AppCompatActivity {
         final boolean playerFirst = currentPlayer == playerColor;
         final int size = boardSize, kyu = aiKyu, visits = searchVisits;
         final double seconds = searchTime;
+        final KataGoEngine.BackendPreference requestedBackend = selectedBackend;
         render(engine.isHumanSLRunning() ? "正在初始化棋局..." : "正在准备人类棋力模型...");
 
         engineExecutor.execute(() -> {
             String error = null;
             try {
+                engine.setBackendPreference(requestedBackend);
                 if (!engine.isHumanSLRunning()) {
                     engine.prepareHumanModel((done, total) -> {
                         int percent = (int) (done * 100 / total);
@@ -1050,6 +1072,10 @@ public class MainActivity extends AppCompatActivity {
             }
             boolean ready = error == null && engine.isReady();
             boolean running = engine.isReady();
+            String runningBackend = engine.getBackendName();
+            boolean gpuFallback = ready && requestedBackend == KataGoEngine.BackendPreference.GPU
+                    && !runningBackend.startsWith("GPU");
+            Log.i(TAG, "Game backend requested=" + requestedBackend + " actual=" + runningBackend + " ready=" + ready);
             String failure = error;
             mainHandler.post(() -> {
                 engineStarting = false;
@@ -1061,7 +1087,8 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
                 initializeWinRateAnalysis(board, size, komiFor(size), handicapPoints, currentPlayer);
-                if (playerFirst) render("轮到你了");
+                if (gpuFallback) Toast.makeText(this, "GPU 不可用，已回退 " + runningBackend, Toast.LENGTH_LONG).show();
+                if (playerFirst) render(gpuFallback ? "轮到你了（已回退 CPU）" : "轮到你了");
                 else requestAiMove();
             });
         });
@@ -1085,7 +1112,8 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "render in, message=" + message + ", engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer);
         statusText.setText(message);
         updateWinRateLabels();
-        aiDifficultyText.setText(getDifficultyName() + " · Human SL");
+        aiDifficultyText.setText(getDifficultyName() + " · Human SL · "
+                + (engineReady ? engine.getBackendName() : selectedBackend == KataGoEngine.BackendPreference.GPU ? "GPU 准备中" : "CPU 准备中"));
         boardView.setBoard(board);
         boardView.setLastMove(lastMove);
         boardView.setInputEnabled(engineReady && gameReady && !engineStarting && !thinking && !evaluating && currentPlayer == playerColor && !board.isGameOver());
