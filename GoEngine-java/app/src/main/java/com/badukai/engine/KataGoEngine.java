@@ -1099,8 +1099,18 @@ public class KataGoEngine {
     private String waitForResponse(int timeoutMs) {
         DebugLog.enter(TAG, "waitForResponse in, timeoutMs=" + timeoutMs);
         try {
-            String response = responseQueue.poll(timeoutMs, TimeUnit.MILLISECONDS);
-            return response == null ? "" : response;
+            long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs);
+            while (System.nanoTime() < deadline) {
+                long remainingMs = Math.max(1, TimeUnit.NANOSECONDS.toMillis(deadline - System.nanoTime()));
+                String response = responseQueue.poll(Math.min(200, remainingMs), TimeUnit.MILLISECONDS);
+                if (response != null) return response;
+                GpuRemoteSession remote = gpuSession;
+                if (remote != null && !remote.isAlive()) {
+                    Log.e(TAG, "GPU GTP service died while waiting for a reply");
+                    return "";
+                }
+            }
+            return "";
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return "";
