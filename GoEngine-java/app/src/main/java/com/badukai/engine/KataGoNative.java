@@ -45,6 +45,11 @@ public final class KataGoNative {
             return nativeReadOutput(handle, timeoutMs);
         }
 
+        /** True while the native GTP worker has not exited. */
+        public synchronized boolean isAlive() {
+            return handle != 0 && nativeIsSessionAlive(handle);
+        }
+
         /** Enqueues GTP stop; synchronous genmove cannot be interrupted until it returns. */
         public synchronized boolean stopSearch() {
             return handle != 0 && nativeStopSearch(handle);
@@ -63,6 +68,7 @@ public final class KataGoNative {
     private static native long nativeCreateSession(String modelPath, String configPath, String humanModelPath);
     private static native boolean nativeSendCommand(long handle, String command);
     private static native String nativeReadOutput(long handle, int timeoutMs);
+    private static native boolean nativeIsSessionAlive(long handle);
     private static native boolean nativeStopSearch(long handle);
     private static native void nativeDestroySession(long handle);
 }
