@@ -26,6 +26,13 @@ for attempt in $(seq 1 120); do
         cat "$REPORT"
         exit 1
     fi
+    starts="$(grep -Fc 'Starting JNI CPU/Eigen GTP session' "$REPORT" || true)"
+    if [[ "$starts" -ge 3 ]]; then
+        cat "$REPORT"
+        echo "ERROR: Android APP restarted $starts times during JNI GTP test." >&2
+        "$ADB" -s "$SERIAL" logcat -d -b crash -v threadtime | tail -80 >&2 || true
+        exit 1
+    fi
     sleep 1
 done
 cat "$REPORT"
