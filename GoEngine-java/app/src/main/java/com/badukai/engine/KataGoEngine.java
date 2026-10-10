@@ -374,7 +374,7 @@ public class KataGoEngine {
                 while (running.get() && gpuSession == session) {
                     String chunk = session.read(1000);
                     if (chunk == null) break;
-                    buffer.append(chunk.replace("\\r\\n", "\\n"));
+                    buffer.append(chunk.replace("\r\n", "\n"));
                     int end;
                     while ((end = buffer.indexOf("\\n\\n")) >= 0) {
                         String response = buffer.substring(0, end + 2);
