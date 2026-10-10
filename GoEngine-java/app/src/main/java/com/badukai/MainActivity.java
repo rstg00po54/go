@@ -432,7 +432,8 @@ public class MainActivity extends AppCompatActivity {
             boolean synced = gtp != null && engine.playMove(color.toGtp(), gtp);
             mainHandler.post(() -> {
                 if (!synced) {
-                    render("落子同步失败");
+                    if (!engine.isReady()) { engineReady = false; gameReady = false; }
+                    render("落子同步失败，请重新开局");
                     return;
                 }
                 queueWinRateMove(color, gtp, color.opposite(), snapshot, moveCount);
@@ -457,7 +458,13 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "handleAiMove in, move=" + move + ", aiColor=" + aiColor);
         thinking = false;
         if (move == null || move.isEmpty()) {
-            render("AI 没有返回落子");
+            if (!engine.isReady()) {
+                engineReady = false;
+                gameReady = false;
+                render("AI 引擎已退出，请重新开局");
+            } else {
+                render("AI 没有返回落子");
+            }
             return;
         }
         boardView.setOwnership(null);
