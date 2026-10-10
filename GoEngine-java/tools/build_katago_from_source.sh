@@ -9,10 +9,10 @@ SOURCE_DIR="${KATAGO_SOURCE_DIR:-$PROJECT_DIR/native/KataGo}"
 BUILD_VARIANT="${1:-eigen}"
 BACKEND="$BUILD_VARIANT"
 PORTABLE_OPENCL=false
-if [[ "$BUILD_VARIANT" == "openclportable" ]]; then BACKEND="opencl"; PORTABLE_OPENCL=true; fi
+if [[ "$BUILD_VARIANT" == "openclportable" || "$BUILD_VARIANT" == "opencljni" ]]; then BACKEND="opencl"; PORTABLE_OPENCL=true; fi
 if [[ "$BUILD_VARIANT" == "eigenjni" ]]; then BACKEND="eigen"; fi
 if [[ $# -gt 1 || ("$BACKEND" != "eigen" && "$BACKEND" != "opencl") ]]; then
-    echo "Usage: $0 [eigen|opencl|openclportable|eigenjni]" >&2
+    echo "Usage: $0 [eigen|opencl|openclportable|eigenjni|opencljni]" >&2
     exit 2
 fi
 if [[ ! -f "$SOURCE_DIR/cpp/CMakeLists.txt" ]]; then
@@ -76,7 +76,7 @@ ARGS=(
     -DBUILD_DISTRIBUTED=OFF -DNO_GIT_REVISION=ON -DUSE_AVX2=OFF -DUSE_TCMALLOC=OFF
     -DCMAKE_CXX_FLAGS="-DLITTLE_ENDIAN=1234 -DBIG_ENDIAN=4321 -DBYTE_ORDER=1234"
 )
-if [[ "$BUILD_VARIANT" == "eigenjni" ]]; then
+if [[ "$BUILD_VARIANT" == "eigenjni" || "$BUILD_VARIANT" == "opencljni" ]]; then
     ARGS+=(-DKATAGO_BUILD_JNI_LIBRARY=ON)
 fi
 if [[ "$BACKEND" == "eigen" ]]; then
@@ -191,7 +191,7 @@ fi
 
 cmake -Wno-deprecated -S "$SOURCE_DIR/cpp" -B "$BUILD_DIR" -G Ninja "${ARGS[@]}"
 cmake --build "$BUILD_DIR" --parallel "${KATAGO_JOBS:-8}"
-if [[ "$BUILD_VARIANT" == "eigenjni" ]]; then
+if [[ "$BUILD_VARIANT" == "eigenjni" || "$BUILD_VARIANT" == "opencljni" ]]; then
     BIN="$BUILD_DIR/libkatago.so"
 else
     BIN="$BUILD_DIR/katago"
@@ -207,7 +207,7 @@ if ! grep -Eq '^[[:space:]]*Machine:[[:space:]]*AArch64([[:space:]]|$)' <<< "$HE
     echo "Check NDK toolchain, target architecture, and PIE linker flags." >&2
     exit 1
 fi
-if [[ "$BUILD_VARIANT" == "eigenjni" ]]; then
+if [[ "$BUILD_VARIANT" == "eigenjni" || "$BUILD_VARIANT" == "opencljni" ]]; then
     OUT="$OUTPUT_DIR/libkatago.so"
     if ! "$READELF" -W -d "$BIN" | grep -Fq '[libkatago.so]'; then
         echo "ERROR: JNI ELF does not have libkatago.so SONAME." >&2
@@ -221,6 +221,11 @@ elif [[ "$BACKEND" == "opencl" ]]; then
     OUT="$OUTPUT_DIR/libkatago_exec_opencl.so"
 else
     OUT="$OUTPUT_DIR/libkatago_exec.so"
+fi
+if [[ "$BUILD_VARIANT" == "opencljni" && "$LIB_SONAME" != "libOpenCL.so" ]]; then
+    echo "ERROR: Android APP JNI GPU candidate requires portable libOpenCL.so SONAME, got $LIB_SONAME." >&2
+    echo "Do not link the JNI library to a vendor-private Mali SONAME." >&2
+    exit 1
 fi
 if [[ "$PORTABLE_OPENCL" == true ]]; then
     if ! "$READELF" -W -d "$BIN" | sed -nE 's/.*\(NEEDED\).*\[([^]]+)\].*/\1/p' | grep -Fxq "$LIB_SONAME"; then
@@ -252,5 +257,8 @@ if [[ "$BACKEND" == "opencl" ]]; then
 fi
 echo "No files were changed under app/src/main/jniLibs."
 if [[ "$BUILD_VARIANT" == "eigenjni" ]]; then
-    echo "Experimental JNI GTP EngineSession built; RK3588 device smoke test is still required."
+    echo "CPU/Eigen JNI library built. Use Gradle -PenableKataGoJniCore=true to package it."
+elif [[ "$BUILD_VARIANT" == "opencljni" ]]; then
+    echo "Experimental GPU/OpenCL JNI ELF built in its OWN directory (CPU JNI untouched)."
+    echo "NOT packaged in APK and NOT verified on an Android device; GPU runtime loading must be tested before app switching."
 fi
