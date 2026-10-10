@@ -521,3 +521,30 @@ adb -s 8719e18a71a2a66c logcat -d -s MainActivity:I KataGoEngine:I '*:S' | grep 
 ```
 
 - Code committed to GitHub, but Android device compilation and visual validation must still be performed on the user's environment.
+
+
+### RK3588 GPU Human SL cold-start weight preparation (2026-10-10)
+
+- The OpenCL binary-program cache remains unchanged. Normal warm launches on RK3588 previously measured around 3.2s (9.4s before the binary cache).
+- Large Winograd convolution-weight transformations now partition by **output channel** across up to four C++ CPU workers. Every worker writes disjoint floats into the same transformed tensor; per-filter arithmetic and FP16 conversion remain identical. Small matrices retain the serial implementation.
+- `OPENCL_TIMING ... phase=winograd_weight_transform ms=... layers=...` is part of `model_build_total`, and `weight_fp16_convert` remains separate. Compare total launch time, Winograd time, and model-build time over at least three cold starts. A regression can be reverted independently.
+- Model reading/parsing timing is now split into `phase=model_file_io_sha` (file load plus SHA-256) and `phase=model_descriptor_parse` (constructing model descriptors) while retaining `phase=model_file_parse` as the full sum. No checksum or numerical-validation checks are removed.
+- These changes require rebuilding **`opencljni` native library** before assembling the APK:
+
+```bash
+git pull
+bash tools/build_katago_from_source.sh opencljni
+./build.sh -PenableKataGoJniCore=true -PenableKataGoGpuJni=true
+adb -s 8719e18a71a2a66c install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s 8719e18a71a2a66c shell am force-stop com.badukai.java
+adb -s 8719e18a71a2a66c shell monkey -p com.badukai.java 1
+```
+
+Measure the latest startup's stages:
+
+```bash
+adb -s 8719e18a71a2a66c shell "run-as com.badukai.java sh -c 'grep -hE \"phase=(model_file_io_sha|model_descriptor_parse|winograd_weight_transform|model_build_total|weight_fp16_convert)\" files/engine/gtp_logs/*.log | tail -16'"
+adb -s 8719e18a71a2a66c logcat -d -s MainActivity:I '*:S' | grep 'Initial engine ready' | tail -3
+```
+
+- Threaded Winograd weight output was checked with a standalone C++ reference test across three matrix shapes, comparing all resulting float32 bytes bit-for-bit; **Android cross-compilation and RK3588 runtime validation have not yet been performed**.
