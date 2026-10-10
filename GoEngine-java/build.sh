@@ -21,7 +21,7 @@ if [[ "$BUILD_GPU_JNI" == true ]]; then
 fi
 
 # --apk-only reuses the previously built GPU JNI library when one exists.
-if [[ -s "$PROJECT_DIR/build/katago_android_arm64_opencljni/libkatago.so" ]]; then
+if [[ -s "$PROJECT_DIR/build/katago_android_arm64_opencljni/libkatago_gpu.so" ]]; then
     GRADLE_ARGS+=("-PenableKataGoGpuJni=true")
 elif [[ "$BUILD_GPU_JNI" == true ]]; then
     echo "ERROR: GPU JNI library was not produced" >&2
