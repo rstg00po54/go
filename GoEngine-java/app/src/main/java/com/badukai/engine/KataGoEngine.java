@@ -1167,10 +1167,37 @@ public class KataGoEngine {
         DebugLog.enter(TAG, "copyAssetToFile in, assetPath=" + assetPath + ", dest=" + dest);
         File parent = dest.getParentFile();
         if (parent != null && !parent.exists()) parent.mkdirs();
+
+        // Preserve the extracted .bin model's mtime so native Winograd caches
+        // stay valid between launches of the same APK. Configs are still rewritten.
+        boolean modelAsset = assetPath.endsWith(".bin");
+        String cacheKey = "asset_install_" + assetPath + "_" + dest.getName();
+        long apkUpdateTime = -1;
+        android.content.SharedPreferences prefs = null;
+        if (modelAsset) {
+            try {
+                apkUpdateTime = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).lastUpdateTime;
+                prefs = context.getSharedPreferences("katago_asset_cache", Context.MODE_PRIVATE);
+                if (dest.isFile() && apkUpdateTime == prefs.getLong(cacheKey, -2)) {
+                    try (InputStream input = context.getAssets().open(assetPath)) {
+                        int assetSize = input.available();
+                        if (assetSize > 0 && dest.length() == assetSize) {
+                            Log.i(TAG, "Reusing installed model asset: " + dest.getAbsolutePath());
+                            return;
+                        }
+                    }
+                }
+            } catch (android.content.pm.PackageManager.NameNotFoundException ignored) {
+                // Fall back to copying the asset.
+            }
+        }
+
         try (InputStream input = context.getAssets().open(assetPath); FileOutputStream output = new FileOutputStream(dest, false)) {
             byte[] buffer = new byte[1024 * 64];
             int read;
             while ((read = input.read(buffer)) > 0) output.write(buffer, 0, read);
         }
+        if (modelAsset && prefs != null && apkUpdateTime >= 0)
+            prefs.edit().putLong(cacheKey, apkUpdateTime).apply();
     }
 }
