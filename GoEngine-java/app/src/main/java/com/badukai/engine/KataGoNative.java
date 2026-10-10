@@ -3,31 +3,21 @@ package com.badukai.engine;
 import java.io.File;
 import android.util.Log;
 
-/** Experimental in-process KataGo CPU/Eigen GTP session. */
+/** In-process KataGo CPU/Eigen GTP session with CPU-only JNI bindings. */
 public final class KataGoNative {
     private static final String TAG = "KataGoNative";
     private KataGoNative() {}
 
-    private static String selectedLibrary = "katago";
-    private static String loadedLibrary;
-
-    /**
-     * GPU GTP smoke runs in a dedicated Android process. It must select its
-     * own library before calling any other KataGoNative method.
-     */
-    public static synchronized void selectIsolatedGpuLibrary() {
-        if (loadedLibrary != null && !"katago_gpu".equals(loadedLibrary))
-            throw new IllegalStateException("Cannot select GPU JNI after loading " + loadedLibrary);
-        selectedLibrary = "katago_gpu";
-    }
+    // CPU JNI and GPU JNI have independent Java classes and ELF SONAMEs.
+    private static boolean loaded;
 
     private static synchronized void load() {
-        if (loadedLibrary == null) {
+        if (!loaded) {
             long startNs = System.nanoTime();
-            System.loadLibrary(selectedLibrary);
+            System.loadLibrary("katago");
+            loaded = true;
             Log.i(TAG, "STARTUP_TIMING phase=jni_load_library ms=" +
-                    (System.nanoTime() - startNs) / 1000000.0 + " library=" + selectedLibrary);
-            loadedLibrary = selectedLibrary;
+                    (System.nanoTime() - startNs) / 1000000.0 + " library=katago");
         }
     }
 
