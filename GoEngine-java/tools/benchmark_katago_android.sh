@@ -96,71 +96,94 @@ run_benchmark() {
         return "$status"
     fi
 
-    # The benchmark reports search rate, inference rate, batches and mean batch size.
-    awk -F 'numSearchThreads =|visits/s =|nnEvals/s =|nnBatches/s =|avgBatchSize =' '
-        NF >= 6 {
-            split($2, parts, ":");
-            t=parts[1]; gsub(/[[:space:]]/, "", t);
-            if(t ~ /^[0-9]+$/) printf "%d\t%.2f\t%.2f\t%.2f\t%.2f\n", t, $3+0, $4+0, $5+0, $6+0;
-        }' "$log" > "$tab"
-    [[ -s "$tab" ]] || { echo "No benchmark statistics found in $log" >&2; return 1; }
+    [[ -s "$log" ]] || { echo "Benchmark log is empty: $log" >&2; return 1; }
     echo "Saved: $log"
 }
 
-print_single() {
-    local mode="$1"
-    echo
-    echo "======== ${mode^^} statistics ========"
-    awk -F '\t' 'BEGIN { printf "%-8s %12s %12s %12s\n", "Threads","Visits/s","NNEvals/s","AvgBatch" }
-        {printf "%-8d %12.2f %12.2f %12.2f\n",$1,$2,$3,$5}' "$REPORT_DIR/$mode.tsv"
-}
 
-compare_results() {
-    local csv="$REPORT_DIR/summary.csv"
-    awk -F '\t' -v order="$THREADS" '
-        BEGIN { count=split(order,threadOrder,","); print "threads,cpu_visits_s,gpu_visits_s,gpu_speedup_pct,cpu_nn_evals_s,gpu_nn_evals_s,cpu_avg_batch,gpu_avg_batch" }
-        FILENAME == ARGV[1] {
-            cpu[$1]=$2; cpuEval[$1]=$3; cpuBatch[$1]=$5; next
-        }
-        FILENAME == ARGV[2] {
-            gpu[$1]=$2; gpuEval[$1]=$3; gpuBatch[$1]=$5; next
-        }
-        END {
-            for (i=1; i<=count; i++) {
-                t=threadOrder[i]+0;
-                if (!(t in cpu) || !(t in gpu) || cpu[t] <= 0) continue;
-                gain=(gpu[t]/cpu[t]-1)*100;
-                printf "%d,%.2f,%.2f,%+.1f,%.2f,%.2f,%.2f,%.2f\n",t,cpu[t],gpu[t],gain,cpuEval[t],gpuEval[t],cpuBatch[t],gpuBatch[t];
-            }
-        }' "$REPORT_DIR/cpu.tsv" "$REPORT_DIR/gpu.tsv" > "$csv"
+summarize_results() {
+    # Parse KataGo's original log lines, not intermediary TSV rows. This avoids
+    # ambiguous awk field matching and always checks for missing thread counts.
+    command -v python3 >/dev/null || { echo "python3 required to summarize benchmark logs" >&2; return 1; }
+    python3 - "$REPORT_DIR" "$THREADS" "$MODE" <<'PY'
+import csv
+import re
+import sys
+from pathlib import Path
 
-    echo
-    echo "======== CPU vs GPU (same number of threads) ========"
-    awk -F, '
-        NR==1 {printf "%-8s %12s %12s %11s %12s %12s %11s %11s\n", "Threads","CPU visit/s","GPU visit/s","GPU gain","CPU NN/s","GPU NN/s","CPU batch","GPU batch";next}
-        {printf "%-8d %12.2f %12.2f %10.1f%% %12.2f %12.2f %11.2f %11.2f\n",$1,$2,$3,$4,$5,$6,$7,$8;
-         if($2>bestCpu){bestCpu=$2;bestCpuThreads=$1}
-         if($3>bestGpu){bestGpu=$3;bestGpuThreads=$1}
-         n++
-        }
-        END {
-            if(n==0) {print "No matching CPU/GPU results.";exit 1}
-            printf "\nBest CPU: %.2f visits/s (%d threads)\n", bestCpu,bestCpuThreads;
-            printf "Best GPU: %.2f visits/s (%d threads)\n", bestGpu,bestGpuThreads;
-            printf "Best GPU vs best CPU: %+.1f%%\n",(bestGpu/bestCpu-1)*100;
-        }' "$csv"
-    echo "Summary CSV: $csv"
-    echo "Full logs: $REPORT_DIR/cpu.log | $REPORT_DIR/gpu.log"
+report_dir = Path(sys.argv[1])
+thread_order = [int(s) for s in sys.argv[2].split(',')]
+mode = sys.argv[3]
+num = r'([0-9]+(?:\.[0-9]+)?)'
+pattern = re.compile(
+    r'numSearchThreads\s*=\s*(\d+):\s*\d+\s*/\s*\d+\s+positions,\s*'
+    r'visits/s\s*=\s*' + num + r'\s+nnEvals/s\s*=\s*' + num +
+    r'\s+nnBatches/s\s*=\s*' + num + r'\s+avgBatchSize\s*=\s*' + num
+)
+
+def read_mode(name):
+    source = report_dir / (name + '.log')
+    data = source.read_text(encoding='utf-8', errors='replace')
+    records = {}
+    for match in pattern.finditer(data):
+        threads = int(match.group(1))
+        records[threads] = tuple(float(x) for x in match.groups()[1:])
+    missing = [t for t in thread_order if t not in records]
+    if missing:
+        raise RuntimeError('%s: missing thread results %s in %s (parsed: %s)' %
+                           (name.upper(), missing, source, sorted(records)))
+    with (report_dir / (name + '.tsv')).open('w', newline='') as output:
+        writer = csv.writer(output, delimiter='\t')
+        for t in thread_order:
+            writer.writerow((t,) + records[t])
+    return records
+
+try:
+    if mode == 'both':
+        cpu, gpu = read_mode('cpu'), read_mode('gpu')
+        print('\n======== CPU vs GPU (same number of threads) ========')
+        print('%-8s %12s %12s %11s %12s %12s %11s %11s' %
+              ('Threads', 'CPU visit/s', 'GPU visit/s', 'GPU gain', 'CPU NN/s', 'GPU NN/s', 'CPU batch', 'GPU batch'))
+        summary = report_dir / 'summary.csv'
+        with summary.open('w', newline='') as output:
+            writer = csv.writer(output)
+            writer.writerow(('threads', 'cpu_visits_s', 'gpu_visits_s', 'gpu_speedup_pct',
+                             'cpu_nn_evals_s', 'gpu_nn_evals_s', 'cpu_avg_batch', 'gpu_avg_batch'))
+            for t in thread_order:
+                c, g = cpu[t], gpu[t]
+                gain = (g[0] / c[0] - 1) * 100
+                writer.writerow((t, '%.2f' % c[0], '%.2f' % g[0], '%+.1f' % gain,
+                                 '%.2f' % c[1], '%.2f' % g[1], '%.2f' % c[3], '%.2f' % g[3]))
+                print('%-8d %12.2f %12.2f %10.1f%% %12.2f %12.2f %11.2f %11.2f' %
+                      (t, c[0], g[0], gain, c[1], g[1], c[3], g[3]))
+        best_cpu = max(thread_order, key=lambda t: cpu[t][0])
+        best_gpu = max(thread_order, key=lambda t: gpu[t][0])
+        print('\nBest CPU: %.2f visits/s (%d threads)' % (cpu[best_cpu][0], best_cpu))
+        print('Best GPU: %.2f visits/s (%d threads)' % (gpu[best_gpu][0], best_gpu))
+        print('Best GPU vs best CPU: %+.1f%%' % ((gpu[best_gpu][0] / cpu[best_cpu][0] - 1) * 100))
+        print('Summary CSV: %s' % summary)
+        print('Full logs: %s/cpu.log | %s/gpu.log' % (report_dir, report_dir))
+    else:
+        results = read_mode(mode)
+        print('\n======== %s statistics ========' % mode.upper())
+        print('%-8s %12s %12s %12s' % ('Threads', 'Visits/s', 'NNEvals/s', 'AvgBatch'))
+        for t in thread_order:
+            row = results[t]
+            print('%-8d %12.2f %12.2f %12.2f' % (t, row[0], row[1], row[3]))
+except (OSError, RuntimeError, ZeroDivisionError) as error:
+    print('Benchmark summary error: %s' % error, file=sys.stderr)
+    sys.exit(1)
+PY
 }
 
 case "$MODE" in
     both)
         run_benchmark cpu
         run_benchmark gpu
-        compare_results
+        summarize_results
         ;;
     cpu|gpu)
         run_benchmark "$MODE"
-        print_single "$MODE"
+        summarize_results
         ;;
 esac
