@@ -72,6 +72,9 @@ public class KataGoEngine {
     private final LinkedBlockingQueue<String> responseQueue = new LinkedBlockingQueue<>();
     private final AtomicBoolean running = new AtomicBoolean(false);
     private Process process;
+    private KataGoNative.GtpSession jniSession;
+    private final boolean preferJni;
+    private volatile boolean jniDisabledForProcess;
     private BufferedWriter writer;
     private BufferedReader reader;
     private BufferedReader errorReader;
@@ -89,23 +92,30 @@ public class KataGoEngine {
         volatile long newPlayouts = -1;
     }
 
-    public KataGoEngine(Context context) { this(context, "engine"); }
+    public KataGoEngine(Context context) { this(context, "engine", true); }
+    public KataGoEngine(Context context, String engineDirectoryName) { this(context, engineDirectoryName, false); }
 
-    /** Distinct data folders allow simultaneous GTP processes without overwriting model/config files. */
-    public KataGoEngine(Context context, String engineDirectoryName) {
+    /**
+     * Prefer the in-process JNI engine for the main game, including Human SL.
+     * The separate winrate engine remains a PIE process until multi-session JNI is safe.
+     */
+    public KataGoEngine(Context context, String engineDirectoryName, boolean preferJni) {
         this.context = context.getApplicationContext();
         this.engineDirectoryName = engineDirectoryName;
+        this.preferJni = preferJni && "engine".equals(engineDirectoryName);
         if (!"engine".equals(engineDirectoryName) && !"engine_winrate".equals(engineDirectoryName))
             throw new IllegalArgumentException("Unsupported engine directory: " + engineDirectoryName);
     }
+
+    public String getBackendName() { return jniSession != null ? "JNI/Eigen" : "PIE/ProcessBuilder"; }
 
     public synchronized boolean start(Model model) { return start(model, false); }
 
     public synchronized boolean start(Model model, boolean useHumanSL) {
         DebugLog.enter(TAG, "start in, model=" + model + ", running=" + running.get());
         if (running.get()) {
-            if (process != null && process.isAlive() && humanSLRunning == useHumanSL) return true;
-            stop(); // Different engine mode or native process died.
+            if (isReady() && humanSLRunning == useHumanSL) return true;
+            stop(); // Different engine mode or an engine process/session died.
         }
         Log.i(TAG, "=== JAVA KATAGO ENGINE / ANDROID ARM64 ===");
         try {
@@ -117,9 +127,24 @@ public class KataGoEngine {
             File configFile = new File(engineDir, useHumanSL ? "human_gtp.cfg" : "default_gtp.cfg");
             File modelFile = new File(engineDir, model.fileName);
 
-            if (!binaryFile.isFile()) throw new IOException("KataGo binary not installed in nativeLibraryDir: " + binaryFile);
-            if (!binaryFile.canExecute()) throw new IOException("KataGo binary is not executable: " + binaryFile);
+            boolean useJni = preferJni && !jniDisabledForProcess
+                    && new File(nativeLibDir, "libkatago.so").isFile();
+            if (!useJni && !binaryFile.isFile())
+                throw new IOException("KataGo binary not installed in nativeLibraryDir: " + binaryFile);
+            if (!useJni && !binaryFile.canExecute())
+                throw new IOException("KataGo binary is not executable: " + binaryFile);
             copyAssetToFile(useHumanSL ? HUMAN_CONFIG_ASSET : CONFIG_ASSET, configFile);
+            if (useJni) {
+                File homeDir = new File(engineDir, "jni_home");
+                File logsDir = new File(engineDir, "gtp_logs");
+                if (!homeDir.exists() && !homeDir.mkdirs()) throw new IOException("Cannot create JNI home dir: " + homeDir);
+                if (!logsDir.exists() && !logsDir.mkdirs()) throw new IOException("Cannot create GTP log dir: " + logsDir);
+                String cfg = new String(java.nio.file.Files.readAllBytes(configFile.toPath()),
+                        java.nio.charset.StandardCharsets.UTF_8);
+                cfg = cfg.replace("logDir = gtp_logs", "logDir = " + logsDir.getAbsolutePath());
+                cfg += "\n" + "homeDataDir = " + homeDir.getAbsolutePath() + "\n";
+                java.nio.file.Files.write(configFile.toPath(), cfg.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            }
             if ("engine_winrate".equals(engineDirectoryName)) {
                 // Avoid 6 search threads in a second process competing with the game engine.
                 String config = new String(java.nio.file.Files.readAllBytes(configFile.toPath()),
@@ -147,7 +172,36 @@ public class KataGoEngine {
 
             Log.i(TAG, "Model: " + modelFile.getAbsolutePath() + " size=" + modelFile.length());
             Log.i(TAG, "Config: " + configFile.getAbsolutePath());
-            Log.i(TAG, "Binary: " + binaryFile.getAbsolutePath());
+            Log.i(TAG, "Backend requested: " + (useJni ? "JNI/Eigen" : "PIE/ProcessBuilder"));
+
+            if (useJni) {
+                try {
+                    jniSession = KataGoNative.createSession(modelFile, configFile, humanFile);
+                    if (jniSession == null) throw new IOException("KataGo JNI createSession returned null");
+                } catch (LinkageError | RuntimeException e) {
+                    Log.e(TAG, "JNI startup failed, falling back to ProcessBuilder", e);
+                    jniDisabledForProcess = true;
+                    stop();
+                    return start(model, useHumanSL);
+                } catch (IOException e) {
+                    Log.e(TAG, "JNI session creation failed; fallback", e);
+                    jniDisabledForProcess = true;
+                    stop();
+                    return start(model, useHumanSL);
+                }
+                running.set(true);
+                humanSLRunning = useHumanSL;
+                startReaderThread();
+                responseQueue.clear();
+                if (!sendCommandSync("name") || !waitForStartupResponse(30000)) {
+                    Log.e(TAG, "JNI GTP failed to become ready; retrying with PIE");
+                    jniDisabledForProcess = true;
+                    stop();
+                    return start(model, useHumanSL);
+                }
+                Log.i(TAG, "=== JNI/EIGEN ENGINE STARTED SUCCESSFULLY ===");
+                return true;
+            }
 
             List<String> command = new ArrayList<>();
             command.add(binaryFile.getAbsolutePath());
@@ -188,8 +242,14 @@ public class KataGoEngine {
             }
             Log.i(TAG, "=== ENGINE STARTED SUCCESSFULLY ===");
             return true;
-        } catch (Exception e) {
+        } catch (Exception | LinkageError e) {
             Log.e(TAG, "Failed to start engine", e);
+            if (jniSession != null) {
+                jniDisabledForProcess = true;
+                stop();
+                Log.w(TAG, "Retrying startup with PIE after JNI exception");
+                return start(model, useHumanSL);
+            }
             stop();
             return false;
         }
@@ -199,7 +259,7 @@ public class KataGoEngine {
     private boolean waitForStartupResponse(int timeoutMs) {
         long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs);
         while (System.nanoTime() < deadline) {
-            if (process == null || !process.isAlive()) return false;
+            if (jniSession == null && (process == null || !process.isAlive())) return false;
             try {
                 String response = responseQueue.poll(200, TimeUnit.MILLISECONDS);
                 if (response != null) {
@@ -216,6 +276,7 @@ public class KataGoEngine {
 
     private void startReaderThread() {
         DebugLog.enter(TAG, "startReaderThread in");
+        if (jniSession != null) { startJniReaderThread(); return; }
         readerThread = new Thread(() -> {
             StringBuilder buffer = new StringBuilder();
             try {
@@ -232,6 +293,33 @@ public class KataGoEngine {
                 if (running.get()) Log.e(TAG, "Stdout reader failed", e);
             }
         }, "KataGo-stdout");
+        readerThread.start();
+    }
+
+    private void startJniReaderThread() {
+        readerThread = new Thread(() -> {
+            StringBuilder buffer = new StringBuilder();
+            try {
+                while (running.get()) {
+                    KataGoNative.GtpSession session = jniSession;
+                    if (session == null) break;
+                    String chunk = session.read(1000);
+                    if (chunk == null) break;
+                    buffer.append(chunk.replace("\r\n", "\n"));
+                    int end;
+                    while ((end = buffer.indexOf("\n\n")) >= 0) {
+                        String response = buffer.substring(0, end + 2);
+                        buffer.delete(0, end + 2);
+                        Log.d(TAG, "KataGo JNI GTP response: " + response.trim());
+                        responseQueue.offer(response);
+                    }
+                    if (buffer.length() > 8 * 1024 * 1024) throw new IOException("JNI GTP reply too large");
+                }
+                if (running.get()) Log.w(TAG, "JNI GTP reader reached EOF");
+            } catch (Exception | LinkageError e) {
+                if (running.get()) Log.e(TAG, "JNI GTP output reader failed", e);
+            }
+        }, "KataGo-JNI-stdout");
         readerThread.start();
     }
 
@@ -269,10 +357,17 @@ public class KataGoEngine {
 
     public synchronized void stop() {
         DebugLog.enter(TAG, "stop in, running=" + running.get() + ", process=" + process);
-        if (!running.get() && process == null) return;
+        if (!running.get() && process == null && jniSession == null) return;
         try { sendCommandSync("quit"); } catch (Exception ignored) {}
         running.set(false);
         humanSLRunning = false;
+        if (jniSession != null) {
+            KataGoNative.GtpSession old = jniSession;
+            jniSession = null;
+            try { old.close(); } catch (Exception | LinkageError e) { Log.w(TAG, "JNI GTP cleanup failed", e); }
+            responseQueue.clear();
+            Log.i(TAG, "KataGo JNI session stopped");
+        }
         try { if (writer != null) writer.close(); } catch (Exception ignored) {}
         try { if (reader != null) reader.close(); } catch (Exception ignored) {}
         try { if (errorReader != null) errorReader.close(); } catch (Exception ignored) {}
@@ -466,7 +561,7 @@ public class KataGoEngine {
 
     public boolean isReady() {
         DebugLog.enter(TAG, "isReady in, running=" + running.get());
-        return running.get() && process != null && process.isAlive();
+        return running.get() && (jniSession != null || (process != null && process.isAlive()));
     }
 
     /**
@@ -524,12 +619,13 @@ public class KataGoEngine {
         long startedNs = System.nanoTime();
         try {
             // KataGo v1.14.1: same move as genmove, with exact root visit stats on stderr.
-            if (!sendCommandSync("genmove_debug " + color)) return null;
+            boolean isJni = jniSession != null;
+            if (!sendCommandSync((isJni ? "genmove " : "genmove_debug ") + color)) return null;
             String response = waitForResponse(60000);
             long elapsedMs = (System.nanoTime() - startedNs) / 1000000L;
             String move = parseGtpResponse(response);
             try {
-                if (!stats.ready.await(500, TimeUnit.MILLISECONDS)) Log.w(TAG, "Search statistics not received from KataGo");
+                if (!isJni && !stats.ready.await(500, TimeUnit.MILLISECONDS)) Log.w(TAG, "Search statistics not received from KataGo");
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
@@ -891,6 +987,10 @@ public class KataGoEngine {
     private synchronized boolean sendCommandSync(String command) {
         DebugLog.enter(TAG, "sendCommandSync in, command=" + command + ", running=" + running.get());
         if (!running.get() && !"quit".equals(command)) return false;
+        if (jniSession != null) {
+            try { return jniSession.send(command); }
+            catch (Exception | LinkageError e) { Log.e(TAG, "JNI GTP send failed: " + command, e); return false; }
+        }
         if (writer == null) return false;
         try {
             Log.d(TAG, "Sending: " + command);
