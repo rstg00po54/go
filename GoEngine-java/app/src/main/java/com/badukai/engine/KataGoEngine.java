@@ -204,7 +204,7 @@ public class KataGoEngine {
                     humanSLRunning = useHumanSL;
                     startReaderThread();
                     responseQueue.clear();
-                    if (!sendCommandSync("name") || !waitForStartupResponse(180000))
+                    if (!sendCommandSync("name") || !waitForStartupResponse(360000))
                         throw new IOException("GPU OpenCL JNI GTP did not become ready");
                     Log.i(TAG, "=== GPU/OPENCL JNI ENGINE STARTED SUCCESSFULLY ===");
                     return true;
@@ -748,7 +748,7 @@ public class KataGoEngine {
 
     public boolean setBoardSize(int size) {
         DebugLog.enter(TAG, "setBoardSize in, size=" + size);
-        return simpleCommand("boardsize " + size, (jniSession != null || gpuSession != null) ? 90000 : 5000);
+        return simpleCommand("boardsize " + size, gpuSession != null ? 360000 : jniSession != null ? 90000 : 5000);
     }
 
     /** Initialize KataGo with the same fixed handicap positions as the Java board. */
