@@ -133,6 +133,14 @@ adb -s 10AFB21HP5002ZK logcat -d -s KataGoOpenCLProbe:I '*:S'
 3. 先完成 CPU/Eigen 生命周期：Java `start(model, config)`、`sendCommand`、`stopSearch`、`destroy`，确认 `name`、`boardsize`、`play`、`genmove`、`undo`、分析；两套会话的全局状态需要核查。
 4. CPU JNI 真机验证通过前，现有 `KataGoEngine.java` 的 `ProcessBuilder` 默认入口和 Gradle PIE 打包保持不变。CPU 迁移后再让 GPU OpenCL 后端进入同一个 JNI 主库；**现阶段未创建真正的 `libkatago.so`**。
 
+### 2026-10-10 单设备优先验证与 JNI 链接修复
+
+- 近期**只在 RK3588（ADB serial `8719e18a71a2a66c`）验证 CPU JNI、GTP 会话和 GPU JNI**；vivo 已验证 APP/OpenCL 能访问，暂不重复每次测试。RK3588 功能完成后再进行手机兼容回归。
+- 用户 Ubuntu 首次运行 `bash tools/build_katago_from_source.sh eigenjni`：114/114 份源文件编译到了最终共享库链接步骤，但因缺少 `Version::getGitRevision`、`getKataGoVersion`、`getKataGoVersionForHelp`、`getKataGoVersionFullInfo` 而出现 `ld.lld: undefined symbol`，未生成通过验证的 `libkatago.so`。
+- 根因已确认：上述 Version 实现原来写在 `native/KataGo/cpp/main.cpp` 内；启用 JNI 构建时必须排除 `main()`，却也排除了版本元数据实现。
+- [x] 新建 `native/KataGo/cpp/version.cpp`、从 `main.cpp` 移出完整 Version 实现，并将 `version.cpp` 添加到 `KATAGO_SOURCE_FILES`；命令行 PIE 与 JNI 共享库共用版本实现，避免重复符号。
+- [ ] **待 RK3588 用户环境复测** `bash tools/build_katago_from_source.sh eigenjni`，成功后打包 `./build.sh -PenableKataGoJniCore=true`，再用 `--ez katago_jni true` 检查 APP 内 JNI 核心动态装载。暂不标记链接和 GTP JNI 功能完成。
+
 ### 阶段 1A：独立 CPU/Eigen JNI ELF 构建起点（代码已提交、真机验证未完成）
 
 - [x] `native/KataGo/cpp/CMakeLists.txt` 将原 `add_executable(katago ... main.cpp)` 源码列表拆到 `KATAGO_SOURCE_FILES`；默认仍生成 `katago` PIE，只有 `-DKATAGO_BUILD_JNI_LIBRARY=ON` 才调用 `add_library(katago SHARED ... katago_jni.cpp)`，排除 `main.cpp`。
