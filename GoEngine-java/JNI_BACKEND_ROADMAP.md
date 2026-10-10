@@ -89,6 +89,18 @@
 - [ ] 继续固定访问量 `--visits 20 --max-time 60` 的配对实验，排除时间截断造成的误差，然后再决定 APP 默认搜索线程数。
 - [ ] 设备兼容性仍待处理：Android 手机 `10AFB21HP5002ZK` 的 GPU 运行在动态链接阶段报 `libGLES_mali.so` verneed/DT_NEEDED 错误，先完成 RK3588 性能测试，再研究一份 ARM64 GPU 程序的通用 OpenCL 加载方案。
 
+### 2026-10-10 RK3588 与 vivo OpenCL ELF ABI 对比及实验构建
+
+诊断文件来自两台 ARM64 Android 设备，证明故障首先发生在 ELF 动态链接阶段：
+
+- RK3588 LubanCat-4IO（Android 12）：`/vendor/lib64/libOpenCL.so` 约 42MB、内部 SONAME=`libGLES_mali.so`，导出 `OPENCL_1.0`～`OPENCL_3.0` 符号版本。旧 GPU 可执行文件 `DT_NEEDED libGLES_mali.so`，且 `VERNEED OPENCL_1.0`。
+- vivo V2502A（Android 16）：`/vendor/lib64/libOpenCL.so` 约 167KB、SONAME=`libOpenCL.so`，未显示 `OPENCL_1.0` 版本定义；`/vendor/lib64/egl/libGLES_mali.so` 是另一份约 53MB 的 Mali 驱动。
+- 将手机 `libOpenCL.so` 简单重命名为 `libGLES_mali.so` 不能满足旧程序的 `DT_NEEDED` + `VERNEED`，这与手机 OpenCL 运算性能无关。
+
+已添加 **隔离的 openclportable 试验模式**：`ANDROID_SERIAL=10AFB21HP5002ZK bash tools/build_katago_from_source.sh openclportable`，首次自动把该手机的 loader 库缓存为本地 **仅链接用** 的 `~/.cache/goengine_katago/opencl_arm64_portable/libOpenCL.so`（不进仓库、不打进 APK）。生成 `build/katago_android_arm64_openclportable/libkatago_exec_opencl.so`，不覆盖旧的 RK3588 版本，也不修改 CPU 或 APK。脚本核验新 ELF 只需求 `libOpenCL.so`，且没有 Mali 专属 OpenCL 版本依赖。
+
+测试方式：使用 `KATAGO_BENCH_GPU_BINARY="$PWD/build/katago_android_arm64_openclportable/libkatago_exec_opencl.so"` 指定替代版，再分别指定 `ANDROID_SERIAL` 对手机、RK3588 跑 `bash tools/benchmark_katago_android.sh gpu`。GTP 真实落子脚本也支持 `--gpu-binary <path>`。**上述通用 ELF 的真机加载、GPU 推理尚未完成测试**，APP linker namespace / SELinux 更须单独验证。
+
 注意：这个实验先保留两个独立的 Android PIE 可执行文件，不代表阶段 3 的「同一个 JNI `.so` CPU/GPU 运行时切换」已经完成。Android NDK 不自带厂商 OpenCL 库；库是否对 APP 可见还需要设备侧验证。
 
 ## 阶段 1：CPU/Eigen 真正 JNI 化 —— 首先实现
