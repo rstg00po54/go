@@ -134,8 +134,11 @@ public:
         : input_(&inputBuf_), output_(&outputBuf_),
           worker_([this, model, config] {
               try {
+                  // TCLAP removes args[0] as the executable/subcommand name.
+                  // Omitting "gtp" caused it to treat "-model" as the name,
+                  // fail on the model path, and call exit(1) on the Android APP.
                   const std::vector<std::string> args = {
-                      "-model", model, "-config", config
+                      "gtp", "-model", model, "-config", config
                   };
                   const int result = MainCmds::gtpWithIO(args, input_, output_);
                   if (result != 0) outputBuf_.message("? JNI GTP exited with code " + std::to_string(result) + "\n\n");
