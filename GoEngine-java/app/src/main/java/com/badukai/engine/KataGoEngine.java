@@ -544,10 +544,12 @@ public class KataGoEngine {
     }
 
     private File findInstalledHumanModel(File dir) throws IOException {
+        // Installed files are app-private and were checked when imported/downloaded.
+        // Avoid hashing the full Human SL model again on every app startup.
         File compressed = new File(dir, HUMAN_MODEL_NAME);
-        if (isTrustedHumanModel(compressed)) return compressed;
+        if (isValidHumanModel(compressed)) return compressed;
         File raw = new File(dir, HUMAN_MODEL_RAW_NAME);
-        return isTrustedHumanModel(raw) ? raw : null;
+        return isValidHumanModel(raw) ? raw : null;
     }
 
     /** Load from either official gzip asset or its verified decompressed .bin equivalent. */
