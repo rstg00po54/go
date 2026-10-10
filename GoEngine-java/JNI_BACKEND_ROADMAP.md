@@ -330,6 +330,12 @@ bash tools/test_katago_gpu_jni_android.sh 8719e18a71a2a66c
 
 正常 CPU APK 继续使用旧参数 `./build.sh -PenableKataGoJniCore=true`。GPU smoke 的独立 activity 在不启用 `-PenableKataGoGpuJni=true` 时由 manifest 禁用，不会影响正常主界面。
 
+### 2026-10-10 GPU/OpenCL IPC GTP 响应分帧 Bug 修复（待 APP 真机复测）
+
+- [x] 用户 14:10:17 的 RK3588 真机原生 GTP 日志显示，10b 及 Human SL 均已命中 OpenCL tuning cache；14:10:26 `Loaded human SL model` 和 `GTP ready`。APP 日志却始终缺少 `name` 回复，确认问题已从自动调优转移到 Java IPC 解析。
+- [x] 找到 `KataGoEngine.startGpuReaderThread()` 的确定性错误：`buffer.indexOf("\\\\n\\\\n")` 在 Java 中搜索**字面反斜杠加 n**，而实际 GTP stdout 使用真实 `\\n\\n` 结尾。修正为与 CPU JNI reader 完全一致的真实双换行终止符，恢复 GPU IPC 应答拼包、分帧和 `responseQueue` 投递。提交 `42884d61`。
+- [ ] 修复后需编译 APK 并实测 `KataGo GTP ready response: = KataGo`、`=== GPU/OPENCL JNI ENGINE STARTED SUCCESSFULLY ===`、`Game backend requested=GPU actual=GPU/OpenCL JNI ready=true`，然后测试真实 `genmove`、悔棋、形势判断以及切回 CPU。尚未声称 GPU APP 对弈已通过。
+
 ### 2026-10-10 RK3588 GPU + Human SL 首次 OpenCL 调优定位及超时修复
 
 - [x] 14:00:59 APP 选择 GPU/OpenCL IPC 成功启动 `:katago_gpu` 进程并创建 GTP 会话，**不是 JNI 加载或 IPC 故障**。
