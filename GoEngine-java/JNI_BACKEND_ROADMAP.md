@@ -316,7 +316,8 @@ readelf -d build/katago_android_arm64_opencljni/libkatago.so | grep -E 'NEEDED|S
 - [x] GPU 活动仅通过 ADB 显式启动；测试真实 `genmove` 和 `kata-raw-nn`，日志标签 `KataGoGpuJni`；`tools/test_katago_gpu_jni_android.sh` 自动安装、启动、轮询 PASS/FAIL、保存日志并在失败时打印 crash buffer。
 - [x] **2026-10-10 RK3588 Android APP 真机 GPU/OpenCL JNI 推理日志确认**：独立进程 PID 6008 在 13:31:05 完成 JNI 动态库加载并成功创建会话，GTP 会话继续执行到 `clear_board`、`kata-raw-nn 0`（返回 19×19 的 `whiteWin 0.541861`、`whiteLead 1.186`、完整 `policy` 和 `whiteOwnership`），随后 13:32:49 `Controller: quit`、`GPU -1 finishing, processed 19 rows 19 batches`、`All cleaned up, quitting`。因测试入口按顺序执行 `genmove W`、`undo`、`clear_board`、`kata-raw-nn 0` 且错误即停止，抵达 `kata-raw-nn 0` 可确定前序命令在该次测试中成功；**后续已收到完整 PASS 标记及命令响应，烟雾测试已通过**。这证实 APP 进程动态链接器可加载 GPU JNI/OpenCL，且 GPU 实际执行了 19×19 NN；整轮 13:31:05–13:32:49 约 104 秒，包含可能的首次调优，不能当作每步性能。
 - [x] **完整成功日志**：2026-10-10 13:32:49.355 `Sending genmove W`，13:32:49.788 `genmove W -> = Q16`（约 433ms，接近配置中的 `maxTime=0.4` 搜索时间限制），13:32:49.810 `GPU OpenCL raw neural network inference OK`，13:32:49.896 `PASS: GPU JNI OpenCL GTP name/boardsize/play/genmove/undo/clear_board/kata-raw-nn`。验证了 Android APP 内独立 GPU JNI 真实落子、裸 NN 推理、GTP 和资源清理，不再只是 ELF/linker 验证。
-- [ ] 需重新运行同一 GPU smoke 对比第二次启动耗时、确认私有目录 OpenCL 调优缓存被复用；首次约 104 秒不等于每步 104 秒。GPU 433ms 和 CPU smoke 的 416ms 配置/状态并不严格相同，不能由此断言 GPU 快慢。
+- [x] **2026-10-10 第二次 RK3588 GPU JNI smoke PASS**：13:37:58.386 创建 GPU 会话，13:38:01.949 `name -> = KataGo`，JNI 初始化至 ready 约 **3.56s**；13:38:01.950 发出 `genmove W`、13:38:02.370 返回 `D16`（约 **420ms**）；13:38:02.373 发出 `kata-raw-nn 0`、13:38:02.393 返回白胜率 `0.541861`（约 **20ms**）；13:38:02.455 最终 `PASS`。完整运行约 **4.1s**，首次约 104s，对比缩短约 25 倍。**符合复用自动调优缓存的现象，但现有摘录没有明确缓存命中记录，不能仅凭时间推断已证实缓存读取**。
+- [ ] 如需验证具体调优缓存命中，请检查 `files/jni_gpu_smoke/gtp_logs` 中的 OpenCL tuning 文件加载消息；GPU 420ms 接近 config 的 `maxTime 0.4`，不能用它对比 CPU 416ms 得出后端性能结论。
 - [ ] 完整 UI CPU/GPU 后端选择、Human SL GPU 运行、并发/长时间稳定性，以及未来**同一 JNI 库**运行时 backend 切换仍待实现。
 
 RK3588 测试命令（无须再编译 GPU C++，只要使用已生成的 ELF）：
