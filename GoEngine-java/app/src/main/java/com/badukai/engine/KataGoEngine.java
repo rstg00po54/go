@@ -193,7 +193,7 @@ public class KataGoEngine {
                 humanSLRunning = useHumanSL;
                 startReaderThread();
                 responseQueue.clear();
-                if (!sendCommandSync("name") || !waitForStartupResponse(30000)) {
+                if (!sendCommandSync("name") || !waitForStartupResponse(120000)) {
                     Log.e(TAG, "JNI GTP failed to become ready; retrying with PIE");
                     jniDisabledForProcess = true;
                     stop();
@@ -670,7 +670,7 @@ public class KataGoEngine {
 
     public boolean setBoardSize(int size) {
         DebugLog.enter(TAG, "setBoardSize in, size=" + size);
-        return simpleCommand("boardsize " + size, 5000);
+        return simpleCommand("boardsize " + size, jniSession != null ? 90000 : 5000);
     }
 
     /** Initialize KataGo with the same fixed handicap positions as the Java board. */
