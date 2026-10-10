@@ -16,11 +16,19 @@ elif [[ "${1:-}" == "--with-native" || "${1:-}" == "with-native" ]]; then
 fi
 
 if [[ "$BUILD_GPU_JNI" == true ]]; then
+    echo "Building KataGo CPU/Eigen JNI..."
+    bash "$PROJECT_DIR/tools/build_katago_from_source.sh" eigenjni
     echo "Building KataGo GPU/OpenCL JNI..."
     bash "$PROJECT_DIR/tools/build_katago_from_source.sh" opencljni
 fi
 
-# --apk-only reuses the previously built GPU JNI library when one exists.
+# --apk-only reuses previously built CPU/GPU JNI libraries when present.
+if [[ -s "$PROJECT_DIR/build/katago_android_arm64_eigenjni/libkatago.so" ]]; then
+    GRADLE_ARGS+=("-PenableKataGoJniCore=true")
+elif [[ "$BUILD_GPU_JNI" == true ]]; then
+    echo "ERROR: CPU JNI library was not produced" >&2
+    exit 1
+fi
 if [[ -s "$PROJECT_DIR/build/katago_android_arm64_opencljni/libkatago_gpu.so" ]]; then
     GRADLE_ARGS+=("-PenableKataGoGpuJni=true")
 elif [[ "$BUILD_GPU_JNI" == true ]]; then
