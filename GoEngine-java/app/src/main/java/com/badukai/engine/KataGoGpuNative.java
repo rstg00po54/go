@@ -18,6 +18,15 @@ public final class KataGoGpuNative {
         Log.i(TAG, "STARTUP_TIMING phase=gpu_jni_load_library ms=" + (System.nanoTime() - startedNs) / 1000000.0);
     }
 
+    public static String checkCoreLinkage() {
+        try {
+            load();
+            return nativeBuildStatus();
+        } catch (LinkageError | SecurityException e) {
+            return "KataGo GPU JNI unavailable: " + e;
+        }
+    }
+
     public static GtpSession createSession(File model, File config, File humanModel) {
         long totalNs = System.nanoTime();
         load();
@@ -65,6 +74,7 @@ public final class KataGoGpuNative {
         }
     }
 
+    private static native String nativeBuildStatus();
     private static native long nativeCreateSession(String modelPath, String configPath, String humanModelPath);
     private static native boolean nativeSendCommand(long handle, String command);
     private static native String nativeReadOutput(long handle, int timeoutMs);
