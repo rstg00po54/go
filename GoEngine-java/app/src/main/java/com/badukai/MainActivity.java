@@ -175,7 +175,7 @@ public class MainActivity extends AppCompatActivity {
                 config = out.toString("UTF-8");
             }
             config = config.replace("logDir = gtp_logs", "logDir = " + logs.getAbsolutePath());
-            config += "\\nhomeDataDir = " + home.getAbsolutePath() + "\\n";
+            config += "\nhomeDataDir = " + home.getAbsolutePath() + "\n";
             Files.write(configFile.toPath(), config.getBytes(StandardCharsets.UTF_8));
 
             Log.i(tag, "Starting JNI CPU/Eigen GTP session");
@@ -189,7 +189,7 @@ public class MainActivity extends AppCompatActivity {
                     long deadline = android.os.SystemClock.uptimeMillis() + 90000;
                     String response = null;
                     while (android.os.SystemClock.uptimeMillis() < deadline) {
-                        int end = responseBuffer.indexOf("\\n\\n");
+                        int end = responseBuffer.indexOf("\n\n");
                         if (end >= 0) {
                             response = responseBuffer.substring(0, end).trim();
                             responseBuffer.delete(0, end + 2);
@@ -197,11 +197,11 @@ public class MainActivity extends AppCompatActivity {
                         }
                         String chunk = session.read(1000);
                         if (chunk == null) throw new IllegalStateException("JNI GTP ended before " + command);
-                        responseBuffer.append(chunk.replace("\\r\\n", "\\n"));
+                        responseBuffer.append(chunk.replace("\r\n", "\n"));
                     }
                     if (response == null || !response.startsWith("="))
                         throw new IllegalStateException("GTP " + command + " failed: " + response);
-                    Log.i(tag, command + " -> " + response.replace('\\n', ' ').substring(0, Math.min(140, response.length())));
+                    Log.i(tag, command + " -> " + response.replace('\n', ' ').substring(0, Math.min(140, response.length())));
                 }
                 Log.i(tag, "PASS: JNI GTP name/boardsize/komi/play/genmove/undo/clear_board");
             }
