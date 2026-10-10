@@ -10,6 +10,8 @@ plugins {
 
 val enableKataGoProbe = providers.gradleProperty("enableKataGoProbe")
     .map { it.equals("true", ignoreCase = true) }.getOrElse(false)
+val enableKataGoJniCore = providers.gradleProperty("enableKataGoJniCore")
+    .map { it.equals("true", ignoreCase = true) }.getOrElse(false)
 
 android {
     namespace = "com.badukai"
@@ -89,6 +91,7 @@ val katagoBuildDir = File(katagoWorkDir, "build_android_arm64_eigen")
 val katagoExecutable = File(katagoBuildDir, "katago")
 val katagoGeneratedJniDir = layout.buildDirectory.dir("generated/katagoJniLibs").get().asFile
 val katagoPrebuiltDir = file("src/main/jniLibs/arm64-v8a")
+val katagoJniCoreFile = rootProject.file("build/katago_android_arm64_eigenjni/libkatago.so")
 
 val configureKataGoNative = tasks.register<Exec>("configureKataGoNative") {
     group = "build"
@@ -148,6 +151,7 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
     inputs.file(inputExe)
     val sharedCpp = File(katagoPrebuiltDir, "libc++_shared.so")
     if (sharedCpp.isFile) inputs.file(sharedCpp)
+    if (enableKataGoJniCore) inputs.file(katagoJniCoreFile)
     outputs.dir(katagoGeneratedJniDir)
     doLast {
         if (!inputExe.isFile) throw GradleException("KataGo native executable missing: $inputExe")
@@ -174,6 +178,11 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
         }
         stageFile(inputExe, "libkatago_exec.so")
         if (sharedCpp.isFile) stageFile(sharedCpp, "libc++_shared.so")
+        if (enableKataGoJniCore) {
+            if (!katagoJniCoreFile.isFile) throw GradleException(
+                "JNI core missing: $katagoJniCoreFile. Run bash tools/build_katago_from_source.sh eigenjni first.")
+            stageFile(katagoJniCoreFile, "libkatago.so")
+        }
         println("KataGo native binary ready: ${File(abiDir, "libkatago_exec.so")}")
     }
 }
