@@ -4,6 +4,13 @@
 
 #include "../core/test.h"
 #include "../neuralnet/opencltuner.h"
+#include "../core/makedir.h"
+#include <chrono>
+#include <cstdio>
+#include <cstdint>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
 
 using namespace std;
 
@@ -117,6 +124,146 @@ cl_program OpenCLHelpers::compileProgram(const string& name, cl_context context,
     }
     clReleaseProgram(program);
     throw CompileError(s);
+  }
+  return program;
+}
+
+// KataGo inference-only OpenCL program binary cache (the tuner still uses source).
+// On cache load failures, always retry compiling from source rather than failing startup.
+namespace {
+  using CacheClock = std::chrono::steady_clock;
+
+  double cacheElapsedMs(CacheClock::time_point start) {
+    return std::chrono::duration<double,std::milli>(CacheClock::now() - start).count();
+  }
+
+  uint64_t fnv1a(const unsigned char* bytes, size_t length) {
+    uint64_t hash = UINT64_C(14695981039346656037);
+    for(size_t i = 0; i < length; i++) {
+      hash ^= bytes[i];
+      hash *= UINT64_C(1099511628211);
+    }
+    return hash;
+  }
+
+  uint64_t hashString(const string& s) {
+    return fnv1a(reinterpret_cast<const unsigned char*>(s.data()), s.size());
+  }
+
+  string deviceString(cl_device_id device, cl_device_info property) {
+    size_t length = 0;
+    if(clGetDeviceInfo(device,property,0,NULL,&length) != CL_SUCCESS || length < 2 || length > 16384)
+      return "";
+    vector<char> data(length,0);
+    if(clGetDeviceInfo(device,property,length,data.data(),NULL) != CL_SUCCESS)
+      return "";
+    return string(data.data());
+  }
+
+  string programCacheKey(const string& name, cl_device_id device, const string& source, const string& options) {
+    string key = "KATAGO_OPENCL_BINARY_CACHE_V1\n";
+    for(cl_device_info p : {CL_DEVICE_NAME,CL_DEVICE_VENDOR,CL_DRIVER_VERSION,CL_DEVICE_VERSION,CL_DEVICE_OPENCL_C_VERSION}) {
+      string value = deviceString(device,p);
+      if(value.empty()) return "";
+      key += std::to_string(value.size()) + ":" + value;
+    }
+    key += std::to_string(name.size()) + ":" + name;
+    key += std::to_string(options.size()) + ":" + options;
+    key += std::to_string(source.size()) + ":" + source;
+    std::ostringstream hash;
+    hash << std::hex << std::setfill('0') << std::setw(16) << hashString(key);
+    return hash.str();
+  }
+
+  bool readCachedProgram(const string& path, vector<unsigned char>& binary) {
+    std::ifstream input(path,std::ios::binary | std::ios::ate);
+    if(!input) return false;
+    std::streamoff length = input.tellg();
+    if(length <= 16 || length > 128LL * 1024 * 1024) return false;
+    input.seekg(0);
+    char magic[8];
+    uint64_t checksum = 0;
+    input.read(magic,8);
+    input.read(reinterpret_cast<char*>(&checksum),sizeof(checksum));
+    if(!input || string(magic,8) != "KGCLBIN1") return false;
+    binary.resize(static_cast<size_t>(length - 16));
+    input.read(reinterpret_cast<char*>(binary.data()),binary.size());
+    return input.good() && fnv1a(binary.data(),binary.size()) == checksum;
+  }
+
+  void writeCachedProgram(const string& path, cl_program program) {
+    cl_uint count = 0;
+    if(clGetProgramInfo(program,CL_PROGRAM_NUM_DEVICES,sizeof(count),&count,NULL) != CL_SUCCESS || count != 1)
+      return;
+    size_t size = 0;
+    if(clGetProgramInfo(program,CL_PROGRAM_BINARY_SIZES,sizeof(size),&size,NULL) != CL_SUCCESS ||
+       size == 0 || size > 128ULL * 1024 * 1024) return;
+    vector<unsigned char> binary(size);
+    unsigned char* dst = binary.data();
+    if(clGetProgramInfo(program,CL_PROGRAM_BINARIES,sizeof(dst),&dst,NULL) != CL_SUCCESS) return;
+    string tmp = path + ".tmp." + std::to_string(CacheClock::now().time_since_epoch().count());
+    std::ofstream output(tmp,std::ios::binary | std::ios::trunc);
+    if(!output) return;
+    const char magic[] = "KGCLBIN1";
+    uint64_t checksum = fnv1a(binary.data(),binary.size());
+    output.write(magic,8);
+    output.write(reinterpret_cast<const char*>(&checksum),sizeof(checksum));
+    output.write(reinterpret_cast<const char*>(binary.data()),binary.size());
+    output.close();
+    if(!output) { std::remove(tmp.c_str()); return; }
+    if(std::rename(tmp.c_str(),path.c_str()) != 0) std::remove(tmp.c_str());
+  }
+}
+
+cl_program OpenCLHelpers::compileProgramCached(
+  const string& name, cl_context context, const vector<cl_device_id>& devices,
+  const string& str, const string& options, const string& cacheDir,
+  OpenCLProgramCacheStats* stats
+) {
+  const string opts = options + " -cl-mad-enable -cl-fast-relaxed-math -cl-no-signed-zeros -cl-denorms-are-zero";
+  const string key = devices.size() == 1 && !cacheDir.empty()
+                   ? programCacheKey(name,devices[0],str,opts) : "";
+  const string path = key.empty() ? "" : cacheDir + "/" + name + "-" + key + ".bin";
+  if(!path.empty()) {
+    const auto loadStart = CacheClock::now();
+    vector<unsigned char> binary;
+    if(readCachedProgram(path,binary)) {
+      size_t length = binary.size();
+      const unsigned char* data = binary.data();
+      cl_int binaryStatus = CL_INVALID_BINARY, err = CL_INVALID_BINARY;
+      cl_program program = clCreateProgramWithBinary(context,1,devices.data(),
+                                                     &length,&data,&binaryStatus,&err);
+      if(program != NULL && err == CL_SUCCESS && binaryStatus == CL_SUCCESS) {
+        err = clBuildProgram(program,1,devices.data(),opts.c_str(),NULL,NULL);
+        if(err == CL_SUCCESS) {
+          if(stats) { stats->hits++; stats->binaryLoadMs += cacheElapsedMs(loadStart); }
+          return program;
+        }
+      }
+      if(program != NULL) clReleaseProgram(program);
+      std::remove(path.c_str());
+      if(stats) stats->invalid++;
+    }
+    else {
+      // Broken or truncated cache should not block a clean source rebuild.
+      std::ifstream existing(path,std::ios::binary);
+      if(existing.good()) { existing.close(); std::remove(path.c_str()); if(stats) stats->invalid++; }
+    }
+    if(stats) stats->binaryLoadMs += cacheElapsedMs(loadStart);
+  }
+
+  if(stats) stats->misses++;
+  const auto compileStart = CacheClock::now();
+  cl_program program = compileProgram(name,context,devices,str,options);
+  if(stats) stats->sourceBuildMs += cacheElapsedMs(compileStart);
+  if(!path.empty()) {
+    try {
+      MakeDir::make(cacheDir);
+      writeCachedProgram(path,program);
+      std::ifstream saved(path,std::ios::binary);
+      if(saved.good() && stats) stats->saved++;
+    }
+    catch(...) { /* Cache is optional; source-built program is usable. */ }
   }
   return program;
 }
