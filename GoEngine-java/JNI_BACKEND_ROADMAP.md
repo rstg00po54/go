@@ -24,7 +24,25 @@
 - [x] 同设备 19x19 / 10b / 100 visits / 2 搜索线程 / 2 positions GPU/OpenCL：`43.48 visits/s`、`41.33 nnEvals/s`、约 4.6 秒；较 CPU `39.99 visits/s` 约快 `8.7%`。首次调优约 104 秒（18:17:31–18:19:15）。该样本仅 2 个局面，结果不代表稳定性能优势。
 - [x] 记录 ADB Shell 测试的动态加载限制：PIE 引用的 SONAME 为 `libGLES_mali.so`，默认搜索路径找不到；复制手机 `/vendor/lib64/libOpenCL.so` 到 `/data/local/tmp/katago_bench/libGLES_mali.so` 并设置 `LD_LIBRARY_PATH` 后测试成功。
 - [ ] **另行验证 Android APP/JNI 场景的 linker namespace 和 SELinux 访问权限**；ADB Shell 能跑不代表 APK 内可直接访问供应商驱动。
-- [ ] 进行更多局面/线程数的长样本复测（例如 `KATAGO_BENCH_VISITS=200 KATAGO_BENCH_POSITIONS=5 KATAGO_BENCH_THREADS=2,4,6`），再决定 JNI 双后端整合的优先级；当前 GPU 仅约快 8.7%。
+- [x] **2026-10-10 多线程复测完成**：19x19、10b、200 visits、5 positions，搜索线程 2/4/6/8；GPU 在 8 线程达到 115.91 visits/s，相比 CPU 同为 8 线程的 79.33 visits/s 快约 46.1%；2 线程时 GPU 略慢。
+- [ ] 对 APP 实际的短时落子设置（当前 config `maxVisits=20`、`maxTime=0.4`）验证用户可感知延迟；关注更长测试时的发热、耗电和降频，不能直接将 benchmark 的 8 线程结果认定为 APP 最佳配置。
+
+### 2026-10-10 手机多线程 benchmark 原始对比
+
+同一 Android 设备 Mali-G610 r0p0，`KATAGO_BENCH_VISITS=200`、`KATAGO_BENCH_POSITIONS=5`、`KATAGO_BENCH_THREADS=2,4,6,8`、19x19、10b 模型。以下百分比是 GPU 相对于**同线程数** CPU 的 visits/s 变化：
+
+| 搜索线程 | CPU visits/s | GPU visits/s | GPU 相对 CPU | CPU nnEvals/s | GPU nnEvals/s | GPU avgBatchSize |
+|---:|---:|---:|---:|---:|---:|---:|
+| 2 | 44.64 | 42.80 | -4.1% | 39.62 | 40.20 | 1.00 |
+| 4 | 78.55 | 77.01 | -2.0% | 71.51 | 68.44 | 1.98 |
+| 6 | 80.34 | 100.71 | +25.4% | 75.17 | 93.72 | 3.01 |
+| 8 | 79.33 | 115.91 | +46.1% | 75.04 | 109.41 | 3.97 |
+
+- CPU 在 4–8 线程左右速度进入平台，GPU 随 batch≈1→4 继续提升；GPU 8 线程相比 CPU **最佳 6 线程**（80.34 visits/s）快约 44.3%。
+- GPU 通过调优缓存快速启动；仍为 `FP16Storage=true`、`FP16Compute=true`、WMMA 禁用。
+- benchmark 中的 `EloDiff` 是启发式估算，不是 CPU/GPU 实测等级分；不同后端/线程可能有不同的蒙特卡洛波动，数据需要重复、交叉顺序和温控验证。
+
+
 
 注意：这个实验先保留两个独立的 Android PIE 可执行文件，不代表阶段 3 的「同一个 JNI `.so` CPU/GPU 运行时切换」已经完成。Android NDK 不自带厂商 OpenCL 库；库是否对 APP 可见还需要设备侧验证。
 
