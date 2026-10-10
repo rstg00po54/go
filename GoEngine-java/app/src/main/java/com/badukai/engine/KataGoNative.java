@@ -6,7 +6,24 @@ import java.io.File;
 public final class KataGoNative {
     private KataGoNative() {}
 
-    private static synchronized void load() { System.loadLibrary("katago"); }
+    private static String selectedLibrary = "katago";
+    private static String loadedLibrary;
+
+    /**
+     * GPU GTP smoke runs in a dedicated Android process. It must select its
+     * own library before calling any other KataGoNative method.
+     */
+    public static synchronized void selectIsolatedGpuLibrary() {
+        if (loadedLibrary != null) throw new IllegalStateException("KataGo JNI already loaded: " + loadedLibrary);
+        selectedLibrary = "katago_gpu";
+    }
+
+    private static synchronized void load() {
+        if (loadedLibrary == null) {
+            System.loadLibrary(selectedLibrary);
+            loadedLibrary = selectedLibrary;
+        }
+    }
 
     public static String checkCoreLinkage() {
         try {
