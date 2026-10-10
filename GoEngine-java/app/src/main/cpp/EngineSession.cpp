@@ -257,3 +257,37 @@ Java_com_badukai_engine_KataGoNative_nativeDestroySession(JNIEnv*, jclass, jlong
     // Destroy outside the registry mutex; joining the native search can block.
     removed.reset();
 }
+
+#ifdef USE_OPENCL_BACKEND
+// GPU-specific JNI symbol names prevent ART from resolving methods to the
+// CPU/Eigen libkatago.so when the user switches backends in one APP process.
+extern "C" JNIEXPORT jlong JNICALL
+Java_com_badukai_engine_KataGoGpuNative_nativeCreateSession(JNIEnv* env, jclass cls, jstring model, jstring config, jstring human) {
+    return Java_com_badukai_engine_KataGoNative_nativeCreateSession(env,cls,model,config,human);
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_badukai_engine_KataGoGpuNative_nativeSendCommand(JNIEnv* env, jclass cls, jlong handle, jstring cmd) {
+    return Java_com_badukai_engine_KataGoNative_nativeSendCommand(env,cls,handle,cmd);
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_badukai_engine_KataGoGpuNative_nativeReadOutput(JNIEnv* env, jclass cls, jlong handle, jint timeout) {
+    return Java_com_badukai_engine_KataGoNative_nativeReadOutput(env,cls,handle,timeout);
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_badukai_engine_KataGoGpuNative_nativeIsSessionAlive(JNIEnv* env, jclass cls, jlong handle) {
+    return Java_com_badukai_engine_KataGoNative_nativeIsSessionAlive(env,cls,handle);
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_badukai_engine_KataGoGpuNative_nativeStopSearch(JNIEnv* env, jclass cls, jlong handle) {
+    return Java_com_badukai_engine_KataGoNative_nativeStopSearch(env,cls,handle);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_badukai_engine_KataGoGpuNative_nativeDestroySession(JNIEnv* env, jclass cls, jlong handle) {
+    Java_com_badukai_engine_KataGoNative_nativeDestroySession(env,cls,handle);
+}
+#endif
