@@ -80,6 +80,11 @@ public:
         return closed_ && pending_.empty();
     }
 
+    bool isOpen() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return !closed_;
+    }
+
     void message(const std::string& s) { append(s.data(), s.size()); }
 
     void close() {
@@ -159,6 +164,7 @@ public:
     bool send(const std::string& line) { return inputBuf_.send(line); }
     std::string read(int timeoutMs) { return outputBuf_.read(timeoutMs); }
     bool finished() { return outputBuf_.isClosedAndEmpty(); }
+    bool alive() { return outputBuf_.isOpen(); }
 
 private:
     QueueInput inputBuf_;
@@ -222,6 +228,12 @@ Java_com_badukai_engine_KataGoNative_nativeReadOutput(JNIEnv* env, jclass, jlong
     const std::string data = session->read(std::min(60000, std::max(0, static_cast<int>(timeoutMs))));
     if (data.empty() && session->finished()) return nullptr;
     return env->NewStringUTF(data.c_str());
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_badukai_engine_KataGoNative_nativeIsSessionAlive(JNIEnv*, jclass, jlong handle) {
+    auto session = lookup(handle);
+    return session && session->alive() ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
