@@ -1215,9 +1215,20 @@ struct ConvLayer {
       };
 
       const auto winogradStart = OpenCLClock::now();
-      for(int oc = 0; oc < outChannelsPadded; oc++) {
-        for(int ic = 0; ic < inChannelsPadded; ic++) {
-          float tmp[maxTileYSize][maxTileXSize];
+      // Keep the original arithmetic, but transpose each small channel tile in cache.
+      // The destination is [tile][input channel][output channel]. Writing it one
+      // output channel at a time caused highly scattered stores on large models.
+      static constexpr int ocBlockSize = 16;
+      static constexpr int icBlockSize = 8;
+      static constexpr int maxTransformElts = maxTileXSize * maxTileYSize;
+      float blockTransforms[ocBlockSize * icBlockSize * maxTransformElts];
+      for(int ocStart = 0; ocStart < outChannelsPadded; ocStart += ocBlockSize) {
+        const int ocEnd = std::min(ocStart + ocBlockSize, outChannelsPadded);
+        for(int icStart = 0; icStart < inChannelsPadded; icStart += icBlockSize) {
+          const int icEnd = std::min(icStart + icBlockSize, inChannelsPadded);
+          for(int oc = ocStart; oc < ocEnd; oc++) {
+            for(int ic = icStart; ic < icEnd; ic++) {
+              float tmp[maxTileYSize][maxTileXSize];
           for(int subY = 0; subY < convYSize; subY++) {
             for(int subX = 0; subX < convXSize; subX++) {
               if(oc < outChannels && ic < inChannels)
@@ -1253,9 +1264,21 @@ struct ConvLayer {
               transform5x5_6(tmp[0][subX], tmp[1][subX], tmp[2][subX], tmp[3][subX], tmp[4][subX], tmp[5][subX]);
           }
 
-          for(int subY = 0; subY < inTileYSize; subY++) {
-            for(int subX = 0; subX < inTileXSize; subX++) {
-              transWeights[((subY*inTileXSize + subX)*inChannelsPadded + ic)*outChannelsPadded + oc] = tmp[subY][subX];
+              const int blockOffset = ((oc-ocStart)*icBlockSize + (ic-icStart))*maxTransformElts;
+              for(int subY = 0; subY < inTileYSize; subY++) {
+                for(int subX = 0; subX < inTileXSize; subX++)
+                  blockTransforms[blockOffset + subY*inTileXSize + subX] = tmp[subY][subX];
+              }
+            }
+          }
+
+          // For each output plane, store up to 16 adjacent output channels.
+          // No floating-point arithmetic is reordered, only the final writes.
+          for(int tile = 0; tile < inTileXYSize; tile++) {
+            for(int ic = icStart; ic < icEnd; ic++) {
+              float* dst = &transWeights[((size_t)tile*inChannelsPadded + ic)*outChannelsPadded + ocStart];
+              for(int oc = ocStart; oc < ocEnd; oc++)
+                dst[oc-ocStart] = blockTransforms[((oc-ocStart)*icBlockSize + (ic-icStart))*maxTransformElts + tile];
             }
           }
         }
