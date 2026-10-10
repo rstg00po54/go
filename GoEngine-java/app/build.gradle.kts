@@ -151,6 +151,7 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
     inputs.file(inputExe)
     val sharedCpp = File(katagoPrebuiltDir, "libc++_shared.so")
     if (sharedCpp.isFile) inputs.file(sharedCpp)
+    inputs.property("enableKataGoJniCore", enableKataGoJniCore)
     if (enableKataGoJniCore) inputs.file(katagoJniCoreFile)
     outputs.dir(katagoGeneratedJniDir)
     doLast {
@@ -182,6 +183,10 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
             if (!katagoJniCoreFile.isFile) throw GradleException(
                 "JNI core missing: $katagoJniCoreFile. Run bash tools/build_katago_from_source.sh eigenjni first.")
             stageFile(katagoJniCoreFile, "libkatago.so")
+        } else {
+            // An ordinary APK build must not accidentally retain an earlier
+            // opt-in JNI experiment in the persistent generated output folder.
+            File(abiDir, "libkatago.so").delete()
         }
         println("KataGo native binary ready: ${File(abiDir, "libkatago_exec.so")}")
     }
