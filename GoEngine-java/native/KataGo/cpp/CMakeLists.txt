@@ -291,7 +291,10 @@ if(KATAGO_BUILD_JNI_LIBRARY)
   if(NOT ANDROID)
     message(FATAL_ERROR "KATAGO_BUILD_JNI_LIBRARY currently supports Android only")
   endif()
-  add_library(katago SHARED ${KATAGO_SOURCE_FILES} ${CMAKE_CURRENT_LIST_DIR}/../../../app/src/main/cpp/katago_jni.cpp)
+  add_library(katago SHARED ${KATAGO_SOURCE_FILES}
+    ${CMAKE_CURRENT_LIST_DIR}/../../../app/src/main/cpp/katago_jni.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../../../app/src/main/cpp/EngineSession.cpp
+  )
   target_include_directories(katago PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 else()
   add_executable(katago ${KATAGO_SOURCE_FILES} main.cpp)
