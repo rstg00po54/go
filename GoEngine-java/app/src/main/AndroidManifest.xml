@@ -23,6 +23,14 @@
         <!-- Optional OpenCL, so devices without a public vendor library can still install the CPU APK. -->
         <uses-native-library android:name="libOpenCL.so" android:required="false" />
 
+        <!-- GPU-only JNI smoke runs in a separate process, disabled in normal APKs. -->
+        <activity
+            android:name=".GpuSmokeActivity"
+            android:exported="true"
+            android:enabled="${gpuJniSmokeEnabled}"
+            android:process=":katago_gpu"
+            android:theme="@android:style/Theme.Material.NoActionBar" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
