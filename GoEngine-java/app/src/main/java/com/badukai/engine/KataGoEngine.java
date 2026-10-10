@@ -264,7 +264,9 @@ public class KataGoEngine {
 
             if (useJni) {
                 try {
+                    phaseNs = System.nanoTime();
                     jniSession = KataGoNative.createSession(modelFile, configFile, humanFile);
+                    startupTiming("engine_cpu_jni_create", phaseNs);
                     if (jniSession == null) throw new IOException("KataGo JNI createSession returned null");
                 } catch (LinkageError | RuntimeException e) {
                     Log.e(TAG, "JNI startup failed, falling back to ProcessBuilder", e);
@@ -281,12 +283,19 @@ public class KataGoEngine {
                 humanSLRunning = useHumanSL;
                 startReaderThread();
                 responseQueue.clear();
-                if (!sendCommandSync("name") || !waitForStartupResponse(120000)) {
+                phaseNs = System.nanoTime();
+                boolean nameSent = sendCommandSync("name");
+                startupTiming("engine_cpu_gtp_name_send", phaseNs);
+                phaseNs = System.nanoTime();
+                boolean nameReady = nameSent && waitForStartupResponse(120000);
+                startupTiming("engine_cpu_gtp_name_wait", phaseNs);
+                if (!nameReady) {
                     Log.e(TAG, "JNI GTP failed to become ready; retrying with PIE");
                     jniDisabledForProcess = true;
                     stop();
                     return start(model, useHumanSL);
                 }
+                startupTiming("engine_java_start_total", totalStartNs);
                 Log.i(TAG, "=== JNI/EIGEN ENGINE STARTED SUCCESSFULLY ===");
                 return true;
             }
