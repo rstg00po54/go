@@ -467,15 +467,20 @@ public class KataGoEngine {
 
     private void startErrorReaderThread() {
         DebugLog.enter(TAG, "startErrorReaderThread in");
+        final BufferedReader sessionErrorReader = errorReader;
+        final Process expectedProcess = process;
+        final long generation = sessionGeneration;
         errorReaderThread = new Thread(() -> {
             try {
                 String line;
-                while (running.get() && (line = errorReader.readLine()) != null) {
+                while (running.get() && generation == sessionGeneration && expectedProcess == process
+                        && (line = sessionErrorReader.readLine()) != null) {
+                    if (!running.get() || generation != sessionGeneration || expectedProcess != process) break;
                     recordSearchStats(line);
                     Log.d(TAG, "KataGo stderr: " + line);
                 }
             } catch (IOException e) {
-                if (running.get()) Log.e(TAG, "Stderr reader failed", e);
+                if (running.get() && generation == sessionGeneration) Log.e(TAG, "Stderr reader failed", e);
             }
         }, "KataGo-stderr");
         errorReaderThread.start();
