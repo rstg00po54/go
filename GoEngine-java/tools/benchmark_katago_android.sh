@@ -159,19 +159,23 @@ run_benchmark() {
     "$ADB" -s "$SERIAL" push "$binary" "$REMOTE/$name" >/dev/null
     "$ADB" -s "$SERIAL" shell "chmod 755 $REMOTE/$name"
 
-    # Mali vendor libOpenCL.so may declare SONAME=libGLES_mali.so.
-    # Stage it in the test dir without changing /vendor or the APK.
-    if [[ "$mode" == "gpu" ]] && readelf -W -d "$binary" | grep -Fq '(NEEDED)             Shared library: [libGLES_mali.so]'; then
-        echo "Staging legacy RK3588 Mali OpenCL runtime"
-        # The old binary requires Mali's versioned OPENCL_1.0 symbols.
-        # Never rename a phone's SONAME=libOpenCL.so loader as libGLES_mali.so.
-        "$ADB" -s "$SERIAL" shell "cp /vendor/lib64/libOpenCL.so $REMOTE/libGLES_mali.so"
+    # Legacy RK3588 binary has VERNEED OPENCL_1.0, but new Mali fallback
+    # builds do not. For the latter use the phone's actual EGL driver first.
+    local ld_path="$REMOTE:/vendor/lib64:/system/vendor/lib64"
+    if [[ "$mode" == "gpu" ]] && readelf -W -d "$binary" | grep -Fq '[libGLES_mali.so]'; then
+        if readelf -W -V "$binary" | grep -Eq 'Name: OPENCL_[0-9]'; then
+            echo "Staging legacy RK3588 Mali OpenCL runtime"
+            "$ADB" -s "$SERIAL" shell "cp /vendor/lib64/libOpenCL.so $REMOTE/libGLES_mali.so"
+        else
+            echo "Using unversioned EGL Mali GPU driver (no legacy staging)"
+            ld_path="/vendor/lib64/egl:$REMOTE:/vendor/lib64:/system/vendor/lib64"
+        fi
     fi
 
     # Keep a complete log but display only useful progress and benchmark lines.
     # This also preserves previously generated OpenCL tuning cache on the device.
     set +e
-    "$ADB" -s "$SERIAL" shell "cd $REMOTE && HOME=$REMOTE TMPDIR=$REMOTE LD_LIBRARY_PATH=$REMOTE:/vendor/lib64:/system/vendor/lib64 $REMOTE/$name benchmark -model 10b.bin -config default_gtp.cfg -v $VISITS -t $THREADS -n $POSITIONS -boardsize $BOARD" 2>&1 |
+    "$ADB" -s "$SERIAL" shell "cd $REMOTE && HOME=$REMOTE TMPDIR=$REMOTE LD_LIBRARY_PATH=$ld_path $REMOTE/$name benchmark -model 10b.bin -config default_gtp.cfg -v $VISITS -t $THREADS -n $POSITIONS -boardsize $BOARD" 2>&1 |
         tee "$log" | awk '
           /Loading model and initializing benchmark|Loaded model 10b.bin|Using OpenCL Device 0:|Loaded tuning parameters from:|Performing autotuning|Done tuning|FP16Storage|Mali OpenCL detected|Testing different numbers of threads|Testing \(board size|numSearchThreads = *[0-9]+:|Error|ERROR|error:|Aborted|CANNOT LINK/ {
             if (index($0,"Using OpenCL Device 0:") > 0) print substr($0,1,105) "...";
