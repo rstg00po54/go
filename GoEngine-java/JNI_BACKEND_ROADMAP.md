@@ -133,6 +133,28 @@ adb -s 10AFB21HP5002ZK logcat -d -s KataGoOpenCLProbe:I '*:S'
 3. 先完成 CPU/Eigen 生命周期：Java `start(model, config)`、`sendCommand`、`stopSearch`、`destroy`，确认 `name`、`boardsize`、`play`、`genmove`、`undo`、分析；两套会话的全局状态需要核查。
 4. CPU JNI 真机验证通过前，现有 `KataGoEngine.java` 的 `ProcessBuilder` 默认入口和 Gradle PIE 打包保持不变。CPU 迁移后再让 GPU OpenCL 后端进入同一个 JNI 主库；**现阶段未创建真正的 `libkatago.so`**。
 
+### 阶段 1A：独立 CPU/Eigen JNI ELF 构建起点（代码已提交、真机验证未完成）
+
+- [x] `native/KataGo/cpp/CMakeLists.txt` 将原 `add_executable(katago ... main.cpp)` 源码列表拆到 `KATAGO_SOURCE_FILES`；默认仍生成 `katago` PIE，只有 `-DKATAGO_BUILD_JNI_LIBRARY=ON` 才调用 `add_library(katago SHARED ... katago_jni.cpp)`，排除 `main.cpp`。
+- [x] 新建 `app/src/main/cpp/katago_jni.cpp` 与 Java `KataGoNative`，首个 JNI 入口 `nativeBuildStatus()` 读取 KataGo `Board::MAX_LEN`，仅用于验证 C++ 引擎源码与 JNI 库成功链接/装载。
+- [x] `bash tools/build_katago_from_source.sh eigenjni` 的独立输出为 `build/katago_android_arm64_eigenjni/libkatago.so`，CMake 使用 EIGEN CPU 后端，检查 ARM64 ET_DYN、SONAME 与 JNI 符号。
+- [x] `./build.sh -PenableKataGoJniCore=true` 可选把预编译的 `libkatago.so` 与原有 `libkatago_exec.so` 一起打包；默认构建不包括实验 JNI 核心。通过 ADB intent `--ez katago_jni true` 触发日志 Tag `KataGoJniCore`，现有对弈仍使用 `ProcessBuilder`。
+- [ ] **未在用户 Ubuntu 上编译验证 JNI ELF，也未在真机上加载验证。** 预期可能出现 CMake/链接/API 兼容错误，须由日志修复后才能继续。
+- [ ] 这一步只是 JNI 与原生源码的构建整合，`EngineSession`、GTP 请求/响应、模型加载和真实 CPU AI 落子**尚未实现**。不可把符号加载成功标记为整个 JNI 迁移完成。
+
+验证命令：
+
+```bash
+git pull --ff-only github rk3588-engine
+bash tools/build_katago_from_source.sh eigenjni
+./build.sh -PenableKataGoJniCore=true
+adb -s 10AFB21HP5002ZK install -r app/build/outputs/apk/debug/app-debug.apk
+adb -s 10AFB21HP5002ZK logcat -c
+adb -s 10AFB21HP5002ZK shell am force-stop com.badukai.java
+adb -s 10AFB21HP5002ZK shell am start -n com.badukai.java/com.badukai.MainActivity --ez katago_jni true
+adb -s 10AFB21HP5002ZK logcat -d -s KataGoJniCore:I '*:S'
+```
+
 ## 阶段 1：CPU/Eigen 真正 JNI 化 —— 首先实现
 
 **目标**：构建可加载的 `libkatago.so`，Java 在 APP 进程内调用 KataGo；先不接 GPU/NPU。
