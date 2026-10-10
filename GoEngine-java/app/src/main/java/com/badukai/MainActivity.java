@@ -1046,7 +1046,8 @@ public class MainActivity extends AppCompatActivity {
         final int size = boardSize, kyu = aiKyu, visits = searchVisits;
         final double seconds = searchTime;
         final KataGoEngine.BackendPreference requestedBackend = selectedBackend;
-        render(engine.isHumanSLRunning() ? "正在初始化棋局..." : "正在准备人类棋力模型...");
+        render(requestedBackend == KataGoEngine.BackendPreference.GPU ? "GPU 初始化中，首次调优可能需要数分钟..."
+                : engine.isHumanSLRunning() ? "正在初始化棋局..." : "正在准备人类棋力模型...");
 
         engineExecutor.execute(() -> {
             String error = null;
