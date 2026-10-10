@@ -21,6 +21,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.badukai.engine.KataGoEngine;
 import com.badukai.engine.KataGoOpenCLProbe;
+import com.badukai.engine.KataGoNative;
 import com.badukai.game.GoBoard;
 import com.badukai.game.Intersection;
 import com.badukai.game.Move;
@@ -110,6 +111,10 @@ public class MainActivity extends AppCompatActivity {
         if (getIntent() != null && getIntent().getBooleanExtra("katago_probe", false)) {
             new Thread(() -> Log.i("KataGoOpenCLProbe", KataGoOpenCLProbe.check()),
                     "KataGo-OpenCL-Probe").start();
+        }
+        if (getIntent() != null && getIntent().getBooleanExtra("katago_jni", false)) {
+            new Thread(() -> Log.i("KataGoJniCore", KataGoNative.checkCoreLinkage()),
+                    "KataGo-JNI-Core").start();
         }
         setContentView(R.layout.activity_main);
         engine = new KataGoEngine(getApplicationContext());
