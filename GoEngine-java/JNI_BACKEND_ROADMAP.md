@@ -309,12 +309,12 @@ bash tools/build_katago_from_source.sh opencljni
 readelf -d build/katago_android_arm64_opencljni/libkatago.so | grep -E 'NEEDED|SONAME'
 ```
 
-### 阶段 1F：GPU JNI Android APP 内加载及真推理烟雾测试（代码已提交，待用户 RK3588 复测）
+### 阶段 1F：GPU JNI Android APP 内加载及真推理烟雾测试（RK3588 已实测运行）
 
 - [x] Gradle 可选打包 `libkatago_gpu.so`，源自已编译的独立 `build/katago_android_arm64_opencljni/libkatago.so`；只修改 ELF **APK 内文件名别名**，不修改 SONAME `libkatago.so`。依靠独立 Android 进程完成库隔离。
 - [x] 原主进程的 `KataGoNative` 继续默认加载 CPU `libkatago.so`；GPU 活动先调用 `selectIsolatedGpuLibrary()`，仅在它自己的 `:katago_gpu` 进程加载别名 `libkatago_gpu.so`。正常 APP 不会加载或执行 GPU JNI。
 - [x] GPU 活动仅通过 ADB 显式启动；测试真实 `genmove` 和 `kata-raw-nn`，日志标签 `KataGoGpuJni`；`tools/test_katago_gpu_jni_android.sh` 自动安装、启动、轮询 PASS/FAIL、保存日志并在失败时打印 crash buffer。
-- [ ] 需 RK3588 Android APP 实机检查 `DT_NEEDED libOpenCL.so` 是否被 linker namespace 允许、Mali-G610 的 OpenCL context/模型加载是否正常，以及 GPU `genmove`/NN 是否完成。虽然先前 APP JNI 探针可以 `dlopen("libOpenCL.so")`，并不能推出 GPU KataGo 已完成推理。
+- [x] **2026-10-10 RK3588 Android APP 真机 GPU/OpenCL JNI 推理日志确认**：独立进程 PID 6008 在 13:31:05 完成 JNI 动态库加载并成功创建会话，GTP 会话继续执行到 `clear_board`、`kata-raw-nn 0`（返回 19×19 的 `whiteWin 0.541861`、`whiteLead 1.186`、完整 `policy` 和 `whiteOwnership`），随后 13:32:49 `Controller: quit`、`GPU -1 finishing, processed 19 rows 19 batches`、`All cleaned up, quitting`。因测试入口按顺序执行 `genmove W`、`undo`、`clear_board`、`kata-raw-nn 0` 且错误即停止，抵达 `kata-raw-nn 0` 可确定前序命令在该次测试中成功；**尚未看到脚本 PASS 标记原文，不应称整条自动化断言全部验收**。这证实 APP 进程动态链接器可加载 GPU JNI/OpenCL，且 GPU 实际执行了 19×19 NN；整轮 13:31:05–13:32:49 约 104 秒，包含可能的首次调优，不能当作每步性能。
 - [ ] 成功后仍需 GPU JNI 与 CPU JNI 的各自回归以及进一步的单一库运行时 backend 切换。
 
 RK3588 测试命令（无须再编译 GPU C++，只要使用已生成的 ELF）：
