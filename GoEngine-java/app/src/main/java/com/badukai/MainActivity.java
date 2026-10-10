@@ -320,6 +320,9 @@ public class MainActivity extends AppCompatActivity {
                 engineReady = ready;
                 aiBattleButton.setEnabled(true);
                 dismissGpuTuning();
+                if (ready && selectedBackend == KataGoEngine.BackendPreference.GPU
+                        && !engine.getBackendName().startsWith("GPU"))
+                    Toast.makeText(this, "GPU 初始化失败，已使用 " + engine.getBackendName(), Toast.LENGTH_LONG).show();
                 render(ready ? "准备好了" : "AI 启动失败，可重试新局");
             });
         });
@@ -1151,7 +1154,11 @@ public class MainActivity extends AppCompatActivity {
     private void showGpuTuningIfNeeded(int size, KataGoEngine.BackendPreference backend) {
         if (backend != KataGoEngine.BackendPreference.GPU || forceLegacyBackend) return;
         if (!new File(getApplicationInfo().nativeLibraryDir, "libkatago_gpu.so").isFile()) return;
-        if (!engine.hasHumanModel() || !GpuTuneCache.needsTuning(this, size)) return;
+        if (!engine.hasHumanModel()) return;
+        int tuneMask = GpuTuneCache.cachedModelMask(this, size);
+        Log.i(TAG, "GPU tuning preflight boardSize=" + size + " cachedMask=" + tuneMask
+                + " requiredMask=" + GpuTuneCache.BOTH_MODELS);
+        if (tuneMask == GpuTuneCache.BOTH_MODELS) return;
         if (gpuTuningDialog != null && gpuTuningDialog.isShowing()) return;
 
         int padding = (int) (24 * getResources().getDisplayMetrics().density + 0.5f);
