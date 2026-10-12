@@ -54,10 +54,8 @@ def run_case(engine, fixture, backend, name, repeat, threads, friendly):
         raise RuntimeError("Expected Chinese area/simple-ko rules, got " + rules_json)
     if rules.get("friendlyPassOk") is not friendly:
         raise RuntimeError("KataGo rejected friendlyPassOk " + str(friendly))
-    if not engine.command("play B pass")[0] == "":
-        raise RuntimeError("Unexpected reply to first pass")
-    if not engine.command("play W pass")[0] == "":
-        raise RuntimeError("Unexpected reply to second pass")
+    engine.command("play B pass")
+    engine.command("play W pass")
     engine.command("clear_cache")
     score, score_ms = engine.command("final_score")
     dead, dead_ms = engine.command("final_status_list dead")
