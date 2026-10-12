@@ -84,3 +84,21 @@ UIAutomator 导出界面树在 RK3588 上仍有固定的数秒延迟。脚本会
 点击开始按钮后，脚本还会读取 `MainActivity` 的 `Saved new-game preference boardSize=... backend=...` 日志，以确认点击事件真正执行。5 秒内未收到确认，会重新检查弹窗及实际后端后只重试一次，而不是长时间等待对局界面。
 
 当用户按 Ctrl+C 中断时，现在也会尝试保存 `interrupted.xml`、`interrupted.png` 和日志到本地及报告分支，便于定位中断前的现场。
+
+## 2026-10-12：对局日志驱动提速
+
+已修复之前每次测试都提示「动态状态使用 UIAutomator 后备检测」的问题：旧脚本在 APP 首页检查 `render in, message=轮到你了`，但尚未进入对局，自然检测不到，所以整场都走慢路径。
+
+现在会在 **MainActivity 确认第一局开始后** 检测 DebugLog，再决定是否启用日志驱动的快速检测。若 APP 不输出对局 DebugLog，仍使用原来的 UIAutomator 验证。无须重新编译 APK，默认自动选择。
+
+快速检测会通过每一步之前的 logcat 计数快照判断：实际 CPU/GPU、AI 回棋、悔棋完成，还会先确认落子进入「AI 思考中」再等 AI 回复；遇到已经占用的交叉点时自动换点，避免长时间假等待。已经验证过的 UI 坐标缓存及下拉菜单选中确认保持不变。
+
+不连接设备的回归测试：`python3 tools/test_app_ui_units.py`。
+正式测试不变：
+
+    python3 tools/test_app_ui.py -s 8719e18a71a2a66c --backends cpu,gpu,cpu --size 9 --moves 2 --undo
+
+在 GitHub 的 `ui-test-results` 分支查看 `ui_dumps` 和完整事件时间，比较优化前约 61.5 秒、20 次 UI 导出。不能预先保证固定提速幅度，RK3588 的实际数据以运行报告为准。
+
+如要对照旧逻辑，加 `--slow-ui` 让动态对弈阶段强制使用 UIAutomator：
+    python3 tools/test_app_ui.py -s 8719e18a71a2a66c --backends cpu,gpu,cpu --size 9 --moves 2 --undo --slow-ui
