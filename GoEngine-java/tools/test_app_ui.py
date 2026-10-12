@@ -137,7 +137,9 @@ class AppTest:
                 root = self.hierarchy(fresh=(attempts > 0))
                 attempts += 1
                 result = callback(root)
-                if result:
+                # XML leaf nodes (e.g. Button) are falsy in ElementTree even
+                # when found. Treat only None and literal False as no result.
+                if result is not None and result is not False:
                     return result
                 detail = " ".join(n.get("text", "") for n in root.iter("node")
                                   if n.get("text"))[-350:]
