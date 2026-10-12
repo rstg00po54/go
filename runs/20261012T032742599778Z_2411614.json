@@ -1,0 +1,272 @@
+{
+  "schema": 2,
+  "status": "PASS",
+  "timestamp_utc": "20261012T032742599778Z",
+  "serial": "8719e18a71a2a66c",
+  "backends": "cpu,gpu,cpu",
+  "rounds": 1,
+  "size": 9,
+  "moves": 2,
+  "undo": true,
+  "pass": false,
+  "failure": null,
+  "events": [
+    {
+      "seconds": 0.006,
+      "message": "连接设备 8719e18a71a2a66c"
+    },
+    {
+      "seconds": 0.676,
+      "message": "启动 APP"
+    },
+    {
+      "seconds": 0.676,
+      "message": "等待 MainActivity 的引擎完成日志（不依赖屏幕下方的按钮）"
+    },
+    {
+      "seconds": 0.727,
+      "message": "首页引擎尚未发出 ready 日志，已等待 0s"
+    },
+    {
+      "seconds": 4.818,
+      "message": "MainActivity 已报告 Initial engine ready=true"
+    },
+    {
+      "seconds": 4.818,
+      "message": "=== Case 1: CPU / 9x9 ==="
+    },
+    {
+      "seconds": 4.872,
+      "message": "寻找首页 AI训练按钮（如不在当前屏幕，会自动上滑）"
+    },
+    {
+      "seconds": 7.255,
+      "message": "已进入 AI训练新开一局界面"
+    },
+    {
+      "seconds": 9.477,
+      "message": "sizeSpinner 已选择 9路，跳过下拉菜单"
+    },
+    {
+      "seconds": 9.477,
+      "message": "执黑已选中，无需重复点击"
+    },
+    {
+      "seconds": 9.477,
+      "message": "backendSpinner 已选择 CPU / Eigen，跳过下拉菜单"
+    },
+    {
+      "seconds": 9.477,
+      "message": "点击开始对局（实际控件），坐标=(539,1333)"
+    },
+    {
+      "seconds": 12.541,
+      "message": "CPU 就绪，第 1 手"
+    },
+    {
+      "seconds": 12.6,
+      "message": "主进程 PID=4823，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 16.274,
+      "message": "落子 (2,2)，屏幕 (310,757)"
+    },
+    {
+      "seconds": 16.274,
+      "message": "CPU 就绪，第 3 手"
+    },
+    {
+      "seconds": 19.626,
+      "message": "落子 (6,6)，屏幕 (765,1212)"
+    },
+    {
+      "seconds": 19.626,
+      "message": "CPU 就绪，第 5 手"
+    },
+    {
+      "seconds": 19.679,
+      "message": "点击 undoButton，坐标=(671, 1594)"
+    },
+    {
+      "seconds": 21.818,
+      "message": "悔棋通过"
+    },
+    {
+      "seconds": 21.882,
+      "message": "主进程 PID=4823，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 22.174,
+      "message": "截图 case_001_cpu.png"
+    },
+    {
+      "seconds": 22.174,
+      "message": "=== Case 1: PASS ==="
+    },
+    {
+      "seconds": 22.174,
+      "message": "=== Case 2: GPU / 9x9 ==="
+    },
+    {
+      "seconds": 22.252,
+      "message": "点击 newRoundButton，坐标=(933, 1594)"
+    },
+    {
+      "seconds": 24.418,
+      "message": "sizeSpinner 已选择 9路，跳过下拉菜单"
+    },
+    {
+      "seconds": 24.418,
+      "message": "执黑已选中，无需重复点击"
+    },
+    {
+      "seconds": 24.47,
+      "message": "点击 backendSpinner，坐标=(639, 1035)"
+    },
+    {
+      "seconds": 26.735,
+      "message": "选择 backendSpinner: GPU / OpenCL，坐标=(575, 1169)"
+    },
+    {
+      "seconds": 28.887,
+      "message": "点击开始对局（实际控件），坐标=(539,1333)"
+    },
+    {
+      "seconds": 34.163,
+      "message": "GPU 就绪，第 1 手"
+    },
+    {
+      "seconds": 34.237,
+      "message": "主进程 PID=4823，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 37.457,
+      "message": "落子 (2,2)，屏幕 (310,757)"
+    },
+    {
+      "seconds": 37.457,
+      "message": "GPU 就绪，第 3 手"
+    },
+    {
+      "seconds": 40.758,
+      "message": "落子 (6,6)，屏幕 (765,1212)"
+    },
+    {
+      "seconds": 40.758,
+      "message": "GPU 就绪，第 5 手"
+    },
+    {
+      "seconds": 40.811,
+      "message": "点击 undoButton，坐标=(671, 1594)"
+    },
+    {
+      "seconds": 42.972,
+      "message": "悔棋通过"
+    },
+    {
+      "seconds": 43.038,
+      "message": "主进程 PID=4823，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 43.321,
+      "message": "截图 case_002_gpu.png"
+    },
+    {
+      "seconds": 43.321,
+      "message": "=== Case 2: PASS ==="
+    },
+    {
+      "seconds": 43.321,
+      "message": "=== Case 3: CPU / 9x9 ==="
+    },
+    {
+      "seconds": 43.376,
+      "message": "点击 newRoundButton，坐标=(933, 1594)"
+    },
+    {
+      "seconds": 45.554,
+      "message": "sizeSpinner 已选择 9路，跳过下拉菜单"
+    },
+    {
+      "seconds": 45.554,
+      "message": "执黑已选中，无需重复点击"
+    },
+    {
+      "seconds": 45.604,
+      "message": "点击 backendSpinner，坐标=(639, 1035)"
+    },
+    {
+      "seconds": 47.841,
+      "message": "选择 backendSpinner: CPU / Eigen，坐标=(575, 1040)"
+    },
+    {
+      "seconds": 49.981,
+      "message": "点击开始对局（实际控件），坐标=(539,1333)"
+    },
+    {
+      "seconds": 55.319,
+      "message": "CPU 就绪，第 1 手"
+    },
+    {
+      "seconds": 55.382,
+      "message": "主进程 PID=4823，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 58.673,
+      "message": "落子 (2,2)，屏幕 (310,757)"
+    },
+    {
+      "seconds": 58.673,
+      "message": "CPU 就绪，第 3 手"
+    },
+    {
+      "seconds": 61.746,
+      "message": "落子 (6,6)，屏幕 (765,1212)"
+    },
+    {
+      "seconds": 61.746,
+      "message": "CPU 就绪，第 5 手"
+    },
+    {
+      "seconds": 61.793,
+      "message": "点击 undoButton，坐标=(671, 1594)"
+    },
+    {
+      "seconds": 63.97,
+      "message": "悔棋通过"
+    },
+    {
+      "seconds": 64.039,
+      "message": "主进程 PID=4823，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 64.343,
+      "message": "截图 case_003_cpu.png"
+    },
+    {
+      "seconds": 64.344,
+      "message": "=== Case 3: PASS ==="
+    },
+    {
+      "seconds": 66.785,
+      "message": "截图 final.png"
+    },
+    {
+      "seconds": 66.861,
+      "message": "全部 PASS"
+    },
+    {
+      "seconds": 66.862,
+      "message": "本地报告: /mnt/hgfs/D/code/go/GoEngine-java/build/app_ui_test/20261012_112635"
+    }
+  ],
+  "startup_timings": [],
+  "game_backends": [
+    {
+      "requested": "CPU",
+      "actual": "CPU/Eigen JNI",
+      "ready": true
+    }
+  ],
+  "note": "PUBLIC and NOT REDACTED, diagnostics under runs/20261012T032742599778Z_2411614/"
+}
