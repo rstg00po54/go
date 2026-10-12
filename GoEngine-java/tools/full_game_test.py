@@ -281,6 +281,8 @@ def run_full_game(runner, size, backend, max_actions=110, settlement_timeout=180
         stages = score_timings(raw)
     except ValueError as exc:
         raise TestFailure("整局结算日志检查失败：" + str(exc)) from exc
+    if stages["scoring_mode"] != "full" or stages["gtp_final_score"] is None:
+        raise TestFailure("未得到 KataGo 原版 final_score 有效结果，不能把快速估算当完整数目 PASS")
     quality = assess_final_position(stages.get("chinese_area_log"), board)
     result = {"size": size, "backend": backend, "status": "PASS",
               "end_type": end_type, "move_strategy": "defend_territory_v1",
