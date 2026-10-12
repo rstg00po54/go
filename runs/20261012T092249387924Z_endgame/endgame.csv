@@ -1,0 +1,7 @@
+backend,fixture,repeat,sha256,native_ms,original_score_ms,original_dead_ms,native_fast_score,native_raw_rule_score,original_score,nn_white_lead,native_white_lead,original_white_lead,native_dead,original_dead,dead_same,dead_only_native,dead_only_original,dead_groups,groups,black_area,white_area
+gpu,simple,1,bf58d4629694fef9b8f12749decb929e720efda9b6692ceb3ba13c45160cf04d,34.505,5942.667,2417.975,W+5.5,W+5.5,W+2.5,1.223,5.5,2.5,,,True,[],[],0,2,15,15
+gpu,territory,1,906eca60867b9521f82bf82423042304eb04093c488dee1b73402852ee773dd5,17.097,6062.33,2334.416,W+16.5,W+16.5,W+6.5,6.455,16.5,6.5,,,True,[],[],0,2,19,30
+gpu,tactical,1,13c850d1c64a8acf893eb6c4514c49f049f7402a865facee58c6e1c83ca4d4d3,21.961,6175.151,2457.823,W+21.5,W+20.5,W+10.5,9.752,21.5,10.5,F5,F5,True,[],[],1,4,20,36
+gpu,simple,2,bf58d4629694fef9b8f12749decb929e720efda9b6692ceb3ba13c45160cf04d,40.135,6135.706,2394.897,W+5.5,W+5.5,W+2.5,1.223,5.5,2.5,,,True,[],[],0,2,15,15
+gpu,territory,2,906eca60867b9521f82bf82423042304eb04093c488dee1b73402852ee773dd5,25.088,5996.248,2390.111,W+16.5,W+16.5,W+6.5,6.455,16.5,6.5,,,True,[],[],0,2,19,30
+gpu,tactical,2,13c850d1c64a8acf893eb6c4514c49f049f7402a865facee58c6e1c83ca4d4d3,16.719,5998.612,2415.218,W+21.5,W+20.5,W+10.5,9.752,21.5,10.5,F5,F5,True,[],[],1,4,20,36
