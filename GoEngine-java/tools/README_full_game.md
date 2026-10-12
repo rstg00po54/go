@@ -37,7 +37,7 @@ GPU 通过后再尝试 `--backends cpu,gpu`，以比较不同引擎的结算时�
 - 玩家黑棋正常下棋，脚本维护简单的棋盘模型（落子、提子、避免自杀和立即打劫）来避免无效交叉点；
 - 监测 `handleAiMove` 的坐标/停一手，持续下棋。AI 停一手后，玩家立即停一手，以真实结束对局；
 - 当棋盘没有适合落子的点时，玩家停一手，等待 AI 决定是继续还是也停一手；
-- 只有出现 `finishByScore`、`final_score`、死子判断、`kata-raw-nn 0`、`Chinese area score` 和最终数目渲染才算通过。当前 APK 已恢复默认完整计算，采用 `scoring_mode=full`，测试脚本仍兼容上一版 `fast` 日志。
+- 只有出现 `finishByScore`、有效的 KataGo `final_score` 数值、死子判断、`kata-raw-nn 0`、`Chinese area score` 和最终数目渲染才算通过。当前 APP 默认完整计算、采用 `scoring_mode=full`；日志解析器可以分析上一版 `fast` 数据，但完整对局验收不允许把上一版快速估算当成 PASS。
 
 如果 AI 提前认输、测试期间崩溃、回棋/结算超时、最终没有数目日志，脚本会 FAIL 并保存故障日志；不会伪造一个完成的棋局。可以用 Ctrl+C 中断，仍生成中断报告。
 
