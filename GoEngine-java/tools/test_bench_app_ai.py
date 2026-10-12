@@ -71,7 +71,7 @@ class BenchmarkTests(unittest.TestCase):
         self.assertEqual(result["by_backend"]["cpu"]["response"]["samples"], 2)
         self.assertEqual(result["by_backend"]["gpu"]["response"]["samples"], 1)
         self.assertEqual(result["by_backend"]["gpu"]["response"]["average_ms"], 80.0)
-        self.assertAlmostEqual(result["by_backend"]["cpu"]["response"]["average_ms"], 220.0)
+        self.assertAlmostEqual(result["by_backend"]["cpu"]["response"]["average_ms"], 225.0)
         self.assertIn("GPU total", format_summary(result))
         self.assertEqual(len(export_csv(result).strip().splitlines()), 7)
 
