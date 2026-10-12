@@ -69,6 +69,7 @@ POSITIONS = {
 }
 DETAIL_FIELDS = ["backend", "fixture", "repeat", "threads", "sha256", "black_stones",
                  "white_stones", "score", "dead", "raw_white_lead", "rules",
+                 "local_white_lead", "score_minus_local_lead",
                  "load_sgf_ms", "final_score_ms", "dead_stones_ms",
                  "raw_nn_ms", "total_ms"]
 SCORE = re.compile(r"(?:[BW]\+[0-9]+(?:\.[0-9]+)?|0)", re.I)
@@ -152,6 +153,66 @@ def parse_raw_white_lead(text):
     return float(match.group(1))
 
 
+def white_lead_from_gtp(score):
+    score = parse_score(score)
+    return 0.0 if score == "0" else float(score[2:]) * (1 if score.startswith("W+") else -1)
+
+
+def chinese_area_score(rows, dead_vertices, komi=5.5):
+    """Replicate GoBoard.countChineseScore's flood fill on an SGF setup grid.
+
+    Unlike KataGo's final_score, this treats its predicted dead stones as
+    removed and then counts unequivocal single-color bordered empty regions.
+    Differences are informative, but not automatically a KataGo bug.
+    """
+    size = len(rows)
+    live = {(x, y): c for y, row in enumerate(rows) for x, c in enumerate(row)
+            if c in "BW"}
+    dead = []
+    for vertex in dead_vertices.split():
+        x = "ABCDEFGHJKLMNOPQRST".index(vertex[0].upper())
+        y = size - int(vertex[1:])
+        if (x, y) not in live:
+            raise ValueError("KataGo marked an empty point as dead: " + vertex)
+        dead.append((x, y))
+    for point in set(dead):
+        live.pop(point)
+
+    def adjacent(p):
+        x, y = p
+        return [(a, b) for a, b in ((x-1, y), (x+1, y), (x, y-1), (x, y+1))
+                if 0 <= a < size and 0 <= b < size]
+
+    territory = {"B": 0, "W": 0}
+    visited = set()
+    for y in range(size):
+        for x in range(size):
+            start = (x, y)
+            if start in live or start in visited:
+                continue
+            stack, area, borders = [start], 0, set()
+            while stack:
+                p = stack.pop()
+                if p in visited:
+                    continue
+                visited.add(p)
+                area += 1
+                for neighbour in adjacent(p):
+                    if neighbour in live:
+                        borders.add(live[neighbour])
+                    elif neighbour not in visited:
+                        stack.append(neighbour)
+            if len(borders) == 1:
+                territory[next(iter(borders))] += area
+    black = sum(v == "B" for v in live.values()) + territory["B"]
+    white = sum(v == "W" for v in live.values()) + territory["W"] + komi
+    return {"black_points": black, "white_points": white,
+            "black_territory": territory["B"], "white_territory": territory["W"],
+            "dead_black": sum(rows[p[1]][p[0]] == "B" for p in set(dead)),
+            "dead_white": sum(rows[p[1]][p[0]] == "W" for p in set(dead)),
+            "white_lead": round(white-black, 3)}
+
+
 def prepare_device(adb, serial, backends, binaries, model, config, report_dir):
     run([adb, "-s", serial, "shell", "mkdir -p %s/.katago %s/gtp_logs %s/positions" %
          (REMOTE, REMOTE, REMOTE)])
@@ -210,10 +271,13 @@ def measure_case(engine, backend, name, fixture, repeat, threads, max_time):
     score = parse_score(score_text)
     dead = parse_dead(dead_text)
     lead = parse_raw_white_lead(raw_text)
+    local = chinese_area_score(fixture["grid"], dead)
     return dict(backend=backend, fixture=name, repeat=repeat, threads=threads,
                 sha256=fixture["sha256"], black_stones=fixture["black_stones"],
                 white_stones=fixture["white_stones"], score=score, dead=dead,
                 raw_white_lead=round(lead, 3), rules=rules,
+                local_white_lead=local["white_lead"],
+                score_minus_local_lead=round(white_lead_from_gtp(score)-local["white_lead"], 3),
                 load_sgf_ms=round(setup_ms, 3),
                 final_score_ms=round(score_ms, 3),
                 dead_stones_ms=round(dead_ms, 3), raw_nn_ms=round(raw_ms, 3),
@@ -305,14 +369,19 @@ def main(argv=None):
                             rows.append(row)
                             writer.writerow(row)
                             target.flush()
-                            print("  %s #%d score=%s total=%.1f ms (score=%.1f dead=%.1f raw=%.1f)" %
-                                  (name, repeat, row["score"], row["total_ms"],
+                            print("  %s #%d score=%s localLead=%+.1f diff=%+.1f total=%.1f ms (score=%.1f dead=%.1f raw=%.1f)" %
+                                  (name, repeat, row["score"], row["local_white_lead"],
+                                   row["score_minus_local_lead"], row["total_ms"],
                                    row["final_score_ms"], row["dead_stones_ms"], row["raw_nn_ms"]),
                                   flush=True)
                 finally:
                     engine.close()
         grouped = summarize(rows, names, backends)
         warnings = []
+        for row in rows:
+            if abs(row["score_minus_local_lead"]) >= 0.5:
+                warnings.append("%s/%s #%d: GTP final_score differs from local Chinese count by %+.1f points" %
+                                (row["backend"], row["fixture"], row["repeat"], row["score_minus_local_lead"]))
         for name in names:
             if "cpu" in grouped[name] and "gpu" in grouped[name]:
                 cpu_scores = grouped[name]["cpu"]["scores"]
