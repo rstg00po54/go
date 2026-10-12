@@ -1030,4 +1030,8 @@ def main():
 
 
 if __name__ == "__main__":
+    # full_game_test imports shared TestFailure/BOUNDS from test_app_ui. When
+    # running this file as a script, expose the same module instance instead
+    # of creating duplicate exception classes under two module names.
+    sys.modules.setdefault("test_app_ui", sys.modules[__name__])
     sys.exit(main())
