@@ -1,0 +1,40 @@
+[
+  {
+    "size": 9,
+    "backend": "gpu",
+    "status": "PASS",
+    "end_type": "two_passes",
+    "move_strategy": "defend_territory_v1",
+    "black_stones_played": 42,
+    "ai_stones_played": 46,
+    "rejected_taps": 0,
+    "player_passes": 5,
+    "ai_passes": 1,
+    "match_elapsed_s": 48.913,
+    "settlement": {
+      "total_ms": 7885.0,
+      "before_final_score_ms": 6.0,
+      "final_score_ms": 6187.0,
+      "dead_stones_ms": 1647.0,
+      "raw_nn_to_render_ms": 45.0,
+      "position_evaluation_ms": 25,
+      "gtp_final_score": "0",
+      "chinese_area_log": "Chinese area score B stones=0 territory=0, W stones=45 territory=36, dead B=22 W=0, komi=5.5, total B=0.0 W=86.5, lead local=86.5 engine=84.5 agrees=false",
+      "has_chinese_area_score": true
+    },
+    "position_quality": {
+      "tracker_black_stones": 22,
+      "tracker_white_stones": 45,
+      "black_stones": 0,
+      "white_stones": 45,
+      "black_territory": 0,
+      "white_territory": 36,
+      "dead_black": 22,
+      "dead_white": 0,
+      "tracker_matches_score": true,
+      "benchmark_quality": "UNREPRESENTATIVE",
+      "quality_reason": "一方棋子太少或无独立地盘，不能代表争夺激烈的终局"
+    },
+    "case": 1
+  }
+]

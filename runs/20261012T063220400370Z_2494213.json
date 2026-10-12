@@ -1,0 +1,585 @@
+{
+  "schema": 3,
+  "status": "PASS",
+  "timestamp_utc": "20261012T063220400370Z",
+  "ui_dumps": 1,
+  "cached_controls": 12,
+  "serial": "8719e18a71a2a66c",
+  "backends": "gpu",
+  "rounds": 1,
+  "size": 9,
+  "moves": 1,
+  "undo": false,
+  "pass": false,
+  "failure": null,
+  "events": [
+    {
+      "seconds": 0.004,
+      "message": "连接设备 8719e18a71a2a66c"
+    },
+    {
+      "seconds": 0.147,
+      "message": "已加载本地 UI 缓存：12 个控件/菜单位置"
+    },
+    {
+      "seconds": 0.845,
+      "message": "启动 APP"
+    },
+    {
+      "seconds": 0.846,
+      "message": "等待 MainActivity 的引擎完成日志（不依赖屏幕下方的按钮）"
+    },
+    {
+      "seconds": 0.919,
+      "message": "首页引擎尚未发出 ready 日志，已等待 0s"
+    },
+    {
+      "seconds": 2.956,
+      "message": "MainActivity 已报告 Initial engine ready=true"
+    },
+    {
+      "seconds": 2.956,
+      "message": "已读取 APP 会话设置：9路，GPU"
+    },
+    {
+      "seconds": 2.956,
+      "message": "动态检测将在第一局启动后选择 logcat 或 UIAutomator"
+    },
+    {
+      "seconds": 2.956,
+      "message": "=== Case 1: GPU / 9x9 ==="
+    },
+    {
+      "seconds": 3.004,
+      "message": "打开 AI训练（本地缓存），坐标=(540, 1534)"
+    },
+    {
+      "seconds": 5.207,
+      "message": "新开一局弹窗已显示"
+    },
+    {
+      "seconds": 5.207,
+      "message": "sizeSpinner 已选择 9路，跳过下拉菜单"
+    },
+    {
+      "seconds": 5.207,
+      "message": "执黑已由本次会话确认，跳过 UI 检查"
+    },
+    {
+      "seconds": 5.207,
+      "message": "backendSpinner 已选择 GPU / OpenCL，跳过下拉菜单"
+    },
+    {
+      "seconds": 5.335,
+      "message": "点击开始对局（本地缓存），坐标=(539, 1333)"
+    },
+    {
+      "seconds": 5.377,
+      "message": "MainActivity 已确认开始：9路 GPU"
+    },
+    {
+      "seconds": 5.412,
+      "message": "MainActivity DebugLog 已就绪，切换到 logcat 快速检测"
+    },
+    {
+      "seconds": 5.439,
+      "message": "GPU 就绪，第 1 手（logcat）"
+    },
+    {
+      "seconds": 5.498,
+      "message": "主进程 PID=13178，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 5.579,
+      "message": "落子策略前3: (2, 2):100, (6, 2):100, (2, 6):100"
+    },
+    {
+      "seconds": 5.654,
+      "message": "整局 #1 执黑落子 (2, 2)"
+    },
+    {
+      "seconds": 6.232,
+      "message": "整局 #1 AI 落子 F3 → (5, 6)"
+    },
+    {
+      "seconds": 6.356,
+      "message": "整局 #2 执黑落子 (1, 1)"
+    },
+    {
+      "seconds": 6.953,
+      "message": "整局 #2 AI 落子 G5 → (6, 4)"
+    },
+    {
+      "seconds": 7.073,
+      "message": "整局 #3 执黑落子 (1, 0)"
+    },
+    {
+      "seconds": 7.668,
+      "message": "整局 #3 AI 落子 D5 → (3, 4)"
+    },
+    {
+      "seconds": 7.796,
+      "message": "整局 #4 执黑落子 (0, 1)"
+    },
+    {
+      "seconds": 8.397,
+      "message": "整局 #4 AI 落子 C3 → (2, 6)"
+    },
+    {
+      "seconds": 8.534,
+      "message": "整局 #5 执黑落子 (3, 1)"
+    },
+    {
+      "seconds": 9.127,
+      "message": "整局 #5 AI 落子 B6 → (1, 3)"
+    },
+    {
+      "seconds": 9.25,
+      "message": "整局 #6 执黑落子 (3, 0)"
+    },
+    {
+      "seconds": 9.849,
+      "message": "整局 #6 AI 落子 C6 → (2, 3)"
+    },
+    {
+      "seconds": 9.994,
+      "message": "整局 #7 执黑落子 (4, 0)"
+    },
+    {
+      "seconds": 10.602,
+      "message": "整局 #7 AI 落子 F7 → (5, 2)"
+    },
+    {
+      "seconds": 10.739,
+      "message": "整局 #8 执黑落子 (0, 0)"
+    },
+    {
+      "seconds": 11.34,
+      "message": "整局 #8 AI 落子 G8 → (6, 1)"
+    },
+    {
+      "seconds": 11.376,
+      "message": "落子策略前3: (2, 0):45, (5, 0):43, (4, 1):43"
+    },
+    {
+      "seconds": 11.483,
+      "message": "整局 #9 执黑落子 (2, 0)"
+    },
+    {
+      "seconds": 12.085,
+      "message": "整局 #9 AI 落子 D6 → (3, 3)"
+    },
+    {
+      "seconds": 12.223,
+      "message": "整局 #10 执黑落子 (5, 0)"
+    },
+    {
+      "seconds": 12.832,
+      "message": "整局 #10 AI 落子 A6 → (0, 3)"
+    },
+    {
+      "seconds": 12.978,
+      "message": "整局 #11 执黑落子 (4, 1)"
+    },
+    {
+      "seconds": 13.593,
+      "message": "整局 #11 AI 落子 E6 → (4, 3)"
+    },
+    {
+      "seconds": 13.704,
+      "message": "整局 #12 执黑落子 (7, 0)"
+    },
+    {
+      "seconds": 14.311,
+      "message": "整局 #12 AI 落子 G9 → (6, 0)"
+    },
+    {
+      "seconds": 14.441,
+      "message": "整局 #13 执黑落子 (7, 2)"
+    },
+    {
+      "seconds": 15.062,
+      "message": "整局 #13 AI 落子 H8 → (7, 1)"
+    },
+    {
+      "seconds": 15.196,
+      "message": "整局 #14 执黑落子 (8, 3)"
+    },
+    {
+      "seconds": 15.807,
+      "message": "整局 #14 AI 落子 G7 → (6, 2)"
+    },
+    {
+      "seconds": 15.971,
+      "message": "整局 #15 执黑落子 (8, 5)"
+    },
+    {
+      "seconds": 16.601,
+      "message": "整局 #15 AI 落子 H5 → (7, 4)"
+    },
+    {
+      "seconds": 16.747,
+      "message": "整局 #16 执黑落子 (7, 6)"
+    },
+    {
+      "seconds": 17.373,
+      "message": "整局 #16 AI 落子 J5 → (8, 4)"
+    },
+    {
+      "seconds": 17.416,
+      "message": "落子策略前3: (7, 7):11, (6, 7):8, (8, 7):7"
+    },
+    {
+      "seconds": 17.528,
+      "message": "整局 #17 执黑落子 (7, 7)"
+    },
+    {
+      "seconds": 18.159,
+      "message": "整局 #17 AI 落子 H6 → (7, 3)"
+    },
+    {
+      "seconds": 18.298,
+      "message": "整局 #18 执黑落子 (8, 7)"
+    },
+    {
+      "seconds": 18.924,
+      "message": "整局 #18 AI 落子 J7 → (8, 2)"
+    },
+    {
+      "seconds": 19.094,
+      "message": "整局 #19 执黑落子 (7, 8)"
+    },
+    {
+      "seconds": 19.701,
+      "message": "整局 #19 AI 落子 H4 → (7, 5)"
+    },
+    {
+      "seconds": 19.858,
+      "message": "整局 #20 执黑落子 (6, 8)"
+    },
+    {
+      "seconds": 20.469,
+      "message": "整局 #20 AI 落子 E2 → (4, 7)"
+    },
+    {
+      "seconds": 20.617,
+      "message": "整局 #21 执黑落子 (6, 7)"
+    },
+    {
+      "seconds": 21.264,
+      "message": "整局 #21 AI 落子 G3 → (6, 6)"
+    },
+    {
+      "seconds": 21.422,
+      "message": "整局 #22 执黑落子 (5, 8)"
+    },
+    {
+      "seconds": 22.039,
+      "message": "整局 #22 AI 落子 E1 → (4, 8)"
+    },
+    {
+      "seconds": 22.209,
+      "message": "整局 #23 执黑落子 (2, 8)"
+    },
+    {
+      "seconds": 22.846,
+      "message": "整局 #23 AI 落子 F2 → (5, 7)"
+    },
+    {
+      "seconds": 23.022,
+      "message": "整局 #24 执黑落子 (1, 7)"
+    },
+    {
+      "seconds": 23.654,
+      "message": "整局 #24 AI 落子 J3 → (8, 6)"
+    },
+    {
+      "seconds": 23.704,
+      "message": "落子策略前3: (0, 7):-180, (1, 8):-180, (1, 5):-183"
+    },
+    {
+      "seconds": 23.829,
+      "message": "整局 #25 执黑落子 (0, 7)"
+    },
+    {
+      "seconds": 24.481,
+      "message": "整局 #25 AI 落子 C2 → (2, 7)"
+    },
+    {
+      "seconds": 24.616,
+      "message": "整局 #26 执黑落子 (8, 5)"
+    },
+    {
+      "seconds": 25.258,
+      "message": "整局 #26 AI 落子 B3 → (1, 6)"
+    },
+    {
+      "seconds": 25.416,
+      "message": "整局 #27 执黑落子 (0, 5)"
+    },
+    {
+      "seconds": 26.063,
+      "message": "整局 #27 AI 落子 A3 → (0, 6)"
+    },
+    {
+      "seconds": 26.226,
+      "message": "整局 #28 执黑落子 (0, 2)"
+    },
+    {
+      "seconds": 26.873,
+      "message": "整局 #28 AI 落子 J3 → (8, 6)"
+    },
+    {
+      "seconds": 27.012,
+      "message": "整局 #29 执黑落子 (4, 5)"
+    },
+    {
+      "seconds": 27.625,
+      "message": "整局 #29 AI 落子 J1 → (8, 8)"
+    },
+    {
+      "seconds": 27.775,
+      "message": "整局 #30 执黑落子 (3, 5)"
+    },
+    {
+      "seconds": 28.436,
+      "message": "整局 #30 AI 落子 C4 → (2, 5)"
+    },
+    {
+      "seconds": 28.586,
+      "message": "整局 #31 执黑落子 (5, 5)"
+    },
+    {
+      "seconds": 29.237,
+      "message": "整局 #31 AI 落子 F5 → (5, 4)"
+    },
+    {
+      "seconds": 29.394,
+      "message": "整局 #32 执黑落子 (7, 7)"
+    },
+    {
+      "seconds": 30.055,
+      "message": "整局 #32 AI 落子 J2 → (8, 7)"
+    },
+    {
+      "seconds": 30.093,
+      "message": "落子策略前3: (6, 8):2, (1, 4):-12, (3, 2):-14"
+    },
+    {
+      "seconds": 30.182,
+      "message": "整局 #33 执黑落子 (6, 8)"
+    },
+    {
+      "seconds": 30.844,
+      "message": "整局 #33 AI 落子 H3 → (7, 6)"
+    },
+    {
+      "seconds": 31.01,
+      "message": "整局 #34 执黑落子 (1, 4)"
+    },
+    {
+      "seconds": 31.667,
+      "message": "整局 #34 AI 落子 C5 → (2, 4)"
+    },
+    {
+      "seconds": 31.857,
+      "message": "整局 #35 执黑落子 (3, 2)"
+    },
+    {
+      "seconds": 32.548,
+      "message": "整局 #35 AI 落子 D3 → (3, 6)"
+    },
+    {
+      "seconds": 32.718,
+      "message": "整局 #36 执黑落子 (1, 8)"
+    },
+    {
+      "seconds": 33.39,
+      "message": "整局 #36 AI 落子 E3 → (4, 6)"
+    },
+    {
+      "seconds": 33.557,
+      "message": "整局 #37 执黑落子 (3, 8)"
+    },
+    {
+      "seconds": 34.222,
+      "message": "整局 #37 AI 落子 D2 → (3, 7)"
+    },
+    {
+      "seconds": 34.396,
+      "message": "整局 #38 执黑落子 (7, 8)"
+    },
+    {
+      "seconds": 35.067,
+      "message": "整局 #38 AI 落子 G2 → (6, 7)"
+    },
+    {
+      "seconds": 35.245,
+      "message": "整局 #39 执黑落子 (5, 1)"
+    },
+    {
+      "seconds": 35.961,
+      "message": "整局 #39 AI 落子 F1 → (5, 8)"
+    },
+    {
+      "seconds": 36.169,
+      "message": "整局 #40 执黑落子 (7, 8)"
+    },
+    {
+      "seconds": 36.871,
+      "message": "整局 #40 AI 落子 B7 → (1, 2)"
+    },
+    {
+      "seconds": 37.03,
+      "message": "点击 passButton（本地缓存），坐标=(409, 1594)"
+    },
+    {
+      "seconds": 37.101,
+      "message": "整局 #41 玩家停一手"
+    },
+    {
+      "seconds": 38.459,
+      "message": "整局 #41 AI 落子 H2 → (7, 7)"
+    },
+    {
+      "seconds": 38.604,
+      "message": "点击 passButton（本地缓存），坐标=(409, 1594)"
+    },
+    {
+      "seconds": 38.661,
+      "message": "整局 #42 玩家停一手"
+    },
+    {
+      "seconds": 40.04,
+      "message": "整局 #42 AI 落子 A1 → (0, 8)"
+    },
+    {
+      "seconds": 40.205,
+      "message": "整局 #43 执黑落子 (1, 8)"
+    },
+    {
+      "seconds": 40.875,
+      "message": "整局 #43 AI 落子 A2 → (0, 7)"
+    },
+    {
+      "seconds": 41.074,
+      "message": "整局 #44 执黑落子 (2, 8)"
+    },
+    {
+      "seconds": 41.765,
+      "message": "整局 #44 AI 落子 J9 → (8, 0)"
+    },
+    {
+      "seconds": 41.892,
+      "message": "点击 passButton（本地缓存），坐标=(409, 1594)"
+    },
+    {
+      "seconds": 41.953,
+      "message": "整局 #45 玩家停一手"
+    },
+    {
+      "seconds": 43.555,
+      "message": "整局 #45 AI 落子 B4 → (1, 5)"
+    },
+    {
+      "seconds": 43.707,
+      "message": "点击 passButton（本地缓存），坐标=(409, 1594)"
+    },
+    {
+      "seconds": 43.786,
+      "message": "整局 #46 玩家停一手"
+    },
+    {
+      "seconds": 45.113,
+      "message": "整局 #46 AI 落子 E7 → (4, 2)"
+    },
+    {
+      "seconds": 45.245,
+      "message": "点击 passButton（本地缓存），坐标=(409, 1594)"
+    },
+    {
+      "seconds": 45.318,
+      "message": "整局 #47 玩家停一手"
+    },
+    {
+      "seconds": 46.441,
+      "message": "连续停一手已触发 final_score，开始等待终局三个阶段"
+    },
+    {
+      "seconds": 54.421,
+      "message": "终局局面质量: UNREPRESENTATIVE — 一方棋子太少或无独立地盘，不能代表争夺激烈的终局"
+    },
+    {
+      "seconds": 54.421,
+      "message": "终局结算完成：总=7885.0ms, score=6187.0ms, dead=1647.0ms, rawNN=45.0ms"
+    },
+    {
+      "seconds": 54.483,
+      "message": "主进程 PID=13178，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 55.065,
+      "message": "截图 case_001_gpu.png"
+    },
+    {
+      "seconds": 55.065,
+      "message": "=== Case 1: PASS（完整对局 + 终局数目） ==="
+    },
+    {
+      "seconds": 55.658,
+      "message": "截图 final.png"
+    },
+    {
+      "seconds": 55.766,
+      "message": "全部 PASS；本次 UIAutomator 导出次数=1"
+    },
+    {
+      "seconds": 55.768,
+      "message": "本地报告: /mnt/hgfs/D/code/go/GoEngine-java/build/app_ui_test/20261012_143124"
+    }
+  ],
+  "startup_timings": [],
+  "game_backends": [],
+  "benchmark": null,
+  "full_games": [
+    {
+      "size": 9,
+      "backend": "gpu",
+      "status": "PASS",
+      "end_type": "two_passes",
+      "move_strategy": "defend_territory_v1",
+      "black_stones_played": 42,
+      "ai_stones_played": 46,
+      "rejected_taps": 0,
+      "player_passes": 5,
+      "ai_passes": 1,
+      "match_elapsed_s": 48.913,
+      "settlement": {
+        "total_ms": 7885.0,
+        "before_final_score_ms": 6.0,
+        "final_score_ms": 6187.0,
+        "dead_stones_ms": 1647.0,
+        "raw_nn_to_render_ms": 45.0,
+        "position_evaluation_ms": 25,
+        "gtp_final_score": "0",
+        "chinese_area_log": "Chinese area score B stones=0 territory=0, W stones=45 territory=36, dead B=22 W=0, komi=5.5, total B=0.0 W=86.5, lead local=86.5 engine=84.5 agrees=false",
+        "has_chinese_area_score": true
+      },
+      "position_quality": {
+        "tracker_black_stones": 22,
+        "tracker_white_stones": 45,
+        "black_stones": 0,
+        "white_stones": 45,
+        "black_territory": 0,
+        "white_territory": 36,
+        "dead_black": 22,
+        "dead_white": 0,
+        "tracker_matches_score": true,
+        "benchmark_quality": "UNREPRESENTATIVE",
+        "quality_reason": "一方棋子太少或无独立地盘，不能代表争夺激烈的终局"
+      },
+      "case": 1
+    }
+  ],
+  "note": "PUBLIC and NOT REDACTED, diagnostics under runs/20261012T063220400370Z_2494213/"
+}
