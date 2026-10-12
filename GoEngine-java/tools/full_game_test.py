@@ -127,7 +127,12 @@ def score_timings(log_text, year=None):
                        and score <= stamp < dead
                        for m in [re.search(r"parseGtpResponse in, response==\s*((?:[BW]\+[0-9.]+)|0)", msg)]
                        if m is not None]
-    final_gtp = score_responses[-1] if score_responses else None
+    tagged_score = next((m.group(1) for _, tag, msg in tail
+                         if tag == "MainActivity" and "ENDGAME_TIMING phase=score_done" in msg
+                         for m in [re.search(r" score=((?:[BW]\\+[0-9.]+)|0)(?:\\s|$)", msg)]
+                         if m is not None), None)
+    final_gtp = tagged_score if tagged_score is not None else (
+        score_responses[-1] if score_responses else None)
     position_ms = next((int(m.group(1)) for _, tag, msg in tail
                         if tag == "KataGoEngine" and "Position evaluation" in msg
                         for m in [re.search(r"elapsedMs=(\d+)", msg)] if m is not None), None)
