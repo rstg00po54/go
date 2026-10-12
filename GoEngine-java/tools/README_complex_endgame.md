@@ -48,7 +48,7 @@ python3 tools/benchmark_native_fast_score_android.py --serial 8719e18a71a2a66c -
 
 每份每次固定局面的 `endgame.json` 保留以下四项，不混淆其含义：
 
-- `native_dead` vs `original_dead`：原生快版和原版搜索判死名单；分别看 `dead_only_native`、`dead_only_original`。
+- `native_dead` vs `original_dead`：原生快版和原版搜索判死名单；分别看 `dead_only_native`、`dead_only_original`。有差异时，`disagreement_groups` 自动归并同一整块棋，列出棋块颜色、颗数、一口气数量和具体气点坐标（气少不代表必死）。
 - `nn_white_lead` vs `original_white_lead`：两种**预测目差**（NN 一次 vs 原版 MCTS 搜索）。
 - `native_white_lead` vs `original_white_lead`：**当前规则数子 vs 未来搜索预测**；这个差异本身不是计算错误。
 - `native_ms` vs `original_score_ms + original_dead_ms`：各自耗时，注意两者不完全等价。
