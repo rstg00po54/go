@@ -44,7 +44,7 @@ python3 tools/benchmark_real_sgf_nn_android.py --serial 8719e18a71a2a66c --mode 
 - `RE[B+数字]` 或 `RE[W+数字]`；**拒绝认输、超时、Void、不完整结果、未知结果**；
 - 不包含让子／中途改棋／多分支变化图；必须达到基本落子数并按黑白顺序走棋；
 - 对连续双 pass 的棋局作 `terminal_passes` 标志；没记录 pass 但有正式数字计目结果的棋局不伪造落子。
-- 执行 `loadsgf` 后再次从 KataGo 读取中国面积规则和原始贴目，发现不匹配就报错而不是继续计算。
+- 执行 `loadsgf` 后先通过 `showboard` 的 `MoveNum` 核对是否重放了原始棋谱的全部落子，防止宽容模式静默跳过某手。再读取中国面积规则和原始贴目，发现不匹配就报错而不是继续计算。
 
 每个局面仅执行 `kata-raw-nn 0`，记录 `whiteLead`、`whiteWin`、`whiteLoss`。不调用 `final_score` 或 `kata-fast-final-score` 作为参照。第一次每个棋盘尺寸的模型推理在计时外预热。
 
