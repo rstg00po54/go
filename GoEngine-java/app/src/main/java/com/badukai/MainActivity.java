@@ -609,8 +609,10 @@ public class MainActivity extends AppCompatActivity {
         finishByResignation("你认输了 · " + winner + "胜");
     }
 
-    /** A fast result uses one KataGo dead-stone search, not the repeated
-     * komi searches inside GTP final_score. The latter remains opt-in. */
+    /** Keep the original KataGo scoring result as the default.
+     * Reveal the GTP winner as soon as final_score returns, then append
+     * dead-stone-adjusted Chinese-area totals and ownership when ready.
+     * Commands and search parameters are otherwise unchanged. */
     private void finishByScore(String pendingPassColor) {
         DebugLog.enter(TAG, "finishByScore in, pendingPassColor=" + pendingPassColor);
         if (evaluating) return;
@@ -620,32 +622,38 @@ public class MainActivity extends AppCompatActivity {
         final int size = boardSize, moves = board.getMoveCount();
         final long epoch = winRateEpoch;
         final long startedNs = System.nanoTime();
-        render("正在判断死子并快速数目...");
+        render("正在搜索计算最终目差...");
         engineExecutor.execute(() -> {
             boolean synced = pendingPassColor == null || engine.playMove(pendingPassColor, "pass");
+            long scoreStartedNs = System.nanoTime();
+            String score = synced ? engine.getFinalScore() : null;
+            long scoreMs = (System.nanoTime() - scoreStartedNs) / 1000000L;
+            Log.i(TAG, "ENDGAME_TIMING phase=score_done elapsedMs="
+                    + (System.nanoTime() - startedNs) / 1000000L + " scoreMs=" + scoreMs
+                    + " valid=" + (score != null));
+            if (score != null) {
+                mainHandler.post(() -> {
+                    if (board != snapshot || board.getMoveCount() != moves || winRateEpoch != epoch) return;
+                    gameResultText = formatFinalResult(score);
+                    render("正在确认死子和地盘...");
+                });
+            }
             long deadStartedNs = System.nanoTime();
             String deadStones = synced ? engine.getFinalDeadStones() : null;
             long deadMs = (System.nanoTime() - deadStartedNs) / 1000000L;
-            KataGoEngine.PositionEvaluation result = synced && deadStones != null ? engine.evaluatePosition(size) : null;
-            long elapsedMs = (System.nanoTime() - startedNs) / 1000000L;
-            Log.i(TAG, "ENDGAME_TIMING phase=fast_done elapsedMs=" + elapsedMs
-                    + " deadMs=" + deadMs + " synced=" + synced + " deadAvailable=" + (deadStones != null));
+            KataGoEngine.PositionEvaluation result = synced ? engine.evaluatePosition(size) : null;
+            Log.i(TAG, "ENDGAME_TIMING phase=full_done elapsedMs="
+                    + (System.nanoTime() - startedNs) / 1000000L + " scoreMs=" + scoreMs
+                    + " deadMs=" + deadMs + " synced=" + synced);
             mainHandler.post(() -> {
                 if (board != snapshot || board.getMoveCount() != moves || winRateEpoch != epoch) return;
                 evaluating = false;
                 finalDeadStones = deadStones;
-                preciseScoreReady = false;
-                if (!synced) {
-                    gameResultText = "对局结束 · 同步失败";
-                    finalScoreText = "终局数子\n同步失败";
-                } else if (deadStones == null) {
-                    gameResultText = "对局结束 · 死子判断不可用";
-                    finalScoreText = "终局数子\n结果不可用";
-                } else {
-                    gameResultText = formatEstimatedFinalResult(deadStones);
-                    finalScoreText = finalPointsSummary(null, deadStones);
-                }
+                preciseScoreReady = score != null;
+                gameResultText = synced ? formatFinalResult(score) : "对局结束 · 同步失败";
                 if (result != null) territorySummary(result);
+                recordFinalWinRate(snapshot, moves, epoch, score);
+                finalScoreText = synced ? finalPointsSummary(score, deadStones) : "终局数子\\n同步失败";
                 render(finalScoreText);
             });
         });
@@ -1341,7 +1349,7 @@ public class MainActivity extends AppCompatActivity {
         boolean playerTurn = engineReady && gameReady && !engineStarting && !thinking && !evaluating && currentPlayer == playerColor && !board.isGameOver();
         newGameButton.setEnabled(!thinking && !engineStarting && !evaluating);
         newRoundButton.setEnabled(!thinking && !engineStarting && !evaluating);
-        countTerritoryButton.setText(board.isGameOver() ? "深度估算" : "数目");
+        countTerritoryButton.setText(board.isGameOver() ? (preciseScoreReady ? "已结算" : "重新估算") : "数目");
         countTerritoryButton.setEnabled(engineReady && gameReady && board.isGameOver()
                 && !thinking && !engineStarting && !evaluating && finalDeadStones != null && !preciseScoreReady);
         situationButton.setEnabled(variationBoard == null && engineReady && gameReady && !engineStarting
