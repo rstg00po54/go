@@ -90,7 +90,7 @@ class EngineTests(unittest.TestCase):
                 "kata-get-rules": (json.dumps({"scoring": "AREA", "tax": "NONE", "komi": 5.5}), 1),
                 "clear_cache": ("", 1),
                 "final_score": ("W+3.5", 750.25),
-                "final_status_list dead": ("A1 B2", 100.5),
+                "final_status_list dead": ("A9 E1", 100.5),
                 "kata-raw-nn 0": ("whiteWin 0.6 whiteLead 1.5 whiteLoss 0.4", 20.0),
             }
             def command(self, c):
@@ -107,7 +107,7 @@ class EngineTests(unittest.TestCase):
                                         "final_status_list dead", "kata-raw-nn 0"])
         self.assertEqual(result["score"], "W+3.5")
         self.assertAlmostEqual(result["total_ms"], 870.75)
-        self.assertEqual(result["dead"], "A1 B2")
+        self.assertEqual(result["dead"], "A9 E1")
         self.assertIn("score_minus_local_lead", result)
 
     def test_wrong_rules_fail_before_scoring(self):
