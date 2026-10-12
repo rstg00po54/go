@@ -687,7 +687,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /** Provisional Chinese area score after KataGo-predicted dead stones.
-     * This is not an official adjudicated result, unlike a final_score. */
+     * Neither this result nor final_score is an official adjudication. */
     private String formatEstimatedFinalResult(String deadVertices) {
         GoBoard.FinalScore totals = calculateChineseFinalTotals(deadVertices);
         double lead = totals.whitePoints - totals.blackPoints;
@@ -727,6 +727,7 @@ public class MainActivity extends AppCompatActivity {
     private String formatFinalResult(String score) {
         if (score == null || score.trim().isEmpty()) return "对局结束 · 未得到数目结果";
         String text = score.trim();
+        if ("0".equals(text)) return "对局结束 · 搜索预测平局";
         if (text.startsWith("B+")) return "对局结束 · 搜索预测黑胜 " + text.substring(2);
         if (text.startsWith("W+")) return "对局结束 · 搜索预测白胜 " + text.substring(2);
         return "对局结束 · 搜索预测 " + text;
