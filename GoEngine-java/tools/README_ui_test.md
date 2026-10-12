@@ -114,3 +114,24 @@ UIAutomator 导出界面树在 RK3588 上仍有固定的数秒延迟。脚本会
     MainActivity DebugLog 已就绪，切换到 logcat 快速检测
 
 下一步用报告中的 `ui_dumps` 和总耗时，和上一轮 61.5 秒 / 20 次导出比较。若仍出现 UI 后备，保留自动上传的 `interrupted_logcat.txt` 或 `failed_logcat.txt` 以便检查实际滤波结果。
+
+## 2026-10-12：减少对话框与成功诊断的 UI 树读取
+
+在原有 CPU→GPU→CPU 三轮均 PASS、36.4 秒、7 次 UIAutomator 导出的基础上，进一步减少不必要的全树读取：
+
+- 打开新局时，**仍然导出一次 UI 树**，确认弹窗内的 `backendSpinner` 和 `startGameButton` 已出现。不会回到过去「弹窗尚未显示就点击」的问题。
+- 使用缓存切换 CPU/GPU 下拉菜单后，默认等待 0.45 秒让 Android 收起弹出层，不再立即做一次约 2 秒的 `uiautomator dump`。随后 `start_game_confirmed()` 通过 `MainActivity` 的 `Saved new-game preference` 日志核对**实际棋盘路数和后端**；参数不符会失败，不能虚报 PASS。若开始按钮没响应，原先的 UI 检查与重试仍然保留。
+- 成功结束时，保留 `final.png`、logcat 和报告，但不再额外导出最终 XML。失败或 Ctrl+C 时，仍导出新鲜 UI XML、截图和完整日志。
+- 无效落子的等待时间由 2.5 秒调到 1.4 秒，之后换一个预设交叉点；真正被接受的落子仍会等候 AI 回复。
+
+预计在 RK3588 上从 7 次 UI 树读取减少到约 3 次，具体速度以新的 GitHub 测试报告为准。首次缓存缺失可能读取更多。
+
+原命令不变：
+
+    python3 tools/test_app_ui.py -s 8719e18a71a2a66c --backends cpu,gpu,cpu --size 9 --moves 2 --undo
+
+若要切回严格的 UI 确认与慢速对局检测，加 `--slow-ui`：
+
+    python3 tools/test_app_ui.py -s 8719e18a71a2a66c --backends cpu,gpu,cpu --size 9 --moves 2 --undo --slow-ui
+
+单元测试：`python3 tools/test_app_ui_units.py`。
