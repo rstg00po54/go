@@ -164,7 +164,7 @@ def score_timings(log_text, year=None):
                 "gtp_final_score": None, "chinese_area_log": area_line,
                 "has_chinese_area_score": True}
     if dead is None:
-        raise ValueError("缺少 final_status_list dead（只用于旧版快速或完整计分）")
+        raise ValueError("终局日志不完整：缺少 final_status_list dead（只用于旧版快速或完整计分）")
     if fast and not (begin <= dead <= raw_nn <= chinese <= render):
         raise ValueError("快速结算阶段时间顺序异常")
     if not fast and not (begin <= score <= dead <= raw_nn <= chinese <= render):
