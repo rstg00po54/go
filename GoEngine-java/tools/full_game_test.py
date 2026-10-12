@@ -9,6 +9,7 @@ import time
 
 from bench_app_ai import log_time
 from test_app_ui import TestFailure, BOUNDS
+from go_play_strategy import rank_moves, assess_final_position
 
 GTP_LETTERS = "ABCDEFGHJKLMNOPQRST"
 LOG_EVENT = re.compile(r"^(\d\d-\d\d \d\d:\d\d:\d\d\.\d+)\s+[VDIWEF]/(MainActivity|KataGoEngine)\(\s*\d+\):\s*(.*)$")
@@ -180,23 +181,19 @@ def run_full_game(runner, size, backend, max_actions=110, settlement_timeout=180
         raise TestFailure("整局模式需要 MainActivity DebugLog，当前 APK 无法进行可靠的自动终局检查")
     board = BoardTracker(size)
     screen = _board_coordinates(runner, size)
-    # Spread human moves across interior and edges, deterministic for replay.
-    coords = [(x,y) for y in range(size) for x in range(size)]
-    mid = size // 2
-    coords.sort(key=lambda p: (abs(p[0]-mid)+abs(p[1]-mid), p[1], p[0]))
+    # Board-aware black player: defend groups, establish eyes and territory.
     black_moves, ai_moves, rejected, player_passes, ai_passes = 0, 0, 0, 0, 0
     started = time.monotonic()
     game_baseline = runner.read_log_state()
-    rejected_points = set()
     last_ai_pass = False
     end_type = None
     for action in range(max_actions):
         state = runner.read_log_state()
         # The player must pass immediately after an AI pass to end the game.
-        candidates = [] if last_ai_pass else [p for p in coords
-                                                if p not in rejected_points and board.legal("B", p)]
-        # Avoid spending minutes re-tapping a row of UI-rejected points.
-        candidates = candidates[:6]
+        ranked = [] if last_ai_pass else rank_moves(board, limit=8)
+        candidates = [point for point, score in ranked]
+        if ranked and action % 8 == 0:
+            runner.log("落子策略前3: " + ", ".join(f"{point}:{score:.0f}" for point, score in ranked[:3]))
         accepted = False
         before = state
         for point in candidates:
@@ -210,7 +207,6 @@ def run_full_game(runner, size, backend, max_actions=110, settlement_timeout=180
                 if "日志等待超过" not in str(exc):
                     raise
                 rejected += 1
-                rejected_points.add(point)
                 continue
             board.play("B",point)
             black_moves += 1
@@ -263,12 +259,14 @@ def run_full_game(runner, size, backend, max_actions=110, settlement_timeout=180
         stages = score_timings(raw)
     except ValueError as exc:
         raise TestFailure("整局结算日志检查失败：" + str(exc)) from exc
+    quality = assess_final_position(stages.get("chinese_area_log"), board)
     result = {"size": size, "backend": backend, "status": "PASS",
-              "end_type": end_type, "black_stones_played": black_moves,
-              "ai_stones_played": ai_moves, "rejected_taps": rejected,
-              "player_passes": player_passes, "ai_passes": ai_passes,
-              "match_elapsed_s": round(time.monotonic()-started, 3),
-              "settlement": stages}
+              "end_type": end_type, "move_strategy": "defend_territory_v1",
+              "black_stones_played": black_moves, "ai_stones_played": ai_moves,
+              "rejected_taps": rejected, "player_passes": player_passes,
+              "ai_passes": ai_passes, "match_elapsed_s": round(time.monotonic()-started, 3),
+              "settlement": stages, "position_quality": quality}
+    runner.log("终局局面质量: " + quality["benchmark_quality"] + " — " + quality["quality_reason"])
     runner.log(f"终局结算完成：总={stages['total_ms']}ms, score={stages['final_score_ms']}ms, "
                f"dead={stages['dead_stones_ms']}ms, rawNN={stages['raw_nn_to_render_ms']}ms")
     return result
