@@ -632,7 +632,7 @@ public class MainActivity extends AppCompatActivity {
             long scoreMs = (System.nanoTime() - scoreStartedNs) / 1000000L;
             Log.i(TAG, "ENDGAME_TIMING phase=score_done elapsedMs="
                     + (System.nanoTime() - startedNs) / 1000000L + " scoreMs=" + scoreMs
-                    + " valid=" + (score != null));
+                    + " valid=" + (score != null) + " score=" + (score == null ? "null" : score.trim()));
             if (score != null) {
                 mainHandler.post(() -> {
                     if (board != snapshot || board.getMoveCount() != moves || winRateEpoch != epoch) return;
