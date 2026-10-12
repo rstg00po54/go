@@ -81,6 +81,7 @@ class CacheAndLogTests(unittest.TestCase):
         log = (
             "I/MainActivity( 4823): Game backend requested=CPU actual=CPU/Eigen JNI ready=true\n"
             "D/MainActivity( 4823): render in, message=轮到你了, engineReady=true\n"
+            "D/MainActivity( 4823): render in, message=AI 思考中..., engineReady=true\n"
             "D/MainActivity( 4823): handleAiMove in, move=F4, aiColor=WHITE\n"
             "D/MainActivity( 4823): render in, message=轮到你了, engineReady=true\n"
             "D/MainActivity( 4823): render in, message=已悔棋，轮到你了, engineReady=true\n"
@@ -90,6 +91,7 @@ class CacheAndLogTests(unittest.TestCase):
         self.assertEqual(state["backend"], [("CPU", "CPU/Eigen JNI", True)])
         self.assertEqual(state["turns"], 2)
         self.assertEqual(state["ai_moves"], 1)
+        self.assertEqual(state["thinking"], 1)
         self.assertEqual(state["undo_done"], 1)
         self.assertTrue(state["debug_active"])
 
@@ -138,7 +140,7 @@ class CacheAndLogTests(unittest.TestCase):
         self.assertEqual(hits[1], ("tap", 577, 1170))
 
     def test_game_start_requires_mainactivity_ack(self):
-        self.app.args = SimpleNamespace(size=9)
+        self.app.args = SimpleNamespace(size=9, slow_ui=True)
         calls = []
         logs = ["", "I/MainActivity( 4823): Saved new-game preference boardSize=9 backend=GPU"]
         self.app.adb = lambda *args, **kwargs: logs.pop(0) if logs else logs[-1]
@@ -147,12 +149,56 @@ class CacheAndLogTests(unittest.TestCase):
         self.assertEqual(calls, ["tap"])
 
     def test_game_start_rejects_unexpected_backend(self):
-        self.app.args = SimpleNamespace(size=9)
+        self.app.args = SimpleNamespace(size=9, slow_ui=True)
         logs = ["", "I/MainActivity( 4823): Saved new-game preference boardSize=9 backend=CPU"]
         self.app.adb = lambda *args, **kwargs: logs.pop(0) if len(logs) > 1 else logs[0]
         self.app.start_game_from_layout = lambda: None
         with self.assertRaises(TestFailure):
             self.app.start_game_confirmed("gpu")
+
+
+    def test_fast_mode_activates_after_first_start_not_home(self):
+        self.app.args = SimpleNamespace(size=9, slow_ui=False)
+        self.app.use_log_wait = False
+        calls = []
+        logs = ["", "I/MainActivity( 4823): Saved new-game preference boardSize=9 backend=CPU"]
+        self.app.adb = lambda *args, **kwargs: logs.pop(0) if len(logs) > 1 else logs[0]
+        self.app.start_game_from_layout = lambda: calls.append("tap")
+        self.app.read_log_state = lambda: {"debug_active": True}
+        self.app.start_game_confirmed("cpu")
+        self.assertTrue(self.app.use_log_wait)
+        self.assertEqual(calls, ["tap"])
+
+    def test_fast_accepted_ai_move_requires_new_thinking_event(self):
+        self.app.use_log_wait = True
+        self.app.geometry = {"boardView": [0, 447, 1075, 1522]}
+        self.app.density = lambda: 3.0
+        self.app.read_log_state = lambda: {"thinking": 3, "ai_moves": 2, "turns": 4}
+        self.app.tap = lambda *args: None
+        self.app.wait_log = lambda predicate, timeout, label: predicate({"thinking": 4})
+        self.app.wait_turn = lambda size, backend, minimum, **kwargs: minimum
+        result = self.app.move(9, "cpu", 5, 1)
+        self.assertEqual(result, 7)
+
+    def test_fast_invalid_point_tries_next_candidate(self):
+        self.app.use_log_wait = True
+        self.app.geometry = {"boardView": [0, 447, 1075, 1522]}
+        self.app.density = lambda: 3.0
+        self.app.read_log_state = lambda: {"thinking": 3, "ai_moves": 2, "turns": 4}
+        clicks = []
+        self.app.tap = lambda *args: clicks.append(args)
+        attempts = [0]
+        def wait_log(predicate, timeout, label):
+            attempts[0] += 1
+            if attempts[0] == 1:
+                raise TestFailure("确认落子，日志等待超过 2.5s")
+            return predicate({"thinking": 4})
+        self.app.wait_log = wait_log
+        self.app.wait_turn = lambda size, backend, minimum, **kwargs: minimum
+        result = self.app.move(9, "cpu", 5, 1)
+        self.assertEqual(result, 7)
+        self.assertEqual(len(clicks), 2)
+        self.assertNotEqual(clicks[0], clicks[1])
 
 
 if __name__ == "__main__":
