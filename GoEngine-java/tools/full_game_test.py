@@ -112,6 +112,7 @@ def score_timings(log_text, year=None):
     render = first(lambda tag, m: tag == "MainActivity" and
                    ("render in, message=黑" in m or "render in, message=终局数子" in m))
     chinese = first(lambda tag, m: tag == "MainActivity" and "Chinese area score" in m)
+    first_score_ready = first(lambda tag, m: tag == "MainActivity" and "ENDGAME_TIMING phase=score_done" in m and "valid=true" in m)
     # The user may request optional deeper scoring *after* the fast result.
     # That later final_score must not be assigned to the earlier fast settlement.
     if score is not None and render is not None and score > render:
@@ -140,9 +141,10 @@ def score_timings(log_text, year=None):
         raise ValueError("传统结算阶段时间顺序异常")
     def ms(start, end):
         return round((end-start)/1000, 3)
+    first_result = first_score_ready if not fast and first_score_ready is not None and begin <= first_score_ready <= render else render
     return {"scoring_mode": "fast" if fast else "full",
             "total_ms": ms(begin, render),
-            "time_to_first_result_ms": ms(begin, render),
+            "time_to_first_result_ms": ms(begin, first_result),
             "before_final_score_ms": ms(begin, score) if not fast else None,
             "final_score_ms": ms(score, dead) if not fast else None,
             "before_dead_ms": ms(begin, dead) if fast else None,
