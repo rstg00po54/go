@@ -146,7 +146,10 @@ class AppTest:
                 self.store_geometry(key, item.get("bounds"))
 
     def read_log_state(self):
-        raw = self.adb("logcat", "-d", "-s", "MainActivity:D", "MainActivity:I",
+        # Do not include MainActivity:I as a second filter. Android logcat
+        # resolves duplicate tag specs by keeping the last priority; using
+        # MainActivity:D alone includes both DEBUG and INFO events.
+        raw = self.adb("logcat", "-d", "-s", "MainActivity:D",
                        "AndroidRuntime:E", "*:S", timeout=15)
         lines = raw.splitlines()
         backend = []
