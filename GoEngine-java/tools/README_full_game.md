@@ -37,7 +37,7 @@ GPU 通过后再尝试 `--backends cpu,gpu`，以比较不同引擎的结算时�
 - 玩家黑棋正常下棋，脚本维护简单的棋盘模型（落子、提子、避免自杀和立即打劫）来避免无效交叉点；
 - 监测 `handleAiMove` 的坐标/停一手，持续下棋。AI 停一手后，玩家立即停一手，以真实结束对局；
 - 当棋盘没有适合落子的点时，玩家停一手，等待 AI 决定是继续还是也停一手；
-- 只有出现 `finishByScore`、成功的死子判断、`kata-raw-nn 0`、`Chinese area score` 和实际终局渲染才算通过。旧 APK 的三命令慢路径也兼容；新 APK 默认不调用 `final_score`，使用 `scoring_mode=fast` 标记。
+- 只有出现 `finishByScore`、`final_score`、死子判断、`kata-raw-nn 0`、`Chinese area score` 和最终数目渲染才算通过。当前 APK 已恢复默认完整计算，采用 `scoring_mode=full`，测试脚本仍兼容上一版 `fast` 日志。
 
 如果 AI 提前认输、测试期间崩溃、回棋/结算超时、最终没有数目日志，脚本会 FAIL 并保存故障日志；不会伪造一个完成的棋局。可以用 Ctrl+C 中断，仍生成中断报告。
 
@@ -46,15 +46,15 @@ GPU 通过后再尝试 `--backends cpu,gpu`，以比较不同引擎的结算时�
 | JSON 字段 | 含义 |
 |---|---|
 | `total_ms` | `finishByScore` → 最终数目界面 render |
-| `final_score_ms` | 旧慢路径中 `final_score` 的时间；新快速路径为 `null` |
+| `final_score_ms` | `final_score` → `final_status_list dead`，保留原结算口径 |
 | `dead_stones_ms` | 发送 `final_status_list dead` → 发送 `kata-raw-nn 0` |
 | `raw_nn_to_render_ms` | 发送 `kata-raw-nn 0` → 结果呈现 |
 | `position_evaluation_ms` | APP 内部 Position evaluation 的 `elapsedMs`（如有） |
-| `gtp_final_score` | `final_score` 的 GTP 返回值（新快速路径为 `null`） |
-| `scoring_mode` | `fast`（新默认）或 `full`（旧慢路径） |
+| `gtp_final_score` | `final_score` 的 GTP 返回值（上一版快速路径为 `null`） |
+| `scoring_mode` | `full`（当前默认）或 `fast`（上一版实验路径） |
 | `time_to_first_result_ms` | 开始结算到首次显示可用结果 |
 
-阶段时间使用 Android `logcat -v time` 的 GTP 命令发送事件及下一事件相减，**属于近似墙钟时间**，包含 Java 串行处理和 GTP 开销，不是纯 GPU/CPU 推理时间。新版本默认先显示死子判断后的中国数子**预估结果**，终局页面可点击「深度估算」再请求慢的 `final_score`；不会把两个不同口径的分数冒充正式裁决。
+阶段时间使用 Android `logcat -v time` 的 GTP 命令发送事件及下一事件相减，**属于近似墙钟时间**，包含 Java 串行处理和 GTP 开销，不是纯 GPU/CPU 推理时间。当前默认先执行原来的 `final_score`，返回后就显示 KataGo 搜索预测的胜负，然后继续完成死子判断、中国数目和归属图。后台独立胜率分析任务在终局时取消排队，避免无用负载。
 
 每局输出 `full_game.json`（累计成功的棋局，含 `position_quality`）、单局截图、最终原始 logcat，以及 GitHub `ui-test-results` 分支上的自动报告。上传沿用现有的**公开、未脱敏**报告方式，请仅在测试设备上运行；如不希望公开上传，加 `--no-upload`。
 
