@@ -276,6 +276,32 @@ class CacheAndLogTests(unittest.TestCase):
             self.assertTrue((self.app.out / "final.png").exists())
             self.assertTrue((self.app.out / "final_logcat.txt").exists())
 
+    def test_benchmark_reuses_no_human_stone_positions(self):
+        self.app.args = SimpleNamespace(benchmark=True)
+        self.app.use_log_wait = True
+        self.app.geometry = {"boardView": [0, 447, 1075, 1522]}
+        self.app.density = lambda: 3.0
+        self.app.bench_used_positions = {(2, 2)}
+        self.app.read_log_state = lambda: {"thinking": 1, "ai_moves": 0, "turns": 1}
+        self.app.wait_log = lambda callback, timeout, desc: callback({"thinking": 2})
+        self.app.wait_turn = lambda size, backend, minimum, **kwargs: minimum
+        points = []
+        self.app.tap = lambda x, y: points.append((x, y))
+        self.assertEqual(self.app.move(9, "cpu", 1, 0), 3)
+        self.assertEqual(len(points), 1)
+        self.assertIn((6, 6), self.app.bench_used_positions)
+
+    def test_normal_ui_move_does_not_require_benchmark_state(self):
+        self.app.args = SimpleNamespace(benchmark=False)
+        self.app.use_log_wait = True
+        self.app.geometry = {"boardView": [0, 447, 1075, 1522]}
+        self.app.density = lambda: 3.0
+        self.app.read_log_state = lambda: {"thinking": 1, "ai_moves": 0, "turns": 1}
+        self.app.wait_log = lambda callback, timeout, desc: callback({"thinking": 2})
+        self.app.wait_turn = lambda size, backend, minimum, **kwargs: minimum
+        self.app.tap = lambda *args: None
+        self.assertEqual(self.app.move(9, "cpu", 1, 0), 3)
+
 
 if __name__ == "__main__":
     unittest.main()
