@@ -12,12 +12,14 @@ import json
 import os
 from pathlib import Path
 import shutil
+import statistics
 import sys
 
 from benchmark_endgame_android import (
     PROJECT, POSITIONS, GtpEngine, device_serial, prepare_device, load_fixtures,
     parse_score, parse_dead, white_lead_from_gtp,
 )
+from complex_endgame_fixtures import COMPLEX_POSITIONS
 
 FIELDS = [
     "backend", "fixture", "repeat", "sha256",
@@ -99,11 +101,36 @@ def measure_case(engine, fixture, backend, name, repeat):
     }
 
 
+def summarize_comparisons(rows):
+    summary = {}
+    keys = sorted({(r["backend"], r["fixture"]) for r in rows})
+    for backend, fixture in keys:
+        group = [r for r in rows if r["backend"] == backend and r["fixture"] == fixture]
+        original_leads = [r["original_white_lead"] for r in group]
+        summary[backend + "/" + fixture] = {
+            "samples": len(group),
+            "dead_matches": sum(r["dead_same"] for r in group),
+            "dead_disagreements": sum(not r["dead_same"] for r in group),
+            "native_ms_average": round(statistics.mean(r["native_ms"] for r in group), 3),
+            "original_ms_average": round(statistics.mean(
+                r["original_score_ms"] + r["original_dead_ms"] for r in group), 3),
+            "prediction_to_rule_delta_average_abs": round(statistics.mean(
+                abs(r["native_white_lead"] - r["original_white_lead"]) for r in group), 3),
+            "original_prediction_range": round(max(original_leads) - min(original_leads), 3),
+            "native_dead_variants": sorted({r["native_dead"] for r in group}),
+            "original_dead_variants": sorted({r["original_dead"] for r in group}),
+        }
+    return summary
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description="RK3588 native KataGo fast rule scoring experiment")
     p.add_argument("--serial", default=os.getenv("ANDROID_SERIAL"))
     p.add_argument("--mode", choices=("cpu", "gpu", "both"), default="gpu")
-    p.add_argument("--positions", default="simple,territory,tactical")
+    p.add_argument("--suite", choices=("baseline", "complex", "all"), default="complex",
+                   help="complex includes 9/13/19 boards; baseline keeps the old three")
+    p.add_argument("--positions", default=None,
+                   help="Comma-separated fixture names from the selected suite; default is all")
     p.add_argument("--repeats", type=int, default=2)
     p.add_argument("--threads", type=int, default=1)
     p.add_argument("--visits", type=int, default=8)
@@ -113,9 +140,12 @@ def main(argv=None):
     p.add_argument("--gpu-binary", type=Path, default=PROJECT / "build/katago_android_arm64_opencl/libkatago_exec_opencl.so")
     p.add_argument("--no-upload", action="store_true")
     args = p.parse_args(argv)
-    selected = [n.strip() for n in args.positions.split(",") if n.strip()]
-    if not selected or len(set(selected)) != len(selected) or any(n not in POSITIONS for n in selected):
-        p.error("Select distinct positions from: " + ",".join(POSITIONS))
+    available = dict(POSITIONS) if args.suite == "baseline" else (
+        dict(COMPLEX_POSITIONS) if args.suite == "complex" else dict(POSITIONS, **COMPLEX_POSITIONS))
+    selected = list(available) if args.positions is None else [
+        n.strip() for n in args.positions.split(",") if n.strip()]
+    if not selected or len(set(selected)) != len(selected) or any(n not in available for n in selected):
+        p.error("Select distinct positions from: " + ",".join(available))
     if args.repeats < 1 or not 1 <= args.threads <= 64 or args.visits < 1 or not args.adb:
         p.error("Invalid repeats/threads/visits/adb")
     backends = ["cpu", "gpu"] if args.mode == "both" else [args.mode]
@@ -135,7 +165,7 @@ def main(argv=None):
     try:
         serial = device_serial(args.adb, args.serial)
         gpu_egl = prepare_device(args.adb, serial, backends, binaries, model, config, output)
-        fixtures = load_fixtures(args.adb, serial, output, selected)
+        fixtures = load_fixtures(args.adb, serial, output, selected, positions=available)
         rows = []
         with (output / "endgame.csv").open("w", encoding="utf-8", newline="") as csv_out:
             writer = csv.DictWriter(csv_out, fieldnames=FIELDS, extrasaction="ignore")
@@ -159,12 +189,14 @@ def main(argv=None):
                             rows.append(item)
                             writer.writerow(item)
                             csv_out.flush()
-                            print("%s/%s #%d native %s (raw %s, nnLead %+.3f, %6.1fms), "
-                                  "original %s (%6.1fms), dead %s vs %s" % (
-                                    backend, name, repeat, item["native_fast_score"],
+                            print("%s/%s (%dx%d) #%d native %s (raw %s, nnLead %+.3f, %6.1fms), "
+                                  "original %s (%6.1fms), dead %s vs %s%s" % (
+                                    backend, name, fixtures[name]["size"], fixtures[name]["size"],
+                                    repeat, item["native_fast_score"],
                                     item["native_raw_rule_score"], item["nn_white_lead"], item["native_ms"],
                                     item["original_score"], item["original_score_ms"] + item["original_dead_ms"],
-                                    item["native_dead"] or "(none)", item["original_dead"] or "(none)"
+                                    item["native_dead"] or "(none)", item["original_dead"] or "(none)",
+                                    "" if item["dead_same"] else " [DEAD MISMATCH]"
                                   ), flush=True)
                 finally:
                     engine.close()
@@ -176,13 +208,24 @@ def main(argv=None):
                        "of continued play, and neither is certified ground truth. "
                        "No APK/JNI/UI change is made.",
             "device": serial, "backends": backends, "threads": args.threads,
-            "repeats": args.repeats, "model_sha256": hashlib.sha256(model.read_bytes()).hexdigest(),
+            "suite": args.suite, "repeats": args.repeats,
+            "fixture_names": selected,
+            "model_sha256": hashlib.sha256(model.read_bytes()).hexdigest(),
             "binaries": {backend: hashlib.sha256(binaries[backend].read_bytes()).hexdigest()
                          for backend in backends},
             "fixtures": fixtures, "rows": rows,
+            "summary": summarize_comparisons(rows),
         }
         (output / "endgame.json").write_text(
             json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print("\\nSummary (prediction vs current-rule scoring is NOT a correctness metric):")
+        for key, item in report["summary"].items():
+            print("%s n=%d dead-mismatches=%d, native=%.1fms original=%.1fms, "
+                  "prediction-difference=%.1f, original-variance=%.1f" % (
+                      key, item["samples"], item["dead_disagreements"],
+                      item["native_ms_average"], item["original_ms_average"],
+                      item["prediction_to_rule_delta_average_abs"],
+                      item["original_prediction_range"]), flush=True)
         print("Local report: " + str(output))
         if not args.no_upload:
             from upload_endgame_results import upload_results
