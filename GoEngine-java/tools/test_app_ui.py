@@ -157,16 +157,42 @@ class AppTest:
         self.adb("shell", "input", "tap", str(x), str(y), timeout=15)
 
     def click(self, rid=None, text=None, timeout=20):
-        # Some Android versions report enabled=false for visible, usable
-        # dialog controls. Do not turn that unreliable accessibility flag
-        # into a reason to wait until timeout; verify the next UI state instead.
+        # Some devices expose the visible label of a dialog Button, but omit
+        # its app resource-id. Try the exact ID first, then an exact known
+        # label. Never guess coordinates when neither is in the hierarchy.
+        labels = {
+            "startGameButton": "开始对局",
+            "newRoundButton": "新开一局",
+            "undoButton": "悔棋",
+            "passButton": "停一手",
+        }
         label = rid or text
-        item = self.poll(lambda r: self.node(r, rid=rid, text=text),
-                         timeout, f"未找到控件: {label}")
+        matched_by = [None]
+
+        def locate(root):
+            item = self.node(root, rid=rid, text=text)
+            if item is not None:
+                matched_by[0] = "id" if rid else "text"
+                return item
+            alternate = labels.get(rid) if rid else None
+            if not alternate:
+                return None
+            for candidate in root.iter("node"):
+                if candidate.get("text", "").strip() != alternate:
+                    continue
+                if not BOUNDS.fullmatch(candidate.get("bounds", "")):
+                    continue
+                matched_by[0] = "label"
+                return candidate
+            return None
+
+        item = self.poll(locate, timeout, f"未找到控件或可见文字: {label}")
         x, y = self.center(item)
         width, height = self.screen_size()
         if not (0 <= x < width and 0 <= y < height):
             raise TestFailure(f"{label} 在屏幕外，禁止盲点坐标: ({x}, {y})")
+        if matched_by[0] == "label":
+            self.log(f"{label} 未暴露资源ID，使用文字 {item.get('text')} 定位")
         if item.get("enabled") != "true":
             self.log(f"{label} 的 UI enabled={item.get('enabled')}，尝试点击可见控件")
         self.tap(x, y)
