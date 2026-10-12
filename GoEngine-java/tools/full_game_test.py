@@ -110,8 +110,11 @@ def score_timings(log_text, year=None):
     dead = first(lambda tag, m: tag == "KataGoEngine" and "sendCommandSync in, command=final_status_list dead" in m)
     raw_nn = first(lambda tag, m: tag == "KataGoEngine" and "sendCommandSync in, command=kata-raw-nn 0" in m)
     render = first(lambda tag, m: tag == "MainActivity" and
-                   ("render in, message=黑" in m or "render in, message=终局数子" in m))
+                   ("render in, message=黑" in m or "render in, message=终局数子" in m or
+                    "render in, message=快速AI预估" in m))
     chinese = first(lambda tag, m: tag == "MainActivity" and "Chinese area score" in m)
+    fast_nn_done = first(lambda tag, m: tag == "MainActivity" and "ENDGAME_TIMING phase=fast_nn_done" in m)
+    fast_nn_msg = next((m for _, tag, m in tail if tag == "MainActivity" and "ENDGAME_TIMING phase=fast_nn_done" in m), "")
     first_score_ready = first(lambda tag, m: tag == "MainActivity" and "ENDGAME_TIMING phase=score_done" in m and "valid=true" in m)
     # The user may request optional deeper scoring *after* the fast result.
     # That later final_score must not be assigned to the earlier fast settlement.
@@ -139,7 +142,28 @@ def score_timings(log_text, year=None):
     if not (begin is not None and dead is not None and raw_nn is not None
             and render is not None and chinese is not None):
         raise ValueError("终局日志不完整，缺少 dead / raw-nn / Chinese area score / 最终显示")
+    fast_nn = fast_nn_done is not None
     fast = score is None
+    if fast_nn:
+        if not (begin is not None and raw_nn is not None and chinese is not None and render is not None
+                and begin <= raw_nn <= chinese <= fast_nn_done <= render):
+            raise ValueError("快速 NN 结算缺少 raw-nn / Chinese area score / 正式结果渲染")
+        if (score is not None and score <= render) or (dead is not None and dead <= render):
+            raise ValueError("快速 NN 路径不应提前调用慢的 final_score 或 final_status_list")
+        white_lead = re.search(r"nnWhiteLead=(-?[0-9]+(?:\\.[0-9]+)?)", fast_nn_msg)
+        if white_lead is None:
+            raise ValueError("快速 NN 结算没有记录神经网络预测目差")
+        def ms(start, end):
+            return round((end-start)/1000, 3)
+        return {"scoring_mode": "fast_nn", "total_ms": ms(begin, render),
+                "time_to_first_result_ms": ms(begin, render),
+                "before_final_score_ms": None, "final_score_ms": None,
+                "before_dead_ms": None, "dead_stones_ms": None,
+                "raw_nn_to_render_ms": ms(raw_nn, render),
+                "position_evaluation_ms": position_ms,
+                "raw_white_lead": float(white_lead.group(1)),
+                "gtp_final_score": None, "chinese_area_log": area_line,
+                "has_chinese_area_score": True}
     if fast and not (begin <= dead <= raw_nn <= chinese <= render):
         raise ValueError("快速结算阶段时间顺序异常")
     if not fast and not (begin <= score <= dead <= raw_nn <= chinese <= render):
@@ -272,7 +296,7 @@ def run_full_game(runner, size, backend, max_actions=110, settlement_timeout=180
             runner.log(f"整局 #{action+1} AI 落子 {move} → {point}")
     if end_type != "two_passes":
         raise TestFailure(f"整局 {max_actions} 次玩家行动内未出现连续两次停一手；未伪造结算结果")
-    runner.log("连续停一手已触发 final_score，开始等待终局三个阶段")
+    runner.log("连续停一手，等待终局结果（原版完整计分或实验快速 NN 预估）")
     runner.wait_log(lambda x: x["score_summary"] > game_baseline["score_summary"]
                     and x["final_render"] > game_baseline["final_render"] or None,
                     settlement_timeout, "等待实际地盘数目完成")
@@ -281,8 +305,15 @@ def run_full_game(runner, size, backend, max_actions=110, settlement_timeout=180
         stages = score_timings(raw)
     except ValueError as exc:
         raise TestFailure("整局结算日志检查失败：" + str(exc)) from exc
-    if stages["scoring_mode"] != "full" or stages["gtp_final_score"] is None:
-        raise TestFailure("未得到 KataGo 原版 final_score 有效结果，不能把快速估算当完整数目 PASS")
+    if stages["scoring_mode"] == "full":
+        if stages["gtp_final_score"] is None:
+            raise TestFailure("没有收到 KataGo 原版 final_score 数值，完整结算不能 PASS")
+    elif stages["scoring_mode"] == "fast_nn":
+        if stages["raw_white_lead"] is None:
+            raise TestFailure("实验 NN 结算没有有效 whiteLead")
+        runner.log("注意：这次只通过实验快速 NN 结算检查，不代表与 KataGo 深度 final_score 的目数一致")
+    else:
+        raise TestFailure("旧版只判死子快速路径不能冒充新的 NN 结算通过")
     quality = assess_final_position(stages.get("chinese_area_log"), board)
     result = {"size": size, "backend": backend, "status": "PASS",
               "end_type": end_type, "move_strategy": "defend_territory_v1",
