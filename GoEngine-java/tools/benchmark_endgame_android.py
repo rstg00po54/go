@@ -348,6 +348,7 @@ def main(argv=None):
         gpu_egl = prepare_device(args.adb, serial, backends, binaries, model, config, output)
         fixtures = load_fixtures(args.adb, serial, output, names)
         rows = []
+        engine_versions = {}
         csv_file = output / "endgame.csv"
         with csv_file.open("w", newline="", encoding="utf-8") as target:
             writer = csv.DictWriter(target, fieldnames=DETAIL_FIELDS)
@@ -358,6 +359,10 @@ def main(argv=None):
                                    args.visits, args.max_time, output, args.timeout,
                                    use_egl_mali=(backend == "gpu" and gpu_egl))
                 try:
+                    engine_name, _ = engine.command("name")
+                    engine_version, _ = engine.command("version")
+                    engine_versions[backend] = {"name": engine_name, "version": engine_version}
+                    print("  KataGo: %s %s" % (engine_name, engine_version), flush=True)
                     engine.command("boardsize 9")
                     engine.command("komi 5.5")
                     engine.command("kata-set-rules chinese")
@@ -378,6 +383,10 @@ def main(argv=None):
                     engine.close()
         grouped = summarize(rows, names, backends)
         warnings = []
+        if len(backends) == 2 and (
+                engine_versions["cpu"]["name"] != engine_versions["gpu"]["name"] or
+                engine_versions["cpu"]["version"] != engine_versions["gpu"]["version"]):
+            warnings.append("CPU and GPU binaries report different KataGo name/version; comparisons may not be apples-to-apples")
         for row in rows:
             if abs(row["score_minus_local_lead"]) >= 0.5:
                 warnings.append("%s/%s #%d: GTP final_score differs from local Chinese count by %+.1f points" %
@@ -391,7 +400,10 @@ def main(argv=None):
                                     (name, cpu_scores, gpu_scores))
         report = {"schema": 1, "device": serial, "type": "native_gtp_sgf_setup",
                   "note": "Synthetic fixed SGF snapshots; not Android UI/JNI Human SL; GTP command wall time via ADB.",
-                  "same_model": str(model), "rules": "Chinese AREA, komi 5.5",
+                  "same_model": str(model), "model_sha256": hashlib.sha256(model.read_bytes()).hexdigest(),
+                  "binaries": {b: {"path": str(binaries[b]), "sha256": hashlib.sha256(binaries[b].read_bytes()).hexdigest()}
+                               for b in backends},
+                  "engines": engine_versions, "rules": "Chinese AREA, komi 5.5",
                   "threads": args.threads, "max_visits": args.visits,
                   "max_time_s": args.max_time, "repeats": args.repeats,
                   "fixtures": fixtures, "rows": rows, "summary": grouped, "warnings": warnings}
