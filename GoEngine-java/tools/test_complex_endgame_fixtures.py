@@ -89,11 +89,11 @@ class ComplexEndgameFixturesTests(unittest.TestCase):
         rows = [
             dict(backend="gpu", fixture="double_ko_shape13", native_ms=30,
                  original_score_ms=6000, original_dead_ms=2000,
-                 native_white_lead=5.5, original_white_lead=4.5,
+                 native_white_lead=5.5, nn_white_lead=4.6, original_white_lead=4.5,
                  dead_same=False, native_dead="F8", original_dead="K7"),
             dict(backend="gpu", fixture="double_ko_shape13", native_ms=40,
                  original_score_ms=6200, original_dead_ms=2400,
-                 native_white_lead=5.5, original_white_lead=5.5,
+                 native_white_lead=5.5, nn_white_lead=5.6, original_white_lead=5.5,
                  dead_same=True, native_dead="K7", original_dead="K7"),
         ]
         out = summarize_comparisons(rows)["gpu/double_ko_shape13"]
@@ -102,6 +102,7 @@ class ComplexEndgameFixturesTests(unittest.TestCase):
         self.assertEqual(out["dead_disagreements"], 1)
         self.assertEqual(out["native_ms_average"], 35)
         self.assertEqual(out["original_prediction_range"], 1)
+        self.assertEqual(out["nn_to_original_delta_average_abs"], 0.1)
         self.assertEqual(out["native_dead_variants"], ["F8", "K7"])
 
 
