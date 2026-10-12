@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 from full_game_test import BoardTracker, from_gtp, score_timings, run_full_game, _await_ai
 from test_app_ui import TestFailure
+from go_play_strategy import rank_moves, assess_final_position
 
 
 def line(milliseconds, tag, message):
@@ -55,6 +56,52 @@ class BoardTrackerTests(unittest.TestCase):
         b.play("B", (4, 4))
         b.play("W", None)
         self.assertEqual(b.stones[(4, 4)], "B")
+
+
+class DefensiveStrategyTests(unittest.TestCase):
+    def test_opening_takes_safe_corner_not_center(self):
+        board = BoardTracker(9)
+        choices = rank_moves(board)
+        self.assertEqual(choices[0][0], (2, 2))
+        self.assertNotIn((4, 4), [p for p, _ in choices])
+
+    def test_repair_group_in_atari_before_expanding(self):
+        board = BoardTracker(5)
+        board.play("B", (2, 2))
+        for point in ((1, 2), (2, 1), (3, 2)):
+            board.play("W", point)
+        self.assertEqual(len(board.group(board.stones, (2, 2))[1]), 1)
+        self.assertEqual(rank_moves(board)[0][0], (2, 3))
+
+    def test_do_not_fill_owned_eye(self):
+        board = BoardTracker(5)
+        for point in ((2, 1), (1, 2), (3, 2), (2, 3)):
+            board.play("B", point)
+        self.assertNotIn((2, 2), [p for p, _ in rank_moves(board)])
+
+    def test_cannot_retry_excluded_point(self):
+        board = BoardTracker(9)
+        self.assertNotIn((2, 2), [p for p, _ in rank_moves(board, {(2, 2)})])
+
+    def test_unrepresentative_one_color_game_is_detected(self):
+        board = BoardTracker(9)
+        for point in ((2, 2), (3, 2), (4, 2)):
+            board.play("W", point)
+        stats = assess_final_position(
+            "Chinese area score B stones=0 territory=0, W stones=57 territory=24", board)
+        self.assertEqual(stats["benchmark_quality"], "UNREPRESENTATIVE")
+        self.assertEqual(stats["black_stones"], 0)
+
+    def test_two_sided_territory_is_representative(self):
+        board = BoardTracker(9)
+        area = "Chinese area score B stones=8 territory=12, W stones=10 territory=9"
+        result = assess_final_position(area, board)
+        self.assertEqual(result["benchmark_quality"], "REPRESENTATIVE")
+        self.assertEqual(result["black_territory"], 12)
+        self.assertFalse(result["tracker_matches_score"])
+
+    def test_missing_area_log_is_unknown(self):
+        self.assertEqual(assess_final_position(None, BoardTracker(9))["benchmark_quality"], "UNKNOWN")
 
 
 class EndgameTests(unittest.TestCase):
@@ -120,6 +167,7 @@ class EndgameTests(unittest.TestCase):
         self.assertEqual(result["player_passes"], 1)
         self.assertEqual(result["ai_passes"], 1)
         self.assertEqual(result["settlement"]["dead_stones_ms"], 3350)
+        self.assertEqual(result["position_quality"]["benchmark_quality"], "REPRESENTATIVE")
         self.assertEqual(calls[-1], ("pass", "passButton"))
 
 
