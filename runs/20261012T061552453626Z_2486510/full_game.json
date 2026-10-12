@@ -1,0 +1,26 @@
+[
+  {
+    "size": 9,
+    "backend": "gpu",
+    "status": "PASS",
+    "end_type": "two_passes",
+    "black_stones_played": 57,
+    "ai_stones_played": 57,
+    "rejected_taps": 0,
+    "player_passes": 1,
+    "ai_passes": 0,
+    "match_elapsed_s": 49.109,
+    "settlement": {
+      "total_ms": 1873.0,
+      "before_final_score_ms": 3.0,
+      "final_score_ms": 1377.0,
+      "dead_stones_ms": 465.0,
+      "raw_nn_to_render_ms": 28.0,
+      "position_evaluation_ms": 22,
+      "gtp_final_score": null,
+      "chinese_area_log": "Chinese area score B stones=0 territory=0, W stones=57 territory=24, dead B=0 W=0, komi=5.5, total B=0.0 W=86.5, lead local=86.5 engine=86.5 agrees=true",
+      "has_chinese_area_score": true
+    },
+    "case": 1
+  }
+]
