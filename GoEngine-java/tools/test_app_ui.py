@@ -18,6 +18,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -42,7 +43,11 @@ class AppTest:
         self.started = time.monotonic()
         self.events = []
         self.last_xml = None
+        self.last_root = None
+        self.last_root_time = 0.0
+        self.screen_size_cached = None
         self.density_cache = None
+        self.failure = None
 
     def log(self, message):
         elapsed = round(time.monotonic() - self.started, 3)
@@ -77,17 +82,25 @@ class AppTest:
             self.serial = devices[0]
         self.log("连接设备 " + self.serial)
 
-    def hierarchy(self):
-        self.adb("shell", "uiautomator", "dump", "/sdcard/katago_test_ui.xml", timeout=25)
-        data = self.adb("exec-out", "cat", "/sdcard/katago_test_ui.xml", binary=True)
+    def hierarchy(self, fresh=False):
+        # UIAutomator can take seconds to export a hierarchy. One snapshot is
+        # reusable across several reads unless the UI was touched or timed out.
+        if not fresh and self.last_root is not None and time.monotonic() - self.last_root_time < 1.5:
+            return self.last_root
+        data = self.adb("exec-out", "sh", "-c",
+                        "uiautomator dump /sdcard/katago_test_ui.xml >/dev/null 2>&1 && cat /sdcard/katago_test_ui.xml",
+                        timeout=18, binary=True)
         start = data.find(b"<?xml")
-        if start >= 0:
-            data = data[start:]
+        if start < 0:
+            raise TestFailure("UIAutomator 未输出 XML；请检查手机是否解锁")
+        data = data[start:]
         try:
             root = ET.fromstring(data)
         except ET.ParseError as exc:
             raise TestFailure("Android UI XML 无法解析: " + str(exc)) from exc
         self.last_xml = data
+        self.last_root = root
+        self.last_root_time = time.monotonic()
         return root
 
     @staticmethod
@@ -118,9 +131,11 @@ class AppTest:
         end = started + timeout
         next_progress = started + 10
         detail = ""
+        attempts = 0
         while time.monotonic() < end:
             try:
-                root = self.hierarchy()
+                root = self.hierarchy(fresh=(attempts > 0))
+                attempts += 1
                 result = callback(root)
                 if result:
                     return result
@@ -138,6 +153,7 @@ class AppTest:
         raise TestFailure(f"{description}，等待 {timeout}s；最近界面: {detail}")
 
     def tap(self, x, y):
+        self.last_root = None
         self.adb("shell", "input", "tap", str(x), str(y), timeout=15)
 
     def click(self, rid=None, text=None, timeout=20):
@@ -219,7 +235,7 @@ class AppTest:
                     return (x, y)
             return None
 
-        self.screen_size_cached = self.screen_size()
+        self.screen_size()
         point = self.poll(option_point, 15, f"下拉选项不可见: {rid}={option}")
         self.tap(*point)
         self.log(f"选择 {rid}: {option}，坐标={point}")
@@ -256,13 +272,16 @@ class AppTest:
         raise TestFailure(f"等待 MainActivity 初始化日志超过 {self.args.start_timeout}s")
 
     def screen_size(self):
+        if self.screen_size_cached is not None:
+            return self.screen_size_cached
         raw = self.adb("shell", "wm", "size")
         m = re.search(r"Override size:\s*(\d+)x(\d+)", raw)
         if m is None:
             m = re.search(r"Physical size:\s*(\d+)x(\d+)", raw)
         if m is None:
             raise TestFailure("无法读取屏幕尺寸，不能自动滚动")
-        return int(m.group(1)), int(m.group(2))
+        self.screen_size_cached = (int(m.group(1)), int(m.group(2)))
+        return self.screen_size_cached
 
     def open_home_ai(self):
         width, height = self.screen_size()
