@@ -1139,7 +1139,9 @@ public class KataGoEngine {
         DebugLog.enter(TAG, "getFinalScore in");
         responseQueue.clear();
         if (!sendCommandSync("final_score")) return null;
-        return parseGtpResponse(waitForResponse(10000));
+        // Deeper on-demand search can be slower than 10s on larger boards.
+        // Do not time out and leave an unfinished GTP response in the queue.
+        return parseGtpResponse(waitForResponse(60000));
     }
 
     /** KataGo GTP final_status_list dead returns the coordinates of predicted dead stones. */
