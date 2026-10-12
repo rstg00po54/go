@@ -48,6 +48,14 @@ class AppTest:
         self.screen_size_cached = None
         self.density_cache = None
         self.failure = None
+        self.cache_file = Path("build/app_ui_test/ui_geometry_cache.json").resolve()
+        self.geometry = {}
+        self.geometry_key = None
+        self.selected_size = None
+        self.selected_backend = None
+        self.player_black = True  # MainActivity initializes playerColor=BLACK.
+        self.use_log_wait = False
+        self.log_baseline = None
 
     def log(self, message):
         elapsed = round(time.monotonic() - self.started, 3)
@@ -81,6 +89,94 @@ class AppTest:
                 raise TestFailure(f"当前在线设备 {devices}，请用 -s 指定设备")
             self.serial = devices[0]
         self.log("连接设备 " + self.serial)
+        self.init_geometry_cache()
+
+    def init_geometry_cache(self):
+        """Persistent local geometry, keyed by device, display and APK update."""
+        w, h = self.screen_size()
+        scale = self.density()
+        meta = self.adb("shell", "dumpsys", "package", PACKAGE, timeout=15, check=False)
+        m = re.search(r"lastUpdateTime=([^\r\n]+)", meta)
+        updated = m.group(1).strip() if m else "unknown"
+        self.geometry_key = f"v2|{self.serial}|{w}x{h}|{scale:.4f}|{updated}"
+        try:
+            data = json.loads(self.cache_file.read_text(encoding="utf-8"))
+            if data.get("key") == self.geometry_key:
+                self.geometry = data.get("bounds", {})
+                self.log(f"已加载本地 UI 缓存：{len(self.geometry)} 个控件/菜单位置")
+            else:
+                self.log("APK 或显示环境变化，重新建立 UI 缓存")
+        except (OSError, ValueError, AttributeError):
+            self.log("首次运行，建立 UI 坐标缓存")
+
+    def store_geometry(self, key, bounds):
+        m = BOUNDS.fullmatch(bounds) if isinstance(bounds, str) else None
+        if not m:
+            return
+        values = list(map(int, m.groups()))
+        if values[2] <= values[0] or values[3] <= values[1]:
+            return
+        if self.geometry.get(key) == values:
+            return
+        self.geometry[key] = values
+        self.cache_file.parent.mkdir(parents=True, exist_ok=True)
+        temp = self.cache_file.with_suffix(".tmp")
+        temp.write_text(json.dumps({"key": self.geometry_key, "bounds": self.geometry},
+                                   ensure_ascii=False, indent=2), encoding="utf-8")
+        temp.replace(self.cache_file)
+
+    def cached_center(self, key):
+        bounds = self.geometry.get(key)
+        if bounds is None or len(bounds) != 4:
+            return None
+        x1, y1, x2, y2 = bounds
+        w, h = self.screen_size()
+        if not (0 <= x1 < x2 <= w and 0 <= y1 < y2 <= h):
+            return None
+        return (x1 + x2) // 2, (y1 + y2) // 2
+
+    def remember_screen(self, root):
+        keys = ("aiBattleButton", "sizeSpinner", "blackRadio", "backendSpinner",
+                "startGameButton", "difficultySpinner", "boardView",
+                "newRoundButton", "undoButton", "passButton")
+        for key in keys:
+            item = self.node(root, rid=key)
+            if item is not None:
+                self.store_geometry(key, item.get("bounds"))
+
+    def read_log_state(self):
+        raw = self.adb("logcat", "-d", "-s", "MainActivity:D", "MainActivity:I",
+                       "AndroidRuntime:E", "*:S", timeout=15)
+        lines = raw.splitlines()
+        backend = []
+        for line in lines:
+            m = re.search(r"Game backend requested=(CPU|GPU) actual=(\S+(?: JNI)?) ready=(true|false)", line)
+            if m:
+                backend.append((m.group(1), m.group(2), m.group(3) == "true"))
+        return {
+            "backend": backend,
+            "turns": sum("render in, message=轮到你了" in line for line in lines),
+            "ai_moves": sum("handleAiMove in" in line for line in lines),
+            "undo_done": sum("render in, message=已悔棋，轮到你了" in line for line in lines),
+            "fatal": any("FATAL EXCEPTION" in line for line in lines),
+            "debug_active": any("render in, message=" in line for line in lines),
+        }
+
+    def wait_log(self, predicate, timeout, description):
+        deadline = time.monotonic() + timeout
+        progress = time.monotonic() + 8
+        while time.monotonic() < deadline:
+            state = self.read_log_state()
+            if state["fatal"]:
+                raise TestFailure("APP 发生 Java 崩溃：" + description)
+            result = predicate(state)
+            if result is not None and result is not False:
+                return result
+            if time.monotonic() >= progress:
+                self.log("等待日志：" + description)
+                progress = time.monotonic() + 8
+            time.sleep(0.25)
+        raise TestFailure(f"{description}，日志等待超过 {timeout}s")
 
     def hierarchy(self, fresh=False):
         # UIAutomator can take seconds to export a hierarchy. One snapshot is
@@ -101,6 +197,7 @@ class AppTest:
         self.last_xml = data
         self.last_root = root
         self.last_root_time = time.monotonic()
+        self.remember_screen(root)
         return root
 
     @staticmethod
@@ -197,6 +294,7 @@ class AppTest:
             self.log(f"{label} 未暴露资源ID，使用文字 {item.get('text')} 定位")
         if item.get("enabled") != "true":
             self.log(f"{label} 的 UI enabled={item.get('enabled')}，尝试点击可见控件")
+        self.store_geometry(rid, item.get("bounds")) if rid else None
         self.tap(x, y)
         self.log(f"点击 {label}，坐标=({x}, {y})")
 
