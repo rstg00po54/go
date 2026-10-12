@@ -379,6 +379,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.w(TAG, "Independent winrate engine move sync failed; awaiting next game");
                 return;
             }
+            if (session != winRateSession) return; // No expensive analysis after game end.
             KataGoEngine.WinRate result = winRateEngine.evaluateWinRate(next.toGtp());
             mainHandler.post(() -> recordWinRate(snapshot, moveCount, epoch, result));
         });
@@ -618,6 +619,7 @@ public class MainActivity extends AppCompatActivity {
         if (evaluating) return;
         evaluating = true;
         winRateEpoch++;
+        winRateSession++; // Drop queued independent win-rate searches at the terminal position.
         final GoBoard snapshot = board;
         final int size = boardSize, moves = board.getMoveCount();
         final long epoch = winRateEpoch;
@@ -709,6 +711,7 @@ public class MainActivity extends AppCompatActivity {
         gameResultText = outcome;
         finalScoreText = "认输结束\n未进行数子";
         winRateEpoch++;
+        winRateSession++; // No stale win-rate work after resignation.
         StoneColor winner = outcome.startsWith("AI") ? playerColor : playerColor.opposite();
         float black = winner == StoneColor.BLACK ? 1f : 0f;
         recordWinRate(board, board.getMoveCount(), winRateEpoch, new KataGoEngine.WinRate(black, 1f - black));
