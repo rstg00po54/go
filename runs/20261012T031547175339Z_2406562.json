@@ -1,0 +1,74 @@
+{
+  "schema": 1,
+  "status": "FAIL",
+  "timestamp_utc": "20261012T031547175339Z",
+  "backends": "cpu,gpu,cpu",
+  "rounds": 1,
+  "size": 9,
+  "moves": 2,
+  "undo": true,
+  "pass": false,
+  "failure": "未找到控件或可见文字: startGameButton，等待 20s",
+  "events": [
+    {
+      "s": 4.842,
+      "step": "MainActivity 已报告 Initial engine ready=true"
+    },
+    {
+      "s": 4.842,
+      "step": "=== Case 1: CPU / 9x9 ==="
+    },
+    {
+      "s": 9.424,
+      "step": "执黑已选中，无需重复点击"
+    }
+  ],
+  "startup_timings": [
+    {
+      "phase": "engine_backend_and_paths",
+      "ms": 0.149334
+    },
+    {
+      "phase": "engine_prepare_config",
+      "ms": 5.408958
+    },
+    {
+      "phase": "engine_prepare_model_asset",
+      "ms": 1.939292
+    },
+    {
+      "phase": "engine_find_human_model",
+      "ms": 0.123667
+    },
+    {
+      "phase": "jni_load_library",
+      "ms": 0.982625
+    },
+    {
+      "phase": "jni_native_create_session",
+      "ms": 0.096833
+    },
+    {
+      "phase": "jni_create_session_total",
+      "ms": 1.192917
+    },
+    {
+      "phase": "engine_cpu_jni_create",
+      "ms": 1.49975
+    },
+    {
+      "phase": "engine_cpu_gtp_name_send",
+      "ms": 0.123083
+    },
+    {
+      "phase": "engine_cpu_gtp_name_wait",
+      "ms": 2351.974278
+    },
+    {
+      "phase": "engine_java_start_total",
+      "ms": 2361.873154
+    }
+  ],
+  "game_backends": [],
+  "note": "PUBLIC, sanitized: no full logcat/screenshots/XML/device serial"
+}
