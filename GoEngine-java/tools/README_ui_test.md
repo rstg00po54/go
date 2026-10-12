@@ -55,3 +55,24 @@
 ## 速度与中断
 
 UIAutomator 导出界面树在 RK3588 上仍有固定的数秒延迟。脚本会尽可能复用未变化的 UI 数据，并合并设备端命令，避免每一步无意义等待。Ctrl+C 会保存 `INTERRUPTED` 状态的测试报告，不打印一长串 traceback。
+
+## UI 坐标本地缓存与快速回归
+
+缓存文件：`build/app_ui_test/ui_geometry_cache.json`（在 GoEngine-java 目录下运行时）。
+
+- 第一次会少量导出 UI 树，记住首页 AI训练、新局弹窗、CPU/GPU 下拉切换、棋盘和悔棋等控件的位置。
+- 以后同一 RK3588、同一分辨率/DPI、同一 APK 安装更新时间的测试，直接从本地 JSON 复用坐标。切换 APK 或显示配置时会重建缓存。
+- 运行状态使用 MainActivity 的 logcat 日志监测：新局实际 CPU/GPU 后端、AI 回棋与悔棋完成。无需在每一步调用 `uiautomator dump`。
+- 开关 `--slow-ui` 可以强制动态阶段继续按传统 UI 树验证（用于调试日志未打印的版本）。
+- 每轮测试报告会记录 `ui_dumps`（实际整树导出次数）及 `cached_controls`（缓存控件数）。
+
+如改动布局但仍是同一 APK、怀疑缓存坐标过期，可在 GoEngine-java 目录执行：
+
+    rm -f build/app_ui_test/ui_geometry_cache.json
+
+再运行自动测试，脚本会重新学习坐标。动态动作仍需验证对应日志；若 APP 关闭 DebugLog，测试会自动回退到 UIAutomator。
+
+独立运行 10 个不需要连接设备的回归单测：
+
+    python3 tools/test_app_ui_units.py
+
