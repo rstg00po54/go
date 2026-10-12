@@ -8,14 +8,17 @@ from benchmark_real_sgf_nn_android import (
 
 
 class FakeEngine:
-    def __init__(self, lead=-2.4, komi="7", rules='{"scoring":"AREA","tax":"NONE"}'):
+    def __init__(self, lead=-2.4, komi="7", moves=0, rules='{"scoring":"AREA","tax":"NONE"}'):
         self.calls = []
         self.lead = lead
+        self.moves = moves
         self.komi = komi
         self.rules = rules
 
     def command(self, value):
         self.calls.append(value)
+        if value == "showboard":
+            return "MoveNum: %d HASH: xxx" % self.moves, 0.1
         if value == "kata-get-rules":
             return self.rules, 0.1
         if value == "get_komi":
@@ -79,11 +82,11 @@ class RealSgfTests(unittest.TestCase):
     def test_comparison_preserves_exact_sgf_position_and_komi(self):
         case = collect_games()[0][0]
         case["remote"] = "/data/local/tmp/katago_bench/positions/test.sgf"
-        engine = FakeEngine()
+        engine = FakeEngine(moves=case["moves"])
         out = compare_game(engine, case, "gpu")
         self.assertEqual(engine.calls, [
             "loadsgf /data/local/tmp/katago_bench/positions/test.sgf",
-            "kata-get-rules", "get_komi", "clear_cache", "kata-raw-nn 0",
+            "showboard", "kata-get-rules", "get_komi", "clear_cache", "kata-raw-nn 0",
         ])
         self.assertTrue(out["winner_correct"])
         self.assertEqual(out["absolute_error"], 0.4)
@@ -94,15 +97,21 @@ class RealSgfTests(unittest.TestCase):
         case = collect_games()[0][0]
         case["remote"] = "/positions/test.sgf"
         with self.assertRaisesRegex(ValueError, "komi differs"):
-            compare_game(FakeEngine(komi="5.5"), case, "gpu")
+            compare_game(FakeEngine(komi="5.5", moves=case["moves"]), case, "gpu")
         with self.assertRaisesRegex(ValueError, "changed rules"):
-            compare_game(FakeEngine(rules='{"scoring":"TERRITORY","tax":"NONE"}'),
+            compare_game(FakeEngine(moves=case["moves"], rules='{"scoring":"TERRITORY","tax":"NONE"}'),
                          case, "gpu")
+
+    def test_reject_silently_skipped_or_lost_replay_moves(self):
+        case = collect_games()[0][0]
+        case["remote"] = "/positions/test.sgf"
+        with self.assertRaisesRegex(ValueError, "did not replay all SGF moves"):
+            compare_game(FakeEngine(moves=case["moves"] - 1), case, "gpu")
 
     def test_summary_is_explicit_about_game_count_and_repeats(self):
         case = collect_games()[0][0]
         case["remote"] = "/positions/test.sgf"
-        engine = FakeEngine()
+        engine = FakeEngine(moves=case["moves"])
         row = compare_game(engine, case, "gpu")
         summary = summarize([row, row])["9x9"]
         self.assertEqual(summary["samples"], 2)
