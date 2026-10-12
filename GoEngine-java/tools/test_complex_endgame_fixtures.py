@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 from benchmark_endgame_android import inspect_grid, make_sgf, load_fixtures
 from complex_endgame_fixtures import COMPLEX_POSITIONS
-from benchmark_native_fast_score_android import summarize_comparisons, measure_case
+from benchmark_native_fast_score_android import summarize_comparisons, describe_disagreement_groups
 
 
 LETTERS = "ABCDEFGHJKLMNOPQRST"
@@ -84,6 +84,22 @@ class ComplexEndgameFixturesTests(unittest.TestCase):
             path = Path(tmp) / "positions" / (name + ".sgf")
             self.assertEqual(report[name]["sha256"], hashlib.sha256(path.read_bytes()).hexdigest())
             self.assertIn("SZ[13]", path.read_text())
+
+    def test_disagreement_groups_include_color_size_and_liberties(self):
+        rows = COMPLEX_POSITIONS["ko_shape9"]["rows"]
+        group = describe_disagreement_groups(rows, ["E5"], [])[0]
+        self.assertEqual(group["source"], "native_only")
+        self.assertEqual(group["color"], "W")
+        self.assertEqual(group["stone_count"], 1)
+        self.assertEqual(group["liberties"], 1)
+        self.assertEqual(group["liberty_vertices"], ["E4"])
+
+    def test_multiple_disagreeing_stones_in_one_chain_report_once(self):
+        rows = COMPLEX_POSITIONS["ko_shape9"]["rows"]
+        groups = describe_disagreement_groups(rows, ["A9", "B9"], [])
+        self.assertEqual(len(groups), 1)
+        self.assertEqual(groups[0]["color"], "B")
+        self.assertEqual(groups[0]["stone_count"], 13)
 
     def test_comparison_summary_records_uncertainty_not_accuracy(self):
         rows = [
