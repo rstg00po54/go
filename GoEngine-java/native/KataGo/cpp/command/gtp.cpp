@@ -1595,7 +1595,7 @@ struct GTPEngine {
   // Neither the root board nor the search tree is modified by this command.
   string fastFinalScore() {
     stopAndWait();
-    const Board board = bot->getRootBoard();
+    Board board = bot->getRootBoard();
     const BoardHistory hist = bot->getRootHist();
     const Player nextPla = bot->getRootPla();
     if(hist.rules.scoringRule != Rules::SCORING_AREA)
