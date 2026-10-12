@@ -114,21 +114,45 @@ class CacheAndLogTests(unittest.TestCase):
         with self.assertRaises(TestFailure):
             self.app.wait_turn(9, "gpu", baseline=before)
 
-    def test_cached_spinner_transition_does_not_fetch_hierarchy(self):
+    def test_cached_spinner_transition_verifies_dialog_after_tap(self):
         self.app.geometry = {
             "backendSpinner": [400, 940, 750, 1130],
             "choice:backendSpinner:CPU / Eigen->GPU / OpenCL": [430, 1130, 725, 1210]
         }
         self.app.selected_size = 9
         self.app.selected_backend = "CPU"
-        self.app.hierarchy = lambda *args, **kwargs: self.fail("Unexpected hierarchy dump")
         hits = []
         self.app.click = lambda rid=None, text=None: hits.append(("click", rid))
         self.app.tap = lambda x, y: hits.append(("tap", x, y))
+        root = ET.fromstring(
+            '<hierarchy><node resource-id="com.badukai.java:id/backendSpinner" '
+            'bounds="[400,940][750,1130]"><node text="GPU / OpenCL" '
+            'bounds="[410,980][740,1040]" /></node>'
+            '<node resource-id="com.badukai.java:id/startGameButton" '
+            'bounds="[400,1200][700,1300]" /></hierarchy>'
+        )
+        self.app.poll = lambda predicate, timeout, description: predicate(root)
         self.app.spinner("backendSpinner", "GPU / OpenCL")
         self.assertEqual(self.app.selected_backend, "GPU")
         self.assertEqual(hits[0], ("click", "backendSpinner"))
         self.assertEqual(hits[1], ("tap", 577, 1170))
+
+    def test_game_start_requires_mainactivity_ack(self):
+        self.app.args = SimpleNamespace(size=9)
+        calls = []
+        logs = ["", "I/MainActivity( 4823): Saved new-game preference boardSize=9 backend=GPU"]
+        self.app.adb = lambda *args, **kwargs: logs.pop(0) if logs else logs[-1]
+        self.app.start_game_from_layout = lambda: calls.append("tap")
+        self.app.start_game_confirmed("gpu")
+        self.assertEqual(calls, ["tap"])
+
+    def test_game_start_rejects_unexpected_backend(self):
+        self.app.args = SimpleNamespace(size=9)
+        logs = ["", "I/MainActivity( 4823): Saved new-game preference boardSize=9 backend=CPU"]
+        self.app.adb = lambda *args, **kwargs: logs.pop(0) if len(logs) > 1 else logs[0]
+        self.app.start_game_from_layout = lambda: None
+        with self.assertRaises(TestFailure):
+            self.app.start_game_confirmed("gpu")
 
 
 if __name__ == "__main__":
