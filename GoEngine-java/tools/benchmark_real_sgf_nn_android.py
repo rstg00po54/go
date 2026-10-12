@@ -245,6 +245,11 @@ def parse_nn_metrics(response):
 def compare_game(engine, game, backend):
     # Do not append two passes or rewrite komi: both would change the tested position.
     engine.command("loadsgf " + game["remote"])
+    board_text, _ = engine.command("showboard")
+    played = re.search(r"MoveNum:\s*(\d+)", board_text)
+    if not played or int(played.group(1)) != game["moves"]:
+        raise ValueError("KataGo did not replay all SGF moves for %s: expected %d, shown %s" % (
+            game["name"], game["moves"], played.group(1) if played else "(missing MoveNum)"))
     rules_raw, _ = engine.command("kata-get-rules")
     rules = json.loads(rules_raw)
     if rules.get("scoring") != "AREA" or rules.get("tax") != "NONE":
