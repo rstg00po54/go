@@ -114,7 +114,9 @@ class AppTest:
         return ((x1 + x2) // 2, (y1 + y2) // 2)
 
     def poll(self, callback, timeout, description):
-        end = time.monotonic() + timeout
+        started = time.monotonic()
+        end = started + timeout
+        next_progress = started + 10
         detail = ""
         while time.monotonic() < end:
             try:
@@ -128,6 +130,10 @@ class AppTest:
                 detail = str(exc)
                 if "模型" in detail or "回退" in detail or "后端" in detail:
                     raise
+            now = time.monotonic()
+            if now >= next_progress:
+                self.log(f"等待: {description}；已过 {int(now - started)}s；界面: {detail[:160]}")
+                next_progress = now + 10
             time.sleep(1)
         raise TestFailure(f"{description}，等待 {timeout}s；最近界面: {detail}")
 
@@ -152,13 +158,60 @@ class AppTest:
         return item.get("text", "") if item is not None else ""
 
     def wait_home(self):
-        def ready(root):
-            status = self.text(root, "statusText")
-            if "启动失败" in status:
-                raise TestFailure("首页引擎初始化失败: " + status)
-            return self.node(root, rid="aiBattleButton", enabled=True)
-        self.poll(ready, self.args.start_timeout, "首页 AI 尚未就绪")
-        self.log("首页 AI 已就绪")
+        # The AI-training button lives below the fold in the home ScrollView.
+        # UIAutomator may omit it even after the AI is fully initialized.
+        # MainActivity writes this explicit log before enabling that button.
+        self.log("等待 MainActivity 的引擎完成日志（不依赖屏幕下方的按钮）")
+        started = time.monotonic()
+        next_progress = started
+        while time.monotonic() - started < self.args.start_timeout:
+            logs = self.adb("logcat", "-d", "-s", "MainActivity:I", "AndroidRuntime:E", "*:S", timeout=20)
+            ready = re.findall(r"Initial engine ready=(true|false)", logs)
+            if ready:
+                if ready[-1] != "true":
+                    raise TestFailure("MainActivity 日志报告首页 AI 初始化失败，请检查 logcat")
+                self.log("MainActivity 已报告 Initial engine ready=true")
+                return
+            if "FATAL EXCEPTION" in logs:
+                raise TestFailure("引擎启动期间发生 Java 崩溃")
+            pid = self.adb("shell", "pidof", PACKAGE, timeout=10, check=False)
+            if not pid:
+                raise TestFailure("等待首页初始化期间 APP 主进程已退出")
+            now = time.monotonic()
+            if now >= next_progress:
+                self.log(f"首页引擎尚未发出 ready 日志，已等待 {int(now-started)}s")
+                next_progress = now + 10
+            time.sleep(2)
+        raise TestFailure(f"等待 MainActivity 初始化日志超过 {self.args.start_timeout}s")
+
+    def screen_size(self):
+        raw = self.adb("shell", "wm", "size")
+        m = re.search(r"Override size:\s*(\d+)x(\d+)", raw)
+        if m is None:
+            m = re.search(r"Physical size:\s*(\d+)x(\d+)", raw)
+        if m is None:
+            raise TestFailure("无法读取屏幕尺寸，不能自动滚动")
+        return int(m.group(1)), int(m.group(2))
+
+    def open_home_ai(self):
+        width, height = self.screen_size()
+        self.log("寻找首页 AI训练按钮（如不在当前屏幕，会自动上滑）")
+        for attempt in range(9):
+            root = self.hierarchy()
+            button = self.node(root, rid="aiBattleButton", enabled=True)
+            if button is not None:
+                x, y = self.center(button)
+                if 0 <= x < width and 0 <= y < height:
+                    self.tap(x, y)
+                    self.log("已进入 AI训练新开一局界面")
+                    return
+            if attempt == 8:
+                break
+            self.log(f"按钮未出现在当前屏幕，向上滑动 {attempt+1}/8")
+            self.adb("shell", "input", "swipe", str(width//2), str(height*4//5),
+                     str(width//2), str(height//3), "380", timeout=15)
+            time.sleep(0.7)
+        raise TestFailure("首页已启动但找不到可点击的 AI训练 按钮，已保存失败截图和 UI XML")
 
     def wait_turn(self, size, backend, minimum=1):
         def ready(root):
@@ -258,8 +311,10 @@ class AppTest:
 
     def case(self, backend, index):
         self.log(f"=== Case {index}: {backend.upper()} / {self.args.size}x{self.args.size} ===")
-        root = self.hierarchy()
-        self.click(rid="newRoundButton" if self.node(root, rid="gameTitleText") else "aiBattleButton")
+        if index == 1:
+            self.open_home_ai()
+        else:
+            self.click(rid="newRoundButton")
         self.spinner("sizeSpinner", f"{self.args.size}路")
         self.click(rid="blackRadio")
         root = self.hierarchy()
