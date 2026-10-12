@@ -1,0 +1,500 @@
+10-12 16:40:06.947 D/KataGoEngine(17108): KataGo stdout: play G4
+10-12 16:40:06.948 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:06.949 D/KataGoEngine(17108): MCTS winrate: toPlay=white rootVisits=21 black=0.000 white=1.000
+10-12 16:40:06.949 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxVisits 20, timeoutMs=10000
+10-12 16:40:06.949 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxVisits 20, running=true
+10-12 16:40:06.950 D/KataGoEngine(17108): Sending: kata-set-param maxVisits 20
+10-12 16:40:06.950 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:06.950 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:06.950 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:06.951 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxTime 0.4, timeoutMs=10000
+10-12 16:40:06.951 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxTime 0.4, running=true
+10-12 16:40:06.951 D/KataGoEngine(17108): Sending: kata-set-param maxTime 0.4
+10-12 16:40:06.951 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:06.951 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:06.951 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:06.952 D/KataGoEngine(17108): playMove in, color=white, move=G4
+10-12 16:40:06.952 D/KataGoEngine(17108): simpleCommand in, command=play white G4, timeoutMs=5000
+10-12 16:40:06.952 D/KataGoEngine(17108): sendCommandSync in, command=play white G4, running=true
+10-12 16:40:06.952 D/KataGoEngine(17108): Sending: play white G4
+10-12 16:40:06.952 D/KataGoEngine(17108): waitForResponse in, timeoutMs=5000
+10-12 16:40:06.953 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:06.953 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:06.953 D/KataGoEngine(17108): isReady in, running=true
+10-12 16:40:06.953 D/KataGoEngine(17108): sendCommandSync in, command=kata-get-param maxVisits, running=true
+10-12 16:40:06.953 D/KataGoEngine(17108): Sending: kata-get-param maxVisits
+10-12 16:40:06.954 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:06.954 D/KataGoEngine(17108): KataGo stdout: = 20
+10-12 16:40:06.954 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:06.954 D/KataGoEngine(17108): parseGtpResponse in, response== 20
+10-12 16:40:06.954 D/KataGoEngine(17108): 
+10-12 16:40:06.954 D/KataGoEngine(17108): sendCommandSync in, command=kata-get-param maxTime, running=true
+10-12 16:40:06.954 D/KataGoEngine(17108): Sending: kata-get-param maxTime
+10-12 16:40:06.954 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:06.955 D/KataGoEngine(17108): KataGo stdout: = 0.4
+10-12 16:40:06.955 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:06.956 D/KataGoEngine(17108): parseGtpResponse in, response== 0.4
+10-12 16:40:06.956 D/KataGoEngine(17108): 
+10-12 16:40:06.956 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxVisits 48, timeoutMs=10000
+10-12 16:40:06.956 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxVisits 48, running=true
+10-12 16:40:06.956 D/KataGoEngine(17108): Sending: kata-set-param maxVisits 48
+10-12 16:40:06.956 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:06.957 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:06.957 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:06.957 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxTime 1.200, timeoutMs=10000
+10-12 16:40:06.958 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxTime 1.200, running=true
+10-12 16:40:06.958 D/KataGoEngine(17108): Sending: kata-set-param maxTime 1.200
+10-12 16:40:06.958 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:06.958 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:06.958 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:06.958 D/KataGoEngine(17108): sendCommandSync in, command=kata-search_analyze black 20 minmoves 1 maxmoves 1 rootInfo true, running=true
+10-12 16:40:06.959 D/KataGoEngine(17108): Sending: kata-search_analyze black 20 minmoves 1 maxmoves 1 rootInfo true
+10-12 16:40:06.959 D/KataGoEngine(17108): waitForResponse in, timeoutMs=20000
+10-12 16:40:06.959 D/KataGoEngine(17108): KataGo stdout: =
+10-12 16:40:07.118 D/KataGoEngine(17108): GPU JNI GTP response: = D9
+10-12 16:40:07.119 D/KataGoEngine(17108): parseGtpResponse in, response== D9
+10-12 16:40:07.119 D/KataGoEngine(17108): 
+10-12 16:40:07.119 I/KataGoEngine(17108): genmove color=white move=D9 rootVisits=unavailable newPlayouts=unavailable elapsedMs=775 (wall time includes GTP and inference overhead)
+10-12 16:40:07.119 D/MainActivity(17108): handleAiMove in, move=D9, aiColor=WHITE
+10-12 16:40:07.124 D/MainActivity(17108): render in, message=轮到你了, engineReady=true, thinking=false, currentPlayer=BLACK
+10-12 16:40:07.129 D/MainActivity(17108): updateButtons in, engineReady=true, thinking=false, currentPlayer=BLACK, playerColor=BLACK
+10-12 16:40:07.184 D/KataGoEngine(17108): KataGo stdout: info move pass visits 4 edgeVisits 4 utility -1.21544 winrate 2.01615e-06 scoreMean -81.4174 scoreStdev 4.38705 scoreLead -81.4174 scoreSelfplay -84.2206 prior 0.143153 lcb -0.152797 utilityLcb -1.64328 weight 4 order 0 pv pass E8 pass rootInfo visits 19 utility -1.24221 winrate 3.01967e-06 scoreMean -82.0582 scoreStdev 4.63171 scoreLead -82.0582 scoreSelfplay -86.1178 weight 19 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 16:40:07.385 D/KataGoEngine(17108): KataGo stdout: info move pass visits 8 edgeVisits 8 utility -1.22632 winrate 1.4652e-06 scoreMean -81.1434 scoreStdev 4.10992 scoreLead -81.1434 scoreSelfplay -84.4647 prior 0.143153 lcb -0.0401046 utilityLcb -1.33861 weight 8 order 0 pv pass E8 pass pass rootInfo visits 35 utility -1.2405 winrate 2.16131e-06 scoreMean -81.063 scoreStdev 4.37884 scoreLead -81.063 scoreSelfplay -85.8256 weight 35 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 16:40:07.391 D/MainActivity(17108): onBoardTap in, x=8, y=4, engineReady=true, thinking=false, currentPlayer=BLACK, playerColor=BLACK
+10-12 16:40:07.421 D/MainActivity(17108): render in, message=AI 思考中..., engineReady=true, thinking=false, currentPlayer=WHITE
+10-12 16:40:07.426 D/MainActivity(17108): updateButtons in, engineReady=true, thinking=false, currentPlayer=WHITE, playerColor=BLACK
+10-12 16:40:07.431 D/KataGoEngine(17108): playMove in, color=black, move=J5
+10-12 16:40:07.431 D/KataGoEngine(17108): simpleCommand in, command=play black J5, timeoutMs=5000
+10-12 16:40:07.431 D/KataGoEngine(17108): sendCommandSync in, command=play black J5, running=true
+10-12 16:40:07.432 D/KataGoEngine(17108): GPU in-process JNI GTP command=play black J5 queued=true
+10-12 16:40:07.432 D/KataGoEngine(17108): waitForResponse in, timeoutMs=5000
+10-12 16:40:07.433 D/KataGoEngine(17108): GPU JNI GTP response: =
+10-12 16:40:07.443 D/MainActivity(17108): requestAiMove in, engineReady=true, thinking=false, currentPlayer=WHITE, playerColor=BLACK
+10-12 16:40:07.444 D/MainActivity(17108): render in, message=AI 思考中..., engineReady=true, thinking=true, currentPlayer=WHITE
+10-12 16:40:07.449 D/MainActivity(17108): updateButtons in, engineReady=true, thinking=true, currentPlayer=WHITE, playerColor=BLACK
+10-12 16:40:07.451 D/KataGoEngine(17108): generateMove in, color=white
+10-12 16:40:07.451 D/KataGoEngine(17108): sendCommandSync in, command=genmove white, running=true
+10-12 16:40:07.451 D/KataGoEngine(17108): GPU in-process JNI GTP command=genmove white queued=true
+10-12 16:40:07.451 D/KataGoEngine(17108): waitForResponse in, timeoutMs=60000
+10-12 16:40:07.542 D/KataGoEngine(17108): KataGo stdout: info move pass visits 9 edgeVisits 9 utility -1.22684 winrate 1.8963e-06 scoreMean -81.709 scoreStdev 4.2338 scoreLead -81.709 scoreSelfplay -84.6223 prior 0.143153 lcb -0.0319765 utilityLcb -1.31638 weight 9 order 0 pv pass pass G5 rootInfo visits 49 utility -1.23627 winrate 2.18586e-06 scoreMean -81.4438 scoreStdev 4.43007 scoreLead -81.4438 scoreSelfplay -85.6649 weight 49 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 16:40:07.542 D/KataGoEngine(17108): KataGo stdout: play resign
+10-12 16:40:07.542 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:07.543 D/KataGoEngine(17108): MCTS winrate: toPlay=black rootVisits=49 black=0.000 white=1.000
+10-12 16:40:07.543 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxVisits 20, timeoutMs=10000
+10-12 16:40:07.543 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxVisits 20, running=true
+10-12 16:40:07.543 D/KataGoEngine(17108): Sending: kata-set-param maxVisits 20
+10-12 16:40:07.543 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:07.545 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:07.545 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:07.545 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxTime 0.4, timeoutMs=10000
+10-12 16:40:07.545 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxTime 0.4, running=true
+10-12 16:40:07.545 D/KataGoEngine(17108): Sending: kata-set-param maxTime 0.4
+10-12 16:40:07.545 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:07.546 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:07.546 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:07.547 D/KataGoEngine(17108): playMove in, color=black, move=A2
+10-12 16:40:07.547 D/KataGoEngine(17108): simpleCommand in, command=play black A2, timeoutMs=5000
+10-12 16:40:07.547 D/KataGoEngine(17108): sendCommandSync in, command=play black A2, running=true
+10-12 16:40:07.547 D/KataGoEngine(17108): Sending: play black A2
+10-12 16:40:07.547 D/KataGoEngine(17108): waitForResponse in, timeoutMs=5000
+10-12 16:40:07.547 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:07.547 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:07.548 D/KataGoEngine(17108): isReady in, running=true
+10-12 16:40:07.548 D/KataGoEngine(17108): sendCommandSync in, command=kata-get-param maxVisits, running=true
+10-12 16:40:07.548 D/KataGoEngine(17108): Sending: kata-get-param maxVisits
+10-12 16:40:07.548 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:07.548 D/KataGoEngine(17108): KataGo stdout: = 20
+10-12 16:40:07.548 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:07.548 D/KataGoEngine(17108): parseGtpResponse in, response== 20
+10-12 16:40:07.548 D/KataGoEngine(17108): 
+10-12 16:40:07.549 D/KataGoEngine(17108): sendCommandSync in, command=kata-get-param maxTime, running=true
+10-12 16:40:07.549 D/KataGoEngine(17108): Sending: kata-get-param maxTime
+10-12 16:40:07.549 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:07.549 D/KataGoEngine(17108): KataGo stdout: = 0.4
+10-12 16:40:07.549 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:07.549 D/KataGoEngine(17108): parseGtpResponse in, response== 0.4
+10-12 16:40:07.549 D/KataGoEngine(17108): 
+10-12 16:40:07.549 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxVisits 48, timeoutMs=10000
+10-12 16:40:07.549 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxVisits 48, running=true
+10-12 16:40:07.549 D/KataGoEngine(17108): Sending: kata-set-param maxVisits 48
+10-12 16:40:07.550 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:07.550 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:07.550 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:07.550 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxTime 1.200, timeoutMs=10000
+10-12 16:40:07.550 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxTime 1.200, running=true
+10-12 16:40:07.550 D/KataGoEngine(17108): Sending: kata-set-param maxTime 1.200
+10-12 16:40:07.550 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:07.551 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:07.551 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:07.551 D/KataGoEngine(17108): sendCommandSync in, command=kata-search_analyze white 20 minmoves 1 maxmoves 1 rootInfo true, running=true
+10-12 16:40:07.551 D/KataGoEngine(17108): Sending: kata-search_analyze white 20 minmoves 1 maxmoves 1 rootInfo true
+10-12 16:40:07.551 D/KataGoEngine(17108): waitForResponse in, timeoutMs=20000
+10-12 16:40:07.551 D/KataGoEngine(17108): KataGo stdout: =
+10-12 16:40:07.775 D/KataGoEngine(17108): KataGo stdout: info move E8 visits 6 edgeVisits 6 utility 1.18387 winrate 0.999999 scoreMean 81.4864 scoreStdev 3.86075 scoreLead 81.4864 scoreSelfplay 84.9066 prior 0.162553 lcb 0.928662 utilityLcb 0.984125 weight 6 order 0 pv E8 pass pass pass rootInfo visits 21 utility 1.1687 winrate 0.999999 scoreMean 81.1587 scoreStdev 3.98243 scoreLead 81.1587 scoreSelfplay 84.5665 weight 21 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 16:40:07.775 D/KataGoEngine(17108): KataGo stdout: play E8
+10-12 16:40:07.775 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:07.776 D/KataGoEngine(17108): MCTS winrate: toPlay=white rootVisits=21 black=0.000 white=1.000
+10-12 16:40:07.776 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxVisits 20, timeoutMs=10000
+10-12 16:40:07.776 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxVisits 20, running=true
+10-12 16:40:07.776 D/KataGoEngine(17108): Sending: kata-set-param maxVisits 20
+10-12 16:40:07.776 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:07.778 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:07.778 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:07.778 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxTime 0.4, timeoutMs=10000
+10-12 16:40:07.778 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxTime 0.4, running=true
+10-12 16:40:07.778 D/KataGoEngine(17108): Sending: kata-set-param maxTime 0.4
+10-12 16:40:07.779 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:07.780 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:07.780 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:07.780 D/KataGoEngine(17108): playMove in, color=white, move=E8
+10-12 16:40:07.780 D/KataGoEngine(17108): simpleCommand in, command=play white E8, timeoutMs=5000
+10-12 16:40:07.780 D/KataGoEngine(17108): sendCommandSync in, command=play white E8, running=true
+10-12 16:40:07.781 D/KataGoEngine(17108): Sending: play white E8
+10-12 16:40:07.781 D/KataGoEngine(17108): waitForResponse in, timeoutMs=5000
+10-12 16:40:07.781 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:07.781 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:07.781 D/KataGoEngine(17108): isReady in, running=true
+10-12 16:40:07.782 D/KataGoEngine(17108): sendCommandSync in, command=kata-get-param maxVisits, running=true
+10-12 16:40:07.782 D/KataGoEngine(17108): Sending: kata-get-param maxVisits
+10-12 16:40:07.782 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:07.782 D/KataGoEngine(17108): KataGo stdout: = 20
+10-12 16:40:07.782 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:07.782 D/KataGoEngine(17108): parseGtpResponse in, response== 20
+10-12 16:40:07.782 D/KataGoEngine(17108): 
+10-12 16:40:07.783 D/KataGoEngine(17108): sendCommandSync in, command=kata-get-param maxTime, running=true
+10-12 16:40:07.783 D/KataGoEngine(17108): Sending: kata-get-param maxTime
+10-12 16:40:07.783 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:07.783 D/KataGoEngine(17108): KataGo stdout: = 0.4
+10-12 16:40:07.783 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:07.783 D/KataGoEngine(17108): parseGtpResponse in, response== 0.4
+10-12 16:40:07.783 D/KataGoEngine(17108): 
+10-12 16:40:07.783 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxVisits 48, timeoutMs=10000
+10-12 16:40:07.783 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxVisits 48, running=true
+10-12 16:40:07.783 D/KataGoEngine(17108): Sending: kata-set-param maxVisits 48
+10-12 16:40:07.784 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:07.784 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:07.784 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:07.784 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxTime 1.200, timeoutMs=10000
+10-12 16:40:07.784 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxTime 1.200, running=true
+10-12 16:40:07.784 D/KataGoEngine(17108): Sending: kata-set-param maxTime 1.200
+10-12 16:40:07.785 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:07.788 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:07.788 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:07.789 D/KataGoEngine(17108): sendCommandSync in, command=kata-search_analyze black 20 minmoves 1 maxmoves 1 rootInfo true, running=true
+10-12 16:40:07.789 D/KataGoEngine(17108): Sending: kata-search_analyze black 20 minmoves 1 maxmoves 1 rootInfo true
+10-12 16:40:07.789 D/KataGoEngine(17108): waitForResponse in, timeoutMs=20000
+10-12 16:40:07.789 D/KataGoEngine(17108): KataGo stdout: =
+10-12 16:40:08.021 D/KataGoEngine(17108): KataGo stdout: info move pass visits 4 edgeVisits 4 utility -1.24105 winrate 1.14866e-06 scoreMean -81.4202 scoreStdev 3.71033 scoreLead -81.4202 scoreSelfplay -84.5675 prior 0.139495 lcb -0.153625 utilityLcb -1.67121 weight 4 order 0 pv pass pass pass rootInfo visits 19 utility -1.2545 winrate 2.39965e-06 scoreMean -81.9815 scoreStdev 4.4829 scoreLead -81.9815 scoreSelfplay -86.2026 weight 19 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 16:40:08.085 D/KataGoEngine(17108): GPU JNI GTP response: = J6
+10-12 16:40:08.086 D/KataGoEngine(17108): parseGtpResponse in, response== J6
+10-12 16:40:08.086 D/KataGoEngine(17108): 
+10-12 16:40:08.086 I/KataGoEngine(17108): genmove color=white move=J6 rootVisits=unavailable newPlayouts=unavailable elapsedMs=634 (wall time includes GTP and inference overhead)
+10-12 16:40:08.086 D/MainActivity(17108): handleAiMove in, move=J6, aiColor=WHITE
+10-12 16:40:08.087 D/MainActivity(17108): render in, message=轮到你了, engineReady=true, thinking=false, currentPlayer=BLACK
+10-12 16:40:08.089 D/MainActivity(17108): updateButtons in, engineReady=true, thinking=false, currentPlayer=BLACK, playerColor=BLACK
+10-12 16:40:08.222 D/KataGoEngine(17108): KataGo stdout: info move pass visits 8 edgeVisits 8 utility -1.23414 winrate 2.48651e-06 scoreMean -82.0972 scoreStdev 4.50415 scoreLead -82.0972 scoreSelfplay -84.8975 prior 0.139495 lcb -0.0411557 utilityLcb -1.34939 weight 8 order 0 pv pass pass B4 rootInfo visits 35 utility -1.25129 winrate 2.21541e-06 scoreMean -81.6626 scoreStdev 4.44778 scoreLead -81.6626 scoreSelfplay -86.1631 weight 35 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 16:40:08.400 D/KataGoEngine(17108): KataGo stdout: info move pass visits 9 edgeVisits 9 utility -1.23471 winrate 2.21542e-06 scoreMean -81.6473 scoreStdev 4.38562 scoreLead -81.6473 scoreSelfplay -84.8872 prior 0.139495 lcb -0.0330027 utilityLcb -1.32713 weight 9 order 0 pv pass pass B4 rootInfo visits 49 utility -1.24546 winrate 2.08629e-06 scoreMean -81.6433 scoreStdev 4.43957 scoreLead -81.6433 scoreSelfplay -85.9868 weight 49 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 16:40:08.400 D/KataGoEngine(17108): KataGo stdout: play resign
+10-12 16:40:08.400 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:08.402 D/KataGoEngine(17108): MCTS winrate: toPlay=black rootVisits=49 black=0.000 white=1.000
+10-12 16:40:08.402 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxVisits 20, timeoutMs=10000
+10-12 16:40:08.402 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxVisits 20, running=true
+10-12 16:40:08.402 D/KataGoEngine(17108): Sending: kata-set-param maxVisits 20
+10-12 16:40:08.403 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:08.403 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:08.403 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:08.404 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxTime 0.4, timeoutMs=10000
+10-12 16:40:08.404 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxTime 0.4, running=true
+10-12 16:40:08.404 D/KataGoEngine(17108): Sending: kata-set-param maxTime 0.4
+10-12 16:40:08.404 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:08.404 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:08.404 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:08.404 D/KataGoEngine(17108): playMove in, color=black, move=E9
+10-12 16:40:08.404 D/KataGoEngine(17108): simpleCommand in, command=play black E9, timeoutMs=5000
+10-12 16:40:08.405 D/KataGoEngine(17108): sendCommandSync in, command=play black E9, running=true
+10-12 16:40:08.405 D/KataGoEngine(17108): Sending: play black E9
+10-12 16:40:08.405 D/KataGoEngine(17108): waitForResponse in, timeoutMs=5000
+10-12 16:40:08.405 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:08.405 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:08.406 D/KataGoEngine(17108): isReady in, running=true
+10-12 16:40:08.406 D/KataGoEngine(17108): sendCommandSync in, command=kata-get-param maxVisits, running=true
+10-12 16:40:08.406 D/KataGoEngine(17108): Sending: kata-get-param maxVisits
+10-12 16:40:08.406 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:08.407 D/KataGoEngine(17108): KataGo stdout: = 20
+10-12 16:40:08.407 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:08.407 D/KataGoEngine(17108): parseGtpResponse in, response== 20
+10-12 16:40:08.407 D/KataGoEngine(17108): 
+10-12 16:40:08.407 D/KataGoEngine(17108): sendCommandSync in, command=kata-get-param maxTime, running=true
+10-12 16:40:08.407 D/KataGoEngine(17108): Sending: kata-get-param maxTime
+10-12 16:40:08.407 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:08.408 D/KataGoEngine(17108): KataGo stdout: = 0.4
+10-12 16:40:08.408 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:08.408 D/KataGoEngine(17108): parseGtpResponse in, response== 0.4
+10-12 16:40:08.408 D/KataGoEngine(17108): 
+10-12 16:40:08.408 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxVisits 48, timeoutMs=10000
+10-12 16:40:08.408 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxVisits 48, running=true
+10-12 16:40:08.408 D/KataGoEngine(17108): Sending: kata-set-param maxVisits 48
+10-12 16:40:08.409 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:08.409 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:08.409 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:08.409 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxTime 1.200, timeoutMs=10000
+10-12 16:40:08.409 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxTime 1.200, running=true
+10-12 16:40:08.409 D/KataGoEngine(17108): Sending: kata-set-param maxTime 1.200
+10-12 16:40:08.410 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:08.411 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:08.411 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:08.411 D/KataGoEngine(17108): sendCommandSync in, command=kata-search_analyze white 20 minmoves 1 maxmoves 1 rootInfo true, running=true
+10-12 16:40:08.411 D/KataGoEngine(17108): Sending: kata-search_analyze white 20 minmoves 1 maxmoves 1 rootInfo true
+10-12 16:40:08.412 D/KataGoEngine(17108): waitForResponse in, timeoutMs=20000
+10-12 16:40:08.412 D/KataGoEngine(17108): KataGo stdout: =
+10-12 16:40:08.504 D/MainActivity(17108): pass in, engineReady=true, thinking=false, currentPlayer=BLACK, playerColor=BLACK
+10-12 16:40:08.504 D/MainActivity(17108): render in, message=你停一手，AI 思考中..., engineReady=true, thinking=false, currentPlayer=WHITE
+10-12 16:40:08.511 D/MainActivity(17108): updateButtons in, engineReady=true, thinking=false, currentPlayer=WHITE, playerColor=BLACK
+10-12 16:40:08.515 D/KataGoEngine(17108): playMove in, color=black, move=pass
+10-12 16:40:08.516 D/KataGoEngine(17108): simpleCommand in, command=play black pass, timeoutMs=5000
+10-12 16:40:08.516 D/KataGoEngine(17108): sendCommandSync in, command=play black pass, running=true
+10-12 16:40:08.516 D/KataGoEngine(17108): GPU in-process JNI GTP command=play black pass queued=true
+10-12 16:40:08.516 D/KataGoEngine(17108): waitForResponse in, timeoutMs=5000
+10-12 16:40:08.516 D/KataGoEngine(17108): GPU JNI GTP response: =
+10-12 16:40:08.533 D/MainActivity(17108): requestAiMove in, engineReady=true, thinking=false, currentPlayer=WHITE, playerColor=BLACK
+10-12 16:40:08.533 D/MainActivity(17108): render in, message=AI 思考中..., engineReady=true, thinking=true, currentPlayer=WHITE
+10-12 16:40:08.539 D/MainActivity(17108): updateButtons in, engineReady=true, thinking=true, currentPlayer=WHITE, playerColor=BLACK
+10-12 16:40:08.541 D/KataGoEngine(17108): generateMove in, color=white
+10-12 16:40:08.541 D/KataGoEngine(17108): sendCommandSync in, command=genmove white, running=true
+10-12 16:40:08.542 D/KataGoEngine(17108): GPU in-process JNI GTP command=genmove white queued=true
+10-12 16:40:08.542 D/KataGoEngine(17108): waitForResponse in, timeoutMs=60000
+10-12 16:40:08.638 D/KataGoEngine(17108): KataGo stdout: info move D9 visits 3 edgeVisits 3 utility 1.2201 winrate 0.999999 scoreMean 80.7482 scoreStdev 4.29416 scoreLead 80.7482 scoreSelfplay 85.6044 prior 0.107117 lcb 0.736023 utilityLcb 0.480965 weight 3 order 0 pv D9 pass B2 rootInfo visits 18 utility 1.21104 winrate 0.999998 scoreMean 80.7438 scoreStdev 4.49049 scoreLead 80.7438 scoreSelfplay 85.2108 weight 18 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 16:40:08.681 D/KataGoEngine(17108): KataGo stdout: info move B2 visits 4 edgeVisits 4 utility 1.22015 winrate 0.999998 scoreMean 81.5767 scoreStdev 4.30219 scoreLead 81.5767 scoreSelfplay 85.4103 prior 0.117255 lcb 0.847022 utilityLcb 0.791814 weight 4 order 0 pv B2 pass B1 rootInfo visits 21 utility 1.21202 winrate 0.999998 scoreMean 80.9955 scoreStdev 4.51975 scoreLead 80.9955 scoreSelfplay 85.2045 weight 21 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 16:40:08.681 D/KataGoEngine(17108): KataGo stdout: play B2
+10-12 16:40:08.681 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:08.683 D/KataGoEngine(17108): MCTS winrate: toPlay=white rootVisits=21 black=0.000 white=1.000
+10-12 16:40:08.683 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxVisits 20, timeoutMs=10000
+10-12 16:40:08.683 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxVisits 20, running=true
+10-12 16:40:08.683 D/KataGoEngine(17108): Sending: kata-set-param maxVisits 20
+10-12 16:40:08.683 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:08.687 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:08.687 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:08.687 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxTime 0.4, timeoutMs=10000
+10-12 16:40:08.687 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxTime 0.4, running=true
+10-12 16:40:08.688 D/KataGoEngine(17108): Sending: kata-set-param maxTime 0.4
+10-12 16:40:08.688 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:08.689 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:08.689 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:08.689 D/KataGoEngine(17108): playMove in, color=white, move=D9
+10-12 16:40:08.689 D/KataGoEngine(17108): simpleCommand in, command=play white D9, timeoutMs=5000
+10-12 16:40:08.689 D/KataGoEngine(17108): sendCommandSync in, command=play white D9, running=true
+10-12 16:40:08.689 D/KataGoEngine(17108): Sending: play white D9
+10-12 16:40:08.690 D/KataGoEngine(17108): waitForResponse in, timeoutMs=5000
+10-12 16:40:08.690 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:08.690 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:08.690 D/KataGoEngine(17108): isReady in, running=true
+10-12 16:40:08.690 D/KataGoEngine(17108): sendCommandSync in, command=kata-get-param maxVisits, running=true
+10-12 16:40:08.690 D/KataGoEngine(17108): Sending: kata-get-param maxVisits
+10-12 16:40:08.690 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:08.691 D/KataGoEngine(17108): KataGo stdout: = 20
+10-12 16:40:08.691 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:08.691 D/KataGoEngine(17108): parseGtpResponse in, response== 20
+10-12 16:40:08.691 D/KataGoEngine(17108): 
+10-12 16:40:08.691 D/KataGoEngine(17108): sendCommandSync in, command=kata-get-param maxTime, running=true
+10-12 16:40:08.691 D/KataGoEngine(17108): Sending: kata-get-param maxTime
+10-12 16:40:08.691 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:08.692 D/KataGoEngine(17108): KataGo stdout: = 0.4
+10-12 16:40:08.692 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:08.692 D/KataGoEngine(17108): parseGtpResponse in, response== 0.4
+10-12 16:40:08.692 D/KataGoEngine(17108): 
+10-12 16:40:08.692 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxVisits 48, timeoutMs=10000
+10-12 16:40:08.692 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxVisits 48, running=true
+10-12 16:40:08.692 D/KataGoEngine(17108): Sending: kata-set-param maxVisits 48
+10-12 16:40:08.692 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:08.692 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:08.692 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:08.692 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxTime 1.200, timeoutMs=10000
+10-12 16:40:08.692 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxTime 1.200, running=true
+10-12 16:40:08.692 D/KataGoEngine(17108): Sending: kata-set-param maxTime 1.200
+10-12 16:40:08.693 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:08.693 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:08.693 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:08.693 D/KataGoEngine(17108): sendCommandSync in, command=kata-search_analyze black 20 minmoves 1 maxmoves 1 rootInfo true, running=true
+10-12 16:40:08.693 D/KataGoEngine(17108): Sending: kata-search_analyze black 20 minmoves 1 maxmoves 1 rootInfo true
+10-12 16:40:08.693 D/KataGoEngine(17108): waitForResponse in, timeoutMs=20000
+10-12 16:40:08.693 D/KataGoEngine(17108): KataGo stdout: =
+10-12 16:40:08.924 D/KataGoEngine(17108): KataGo stdout: info move pass visits 7 edgeVisits 7 utility -1.154 winrate 1.63996e-06 scoreMean -80.3148 scoreStdev 4.44112 scoreLead -80.3148 scoreSelfplay -84.3668 prior 0.223801 lcb -0.0518027 utilityLcb -1.29905 weight 7 order 0 pv pass B2 pass B1 rootInfo visits 18 utility -1.18336 winrate 2.24761e-06 scoreMean -81.5176 scoreStdev 4.617 scoreLead -81.5176 scoreSelfplay -85.9119 weight 18 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 16:40:09.125 D/KataGoEngine(17108): KataGo stdout: info move pass visits 12 edgeVisits 12 utility -1.16777 winrate 2.2587e-06 scoreMean -81.5705 scoreStdev 4.45381 scoreLead -81.5705 scoreSelfplay -84.959 prior 0.223801 lcb -0.0194317 utilityLcb -1.22219 weight 12 order 0 pv pass pass B5 rootInfo visits 34 utility -1.18952 winrate 1.98791e-06 scoreMean -81.2144 scoreStdev 4.32698 scoreLead -81.2144 scoreSelfplay -86.0925 weight 34 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 16:40:09.319 D/KataGoEngine(17108): KataGo stdout: info move pass visits 17 edgeVisits 17 utility -1.16575 winrate 2.39065e-06 scoreMean -81.6296 scoreStdev 4.55796 scoreLead -81.6296 scoreSelfplay -85.0283 prior 0.223801 lcb -0.0124529 utilityLcb -1.20063 weight 17 order 0 pv pass B2 pass B1 rootInfo visits 49 utility -1.18204 winrate 1.98056e-06 scoreMean -81.1362 scoreStdev 4.4065 scoreLead -81.1362 scoreSelfplay -85.935 weight 49 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 16:40:09.321 D/KataGoEngine(17108): KataGo stdout: play resign
+10-12 16:40:09.321 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:09.323 D/KataGoEngine(17108): MCTS winrate: toPlay=black rootVisits=49 black=0.000 white=1.000
+10-12 16:40:09.323 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxVisits 20, timeoutMs=10000
+10-12 16:40:09.323 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxVisits 20, running=true
+10-12 16:40:09.323 D/KataGoEngine(17108): Sending: kata-set-param maxVisits 20
+10-12 16:40:09.323 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:09.324 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:09.324 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:09.325 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxTime 0.4, timeoutMs=10000
+10-12 16:40:09.325 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxTime 0.4, running=true
+10-12 16:40:09.325 D/KataGoEngine(17108): Sending: kata-set-param maxTime 0.4
+10-12 16:40:09.325 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:09.326 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:09.326 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:09.326 D/KataGoEngine(17108): playMove in, color=black, move=J5
+10-12 16:40:09.326 D/KataGoEngine(17108): simpleCommand in, command=play black J5, timeoutMs=5000
+10-12 16:40:09.326 D/KataGoEngine(17108): sendCommandSync in, command=play black J5, running=true
+10-12 16:40:09.326 D/KataGoEngine(17108): Sending: play black J5
+10-12 16:40:09.327 D/KataGoEngine(17108): waitForResponse in, timeoutMs=5000
+10-12 16:40:09.327 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:09.327 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:09.328 D/KataGoEngine(17108): isReady in, running=true
+10-12 16:40:09.328 D/KataGoEngine(17108): sendCommandSync in, command=kata-get-param maxVisits, running=true
+10-12 16:40:09.328 D/KataGoEngine(17108): Sending: kata-get-param maxVisits
+10-12 16:40:09.328 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:09.329 D/KataGoEngine(17108): KataGo stdout: = 20
+10-12 16:40:09.329 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:09.329 D/KataGoEngine(17108): parseGtpResponse in, response== 20
+10-12 16:40:09.329 D/KataGoEngine(17108): 
+10-12 16:40:09.329 D/KataGoEngine(17108): sendCommandSync in, command=kata-get-param maxTime, running=true
+10-12 16:40:09.329 D/KataGoEngine(17108): Sending: kata-get-param maxTime
+10-12 16:40:09.330 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:09.330 D/KataGoEngine(17108): KataGo stdout: = 0.4
+10-12 16:40:09.330 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:09.330 D/KataGoEngine(17108): parseGtpResponse in, response== 0.4
+10-12 16:40:09.330 D/KataGoEngine(17108): 
+10-12 16:40:09.330 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxVisits 48, timeoutMs=10000
+10-12 16:40:09.330 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxVisits 48, running=true
+10-12 16:40:09.330 D/KataGoEngine(17108): Sending: kata-set-param maxVisits 48
+10-12 16:40:09.331 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:09.331 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:09.331 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:09.332 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxTime 1.200, timeoutMs=10000
+10-12 16:40:09.332 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxTime 1.200, running=true
+10-12 16:40:09.332 D/KataGoEngine(17108): Sending: kata-set-param maxTime 1.200
+10-12 16:40:09.332 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:09.335 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:09.335 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:09.335 D/KataGoEngine(17108): sendCommandSync in, command=kata-search_analyze white 20 minmoves 1 maxmoves 1 rootInfo true, running=true
+10-12 16:40:09.335 D/KataGoEngine(17108): Sending: kata-search_analyze white 20 minmoves 1 maxmoves 1 rootInfo true
+10-12 16:40:09.335 D/KataGoEngine(17108): waitForResponse in, timeoutMs=20000
+10-12 16:40:09.336 D/KataGoEngine(17108): KataGo stdout: =
+10-12 16:40:09.569 D/KataGoEngine(17108): KataGo stdout: info move H5 visits 4 edgeVisits 4 utility 1.21377 winrate 0.999998 scoreMean 82.144 scoreStdev 4.19071 scoreLead 82.144 scoreSelfplay 85.4931 prior 0.179072 lcb 0.846978 utilityLcb 0.785317 weight 4 order 0 pv H5 pass B2 pass rootInfo visits 18 utility 1.2098 winrate 0.999998 scoreMean 81.9024 scoreStdev 4.38706 scoreLead 81.9024 scoreSelfplay 85.5617 weight 18 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 16:40:09.600 D/KataGoEngine(17108): KataGo stdout: info move H5 visits 5 edgeVisits 5 utility 1.21777 winrate 0.999999 scoreMean 81.5372 scoreStdev 3.94798 scoreLead 81.5372 scoreSelfplay 85.5537 prior 0.179072 lcb 0.900779 utilityLcb 0.939955 weight 5 order 0 pv H5 pass B2 pass rootInfo visits 21 utility 1.21135 winrate 0.999998 scoreMean 81.3926 scoreStdev 4.23204 scoreLead 81.3926 scoreSelfplay 85.5439 weight 21 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 16:40:09.601 D/KataGoEngine(17108): KataGo stdout: play H5
+10-12 16:40:09.601 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:09.602 D/KataGoEngine(17108): MCTS winrate: toPlay=white rootVisits=21 black=0.000 white=1.000
+10-12 16:40:09.603 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxVisits 20, timeoutMs=10000
+10-12 16:40:09.603 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxVisits 20, running=true
+10-12 16:40:09.603 D/KataGoEngine(17108): Sending: kata-set-param maxVisits 20
+10-12 16:40:09.603 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:09.603 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:09.603 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:09.604 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxTime 0.4, timeoutMs=10000
+10-12 16:40:09.604 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxTime 0.4, running=true
+10-12 16:40:09.604 D/KataGoEngine(17108): Sending: kata-set-param maxTime 0.4
+10-12 16:40:09.604 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:09.604 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:09.604 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:09.605 D/KataGoEngine(17108): playMove in, color=white, move=J6
+10-12 16:40:09.605 D/KataGoEngine(17108): simpleCommand in, command=play white J6, timeoutMs=5000
+10-12 16:40:09.605 D/KataGoEngine(17108): sendCommandSync in, command=play white J6, running=true
+10-12 16:40:09.605 D/KataGoEngine(17108): Sending: play white J6
+10-12 16:40:09.605 D/KataGoEngine(17108): waitForResponse in, timeoutMs=5000
+10-12 16:40:09.605 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:09.605 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:09.606 D/KataGoEngine(17108): isReady in, running=true
+10-12 16:40:09.606 D/KataGoEngine(17108): sendCommandSync in, command=kata-get-param maxVisits, running=true
+10-12 16:40:09.606 D/KataGoEngine(17108): Sending: kata-get-param maxVisits
+10-12 16:40:09.606 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:09.606 D/KataGoEngine(17108): KataGo stdout: = 20
+10-12 16:40:09.606 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:09.607 D/KataGoEngine(17108): parseGtpResponse in, response== 20
+10-12 16:40:09.607 D/KataGoEngine(17108): 
+10-12 16:40:09.607 D/KataGoEngine(17108): sendCommandSync in, command=kata-get-param maxTime, running=true
+10-12 16:40:09.607 D/KataGoEngine(17108): Sending: kata-get-param maxTime
+10-12 16:40:09.607 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:09.607 D/KataGoEngine(17108): KataGo stdout: = 0.4
+10-12 16:40:09.607 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:09.607 D/KataGoEngine(17108): parseGtpResponse in, response== 0.4
+10-12 16:40:09.607 D/KataGoEngine(17108): 
+10-12 16:40:09.608 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxVisits 48, timeoutMs=10000
+10-12 16:40:09.608 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxVisits 48, running=true
+10-12 16:40:09.608 D/KataGoEngine(17108): Sending: kata-set-param maxVisits 48
+10-12 16:40:09.608 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:09.608 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:09.608 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:09.608 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxTime 1.200, timeoutMs=10000
+10-12 16:40:09.608 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxTime 1.200, running=true
+10-12 16:40:09.609 D/KataGoEngine(17108): Sending: kata-set-param maxTime 1.200
+10-12 16:40:09.609 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:09.609 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:09.609 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:09.609 D/KataGoEngine(17108): sendCommandSync in, command=kata-search_analyze black 20 minmoves 1 maxmoves 1 rootInfo true, running=true
+10-12 16:40:09.609 D/KataGoEngine(17108): Sending: kata-search_analyze black 20 minmoves 1 maxmoves 1 rootInfo true
+10-12 16:40:09.610 D/KataGoEngine(17108): waitForResponse in, timeoutMs=20000
+10-12 16:40:09.610 D/KataGoEngine(17108): KataGo stdout: =
+10-12 16:40:09.843 D/KataGoEngine(17108): KataGo stdout: info move pass visits 7 edgeVisits 7 utility -1.19111 winrate 1.66599e-06 scoreMean -81.2681 scoreStdev 4.24938 scoreLead -81.2681 scoreSelfplay -85.0228 prior 0.26505 lcb -0.0519572 utilityLcb -1.33659 weight 7 order 0 pv pass B2 pass H5 rootInfo visits 17 utility -1.2092 winrate 2.12261e-06 scoreMean -82.0511 scoreStdev 4.31624 scoreLead -82.0511 scoreSelfplay -85.8735 weight 17 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 16:40:10.004 D/KataGoEngine(17108): GPU JNI GTP response: = pass
+10-12 16:40:10.004 D/KataGoEngine(17108): parseGtpResponse in, response== pass
+10-12 16:40:10.004 D/KataGoEngine(17108): 
+10-12 16:40:10.004 I/KataGoEngine(17108): genmove color=white move=pass rootVisits=unavailable newPlayouts=unavailable elapsedMs=1462 (wall time includes GTP and inference overhead)
+10-12 16:40:10.004 D/MainActivity(17108): handleAiMove in, move=pass, aiColor=WHITE
+10-12 16:40:10.005 D/MainActivity(17108): finishByScore in, pendingPassColor=null
+10-12 16:40:10.005 D/MainActivity(17108): render in, message=正在快速AI估算..., engineReady=true, thinking=false, currentPlayer=BLACK
+10-12 16:40:10.011 D/MainActivity(17108): updateButtons in, engineReady=true, thinking=false, currentPlayer=BLACK, playerColor=BLACK
+10-12 16:40:10.012 D/KataGoEngine(17108): evaluatePosition in, size=9
+10-12 16:40:10.013 D/KataGoEngine(17108): sendCommandSync in, command=kata-raw-nn 0, running=true
+10-12 16:40:10.013 D/KataGoEngine(17108): GPU in-process JNI GTP command=kata-raw-nn 0 queued=true
+10-12 16:40:10.013 D/KataGoEngine(17108): waitForResponse in, timeoutMs=30000
+10-12 16:40:10.044 D/KataGoEngine(17108): KataGo stdout: info move pass visits 11 edgeVisits 11 utility -1.20348 winrate 1.52006e-06 scoreMean -81.4114 scoreStdev 4.02132 scoreLead -81.4114 scoreSelfplay -85.3039 prior 0.26505 lcb -0.0226169 utilityLcb -1.26681 weight 11 order 0 pv pass pass B4 rootInfo visits 34 utility -1.21444 winrate 1.80276e-06 scoreMean -81.5293 scoreStdev 4.21506 scoreLead -81.5293 scoreSelfplay -86.0518 weight 34 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 16:40:10.065 D/KataGoEngine(17108): GPU JNI GTP response: = symmetry 0
+10-12 16:40:10.065 D/KataGoEngine(17108): whiteWin 1.000000
+10-12 16:40:10.065 D/KataGoEngine(17108): whiteLoss 0.000000
+10-12 16:40:10.065 D/KataGoEngine(17108): noResult 0.000000
+10-12 16:40:10.065 D/KataGoEngine(17108): whiteLead 77.013
+10-12 16:40:10.065 D/KataGoEngine(17108): whiteScoreSelfplay 81.978
+10-12 16:40:10.065 D/KataGoEngine(17108): whiteScoreSelfplaySq 6729.467
+10-12 16:40:10.065 D/KataGoEngine(17108): varTimeLeft -1.000
+10-12 16:40:10.065 D/KataGoEngine(17108): shorttermWinlossError -1.000
+10-12 16:40:10.065 D/KataGoEngine(17108): shorttermScoreError -1.000
+10-12 16:40:10.065 D/KataGoEngine(17108): policy
+10-12 16:40:10.065 D/KataGoEngine(17108):     NAN     NAN     NAN     NAN     NAN     NAN     NAN     NAN     NAN 
+10-12 16:40:10.065 D/KataGoEngine(17108):     NAN     NAN     NAN     NAN     NAN     NAN     NAN     NAN 0.123164 
+10-12 16:40:10.065 D/KataGoEngine(17108):     NAN     NAN     NAN     NAN     NAN     NAN     NAN     NAN 0.083093 
+10-12 16:40:10.065 D/KataGoEngine(17108):     NAN     NAN     NAN     NAN     NAN     NAN     NAN     NAN     NAN 
+10-12 16:40:10.065 D/KataGoEngine(17108):     NAN 0.107216     NAN     NAN     NAN     NAN 0.122744 0.056004     NAN 
+10-12 16:40:10.065 D/KataGoEngine(17108):     NAN 0.113852     NAN     NAN     NAN     NAN     NAN     NAN     NAN 
+10-12 16:40:10.065 D/KataGoEngine(17108):     NAN     NAN     NAN     NAN     NAN     NAN     NAN     NAN     NAN 
+10-12 16:40:10.065 D/KataGoEngine(17108):     NAN 0.104528     NAN     NAN     NAN     NAN     NAN     NAN     NAN 
+10-12 16:40:10.065 D/KataGoEngine(17108):     NAN 0.107635     NAN     NAN     NAN     NAN     NAN     NAN     NAN 
+10-12 16:40:10.065 D/KataGoEngine(17108): policyPass 0.181764 
+10-12 16:40:10.065 D/KataGoEngine(17108): whiteOwnership
+10-12 16:40:10.065 D/KataGoEngine(17108): 0.9982061 0.9971902 0.9994977 0.9993650 0.9955660 0.9977940 0.9996148 0.9976149 0.9991389 
+10-12 16:40:10.065 D/KataGoEngine(17108): 0.9952623 0.9998108 0.9998538 0.9998195 0.9999127 0.9998938 0.9998938 0.9997023 0.9911325 
+10-12 16:40:10.065 D/KataGoEngine(17108): 0.9986666 0.9997092 0.9985972 0.9998668 0.9998572 0.9998979 0.9992005 0.9997954 0.9960859 
+10-12 16:40:10.065 D/KataGoEngine(17108): 0.9990905 0.9998330 0.9998843 0.9999092 0.9998825 0.9994352 0.9999351 0.9998615 0.9996679 
+10-12 16:40:10.065 D/KataGoEngine(17108): 0.9774238 0.9975103 0.9998788 0.9978450 0.9992430 0.9998236 0.9979030 0.9971793 0.9938493 
+10-12 16:40:10.065 D/KataGoEngine(17108): 0.9820291 0.9970326 0.9998797 0.9969741 0.9998277 0.9997954 0.9997203 0.9998001 0.9993293 
+10-12 16:40:10.065 D/KataGoEngine(17108): 0.9993650 0.9998264 0.9998343 0.9998208 0.9988047 0.9997159 0.9996831 0.9995015 0.9980605 
+10-12 16:40:10.065 D/KataGoEngine(17108): 0.9570165 0.9941529 0.9996465 0.9997203 0.9996929 0.9996493 0.9994735 0.9937283 0.9980453 
+10-12 16:40:10.065 D/KataGoEngine(17108): 0.9913370 0.9909232 0.9984773 0.9991081 0.9974712 0.9993266 0.9990166 0.9992250 0.9962503
+10-12 16:40:10.067 I/KataGoEngine(17108): Position evaluation blackWin=0.000 whiteWin=1.000 whiteLead=77.01 size=9 elapsedMs=54
+10-12 16:40:10.068 D/MainActivity(17108): komiFor in, size=9, condition=0
+10-12 16:40:10.069 I/MainActivity(17108): Chinese area score B stones=0 territory=0, W stones=53 territory=28, dead B=8 W=0, total B=0.0 W=86.5, lead local=86.5 mode=fast_nn
+10-12 16:40:10.070 I/MainActivity(17108): ENDGAME_TIMING phase=fast_nn_done elapsedMs=63 evalMs=54 nnWhiteLead=77.013 localWhiteLead=86.500 suggestedDead=8 groups=8
+10-12 16:40:10.075 I/MainActivity(17108): Ownership estimate black=0 white=28 predictedDeadBlack=8 predictedDeadWhite=0 uncertainEmpty=0 (threshold 0.55; no komi, prisoner count or official dead-stone confirmation)
+10-12 16:40:10.080 D/MainActivity(17108): render in, message=快速AI预估
+10-12 16:40:10.080 D/MainActivity(17108): 白领先约77.0目, engineReady=true, thinking=false, currentPlayer=BLACK
+10-12 16:40:10.090 D/MainActivity(17108): updateButtons in, engineReady=true, thinking=false, currentPlayer=BLACK, playerColor=BLACK
+10-12 16:40:10.215 D/KataGoEngine(17108): KataGo stdout: info move pass visits 17 edgeVisits 17 utility -1.19844 winrate 1.89628e-06 scoreMean -81.8868 scoreStdev 4.22378 scoreLead -81.8868 scoreSelfplay -85.1752 prior 0.26505 lcb -0.0115004 utilityLcb -1.23065 weight 17 order 0 pv pass B2 pass H5 rootInfo visits 49 utility -1.20858 winrate 1.80549e-06 scoreMean -81.4453 scoreStdev 4.2579 scoreLead -81.4453 scoreSelfplay -85.8527 weight 49 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 16:40:10.215 D/KataGoEngine(17108): KataGo stdout: play resign
+10-12 16:40:10.215 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:10.217 D/KataGoEngine(17108): MCTS winrate: toPlay=black rootVisits=49 black=0.000 white=1.000
+10-12 16:40:10.217 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxVisits 20, timeoutMs=10000
+10-12 16:40:10.217 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxVisits 20, running=true
+10-12 16:40:10.217 D/KataGoEngine(17108): Sending: kata-set-param maxVisits 20
+10-12 16:40:10.217 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:10.218 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:10.218 D/KataGoEngine(17108): KataGo stdout: 
+10-12 16:40:10.218 D/KataGoEngine(17108): simpleCommand in, command=kata-set-param maxTime 0.4, timeoutMs=10000
+10-12 16:40:10.218 D/KataGoEngine(17108): sendCommandSync in, command=kata-set-param maxTime 0.4, running=true
+10-12 16:40:10.218 D/KataGoEngine(17108): Sending: kata-set-param maxTime 0.4
+10-12 16:40:10.219 D/KataGoEngine(17108): waitForResponse in, timeoutMs=10000
+10-12 16:40:10.219 D/KataGoEngine(17108): KataGo stdout: = 
+10-12 16:40:10.219 D/KataGoEngine(17108): KataGo stdout: 
