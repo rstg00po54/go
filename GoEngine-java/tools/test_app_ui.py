@@ -463,6 +463,106 @@ class AppTest:
         self.log("全部 PASS")
 
 
+    def upload_report(self, status, failure):
+        """Push an allowlisted, text-only report to a separate GitHub branch.
+
+        Never upload logcat, UI XML, screenshots, device serial, or full error traces.
+        This repository is PUBLIC. Uses local git remote auth; no token required.
+        Does not check out a branch, stage user files, or modify working tree.
+        """
+        if self.args.no_upload:
+            self.log("自动上传已关闭（--no-upload）")
+            return
+        remote = self.args.upload_remote
+        branch = self.args.upload_branch
+        if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]{0,60}", branch):
+            raise TestFailure("上传分支名无效")
+        root = Path(__file__).resolve().parents[2]
+
+        def git(*params, input_data=None, env=None, timeout=35):
+            cmd = ["git", "-C", str(root)] + list(params)
+            options = dict(os.environ)
+            options["GIT_TERMINAL_PROMPT"] = "0"
+            if env:
+                options.update(env)
+            try:
+                proc = subprocess.run(cmd, input=input_data, stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE, timeout=timeout, env=options)
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                raise TestFailure("自动上传 git 调用失败: " + repr(exc)) from exc
+            if proc.returncode != 0:
+                info = proc.stderr.decode("utf-8", "replace")[-350:]
+                raise TestFailure("自动上传 git 命令失败 (" + params[0] + "): " + info)
+            return proc.stdout.decode("utf-8", "replace").strip()
+
+        remote_url = git("remote", "get-url", remote)
+        if not re.search(r"(^|[:/])rstg00po54/go(?:\.git)?$", remote_url):
+            raise TestFailure("上传已阻止：Git remote 不是 rstg00po54/go")
+        timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+        filename = "runs/" + timestamp + "_" + str(os.getpid()) + ".json"
+        safe_events = []
+        prefixes = ("=== Case ", "点击 ", "选择 ", "CPU 就绪", "GPU 就绪",
+                    "执黑已选中", "已选择执黑", "落子 ", "悔棋通过",
+                    "MainActivity 已报告", "全部 PASS", "主进程 PID=")
+        for event in self.events:
+            msg = event["message"]
+            if msg.startswith(prefixes):
+                if msg.startswith("主进程 PID="):
+                    msg = "主进程正常且无独立 GPU 进程"
+                safe_events.append({"s": event["seconds"], "step": msg[:150]})
+        def safe_failure(value):
+            if not value:
+                return None
+            msg = str(value).split("；最近界面:")[0].split("；界面:")[0]
+            if msg.startswith("ADB 命令失败:"):
+                return "ADB 命令失败（具体输出仅保存在本地日志）"
+            msg = re.sub(r"(?:[a-zA-Z]:)?/(?:[^\s:]+/)*[^\s:]+", "<path>", msg)
+            msg = re.sub(r"\b[0-9a-fA-F]{20,}\b", "<id>", msg)
+            msg = re.sub(r"\b\d{10,}\b", "<id>", msg)
+            return msg[:250]
+        phases = []
+        backend_results = []
+        for file in sorted(self.out.glob("*_summary.log")):
+            data = file.read_text(encoding="utf-8", errors="replace")
+            for phase, ms in re.findall(r"STARTUP_TIMING phase=([A-Za-z0-9_]+) ms=([0-9.]+)", data):
+                phases.append({"phase": phase, "ms": float(ms)})
+            for requested, actual, ready in re.findall(
+                    r"Game backend requested=(CPU|GPU) actual=(CPU/Eigen JNI|GPU/OpenCL JNI|PIE/ProcessBuilder) ready=(true|false)", data):
+                backend_results.append({"requested": requested, "actual": actual, "ready": ready == "true"})
+        report = {
+            "schema": 1, "status": status, "timestamp_utc": timestamp,
+            "backends": self.args.backends, "rounds": self.args.rounds, "size": self.args.size,
+            "moves": self.args.moves, "undo": self.args.undo, "pass": self.args.pass_move,
+            "failure": safe_failure(failure), "events": safe_events[-250:],
+            "startup_timings": phases[-150:], "game_backends": backend_results[-80:],
+            "note": "PUBLIC, sanitized: no full logcat/screenshots/XML/device serial"
+        }
+        content = (json.dumps(report, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+        with tempfile.TemporaryDirectory(prefix="katago_ui_git_") as directory:
+            env = {"GIT_INDEX_FILE": str(Path(directory) / "index")}
+            heads = git("ls-remote", "--heads", remote, "refs/heads/" + branch, timeout=45)
+            parent = heads.split()[0] if heads else None
+            if parent:
+                git("fetch", "--no-tags", "--quiet", "--depth=1", remote, parent, timeout=60)
+                git("read-tree", parent + "^{tree}", env=env)
+            else:
+                git("read-tree", "--empty", env=env)
+            blob = git("hash-object", "-w", "--stdin", input_data=content)
+            git("update-index", "--add", "--cacheinfo", "100644," + blob + "," + filename, env=env)
+            tree = git("write-tree", env=env)
+            cmd = ["-c", "user.name=KataGo UI Test", "-c", "user.email=katago-ui-test@users.noreply.github.com",
+                   "commit-tree", tree]
+            if parent:
+                cmd += ["-p", parent]
+            cmd += ["-m", "UI test " + status + " " + timestamp]
+            commit = git(*cmd)
+            git("push", remote, commit + ":refs/heads/" + branch, timeout=60)
+        link = "https://github.com/rstg00po54/go/blob/" + branch + "/" + filename
+        self.log("测试报告已自动上传：" + link)
+        return link
+
+
+
 def main():
     parser = argparse.ArgumentParser(description="ADB automatic KataGo app UI regression test")
     parser.add_argument("-s", "--serial", default=os.getenv("ADB_SERIAL"))
@@ -476,6 +576,9 @@ def main():
     parser.add_argument("--install", help="测试前安装 APK 路径")
     parser.add_argument("--start-timeout", type=int, default=300)
     parser.add_argument("--think-timeout", type=int, default=180)
+    parser.add_argument("--no-upload", action="store_true", help="只保存本地报告，不上传 GitHub")
+    parser.add_argument("--upload-remote", default="origin", help="使用现有 git remote 凭据上传")
+    parser.add_argument("--upload-branch", default="ui-test-results", help="单独保存报告的分支")
     parser.add_argument("--out", default="build/app_ui_test/" + datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
     args = parser.parse_args()
     args.backends = ",".join(x.strip().lower() for x in args.backends.split(","))
@@ -484,21 +587,35 @@ def main():
     if args.moves < 0 or args.rounds < 1:
         parser.error("--moves 必须 >= 0，--rounds 必须 >= 1")
     runner = AppTest(args)
-    status = "PASS"
+    status, failure = "PASS", None
     try:
         runner.run()
+    except KeyboardInterrupt:
+        status, failure = "INTERRUPTED", "用户按 Ctrl+C 中断测试"
+        runner.log("收到 Ctrl+C，停止测试并保存已完成的结果")
     except TestFailure as exc:
-        status = "FAIL"
-        runner.log("失败: " + str(exc))
-        runner.diagnostics("failed")
+        status, failure = "FAIL", str(exc)
+        runner.log("失败: " + failure)
+        try:
+            runner.diagnostics("failed")
+        except (TestFailure, KeyboardInterrupt) as diagnostic_exc:
+            runner.log("故障诊断未完成: " + str(diagnostic_exc)[:150])
+    except Exception as exc:
+        status, failure = "ERROR", type(exc).__name__ + ": " + str(exc)
+        runner.log("脚本异常: " + failure[:250])
     finally:
         (runner.out / "report.json").write_text(json.dumps({
             "status": status, "serial": runner.serial, "backends": args.backends,
             "rounds": args.rounds, "size": args.size, "moves": args.moves,
-            "undo": args.undo, "pass": args.pass_move, "events": runner.events
+            "undo": args.undo, "pass": args.pass_move, "failure": failure,
+            "events": runner.events
         }, ensure_ascii=False, indent=2), encoding="utf-8")
-        runner.log("报告: " + str(runner.out))
-    return 0 if status == "PASS" else 1
+        runner.log("本地报告: " + str(runner.out))
+        try:
+            runner.upload_report(status, failure)
+        except (TestFailure, KeyboardInterrupt) as upload_exc:
+            runner.log("自动上传失败，本地报告仍保留：" + str(upload_exc)[:350])
+    return 0 if status == "PASS" else 130 if status == "INTERRUPTED" else 1
 
 
 if __name__ == "__main__":
