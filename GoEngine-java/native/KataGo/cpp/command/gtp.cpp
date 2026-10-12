@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "../core/global.h"
 #include "../core/commandloop.h"
 #include "../core/config_parser.h"
