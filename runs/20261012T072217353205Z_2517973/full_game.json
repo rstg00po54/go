@@ -1,0 +1,43 @@
+[
+  {
+    "size": 9,
+    "backend": "gpu",
+    "status": "PASS",
+    "end_type": "two_passes",
+    "move_strategy": "defend_territory_v1",
+    "black_stones_played": 39,
+    "ai_stones_played": 40,
+    "rejected_taps": 0,
+    "player_passes": 2,
+    "ai_passes": 1,
+    "match_elapsed_s": 36.099,
+    "settlement": {
+      "scoring_mode": "fast",
+      "total_ms": 1924.0,
+      "time_to_first_result_ms": 1924.0,
+      "before_final_score_ms": null,
+      "final_score_ms": null,
+      "before_dead_ms": 2.0,
+      "dead_stones_ms": 1891.0,
+      "raw_nn_to_render_ms": 31.0,
+      "position_evaluation_ms": 23,
+      "gtp_final_score": null,
+      "chinese_area_log": "Chinese area score B stones=11 territory=2, W stones=38 territory=30, dead B=14 W=0, komi=5.5, total B=13.0 W=73.5, lead local=60.5 engine=NaN agrees=false mode=fast",
+      "has_chinese_area_score": true
+    },
+    "position_quality": {
+      "tracker_black_stones": 25,
+      "tracker_white_stones": 38,
+      "black_stones": 11,
+      "white_stones": 38,
+      "black_territory": 2,
+      "white_territory": 30,
+      "dead_black": 14,
+      "dead_white": 0,
+      "tracker_matches_score": true,
+      "benchmark_quality": "REPRESENTATIVE",
+      "quality_reason": "双方均有存活棋子及地盘"
+    },
+    "case": 1
+  }
+]
