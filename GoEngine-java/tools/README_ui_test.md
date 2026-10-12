@@ -76,3 +76,11 @@ UIAutomator 导出界面树在 RK3588 上仍有固定的数秒延迟。脚本会
 
     python3 tools/test_app_ui_units.py
 
+
+## 新局按钮的可靠同步（2026-10-12）
+
+首次打开新局以及 CPU/GPU 切换时，需要确认弹窗已显示。改变下拉菜单选项之后，再做一次界面树检查，直到 Spinner 显示目标选项，防止菜单刚关闭的几十毫秒内“开始对局”点击丢失。
+
+点击开始按钮后，脚本还会读取 `MainActivity` 的 `Saved new-game preference boardSize=... backend=...` 日志，以确认点击事件真正执行。5 秒内未收到确认，会重新检查弹窗及实际后端后只重试一次，而不是长时间等待对局界面。
+
+当用户按 Ctrl+C 中断时，现在也会尝试保存 `interrupted.xml`、`interrupted.png` 和日志到本地及报告分支，便于定位中断前的现场。
