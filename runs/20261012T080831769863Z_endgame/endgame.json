@@ -1,0 +1,193 @@
+{
+  "type": "friendly_pass_vs_direct_scoring",
+  "note": "Two passes on identical AB/AW setup. Same area/simple-ko rules except friendlyPassOk. Direct result may be different and is NOT a drop-in replacement for the prediction.",
+  "device": "8719e18a71a2a66c",
+  "model_sha256": "49b75eacdfd8587fe153e6889070d509504750a45fda16105e67bf8c456148d4",
+  "binaries": {
+    "cpu": "cc8f0472e9f37387c9206609b8d56eff8f21d28986c37b3c7634d98f8caf5d91"
+  },
+  "threads": 4,
+  "repeats": 1,
+  "fixtures": {
+    "simple": {
+      "description": "Two stable separated two-eye groups; basic score baseline",
+      "grid": [
+        "BBBBB....",
+        "B.B.B....",
+        "BBBBB....",
+        ".........",
+        ".........",
+        ".........",
+        "....WWWWW",
+        "....W.W.W",
+        "....WWWWW"
+      ],
+      "sha256": "bf58d4629694fef9b8f12749decb929e720efda9b6692ceb3ba13c45160cf04d",
+      "remote": "/data/local/tmp/katago_bench/positions/simple.sgf",
+      "size": 9,
+      "black_stones": 13,
+      "white_stones": 13,
+      "black_eyes": [
+        [
+          1,
+          1
+        ],
+        [
+          3,
+          1
+        ]
+      ],
+      "white_eyes": [
+        [
+          5,
+          7
+        ],
+        [
+          7,
+          7
+        ]
+      ]
+    },
+    "tactical": {
+      "description": "Two alive corner groups plus weak central groups; unsettled status",
+      "grid": [
+        "BBBBB.WWW",
+        "B.B.B.W.W",
+        "BBBBB.WWW",
+        "..B.B.W..",
+        "..BWWBW..",
+        "..BB.WWW.",
+        "....WWWWW",
+        "....W.W.W",
+        "....WWWWW"
+      ],
+      "sha256": "13c850d1c64a8acf893eb6c4514c49f049f7402a865facee58c6e1c83ca4d4d3",
+      "remote": "/data/local/tmp/katago_bench/positions/tactical.sgf",
+      "size": 9,
+      "black_stones": 19,
+      "white_stones": 28,
+      "black_eyes": [
+        [
+          1,
+          1
+        ],
+        [
+          3,
+          1
+        ]
+      ],
+      "white_eyes": [
+        [
+          7,
+          1
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          7,
+          7
+        ]
+      ]
+    }
+  },
+  "rows": [
+    {
+      "backend": "cpu",
+      "fixture": "simple",
+      "repeat": 1,
+      "scoring": "human_predict",
+      "threads": 4,
+      "friendly_pass_ok": true,
+      "rules": "{\"friendlyPassOk\":true,\"hasButton\":false,\"ko\":\"SIMPLE\",\"scoring\":\"AREA\",\"suicide\":false,\"tax\":\"NONE\",\"whiteHandicapBonus\":\"N\"}",
+      "sha256": "bf58d4629694fef9b8f12749decb929e720efda9b6692ceb3ba13c45160cf04d",
+      "score": "W+2.5",
+      "dead": "",
+      "local_white_lead": 5.5,
+      "score_minus_local_lead": -3.0,
+      "score_ms": 1763.62,
+      "dead_ms": 623.2,
+      "total_ms": 2386.82
+    },
+    {
+      "backend": "cpu",
+      "fixture": "simple",
+      "repeat": 1,
+      "scoring": "finished_rules",
+      "threads": 4,
+      "friendly_pass_ok": false,
+      "rules": "{\"friendlyPassOk\":false,\"hasButton\":false,\"ko\":\"SIMPLE\",\"scoring\":\"AREA\",\"suicide\":false,\"tax\":\"NONE\",\"whiteHandicapBonus\":\"N\"}",
+      "sha256": "bf58d4629694fef9b8f12749decb929e720efda9b6692ceb3ba13c45160cf04d",
+      "score": "W+5.5",
+      "dead": "",
+      "local_white_lead": 5.5,
+      "score_minus_local_lead": 0.0,
+      "score_ms": 1.56,
+      "dead_ms": 1.21,
+      "total_ms": 2.78
+    },
+    {
+      "backend": "cpu",
+      "fixture": "tactical",
+      "repeat": 1,
+      "scoring": "human_predict",
+      "threads": 4,
+      "friendly_pass_ok": true,
+      "rules": "{\"friendlyPassOk\":true,\"hasButton\":false,\"ko\":\"SIMPLE\",\"scoring\":\"AREA\",\"suicide\":false,\"tax\":\"NONE\",\"whiteHandicapBonus\":\"N\"}",
+      "sha256": "13c850d1c64a8acf893eb6c4514c49f049f7402a865facee58c6e1c83ca4d4d3",
+      "score": "W+10.5",
+      "dead": "F5",
+      "local_white_lead": 21.5,
+      "score_minus_local_lead": -11.0,
+      "score_ms": 1758.33,
+      "dead_ms": 632.53,
+      "total_ms": 2390.86
+    },
+    {
+      "backend": "cpu",
+      "fixture": "tactical",
+      "repeat": 1,
+      "scoring": "finished_rules",
+      "threads": 4,
+      "friendly_pass_ok": false,
+      "rules": "{\"friendlyPassOk\":false,\"hasButton\":false,\"ko\":\"SIMPLE\",\"scoring\":\"AREA\",\"suicide\":false,\"tax\":\"NONE\",\"whiteHandicapBonus\":\"N\"}",
+      "sha256": "13c850d1c64a8acf893eb6c4514c49f049f7402a865facee58c6e1c83ca4d4d3",
+      "score": "W+20.5",
+      "dead": "",
+      "local_white_lead": 20.5,
+      "score_minus_local_lead": 0.0,
+      "score_ms": 1.19,
+      "dead_ms": 1.07,
+      "total_ms": 2.26
+    }
+  ],
+  "comparisons": [
+    {
+      "backend": "cpu",
+      "fixture": "simple",
+      "repeat": 1,
+      "predict_score": "W+2.5",
+      "rules_score": "W+5.5",
+      "same_score": false,
+      "predict_dead": "",
+      "rules_dead": "",
+      "same_dead": true,
+      "predict_total_ms": 2386.82,
+      "rules_total_ms": 2.78
+    },
+    {
+      "backend": "cpu",
+      "fixture": "tactical",
+      "repeat": 1,
+      "predict_score": "W+10.5",
+      "rules_score": "W+20.5",
+      "same_score": false,
+      "predict_dead": "F5",
+      "rules_dead": "",
+      "same_dead": false,
+      "predict_total_ms": 2390.86,
+      "rules_total_ms": 2.26
+    }
+  ]
+}
