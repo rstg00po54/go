@@ -88,6 +88,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean gameReady;
     private String gameResultText;
     private String finalScoreText;
+    private String finalDeadStones;
+    private boolean preciseScoreReady;
     private Point lastMove;
     private final List<KataGoEngine.SearchRecommendation> recommendationChoices = new ArrayList<>();
     private Point[] recommendationPoints;
@@ -176,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
         newRoundButton.setOnClickListener(v -> showNewGameDialog());
         situationButton.setOnClickListener(v -> showSituation());
         aiSuggestionButton.setOnClickListener(v -> showAiSuggestions());
-        countTerritoryButton.setOnClickListener(v -> Toast.makeText(this, "数目功能待实现", Toast.LENGTH_SHORT).show());
+        countTerritoryButton.setOnClickListener(v -> requestPreciseEndgame());
         variationButton.setOnClickListener(v -> showVariations());
         render("正在启动 AI...");
         showMainPage();
@@ -607,7 +609,8 @@ public class MainActivity extends AppCompatActivity {
         finishByResignation("你认输了 · " + winner + "胜");
     }
 
-    /** Synchronize a final human pass before scoring and territory estimation. */
+    /** A fast result uses one KataGo dead-stone search, not the repeated
+     * komi searches inside GTP final_score. The latter remains opt-in. */
     private void finishByScore(String pendingPassColor) {
         DebugLog.enter(TAG, "finishByScore in, pendingPassColor=" + pendingPassColor);
         if (evaluating) return;
@@ -616,23 +619,81 @@ public class MainActivity extends AppCompatActivity {
         final GoBoard snapshot = board;
         final int size = boardSize, moves = board.getMoveCount();
         final long epoch = winRateEpoch;
-        render("正在结算地盘...");
+        final long startedNs = System.nanoTime();
+        render("正在判断死子并快速数目...");
         engineExecutor.execute(() -> {
             boolean synced = pendingPassColor == null || engine.playMove(pendingPassColor, "pass");
-            String score = synced ? engine.getFinalScore() : null;
+            long deadStartedNs = System.nanoTime();
             String deadStones = synced ? engine.getFinalDeadStones() : null;
-            KataGoEngine.PositionEvaluation result = synced ? engine.evaluatePosition(size) : null;
-            String outcome = formatFinalResult(score);
+            long deadMs = (System.nanoTime() - deadStartedNs) / 1000000L;
+            KataGoEngine.PositionEvaluation result = synced && deadStones != null ? engine.evaluatePosition(size) : null;
+            long elapsedMs = (System.nanoTime() - startedNs) / 1000000L;
+            Log.i(TAG, "ENDGAME_TIMING phase=fast_done elapsedMs=" + elapsedMs
+                    + " deadMs=" + deadMs + " synced=" + synced + " deadAvailable=" + (deadStones != null));
             mainHandler.post(() -> {
+                if (board != snapshot || board.getMoveCount() != moves || winRateEpoch != epoch) return;
                 evaluating = false;
-                if (board != snapshot || board.getMoveCount() != moves) return;
-                gameResultText = synced ? outcome : "对局结束 · 同步失败";
-                if (result != null) territorySummary(result); // Keep ownership marks.
-                recordFinalWinRate(snapshot, moves, epoch, score);
-                finalScoreText = synced ? finalPointsSummary(score, deadStones) : "终局数子\n同步失败";
+                finalDeadStones = deadStones;
+                preciseScoreReady = false;
+                if (!synced) {
+                    gameResultText = "对局结束 · 同步失败";
+                    finalScoreText = "终局数子\n同步失败";
+                } else if (deadStones == null) {
+                    gameResultText = "对局结束 · 死子判断不可用";
+                    finalScoreText = "终局数子\n结果不可用";
+                } else {
+                    gameResultText = formatEstimatedFinalResult(deadStones);
+                    finalScoreText = finalPointsSummary(null, deadStones);
+                }
+                if (result != null) territorySummary(result);
                 render(finalScoreText);
             });
         });
+    }
+
+    /** Run the original slower, extra-search final_score only when requested. */
+    private void requestPreciseEndgame() {
+        DebugLog.enter(TAG, "requestPreciseEndgame in, evaluating=" + evaluating);
+        if (!engineReady || evaluating || !board.isGameOver() || finalDeadStones == null || preciseScoreReady) {
+            Toast.makeText(this, "请先完成快速结算", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        evaluating = true;
+        final GoBoard snapshot = board;
+        final int moves = board.getMoveCount();
+        final long epoch = winRateEpoch;
+        final String deadStones = finalDeadStones;
+        final long startedNs = System.nanoTime();
+        render("正在精确计算目差，请稍候...");
+        engineExecutor.execute(() -> {
+            String score = engine.getFinalScore();
+            long elapsedMs = (System.nanoTime() - startedNs) / 1000000L;
+            Log.i(TAG, "ENDGAME_TIMING phase=precise_done elapsedMs=" + elapsedMs
+                    + " valid=" + (score != null));
+            mainHandler.post(() -> {
+                if (board != snapshot || board.getMoveCount() != moves || winRateEpoch != epoch) return;
+                evaluating = false;
+                if (score != null) {
+                    preciseScoreReady = true;
+                    gameResultText = formatFinalResult(score);
+                    finalScoreText = finalPointsSummary(score, deadStones);
+                    recordFinalWinRate(snapshot, moves, epoch, score);
+                } else {
+                    Toast.makeText(this, "精确目差计算失败，保留快速估算", Toast.LENGTH_LONG).show();
+                }
+                render(finalScoreText);
+            });
+        });
+    }
+
+    /** Provisional Chinese area score after KataGo-predicted dead stones.
+     * This is not an official adjudicated result, unlike a final_score. */
+    private String formatEstimatedFinalResult(String deadVertices) {
+        GoBoard.FinalScore totals = calculateChineseFinalTotals(deadVertices);
+        double lead = totals.whitePoints - totals.blackPoints;
+        if (Math.abs(lead) < 0.01) return "对局结束 · 预估平局";
+        return String.format(Locale.CHINA, "对局结束 · 预估%s胜 %.1f目",
+                lead > 0 ? "白" : "黑", Math.abs(lead));
     }
 
     private void finishByResignation(String outcome) {
@@ -671,37 +732,43 @@ public class MainActivity extends AppCompatActivity {
         return "对局结束 · " + text;
     }
 
-    /**
-     * Chinese area score: stones on board + enclosed empty intersections, after removal
-     * of KataGo-predicted dead stones. White receives the configured komi.
-     * This is AI-adjudicated scoring, not a manually confirmed tournament result.
-     */
-    private String finalPointsSummary(String finalScore, String deadVertices) {
-        if (finalScore == null || deadVertices == null) return "终局数子\n结果不可用";
+    /** Local Chinese area points after removing GTP-predicted dead stones. */
+    private GoBoard.FinalScore calculateChineseFinalTotals(String deadVertices) {
         Set<Point> deadStones = new HashSet<>();
         for (String vertex : deadVertices.trim().split("\\s+")) {
             Point point = Point.fromGtp(vertex, boardSize);
             if (point != null && board.get(point) != Intersection.EMPTY) deadStones.add(point);
         }
-        GoBoard.FinalScore totals = board.countChineseScore(deadStones, komiFor(boardSize), gameCondition >= 2 ? gameCondition : 0);
+        return board.countChineseScore(deadStones, komiFor(boardSize), gameCondition >= 2 ? gameCondition : 0);
+    }
+
+    /** Always label the fast estimate as approximate; a delayed precise query
+     * may disagree because final_score predicts how play could continue. */
+    private String finalPointsSummary(String finalScore, String deadVertices) {
+        if (deadVertices == null) return "终局数子\n结果不可用";
+        GoBoard.FinalScore totals = calculateChineseFinalTotals(deadVertices);
         double expectedLead = Double.NaN;
-        try {
-            String text = finalScore.trim().toUpperCase(Locale.US);
-            if ("0".equals(text)) expectedLead = 0.0;
-            else if (text.startsWith("W+")) expectedLead = Double.parseDouble(text.substring(2));
-            else if (text.startsWith("B+")) expectedLead = -Double.parseDouble(text.substring(2));
-        } catch (NumberFormatException e) {
-            Log.w(TAG, "KataGo final score does not have a numeric margin: " + finalScore, e);
+        if (finalScore != null) {
+            try {
+                String text = finalScore.trim().toUpperCase(Locale.US);
+                if ("0".equals(text)) expectedLead = 0.0;
+                else if (text.startsWith("W+")) expectedLead = Double.parseDouble(text.substring(2));
+                else if (text.startsWith("B+")) expectedLead = -Double.parseDouble(text.substring(2));
+            } catch (NumberFormatException e) {
+                Log.w(TAG, "KataGo final score does not have a numeric margin: " + finalScore, e);
+            }
         }
         double calculatedLead = totals.whitePoints - totals.blackPoints;
         boolean agrees = Double.isFinite(expectedLead) && Math.abs(expectedLead - calculatedLead) < 0.01;
         Log.i(TAG, String.format(Locale.US,
                 "Chinese area score B stones=%d territory=%d, W stones=%d territory=%d, "
-                        + "dead B=%d W=%d, komi=%.1f, total B=%.1f W=%.1f, lead local=%.1f engine=%.1f agrees=%s",
+                        + "dead B=%d W=%d, komi=%.1f, total B=%.1f W=%.1f, lead local=%.1f engine=%.1f agrees=%s mode=%s",
                 totals.blackStones, totals.blackTerritory, totals.whiteStones, totals.whiteTerritory,
                 totals.deadBlack, totals.deadWhite, komiFor(boardSize),
-                totals.blackPoints, totals.whitePoints, calculatedLead, expectedLead, agrees));
-        if (!agrees) Log.w(TAG, "Chinese area score differs from KataGo final_score; these totals are approximate");
+                totals.blackPoints, totals.whitePoints, calculatedLead, expectedLead, agrees,
+                finalScore == null ? "fast" : "precise"));
+        if (finalScore != null && !agrees)
+            Log.w(TAG, "Chinese area score differs from KataGo final_score; these totals are approximate");
         String prefix = agrees ? "" : "约";
         return String.format(Locale.CHINA, "黑%s%.0f目\n白%s%.1f目", prefix, totals.blackPoints, prefix, totals.whitePoints);
     }
@@ -1068,6 +1135,8 @@ public class MainActivity extends AppCompatActivity {
         clearRecommendations();
         gameResultText = null;
         finalScoreText = null;
+        finalDeadStones = null;
+        preciseScoreReady = false;
         winRateEpoch++;
         winRateSession++;
         blackWinHistory.clear();
@@ -1271,6 +1340,9 @@ public class MainActivity extends AppCompatActivity {
         boolean playerTurn = engineReady && gameReady && !engineStarting && !thinking && !evaluating && currentPlayer == playerColor && !board.isGameOver();
         newGameButton.setEnabled(!thinking && !engineStarting && !evaluating);
         newRoundButton.setEnabled(!thinking && !engineStarting && !evaluating);
+        countTerritoryButton.setText(board.isGameOver() ? "精确结算" : "数目");
+        countTerritoryButton.setEnabled(engineReady && gameReady && board.isGameOver()
+                && !thinking && !engineStarting && !evaluating && finalDeadStones != null && !preciseScoreReady);
         situationButton.setEnabled(variationBoard == null && engineReady && gameReady && !engineStarting
                 && !thinking && !evaluating && (board.isGameOver() || currentPlayer == playerColor));
         aiSuggestionButton.setEnabled(playerTurn && variationBoard == null);
