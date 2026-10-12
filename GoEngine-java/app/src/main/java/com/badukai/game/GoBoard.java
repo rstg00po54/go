@@ -15,6 +15,8 @@ public class GoBoard {
     private final List<Move> moveHistory = new ArrayList<>();
     // Starting handicap stones are part of the initial position, not undoable moves.
     private final List<Point> initialHandicapStones = new ArrayList<>();
+    // Fixed problem positions are setup stones, not moves.
+    private String[] initialDiagram;
     private Point koPoint;
     private int capturedBlack;
     private int capturedWhite;
@@ -57,9 +59,34 @@ public class GoBoard {
         return points;
     }
 
+    /** Load a curated training position. All setup stones are restored by undo(). */
+    public void setupDiagram(String[] rows) {
+        if (rows == null || rows.length != size) throw new IllegalArgumentException("Expected " + size + " diagram rows");
+        GoBoard candidate = new GoBoard(size);
+        for (int y = 0; y < size; y++) {
+            if (rows[y] == null || rows[y].length() != size) throw new IllegalArgumentException("Invalid diagram row " + y);
+            for (int x = 0; x < size; x++) {
+                char c = rows[y].charAt(x);
+                if (c == 'X') candidate.placeStone(new Point(x, y), StoneColor.BLACK);
+                else if (c == 'O') candidate.placeStone(new Point(x, y), StoneColor.WHITE);
+                else if (c != '.') throw new IllegalArgumentException("Invalid diagram cell " + c);
+            }
+        }
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                Point p = new Point(x, y);
+                if (candidate.get(p) != Intersection.EMPTY && !candidate.hasLiberty(candidate.getGroup(p)))
+                    throw new IllegalArgumentException("Setup contains a zero-liberty group at " + p);
+            }
+        }
+        clear();
+        for (int y = 0; y < size; y++) System.arraycopy(candidate.board[y], 0, board[y], 0, size);
+        initialDiagram = rows.clone();
+    }
+
     /** Place initial black handicap stones without treating them as played moves. */
     public boolean placeHandicapStones(List<Point> points) {
-        if (points == null || points.size() < 2 || points.size() > 9 || !moveHistory.isEmpty() || !initialHandicapStones.isEmpty()) return false;
+        if (points == null || points.size() < 2 || points.size() > 9 || !moveHistory.isEmpty() || !initialHandicapStones.isEmpty() || initialDiagram != null) return false;
         Set<Point> unique = new HashSet<>();
         for (Point point : points) {
             if (point == null || !isInside(point.x, point.y) || get(point) != Intersection.EMPTY || !unique.add(point))
@@ -236,7 +263,16 @@ public class GoBoard {
         List<Move> history = new ArrayList<>(moveHistory.subList(0, moveHistory.size() - 1));
         // Replay from the handicap position, never from an empty board.
         clearBoardOnly();
-        for (Point point : initialHandicapStones) placeStone(point, StoneColor.BLACK);
+        if (initialDiagram != null) {
+            for (int y = 0; y < size; y++) {
+                for (int x = 0; x < size; x++) {
+                    if (initialDiagram[y].charAt(x) == 'X') placeStone(new Point(x, y), StoneColor.BLACK);
+                    else if (initialDiagram[y].charAt(x) == 'O') placeStone(new Point(x, y), StoneColor.WHITE);
+                }
+            }
+        } else {
+            for (Point point : initialHandicapStones) placeStone(point, StoneColor.BLACK);
+        }
         moveHistory.clear();
         koPoint = null;
         capturedBlack = 0;
@@ -250,6 +286,7 @@ public class GoBoard {
         DebugLog.enter(TAG, "clear in, moveCount=" + moveHistory.size());
         clearBoardOnly();
         initialHandicapStones.clear();
+        initialDiagram = null;
         moveHistory.clear();
         koPoint = null;
         capturedBlack = 0;
@@ -359,6 +396,7 @@ public class GoBoard {
         GoBoard copy = new GoBoard(size);
         for (int y = 0; y < size; y++) System.arraycopy(board[y], 0, copy.board[y], 0, size);
         copy.initialHandicapStones.addAll(initialHandicapStones);
+        copy.initialDiagram = initialDiagram == null ? null : initialDiagram.clone();
         copy.koPoint = koPoint;
         return copy;
     }
