@@ -516,17 +516,17 @@ class AppTest:
 
 
     def upload_report(self, status, failure):
-        """Push an allowlisted, text-only report to a separate GitHub branch.
+        """Upload raw RK3588 test diagnostics to the separate GitHub results branch.
 
-        Never upload logcat, UI XML, screenshots, device serial, or full error traces.
-        This repository is PUBLIC. Uses local git remote auth; no token required.
-        Does not check out a branch, stage user files, or modify working tree.
+        This GitHub repository is PUBLIC. No redaction is performed, as
+        requested. Do not use this mode on a device with private data.
+        Uses the existing Git remote credentials; no GitHub token in code.
+        The local worktree, index, and current branch stay unchanged.
         """
         if self.args.no_upload:
             self.log("自动上传已关闭（--no-upload）")
             return
-        remote = self.args.upload_remote
-        branch = self.args.upload_branch
+        remote, branch = self.args.upload_remote, self.args.upload_branch
         if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]{0,60}", branch):
             raise TestFailure("上传分支名无效")
         root = Path(__file__).resolve().parents[2]
@@ -551,45 +551,38 @@ class AppTest:
         if not re.search(r"(^|[:/])rstg00po54/go(?:\.git)?$", remote_url):
             raise TestFailure("上传已阻止：Git remote 不是 rstg00po54/go")
         timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-        filename = "runs/" + timestamp + "_" + str(os.getpid()) + ".json"
-        safe_events = []
-        prefixes = ("=== Case ", "点击 ", "选择 ", "CPU 就绪", "GPU 就绪",
-                    "执黑已选中", "已选择执黑", "落子 ", "悔棋通过",
-                    "MainActivity 已报告", "全部 PASS", "主进程 PID=")
-        for event in self.events:
-            msg = event["message"]
-            if msg.startswith(prefixes):
-                if msg.startswith("主进程 PID="):
-                    msg = "主进程正常且无独立 GPU 进程"
-                safe_events.append({"s": event["seconds"], "step": msg[:150]})
-        def safe_failure(value):
-            if not value:
-                return None
-            msg = str(value).split("；最近界面:")[0].split("；界面:")[0]
-            if msg.startswith("ADB 命令失败:"):
-                return "ADB 命令失败（具体输出仅保存在本地日志）"
-            msg = re.sub(r"(?:[a-zA-Z]:)?/(?:[^\s:]+/)*[^\s:]+", "<path>", msg)
-            msg = re.sub(r"\b[0-9a-fA-F]{20,}\b", "<id>", msg)
-            msg = re.sub(r"\b\d{10,}\b", "<id>", msg)
-            return msg[:250]
-        phases = []
-        backend_results = []
+        name = timestamp + "_" + str(os.getpid())
+        report_path = "runs/" + name + ".json"
+        phases, backend_results = [], []
         for file in sorted(self.out.glob("*_summary.log")):
-            data = file.read_text(encoding="utf-8", errors="replace")
-            for phase, ms in re.findall(r"STARTUP_TIMING phase=([A-Za-z0-9_]+) ms=([0-9.]+)", data):
+            content = file.read_text(encoding="utf-8", errors="replace")
+            for phase, ms in re.findall(r"STARTUP_TIMING phase=([A-Za-z0-9_]+) ms=([0-9.]+)", content):
                 phases.append({"phase": phase, "ms": float(ms)})
             for requested, actual, ready in re.findall(
-                    r"Game backend requested=(CPU|GPU) actual=(CPU/Eigen JNI|GPU/OpenCL JNI|PIE/ProcessBuilder) ready=(true|false)", data):
+                    r"Game backend requested=(CPU|GPU) actual=(CPU/Eigen JNI|GPU/OpenCL JNI|PIE/ProcessBuilder) ready=(true|false)", content):
                 backend_results.append({"requested": requested, "actual": actual, "ready": ready == "true"})
         report = {
-            "schema": 1, "status": status, "timestamp_utc": timestamp,
-            "backends": self.args.backends, "rounds": self.args.rounds, "size": self.args.size,
+            "schema": 2, "status": status, "timestamp_utc": timestamp,
+            "serial": self.serial, "backends": self.args.backends,
+            "rounds": self.args.rounds, "size": self.args.size,
             "moves": self.args.moves, "undo": self.args.undo, "pass": self.args.pass_move,
-            "failure": safe_failure(failure), "events": safe_events[-250:],
-            "startup_timings": phases[-150:], "game_backends": backend_results[-80:],
-            "note": "PUBLIC, sanitized: no full logcat/screenshots/XML/device serial"
+            "failure": failure, "events": self.events,
+            "startup_timings": phases, "game_backends": backend_results,
+            "note": "PUBLIC and NOT REDACTED, diagnostics under runs/" + name + "/"
         }
-        content = (json.dumps(report, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+        items = [(report_path, (json.dumps(report, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))]
+        # Attach original UI tree, screenshot and logs so failures can be
+        # diagnosed from GitHub alone. Cap each artifact to avoid giant pushes.
+        for file in sorted(self.out.iterdir()):
+            if not file.is_file() or file.name == "report.json":
+                continue
+            if not (file.name.endswith((".xml", ".png", ".log", "_logcat.txt"))):
+                continue
+            if file.stat().st_size > 12 * 1024 * 1024:
+                self.log("文件超过 12MB，仅保留本地：" + file.name)
+                continue
+            items.append(("runs/" + name + "/" + file.name, file.read_bytes()))
+        self.log(f"上传未脱敏诊断数据到公开仓库：{len(items)} 个文件")
         with tempfile.TemporaryDirectory(prefix="katago_ui_git_") as directory:
             env = {"GIT_INDEX_FILE": str(Path(directory) / "index")}
             heads = git("ls-remote", "--heads", remote, "refs/heads/" + branch, timeout=45)
@@ -599,8 +592,10 @@ class AppTest:
                 git("read-tree", parent + "^{tree}", env=env)
             else:
                 git("read-tree", "--empty", env=env)
-            blob = git("hash-object", "-w", "--stdin", input_data=content)
-            git("update-index", "--add", "--cacheinfo", "100644," + blob + "," + filename, env=env)
+            for name_in_repo, payload in items:
+                blob = git("hash-object", "-w", "--stdin", input_data=payload)
+                git("update-index", "--add", "--cacheinfo",
+                    "100644," + blob + "," + name_in_repo, env=env)
             tree = git("write-tree", env=env)
             cmd = ["-c", "user.name=KataGo UI Test", "-c", "user.email=katago-ui-test@users.noreply.github.com",
                    "commit-tree", tree]
@@ -608,11 +603,10 @@ class AppTest:
                 cmd += ["-p", parent]
             cmd += ["-m", "UI test " + status + " " + timestamp]
             commit = git(*cmd)
-            git("push", remote, commit + ":refs/heads/" + branch, timeout=60)
-        link = "https://github.com/rstg00po54/go/blob/" + branch + "/" + filename
-        self.log("测试报告已自动上传：" + link)
+            git("push", remote, commit + ":refs/heads/" + branch, timeout=90)
+        link = "https://github.com/rstg00po54/go/blob/" + branch + "/" + report_path
+        self.log("测试报告及诊断文件已上传：" + link)
         return link
-
 
 
 def main():
