@@ -256,6 +256,13 @@ class AppTest:
         self.adb("shell", "input", "tap", str(x), str(y), timeout=15)
 
     def click(self, rid=None, text=None, timeout=20):
+        if rid in ("newRoundButton", "undoButton", "passButton", "backendSpinner",
+                   "sizeSpinner", "aiBattleButton"):
+            point = self.cached_center(rid)
+            if point is not None:
+                self.tap(*point)
+                self.log(f"点击 {rid}（本地缓存），坐标={point}")
+                return
         # Some devices expose the visible label of a dialog Button, but omit
         # its app resource-id. Try the exact ID first, then an exact known
         # label. Never guess coordinates when neither is in the hierarchy.
@@ -299,13 +306,14 @@ class AppTest:
         self.log(f"点击 {label}，坐标=({x}, {y})")
 
     def start_game_from_layout(self):
-        """Click the start button using its real Android XML layout geometry.
-
-        dialog_new_game.xml places startGameButton directly below the fifth
-        50dp row (difficultySpinner), with a 12dp margin and a 46dp height.
-        The row center to button center is therefore 25+12+23 = 60dp.
-        This avoids relying on UIAutomator exporting the bottom Button.
-        """
+        """Click start button, preferring cached geometry over UIAutomator."""
+        point = self.cached_center("startGameButton")
+        if point is not None:
+            self.tap(*point)
+            self.log(f"点击开始对局（本地缓存），坐标={point}")
+            return
+        # dialog_new_game.xml: difficultySpinner row center to button center
+        # = half-row 25dp + margin 12dp + half-button 23dp = 60dp.
         root = self.hierarchy()
         button = self.node(root, rid="startGameButton")
         if button is None:
@@ -349,13 +357,17 @@ class AppTest:
         return labels[-1] if labels else spinner.get("text", "").strip()
 
     def ensure_black(self):
-        """The dialog defaults to black; do not tap an already selected RadioButton."""
+        """MainActivity starts as BLACK; no UI dump needed in a controlled run."""
+        if self.player_black:
+            self.log("执黑已由本次会话确认，跳过 UI 检查")
+            return
         root = self.hierarchy()
         radio = self.node(root, rid="blackRadio")
         if radio is None:
             raise TestFailure("新局对话框缺少 blackRadio；界面内容=" +
                               " ".join(n.get("text", "") for n in root.iter("node") if n.get("text"))[-200:])
         if radio.get("checked") == "true":
+            self.player_black = True
             self.log("执黑已选中，无需重复点击")
             return
         x, y = self.center(radio)
@@ -363,38 +375,54 @@ class AppTest:
         self.poll(lambda r: (self.node(r, rid="blackRadio") is not None and
                              self.node(r, rid="blackRadio").get("checked") == "true"),
                   8, "点击执黑后未能确认选中")
+        self.player_black = True
         self.log("已选择执黑")
 
     def spinner(self, rid, option):
-        root = self.hierarchy()
-        selected = self.spinner_selected(root, rid)
+        if rid == "sizeSpinner" and self.selected_size is not None:
+            selected = f"{self.selected_size}路"
+        elif rid == "backendSpinner" and self.selected_backend is not None:
+            selected = self.selected_backend + (" / OpenCL" if self.selected_backend == "GPU" else " / Eigen")
+        else:
+            selected = self.spinner_selected(self.hierarchy(), rid)
         if selected == option or (option == "CPU / Eigen" and selected.startswith("CPU / Eigen")):
             self.log(f"{rid} 已选择 {selected}，跳过下拉菜单")
             return
-        self.click(rid=rid)
 
-        def option_point(root):
-            # A Spinner dropdown's TextView can be reported enabled=false even
-            # when its enclosing ListView row is tappable. Match visible text,
-            # then tap its on-screen bounds; never require enabled=true here.
-            width, height = self.screen_size_cached
-            for item in reversed(list(root.iter("node"))):
-                label = item.get("text", "").strip() or item.get("content-desc", "").strip()
-                if label != option:
-                    continue
-                bounds = BOUNDS.fullmatch(item.get("bounds", ""))
-                if bounds is None:
-                    continue
-                x1, y1, x2, y2 = map(int, bounds.groups())
-                x, y = (x1 + x2) // 2, (y1 + y2) // 2
-                if x1 < x2 and y1 < y2 and 0 <= x < width and 0 <= y < height:
-                    return (x, y)
-            return None
+        choice_key = f"choice:{rid}:{selected}->{option}"
+        cached = self.cached_center(choice_key)
+        if cached is not None and self.cached_center(rid) is not None:
+            self.click(rid=rid)
+            time.sleep(0.12)
+            self.tap(*cached)
+            self.log(f"选择 {rid}（本地缓存）: {selected} -> {option}，坐标={cached}")
+        else:
+            self.click(rid=rid)
+            self.screen_size()
 
-        self.screen_size()
-        point = self.poll(option_point, 15, f"下拉选项不可见: {rid}={option}")
-        self.tap(*point)
-        self.log(f"选择 {rid}: {option}，坐标={point}")
+            def option_point(root):
+                for item in reversed(list(root.iter("node"))):
+                    label = item.get("text", "").strip() or item.get("content-desc", "").strip()
+                    if label != option:
+                        continue
+                    bounds = BOUNDS.fullmatch(item.get("bounds", ""))
+                    if bounds is None:
+                        continue
+                    x1, y1, x2, y2 = map(int, bounds.groups())
+                    x, y = (x1 + x2) // 2, (y1 + y2) // 2
+                    w, h = self.screen_size_cached
+                    if x1 < x2 and y1 < y2 and 0 <= x < w and 0 <= y < h:
+                        self.store_geometry(choice_key, item.get("bounds"))
+                        return (x, y)
+                return None
+
+            point = self.poll(option_point, 15, f"下拉选项不可见: {rid}={option}")
+            self.tap(*point)
+            self.log(f"选择 {rid}: {option}，坐标={point}")
+        if rid == "sizeSpinner":
+            self.selected_size = int(option.replace("路", ""))
+        if rid == "backendSpinner":
+            self.selected_backend = "GPU" if option.startswith("GPU") else "CPU"
 
     def text(self, root, rid):
         item = self.node(root, rid=rid)
