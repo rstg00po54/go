@@ -1,0 +1,255 @@
+{
+  "schema": 3,
+  "status": "INTERRUPTED",
+  "timestamp_utc": "20261012T035914002465Z",
+  "ui_dumps": 10,
+  "cached_controls": 12,
+  "serial": "8719e18a71a2a66c",
+  "backends": "cpu,gpu,cpu",
+  "rounds": 1,
+  "size": 9,
+  "moves": 2,
+  "undo": true,
+  "pass": false,
+  "failure": "用户按 Ctrl+C 中断测试",
+  "events": [
+    {
+      "seconds": 0.004,
+      "message": "连接设备 8719e18a71a2a66c"
+    },
+    {
+      "seconds": 0.132,
+      "message": "已加载本地 UI 缓存：12 个控件/菜单位置"
+    },
+    {
+      "seconds": 0.797,
+      "message": "启动 APP"
+    },
+    {
+      "seconds": 0.797,
+      "message": "等待 MainActivity 的引擎完成日志（不依赖屏幕下方的按钮）"
+    },
+    {
+      "seconds": 0.849,
+      "message": "首页引擎尚未发出 ready 日志，已等待 0s"
+    },
+    {
+      "seconds": 4.941,
+      "message": "MainActivity 已报告 Initial engine ready=true"
+    },
+    {
+      "seconds": 4.941,
+      "message": "已读取 APP 会话设置：9路，CPU"
+    },
+    {
+      "seconds": 4.941,
+      "message": "动态检测将在第一局启动后选择 logcat 或 UIAutomator"
+    },
+    {
+      "seconds": 4.941,
+      "message": "=== Case 1: CPU / 9x9 ==="
+    },
+    {
+      "seconds": 4.98,
+      "message": "打开 AI训练（本地缓存），坐标=(540, 1534)"
+    },
+    {
+      "seconds": 7.203,
+      "message": "新开一局弹窗已显示"
+    },
+    {
+      "seconds": 7.203,
+      "message": "sizeSpinner 已选择 9路，跳过下拉菜单"
+    },
+    {
+      "seconds": 7.203,
+      "message": "执黑已由本次会话确认，跳过 UI 检查"
+    },
+    {
+      "seconds": 7.203,
+      "message": "backendSpinner 已选择 CPU / Eigen，跳过下拉菜单"
+    },
+    {
+      "seconds": 7.32,
+      "message": "点击开始对局（本地缓存），坐标=(539, 1333)"
+    },
+    {
+      "seconds": 7.351,
+      "message": "MainActivity 已确认开始：9路 CPU"
+    },
+    {
+      "seconds": 8.252,
+      "message": "APP 未输出对局 DebugLog，继续使用 UIAutomator 后备检测"
+    },
+    {
+      "seconds": 10.405,
+      "message": "CPU 就绪，第 1 手（UI后备）"
+    },
+    {
+      "seconds": 10.472,
+      "message": "主进程 PID=7326，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 10.54,
+      "message": "落子 (2,2)，屏幕 (310,757)（缓存棋盘）"
+    },
+    {
+      "seconds": 14.131,
+      "message": "CPU 就绪，第 3 手（UI后备）"
+    },
+    {
+      "seconds": 14.198,
+      "message": "落子 (6,6)，屏幕 (765,1212)（缓存棋盘）"
+    },
+    {
+      "seconds": 17.777,
+      "message": "CPU 就绪，第 5 手（UI后备）"
+    },
+    {
+      "seconds": 17.828,
+      "message": "点击 undoButton（本地缓存），坐标=(671, 1594)"
+    },
+    {
+      "seconds": 19.958,
+      "message": "悔棋通过"
+    },
+    {
+      "seconds": 20.031,
+      "message": "主进程 PID=7326，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 20.33,
+      "message": "截图 case_001_cpu.png"
+    },
+    {
+      "seconds": 20.33,
+      "message": "=== Case 1: PASS ==="
+    },
+    {
+      "seconds": 20.33,
+      "message": "=== Case 2: GPU / 9x9 ==="
+    },
+    {
+      "seconds": 20.388,
+      "message": "点击 newRoundButton（本地缓存），坐标=(933, 1594)"
+    },
+    {
+      "seconds": 22.514,
+      "message": "新开一局弹窗已显示"
+    },
+    {
+      "seconds": 22.514,
+      "message": "sizeSpinner 已选择 9路，跳过下拉菜单"
+    },
+    {
+      "seconds": 22.514,
+      "message": "执黑已由本次会话确认，跳过 UI 检查"
+    },
+    {
+      "seconds": 22.56,
+      "message": "点击 backendSpinner（本地缓存），坐标=(639, 1035)"
+    },
+    {
+      "seconds": 22.745,
+      "message": "选择 backendSpinner（本地缓存）: CPU / Eigen -> GPU / OpenCL，坐标=(575, 1169)"
+    },
+    {
+      "seconds": 24.891,
+      "message": "backendSpinner 已确认选中 GPU / OpenCL，可以继续点击"
+    },
+    {
+      "seconds": 25.015,
+      "message": "点击开始对局（本地缓存），坐标=(539, 1333)"
+    },
+    {
+      "seconds": 25.058,
+      "message": "MainActivity 已确认开始：9路 GPU"
+    },
+    {
+      "seconds": 25.984,
+      "message": "APP 未输出对局 DebugLog，继续使用 UIAutomator 后备检测"
+    },
+    {
+      "seconds": 28.1,
+      "message": "GPU 就绪，第 1 手（UI后备）"
+    },
+    {
+      "seconds": 28.162,
+      "message": "主进程 PID=7326，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 28.218,
+      "message": "落子 (2,2)，屏幕 (310,757)（缓存棋盘）"
+    },
+    {
+      "seconds": 31.166,
+      "message": "收到 Ctrl+C，停止测试并保存已完成的结果"
+    },
+    {
+      "seconds": 33.607,
+      "message": "截图 interrupted.png"
+    },
+    {
+      "seconds": 33.675,
+      "message": "本地报告: /mnt/hgfs/D/code/go/GoEngine-java/build/app_ui_test/20261012_115840"
+    }
+  ],
+  "startup_timings": [
+    {
+      "phase": "engine_backend_and_paths",
+      "ms": 0.213792
+    },
+    {
+      "phase": "engine_prepare_config",
+      "ms": 3.007167
+    },
+    {
+      "phase": "engine_prepare_model_asset",
+      "ms": 5.085209
+    },
+    {
+      "phase": "engine_find_human_model",
+      "ms": 0.240916
+    },
+    {
+      "phase": "gpu_jni_load_library",
+      "ms": 8.649584
+    },
+    {
+      "phase": "gpu_jni_create_session",
+      "ms": 0.269791
+    },
+    {
+      "phase": "gpu_jni_create_total",
+      "ms": 9.126459
+    },
+    {
+      "phase": "engine_gpu_native_create",
+      "ms": 9.629001
+    },
+    {
+      "phase": "engine_gpu_reader_setup",
+      "ms": 0.336584
+    },
+    {
+      "phase": "engine_gpu_gtp_name_send",
+      "ms": 0.227792
+    },
+    {
+      "phase": "engine_gpu_gtp_name_wait",
+      "ms": 706.998196
+    },
+    {
+      "phase": "engine_java_start_total",
+      "ms": 726.480364
+    }
+  ],
+  "game_backends": [
+    {
+      "requested": "GPU",
+      "actual": "GPU/OpenCL JNI",
+      "ready": true
+    }
+  ],
+  "note": "PUBLIC and NOT REDACTED, diagnostics under runs/20261012T035914002465Z_2425903/"
+}
