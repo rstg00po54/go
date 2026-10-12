@@ -664,7 +664,7 @@ public class MainActivity extends AppCompatActivity {
         final long epoch = winRateEpoch;
         final String deadStones = finalDeadStones;
         final long startedNs = System.nanoTime();
-        render("正在精确计算目差，请稍候...");
+        render("正在深度搜索估算目差...");
         engineExecutor.execute(() -> {
             String score = engine.getFinalScore();
             long elapsedMs = (System.nanoTime() - startedNs) / 1000000L;
@@ -679,7 +679,7 @@ public class MainActivity extends AppCompatActivity {
                     finalScoreText = finalPointsSummary(score, deadStones);
                     recordFinalWinRate(snapshot, moves, epoch, score);
                 } else {
-                    Toast.makeText(this, "精确目差计算失败，保留快速估算", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "深度估算失败，保留快速结果", Toast.LENGTH_LONG).show();
                 }
                 render(finalScoreText);
             });
@@ -727,9 +727,9 @@ public class MainActivity extends AppCompatActivity {
     private String formatFinalResult(String score) {
         if (score == null || score.trim().isEmpty()) return "对局结束 · 未得到数目结果";
         String text = score.trim();
-        if (text.startsWith("B+")) return "对局结束 · 黑胜 " + text.substring(2);
-        if (text.startsWith("W+")) return "对局结束 · 白胜 " + text.substring(2);
-        return "对局结束 · " + text;
+        if (text.startsWith("B+")) return "对局结束 · 搜索预测黑胜 " + text.substring(2);
+        if (text.startsWith("W+")) return "对局结束 · 搜索预测白胜 " + text.substring(2);
+        return "对局结束 · 搜索预测 " + text;
     }
 
     /** Local Chinese area points after removing GTP-predicted dead stones. */
@@ -1340,7 +1340,7 @@ public class MainActivity extends AppCompatActivity {
         boolean playerTurn = engineReady && gameReady && !engineStarting && !thinking && !evaluating && currentPlayer == playerColor && !board.isGameOver();
         newGameButton.setEnabled(!thinking && !engineStarting && !evaluating);
         newRoundButton.setEnabled(!thinking && !engineStarting && !evaluating);
-        countTerritoryButton.setText(board.isGameOver() ? "精确结算" : "数目");
+        countTerritoryButton.setText(board.isGameOver() ? "深度估算" : "数目");
         countTerritoryButton.setEnabled(engineReady && gameReady && board.isGameOver()
                 && !thinking && !engineStarting && !evaluating && finalDeadStones != null && !preciseScoreReady);
         situationButton.setEnabled(variationBoard == null && engineReady && gameReady && !engineStarting
