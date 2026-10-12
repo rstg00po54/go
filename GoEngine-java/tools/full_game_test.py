@@ -112,6 +112,10 @@ def score_timings(log_text, year=None):
     render = first(lambda tag, m: tag == "MainActivity" and
                    ("render in, message=黑" in m or "render in, message=终局数子" in m))
     chinese = first(lambda tag, m: tag == "MainActivity" and "Chinese area score" in m)
+    # The user may request optional deeper scoring *after* the fast result.
+    # That later final_score must not be assigned to the earlier fast settlement.
+    if score is not None and render is not None and score > render:
+        score = None
     area_line = next((msg for _, tag, msg in tail
                       if tag == "MainActivity" and "Chinese area score" in msg), None)
     # A separate winrate engine also logs parseGtpResponse, including "= 0".
