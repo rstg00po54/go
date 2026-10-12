@@ -57,6 +57,7 @@ class AppTest:
         self.use_log_wait = False
         self.log_baseline = None
         self.ui_dumps = 0
+        self.benchmark = None
 
     def log(self, message):
         elapsed = round(time.monotonic() - self.started, 3)
@@ -797,6 +798,26 @@ class AppTest:
                 index += 1
                 self.case(backend, index)
         self.diagnostics("final", capture_ui=False)
+        if self.args.benchmark:
+            from bench_app_ai import analyze, export_csv, format_summary
+            raw = (self.out / "final_logcat.txt").read_text(encoding="utf-8", errors="replace")
+            expected = self.args.backends.split(",") * self.args.rounds
+            try:
+                self.benchmark = analyze(raw, expected, self.args.moves,
+                                         self.args.warmup_moves, size=self.args.size)
+            except ValueError as exc:
+                raise TestFailure("性能基准日志检查失败：" + str(exc)) from exc
+            (self.out / "benchmark.json").write_text(
+                json.dumps(self.benchmark, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            (self.out / "benchmark_moves.csv").write_text(export_csv(self.benchmark),
+                                                            encoding="utf-8")
+            (self.out / "benchmark_summary.log").write_text(format_summary(self.benchmark),
+                                                              encoding="utf-8")
+            for backend, metrics in self.benchmark["by_backend"].items():
+                m = metrics["response"]
+                self.log(f"性能 {backend.upper()}: n={m['samples']} avg={m['average_ms']}ms "
+                         f"P95={m['p95_ms']}ms max={m['max_ms']}ms")
+            self.log("性能明细已保存：benchmark.json / benchmark_moves.csv / benchmark_summary.log")
         self.log(f"全部 PASS；本次 UIAutomator 导出次数={self.ui_dumps}")
 
 
@@ -854,6 +875,7 @@ class AppTest:
             "moves": self.args.moves, "undo": self.args.undo, "pass": self.args.pass_move,
             "failure": failure, "events": self.events,
             "startup_timings": phases, "game_backends": backend_results,
+            "benchmark": self.benchmark,
             "note": "PUBLIC and NOT REDACTED, diagnostics under runs/" + name + "/"
         }
         items = [(report_path, (json.dumps(report, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))]
@@ -862,7 +884,8 @@ class AppTest:
         for file in sorted(self.out.iterdir()):
             if not file.is_file() or file.name == "report.json":
                 continue
-            if not (file.name.endswith((".xml", ".png", ".log", "_logcat.txt"))):
+            if not (file.name.endswith((".xml", ".png", ".log", "_logcat.txt")) or
+                    file.name in ("benchmark.json", "benchmark_moves.csv")):
                 continue
             if file.stat().st_size > 12 * 1024 * 1024:
                 self.log("文件超过 12MB，仅保留本地：" + file.name)
@@ -903,6 +926,8 @@ def main():
     parser.add_argument("--rounds", type=int, default=1, help="重复整组后端测试次数")
     parser.add_argument("--size", type=int, choices=(9, 11, 13, 15, 19), default=9)
     parser.add_argument("--moves", type=int, default=1)
+    parser.add_argument("--benchmark", action="store_true", help="根据 Android 原始日志生成 CPU/GPU 真正回棋耗时统计")
+    parser.add_argument("--warmup-moves", type=int, default=0, help="性能统计中每局排除前 N 手（仍会测试）")
     parser.add_argument("--undo", action="store_true")
     parser.add_argument("--pass", dest="pass_move", action="store_true")
     parser.add_argument("--install", help="测试前安装 APK 路径")
@@ -919,6 +944,8 @@ def main():
         parser.error("--backends 只能用 cpu,gpu")
     if args.moves < 0 or args.rounds < 1:
         parser.error("--moves 必须 >= 0，--rounds 必须 >= 1")
+    if args.benchmark and (args.moves < 1 or not 0 <= args.warmup_moves < args.moves):
+        parser.error("性能测试至少需要 1 手，且 0 <= warmup-moves < moves")
     runner = AppTest(args)
     status, failure = "PASS", None
     try:
@@ -945,7 +972,7 @@ def main():
             "status": status, "ui_dumps": runner.ui_dumps, "serial": runner.serial, "backends": args.backends,
             "rounds": args.rounds, "size": args.size, "moves": args.moves,
             "undo": args.undo, "pass": args.pass_move, "failure": failure,
-            "events": runner.events
+            "events": runner.events, "benchmark": runner.benchmark
         }, ensure_ascii=False, indent=2), encoding="utf-8")
         runner.log("本地报告: " + str(runner.out))
         try:
