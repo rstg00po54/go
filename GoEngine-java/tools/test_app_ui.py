@@ -146,7 +146,49 @@ class AppTest:
         self.tap(*self.center(item))
         self.log("点击 " + (rid or text))
 
+    def spinner_selected(self, root, rid):
+        """Return visible current Spinner label when exposed by UIAutomator."""
+        spinner = self.node(root, rid=rid)
+        if spinner is None:
+            raise TestFailure("找不到下拉控件: " + rid)
+        m = BOUNDS.fullmatch(spinner.get("bounds", ""))
+        if m is None:
+            return ""
+        sx1, sy1, sx2, sy2 = map(int, m.groups())
+        labels = []
+        for item in root.iter("node"):
+            label = item.get("text", "").strip()
+            bounds = BOUNDS.fullmatch(item.get("bounds", ""))
+            if not label or bounds is None:
+                continue
+            x1, y1, x2, y2 = map(int, bounds.groups())
+            if sx1 <= (x1 + x2) // 2 <= sx2 and sy1 <= (y1 + y2) // 2 <= sy2:
+                labels.append(label)
+        return labels[-1] if labels else spinner.get("text", "").strip()
+
+    def ensure_black(self):
+        """The dialog defaults to black; do not tap an already selected RadioButton."""
+        root = self.hierarchy()
+        radio = self.node(root, rid="blackRadio")
+        if radio is None:
+            raise TestFailure("新局对话框缺少 blackRadio；界面内容=" +
+                              " ".join(n.get("text", "") for n in root.iter("node") if n.get("text"))[-200:])
+        if radio.get("checked") == "true":
+            self.log("执黑已选中，无需重复点击")
+            return
+        x, y = self.center(radio)
+        self.tap(x, y)
+        self.poll(lambda r: (self.node(r, rid="blackRadio") is not None and
+                             self.node(r, rid="blackRadio").get("checked") == "true"),
+                  8, "点击执黑后未能确认选中")
+        self.log("已选择执黑")
+
     def spinner(self, rid, option):
+        root = self.hierarchy()
+        selected = self.spinner_selected(root, rid)
+        if selected == option or (option == "CPU / Eigen" and selected.startswith("CPU / Eigen")):
+            self.log(f"{rid} 已选择 {selected}，跳过下拉菜单")
+            return
         self.click(rid=rid)
 
         def option_point(root):
@@ -335,15 +377,18 @@ class AppTest:
         else:
             self.click(rid="newRoundButton")
         self.spinner("sizeSpinner", f"{self.args.size}路")
-        self.click(rid="blackRadio")
+        self.ensure_black()
         root = self.hierarchy()
         gpu = self.node(root, rid="backendSpinner")
         if gpu is None:
             raise TestFailure("新开一局界面找不到 backendSpinner")
+        current_backend = self.spinner_selected(root, "backendSpinner")
         if backend == "gpu" and gpu.get("enabled") != "true":
             raise TestFailure("GPU 选项不可用，APK 可能没有打包 libkatago_gpu.so")
-        if gpu.get("enabled") == "true":
+        if backend == "gpu" or gpu.get("enabled") == "true":
             self.spinner("backendSpinner", "GPU / OpenCL" if backend == "gpu" else "CPU / Eigen")
+        elif not current_backend.startswith("CPU / Eigen"):
+            raise TestFailure("CPU 选择无法确认，当前显示: " + current_backend)
         self.click(rid="startGameButton")
         turn = self.wait_turn(self.args.size, backend)
         self.check_process()
