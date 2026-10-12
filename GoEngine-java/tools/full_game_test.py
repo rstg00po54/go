@@ -120,7 +120,7 @@ def score_timings(log_text, year=None):
     score_responses = [m.group(1) for stamp, tag, msg in tail
                        if tag == "KataGoEngine" and score is not None and dead is not None
                        and score <= stamp < dead
-                       for m in [re.search(r"parseGtpResponse in, response==\\s*((?:[BW]\\+[0-9.]+)|0)", msg)]
+                       for m in [re.search(r"parseGtpResponse in, response==\s*((?:[BW]\+[0-9.]+)|0)", msg)]
                        if m is not None]
     final_gtp = score_responses[-1] if score_responses else None
     position_ms = next((int(m.group(1)) for _, tag, msg in tail
