@@ -148,10 +148,29 @@ class AppTest:
 
     def spinner(self, rid, option):
         self.click(rid=rid)
-        item = self.poll(lambda r: self.node(r, text=option, enabled=True, last=True),
-                         15, f"选项不存在: {option}")
-        self.tap(*self.center(item))
-        self.log(f"选择 {rid}: {option}")
+
+        def option_point(root):
+            # A Spinner dropdown's TextView can be reported enabled=false even
+            # when its enclosing ListView row is tappable. Match visible text,
+            # then tap its on-screen bounds; never require enabled=true here.
+            width, height = self.screen_size_cached
+            for item in reversed(list(root.iter("node"))):
+                label = item.get("text", "").strip() or item.get("content-desc", "").strip()
+                if label != option:
+                    continue
+                bounds = BOUNDS.fullmatch(item.get("bounds", ""))
+                if bounds is None:
+                    continue
+                x1, y1, x2, y2 = map(int, bounds.groups())
+                x, y = (x1 + x2) // 2, (y1 + y2) // 2
+                if x1 < x2 and y1 < y2 and 0 <= x < width and 0 <= y < height:
+                    return (x, y)
+            return None
+
+        self.screen_size_cached = self.screen_size()
+        point = self.poll(option_point, 15, f"下拉选项不可见: {rid}={option}")
+        self.tap(*point)
+        self.log(f"选择 {rid}: {option}，坐标={point}")
 
     def text(self, root, rid):
         item = self.node(root, rid=rid)
