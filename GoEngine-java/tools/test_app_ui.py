@@ -617,7 +617,7 @@ class AppTest:
                 # click would waste the entire think_timeout.
                 try:
                     self.wait_log(lambda st: st["thinking"] > baseline["thinking"],
-                                  2.5, f"确认落子 ({ix},{iy}) 已被 APP 接受")
+                                  1.4, f"确认落子 ({ix},{iy}) 已被 APP 接受")
                 except TestFailure as exc:
                     if "日志等待超过" not in str(exc):
                         raise
@@ -639,18 +639,19 @@ class AppTest:
             (self.out / filename).write_bytes(png)
             self.log("截图 " + filename)
 
-    def diagnostics(self, label):
-        # Always capture the current hierarchy; do not upload a stale cached
-        # XML snapshot from a previous popup or spinner selection.
-        try:
-            self.hierarchy(fresh=True)
-        except TestFailure as exc:
-            self.log("故障时无法刷新 UI XML: " + str(exc)[:180])
+    def diagnostics(self, label, capture_ui=True):
+        # Always save fresh XML for failed and interrupted runs.
+        # On PASS this redundant dump is not needed for diagnostics.
+        if capture_ui:
+            try:
+                self.hierarchy(fresh=True)
+            except TestFailure as exc:
+                self.log("故障时无法刷新 UI XML: " + str(exc)[:180])
         try:
             self.screenshot(label + ".png")
         except TestFailure as exc:
             self.log("无法截图: " + str(exc))
-        if self.last_xml is not None:
+        if capture_ui and self.last_xml is not None:
             (self.out / (label + ".xml")).write_bytes(self.last_xml)
         try:
             data = self.adb("logcat", "-d", "-v", "time", timeout=45)
@@ -795,7 +796,7 @@ class AppTest:
             for backend in self.args.backends.split(","):
                 index += 1
                 self.case(backend, index)
-        self.diagnostics("final")
+        self.diagnostics("final", capture_ui=False)
         self.log(f"全部 PASS；本次 UIAutomator 导出次数={self.ui_dumps}")
 
 
