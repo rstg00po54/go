@@ -661,7 +661,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /** Run the original slower, extra-search final_score only when requested. */
+    /** Retry the original KataGo final_score only if its automatic request failed. */
     private void requestPreciseEndgame() {
         DebugLog.enter(TAG, "requestPreciseEndgame in, evaluating=" + evaluating);
         if (!engineReady || evaluating || !board.isGameOver() || finalDeadStones == null || preciseScoreReady) {
@@ -694,16 +694,6 @@ public class MainActivity extends AppCompatActivity {
                 render(finalScoreText);
             });
         });
-    }
-
-    /** Provisional Chinese area score after KataGo-predicted dead stones.
-     * Neither this result nor final_score is an official adjudication. */
-    private String formatEstimatedFinalResult(String deadVertices) {
-        GoBoard.FinalScore totals = calculateChineseFinalTotals(deadVertices);
-        double lead = totals.whitePoints - totals.blackPoints;
-        if (Math.abs(lead) < 0.01) return "对局结束 · 预估平局";
-        return String.format(Locale.CHINA, "对局结束 · 预估%s胜 %.1f目",
-                lead > 0 ? "白" : "黑", Math.abs(lead));
     }
 
     private void finishByResignation(String outcome) {
