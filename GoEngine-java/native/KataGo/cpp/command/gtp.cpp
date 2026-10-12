@@ -78,6 +78,7 @@ static const vector<string> knownCommands = {
 
   "final_score",
   "final_status_list",
+  "kata-fast-final-score", // Experimental: raw NN ownership + native rule scoring.
 
   "loadsgf",
   "printsgf",
@@ -1584,6 +1585,126 @@ struct GTPEngine {
       }
     }
     return Global::trim(policyStr + "\n" + wlStr + "\n" + leadStr);
+  }
+
+  // Experimental, non-authoritative scoring with one raw NN evaluation.
+  // Uses the exact whole-chain thresholds from PlayUtils::computeAnticipatedStatusesWithOwnership
+  // but substitutes the raw NN ownership map for MCTS ownership. The results
+  // can differ from final_score/final_status_list and must be treated as estimates.
+  // Neither the root board nor the search tree is modified by this command.
+  string fastFinalScore() {
+    stopAndWait();
+    const Board board = bot->getRootBoard();
+    const BoardHistory hist = bot->getRootHist();
+    const Player nextPla = bot->getRootPla();
+    if(hist.rules.scoringRule != Rules::SCORING_AREA)
+      throw StringError("kata-fast-final-score currently supports only area scoring");
+    if(!hist.isGameFinished)
+      throw StringError("kata-fast-final-score requires a finished game (two passes)");
+
+    MiscNNInputParams nnInputParams;
+    nnInputParams.playoutDoublingAdvantage =
+      (analysisParams.playoutDoublingAdvantagePla == C_EMPTY || analysisParams.playoutDoublingAdvantagePla == nextPla) ?
+      analysisParams.playoutDoublingAdvantage : -analysisParams.playoutDoublingAdvantage;
+    nnInputParams.symmetry = 0;
+    nnInputParams.policyOptimism = genmoveParams.rootPolicyOptimism;
+
+    NNResultBuf buf;
+    const bool skipCache = true;
+    const bool includeOwnerMap = true;
+    nnEval->evaluate(board,hist,nextPla,&analysisParams.humanSLProfile,nnInputParams,buf,skipCache,includeOwnerMap);
+    const NNOutput* nnOutput = buf.result.get();
+
+    // This is the original KataGo C++ "score now" method, rather than a Java
+    // approximation or the search-predicted final_score GTP command.
+    BoardHistory rawHist(hist);
+    rawHist.endAndScoreGameNow(board);
+
+    const double avgThresholdForLife = 0.2;
+    const double worstThresholdForLife = -0.6;
+    bool checked[Board::MAX_ARR_SIZE] = {};
+    vector<Loc> deadLocs;
+    int groups = 0;
+    int deadGroups = 0;
+
+    for(int y = 0; y < board.y_size; y++) {
+      for(int x = 0; x < board.x_size; x++) {
+        Loc loc = Location::getLoc(x,y,board.x_size);
+        if(checked[loc] || board.colors[loc] == C_EMPTY)
+          continue;
+        groups++;
+        double minOwnership = 1.0;
+        double maxOwnership = -1.0;
+        double ownershipSum = 0.0;
+        int count = 0;
+        Loc cur = loc;
+        do {
+          int pos = NNPos::locToPos(cur,board.x_size,nnOutput->nnXLen,nnOutput->nnYLen);
+          double ownership = nnOutput->whiteOwnerMap[pos];
+          minOwnership = std::min(minOwnership, ownership);
+          maxOwnership = std::max(maxOwnership, ownership);
+          ownershipSum += ownership;
+          count++;
+          cur = board.next_in_chain[cur];
+        } while(cur != loc);
+        double avgOwnership = ownershipSum / count;
+        bool alive = board.colors[loc] == P_WHITE ?
+          (avgOwnership > avgThresholdForLife && minOwnership > worstThresholdForLife) :
+          (avgOwnership < -avgThresholdForLife && maxOwnership < -worstThresholdForLife);
+
+        if(!alive)
+          deadGroups++;
+        cur = loc;
+        do {
+          checked[cur] = true;
+          if(!alive)
+            deadLocs.push_back(cur);
+          cur = board.next_in_chain[cur];
+        } while(cur != loc);
+      }
+    }
+
+    Board scoredBoard(board);
+    vector<string> deadVertices;
+    for(Loc loc : deadLocs) {
+      deadVertices.push_back(Location::toString(loc,board));
+      if(!scoredBoard.setStone(loc,C_EMPTY))
+        throw StringError("kata-fast-final-score could not remove predicted dead stone");
+    }
+    std::sort(deadVertices.begin(),deadVertices.end());
+
+    BoardHistory scoredHist(hist);
+    Color area[Board::MAX_ARR_SIZE];
+    scoredHist.endAndScoreGameNow(scoredBoard,area);
+    int blackArea = 0;
+    int whiteArea = 0;
+    for(int y = 0; y < scoredBoard.y_size; y++) {
+      for(int x = 0; x < scoredBoard.x_size; x++) {
+        Loc loc = Location::getLoc(x,y,scoredBoard.x_size);
+        if(area[loc] == P_BLACK) blackArea++;
+        if(area[loc] == P_WHITE) whiteArea++;
+      }
+    }
+
+    auto scoreString = [](double score) {
+      if(score > 0.0) return string("W+") + Global::strprintf("%.1f",score);
+      if(score < 0.0) return string("B+") + Global::strprintf("%.1f",-score);
+      return string("0");
+    };
+    nlohmann::json result;
+    result["mode"] = "raw_nn_chain_heuristic";
+    result["authoritative"] = false;
+    result["ruleScoreWithoutDead"] = scoreString(rawHist.finalWhiteMinusBlackScore);
+    result["fastRuleScore"] = scoreString(scoredHist.finalWhiteMinusBlackScore);
+    result["whiteMinusBlackScore"] = scoredHist.finalWhiteMinusBlackScore;
+    result["nnWhiteLead"] = nnOutput->whiteLead;
+    result["dead"] = deadVertices;
+    result["deadGroups"] = deadGroups;
+    result["groups"] = groups;
+    result["blackArea"] = blackArea;
+    result["whiteArea"] = whiteArea;
+    result["komi"] = hist.rules.komi;
+    return result.dump();
   }
 
   string rawNN(int whichSymmetry, double policyOptimism, bool useHumanModel) {
@@ -3206,6 +3327,22 @@ int MainCmds::gtpWithIO(const vector<string>& args, std::istream& gtpInput, std:
           hist.setInitialTurnNumber(board.numStonesOnBoard()); //Should give more accurate temperaure and time control behavior
           vector<Move> newMoveHistory;
           engine->setPositionAndRules(pla,board,hist,board,pla,newMoveHistory);
+        }
+      }
+    }
+
+    else if(command == "kata-fast-final-score") {
+      if(!pieces.empty()) {
+        responseIsError = true;
+        response = "kata-fast-final-score takes no arguments";
+      }
+      else {
+        try {
+          response = engine->fastFinalScore();
+        }
+        catch(const StringError& err) {
+          responseIsError = true;
+          response = err.what();
         }
       }
     }
