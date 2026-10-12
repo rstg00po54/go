@@ -252,6 +252,7 @@ def main(argv=None):
                         default=Path(os.getenv("KATAGO_BENCH_GPU_BINARY") or str(
                             PROJECT / "build/katago_android_arm64_opencl/libkatago_exec_opencl.so")))
     parser.add_argument("--report-dir", type=Path)
+    parser.add_argument("--no-upload", action="store_true", help="Do not upload report to the public ui-test-results branch")
     args = parser.parse_args(argv)
     names = [v.strip() for v in args.positions.split(",") if v.strip()]
     if not names or len(set(names)) != len(names) or any(v not in POSITIONS for v in names):
@@ -336,6 +337,10 @@ def main(argv=None):
         for message in warnings:
             print("WARNING: " + message, file=sys.stderr)
         print("\nFinished: %s" % output)
+        if not args.no_upload:
+            from upload_endgame_results import upload_results
+            link = upload_results(PROJECT.parent, output)
+            print("Public benchmark report: " + link, flush=True)
         return 0
     except (OSError, ValueError, RuntimeError, TimeoutError, json.JSONDecodeError,
             subprocess.SubprocessError) as error:
