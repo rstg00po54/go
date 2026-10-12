@@ -106,13 +106,20 @@ def assess_final_position(area_line, board):
         result.update({"benchmark_quality": "UNKNOWN", "quality_reason": "缺少终局中国数目日志"})
         return result
     black, black_area, white, white_area = map(int, match.groups())
+    # Area scoring removes predicted dead stones from the live stone counts.
+    # The tracker holds the pre-adjudication board, so include the dead stones
+    # when checking whether the Python board followed the same actual game.
+    dead_match = re.search(r"dead B=(\d+) W=(\d+)", area_line)
+    dead_black, dead_white = map(int, dead_match.groups()) if dead_match else (0, 0)
     minimum_stones = 3 if board.size <= 9 else 5
     minimum_area = 2 if board.size <= 9 else 4
     plausible = (black >= minimum_stones and white >= minimum_stones
                  and black_area >= minimum_area and white_area >= minimum_area)
     result.update({"black_stones": black, "white_stones": white,
                    "black_territory": black_area, "white_territory": white_area,
-                   "tracker_matches_score": black == tracker_b and white == tracker_w,
+                   "dead_black": dead_black, "dead_white": dead_white,
+                   "tracker_matches_score": black + dead_black == tracker_b
+                                            and white + dead_white == tracker_w,
                    "benchmark_quality": "REPRESENTATIVE" if plausible else "UNREPRESENTATIVE",
                    "quality_reason": ("双方均有存活棋子及地盘" if plausible else
                                       "一方棋子太少或无独立地盘，不能代表争夺激烈的终局")})
