@@ -170,7 +170,8 @@ class AppTest:
             "final_enter": sum("finishByScore in" in line for line in lines),
             "score_summary": sum("Chinese area score" in line for line in lines),
             "final_render": sum("render in, message=黑" in line or
-                                "render in, message=终局数子" in line for line in lines),
+                                "render in, message=终局数子" in line or
+                                "render in, message=快速AI预估" in line for line in lines),
             "thinking": sum("render in, message=AI 思考中" in line for line in lines),
             "undo_done": sum("render in, message=已悔棋，轮到你了" in line for line in lines),
             "fatal": any("FATAL EXCEPTION" in line for line in lines),
