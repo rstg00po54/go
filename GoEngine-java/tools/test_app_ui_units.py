@@ -157,6 +157,27 @@ class CacheAndLogTests(unittest.TestCase):
             self.app.start_game_confirmed("gpu")
 
 
+    def test_read_log_state_keeps_debug_filter(self):
+        # On Android a duplicate MainActivity:I spec can mask MainActivity:D.
+        arguments = []
+        def adb(*args, **kwargs):
+            arguments.append(args)
+            return (
+                "I/MainActivity( 7326): Game backend requested=GPU actual=GPU/OpenCL JNI ready=true\n"
+                "D/MainActivity( 7326): render in, message=AI 思考中..., engineReady=true\n"
+                "D/MainActivity( 7326): handleAiMove in, move=F3, aiColor=WHITE\n"
+                "D/MainActivity( 7326): render in, message=轮到你了, engineReady=true\n"
+            )
+        self.app.adb = adb
+        state = self.app.read_log_state()
+        self.assertTrue(state["debug_active"])
+        self.assertEqual(state["backend"][-1], ("GPU", "GPU/OpenCL JNI", True))
+        self.assertEqual(state["thinking"], 1)
+        self.assertEqual(state["ai_moves"], 1)
+        self.assertEqual(state["turns"], 1)
+        self.assertIn("MainActivity:D", arguments[0])
+        self.assertNotIn("MainActivity:I", arguments[0])
+
     def test_fast_mode_activates_after_first_start_not_home(self):
         self.app.args = SimpleNamespace(size=9, slow_ui=False)
         self.app.use_log_wait = False
