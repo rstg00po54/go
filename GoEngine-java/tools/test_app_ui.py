@@ -423,6 +423,22 @@ class AppTest:
             self.log(f"选择 {rid}: {option}，坐标={point}")
         if rid == "sizeSpinner":
             self.selected_size = int(option.replace("路", ""))
+        # An Android UI dump also acts as a synchronization barrier after
+        # dropdown dismissal. Only do it when the selection changed.
+        def selected_in_dialog(root):
+            if self.node(root, rid="startGameButton") is None:
+                return None
+            try:
+                actual = self.spinner_selected(root, rid)
+            except TestFailure:
+                return None
+            if actual == option or (option == "CPU / Eigen" and actual.startswith("CPU / Eigen")):
+                return True
+            return None
+        self.poll(selected_in_dialog, 12, f"等待 {rid} 显示已选择 {option}")
+        self.log(f"{rid} 已确认选中 {option}，可以继续点击")
+        if rid == "sizeSpinner":
+            self.selected_size = int(option.replace("路", ""))
         if rid == "backendSpinner":
             self.selected_backend = "GPU" if option.startswith("GPU") else "CPU"
 
@@ -638,6 +654,42 @@ class AppTest:
         self.poll(dialog_ready, 12, "等待新开一局弹窗完全显示")
         self.log("新开一局弹窗已显示")
 
+    def start_game_confirmed(self, backend):
+        """Confirm the start click was received by MainActivity.
+
+        The Dialog Button logs "Saved new-game preference" synchronously at
+        the start of its listener. This is a more reliable acknowledgment than
+        assuming an adb tap succeeded. Retry once only if no new start
+        command was observed; never double-start an accepted game.
+        """
+        def launches():
+            raw = self.adb("logcat", "-d", "-s", "MainActivity:I", "*:S", timeout=15)
+            return re.findall(r"Saved new-game preference boardSize=(\d+) backend=(CPU|GPU)", raw)
+
+        before = launches()
+        for attempt in range(2):
+            if attempt:
+                root = self.hierarchy(fresh=True)
+                if self.node(root, rid="startGameButton") is None:
+                    raise TestFailure("开始对局未收到确认日志，但弹窗已经关闭；请查看故障日志")
+                actual = self.spinner_selected(root, "backendSpinner")
+                desired = "GPU / OpenCL" if backend == "gpu" else "CPU / Eigen"
+                if not actual.startswith(desired):
+                    raise TestFailure(f"开始按钮重试前后端被改变：预期 {desired}，实际 {actual}")
+                self.log("开始对局首次点击未生效，弹窗仍在，重试按钮一次")
+            self.start_game_from_layout()
+            deadline = time.monotonic() + 5
+            while time.monotonic() < deadline:
+                observed = launches()
+                if len(observed) > len(before):
+                    size, actual_backend = observed[-1]
+                    if int(size) != self.args.size or actual_backend != backend.upper():
+                        raise TestFailure(f"新局参数不符：{size}路，{actual_backend}")
+                    self.log(f"MainActivity 已确认开始：{size}路 {actual_backend}")
+                    return
+                time.sleep(0.25)
+        raise TestFailure("两次点击开始对局后 MainActivity 均未响应（未发现 Saved new-game preference 日志）")
+
     def case(self, backend, index):
         self.log(f"=== Case {index}: {backend.upper()} / {self.args.size}x{self.args.size} ===")
         if index == 1:
@@ -656,7 +708,7 @@ class AppTest:
         # spinner() will fail with the observed list of available options.
         self.spinner("backendSpinner", "GPU / OpenCL" if backend == "gpu" else "CPU / Eigen")
         baseline = self.read_log_state() if self.use_log_wait else None
-        self.start_game_from_layout()
+        self.start_game_confirmed(backend)
         turn = self.wait_turn(self.args.size, backend, baseline=baseline)
         self.check_process()
         for n in range(self.args.moves):
@@ -835,6 +887,10 @@ def main():
     except KeyboardInterrupt:
         status, failure = "INTERRUPTED", "用户按 Ctrl+C 中断测试"
         runner.log("收到 Ctrl+C，停止测试并保存已完成的结果")
+        try:
+            runner.diagnostics("interrupted")
+        except (TestFailure, KeyboardInterrupt) as diagnostic_exc:
+            runner.log("中断时无法保存完整诊断: " + str(diagnostic_exc)[:150])
     except TestFailure as exc:
         status, failure = "FAIL", str(exc)
         runner.log("失败: " + failure)
