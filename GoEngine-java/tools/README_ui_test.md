@@ -102,3 +102,15 @@ UIAutomator 导出界面树在 RK3588 上仍有固定的数秒延迟。脚本会
 
 如要对照旧逻辑，加 `--slow-ui` 让动态对弈阶段强制使用 UIAutomator：
     python3 tools/test_app_ui.py -s 8719e18a71a2a66c --backends cpu,gpu,cpu --size 9 --moves 2 --undo --slow-ui
+
+## RK3588 Logcat 过滤器修复（2026-10-12）
+
+脚本之前把 `MainActivity:D` 和 `MainActivity:I` 同时交给 `adb logcat -s`；后者可能使该标签仅保留 Info 及更高等级日志。这正是 APP 实际已打印 `render in`、`handleAiMove in`，脚本却始终判断 `APP 未输出对局 DebugLog` 的原因。
+
+现在 `read_log_state()` 只使用一次 `MainActivity:D`，包含 Debug 和 Info 级别。仍保留 UIAutomator 后备逻辑。此改动只涉及测试脚本，不需要重新编译 APK。
+
+正常启动第一局后，应出现：
+
+    MainActivity DebugLog 已就绪，切换到 logcat 快速检测
+
+下一步用报告中的 `ui_dumps` 和总耗时，和上一轮 61.5 秒 / 20 次导出比较。若仍出现 UI 后备，保留自动上传的 `interrupted_logcat.txt` 或 `failed_logcat.txt` 以便检查实际滤波结果。
