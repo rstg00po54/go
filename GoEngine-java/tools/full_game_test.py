@@ -132,16 +132,15 @@ def score_timings(log_text, year=None):
                        if m is not None]
     tagged_score = next((m.group(1) for _, tag, msg in tail
                          if tag == "MainActivity" and "ENDGAME_TIMING phase=score_done" in msg
-                         for m in [re.search(r" score=((?:[BW]\\+[0-9.]+)|0)(?:\\s|$)", msg)]
+                         for m in [re.search(r" score=((?:[BW]\+[0-9.]+)|0)(?:\s|$)", msg)]
                          if m is not None), None)
     final_gtp = tagged_score if tagged_score is not None else (
         score_responses[-1] if score_responses else None)
     position_ms = next((int(m.group(1)) for _, tag, msg in tail
                         if tag == "KataGoEngine" and "Position evaluation" in msg
                         for m in [re.search(r"elapsedMs=(\d+)", msg)] if m is not None), None)
-    if not (begin is not None and dead is not None and raw_nn is not None
-            and render is not None and chinese is not None):
-        raise ValueError("终局日志不完整，缺少 dead / raw-nn / Chinese area score / 最终显示")
+    if not (begin is not None and raw_nn is not None and render is not None and chinese is not None):
+        raise ValueError("终局日志不完整，缺少 raw-nn / Chinese area score / 最终显示")
     fast_nn = fast_nn_done is not None
     fast = score is None
     if fast_nn:
@@ -150,7 +149,7 @@ def score_timings(log_text, year=None):
             raise ValueError("快速 NN 结算缺少 raw-nn / Chinese area score / 正式结果渲染")
         if (score is not None and score <= render) or (dead is not None and dead <= render):
             raise ValueError("快速 NN 路径不应提前调用慢的 final_score 或 final_status_list")
-        white_lead = re.search(r"nnWhiteLead=(-?[0-9]+(?:\\.[0-9]+)?)", fast_nn_msg)
+        white_lead = re.search(r"nnWhiteLead=(-?[0-9]+(?:\.[0-9]+)?)", fast_nn_msg)
         if white_lead is None:
             raise ValueError("快速 NN 结算没有记录神经网络预测目差")
         def ms(start, end):
@@ -164,6 +163,8 @@ def score_timings(log_text, year=None):
                 "raw_white_lead": float(white_lead.group(1)),
                 "gtp_final_score": None, "chinese_area_log": area_line,
                 "has_chinese_area_score": True}
+    if dead is None:
+        raise ValueError("缺少 final_status_list dead（只用于旧版快速或完整计分）")
     if fast and not (begin <= dead <= raw_nn <= chinese <= render):
         raise ValueError("快速结算阶段时间顺序异常")
     if not fast and not (begin <= score <= dead <= raw_nn <= chinese <= render):
