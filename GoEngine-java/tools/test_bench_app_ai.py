@@ -7,7 +7,7 @@ Run from GoEngine-java:
 import datetime
 import unittest
 
-from bench_app_ai import analyze, export_csv, format_summary, parse_cases, stats
+from bench_app_ai import analyze, export_csv, format_summary, log_time, parse_cases, stats
 
 
 def entry(msec, text, priority="D"):
@@ -56,6 +56,14 @@ def sample_log():
 
 
 class BenchmarkTests(unittest.TestCase):
+    def test_timestamp_math_is_exact_to_one_millisecond(self):
+        first = log_time("10-12 13:27:00.100", 2026)
+        later = log_time("10-12 13:27:00.300", 2026)
+        self.assertIsInstance(first, int)
+        self.assertEqual((later - first) / 1000, 200.0)
+        midnight = log_time("10-13 00:00:00.000", 2026)
+        before = log_time("10-12 23:59:59.999", 2026)
+        self.assertEqual(midnight - before, 1000)
     def test_three_cases_and_rejected_tap(self):
         cases = parse_cases(sample_log(), year=2026)
         self.assertEqual([len(c["moves"]) for c in cases], [2, 2, 2])
