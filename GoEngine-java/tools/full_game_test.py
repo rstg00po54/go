@@ -115,7 +115,7 @@ def score_timings(log_text, year=None):
                       if tag == "MainActivity" and "Chinese area score" in msg), None)
     final_gtp = next((m.group(1) for _, tag, msg in tail
                       if tag == "KataGoEngine"
-                      for m in [re.search(r"parseGtpResponse in, response==((?:[BW]\+[0-9.]+)|0)", msg)]
+                      for m in [re.search(r"parseGtpResponse in, response==\s*((?:[BW]\+[0-9.]+)|0)", msg)]
                       if m is not None), None)
     position_ms = next((int(m.group(1)) for _, tag, msg in tail
                         if tag == "KataGoEngine" and "Position evaluation" in msg
@@ -229,6 +229,12 @@ def run_full_game(runner, size, backend, max_actions=110, settlement_timeout=180
             runner.log(f"整局 #{action+1} 玩家停一手")
         result, move = _await_ai(runner, before, runner.args.think_timeout)
         if result == "scoring":
+            # If the human passed first, a new AI pass may have ended the
+            # game before the normal "AI 停一手" render. Count that pass too.
+            latest = runner.read_log_state()["ai_replies"]
+            if len(latest) > len(before["ai_replies"]) and latest[-1].lower() == "pass":
+                board.play("W", None)
+                ai_passes += 1
             end_type = "two_passes"
             break
         if result == "resign":
