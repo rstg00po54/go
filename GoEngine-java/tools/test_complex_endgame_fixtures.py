@@ -99,7 +99,7 @@ class ComplexEndgameFixturesTests(unittest.TestCase):
         groups = describe_disagreement_groups(rows, ["A9", "B9"], [])
         self.assertEqual(len(groups), 1)
         self.assertEqual(groups[0]["color"], "B")
-        self.assertEqual(groups[0]["stone_count"], 13)
+        self.assertEqual(groups[0]["stone_count"], 14)  # Includes black E6 connected to the corner block.
 
     def test_comparison_summary_records_uncertainty_not_accuracy(self):
         rows = [
