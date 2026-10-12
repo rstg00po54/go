@@ -17,6 +17,7 @@ def completed_game_logs():
     return "\n".join([
         line(0, "MainActivity", "finishByScore in, pendingPassColor=black"),
         line(100, "KataGoEngine", "sendCommandSync in, command=final_score, running=true"),
+        line(640, "KataGoEngine", "parseGtpResponse in, response== W+86.5"),
         line(650, "KataGoEngine", "sendCommandSync in, command=final_status_list dead, running=true"),
         line(4000, "KataGoEngine", "sendCommandSync in, command=kata-raw-nn 0, running=true"),
         line(4500, "KataGoEngine", "Position evaluation whiteWin=0.50 elapsedMs=499"),
@@ -63,6 +64,7 @@ class EndgameTests(unittest.TestCase):
         self.assertEqual(result["before_final_score_ms"], 100)
         self.assertEqual(result["final_score_ms"], 550)
         self.assertEqual(result["dead_stones_ms"], 3350)
+        self.assertEqual(result["gtp_final_score"], "W+86.5")
         self.assertEqual(result["raw_nn_to_render_ms"], 900)
 
     def test_missing_dead_stones_command_is_failure(self):
@@ -116,6 +118,7 @@ class EndgameTests(unittest.TestCase):
         self.assertEqual(result["end_type"], "two_passes")
         self.assertEqual(result["black_stones_played"], 1)
         self.assertEqual(result["player_passes"], 1)
+        self.assertEqual(result["ai_passes"], 1)
         self.assertEqual(result["settlement"]["dead_stones_ms"], 3350)
         self.assertEqual(calls[-1], ("pass", "passButton"))
 
