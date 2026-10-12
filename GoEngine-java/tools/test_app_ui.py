@@ -56,6 +56,7 @@ class AppTest:
         self.player_black = True  # MainActivity initializes playerColor=BLACK.
         self.use_log_wait = False
         self.log_baseline = None
+        self.ui_dumps = 0
 
     def log(self, message):
         elapsed = round(time.monotonic() - self.started, 3)
@@ -183,6 +184,7 @@ class AppTest:
         # reusable across several reads unless the UI was touched or timed out.
         if not fresh and self.last_root is not None and time.monotonic() - self.last_root_time < 1.5:
             return self.last_root
+        self.ui_dumps += 1
         data = self.adb("exec-out", "sh", "-c",
                         "uiautomator dump /sdcard/katago_test_ui.xml >/dev/null 2>&1 && cat /sdcard/katago_test_ui.xml",
                         timeout=18, binary=True)
@@ -442,6 +444,13 @@ class AppTest:
                 if ready[-1] != "true":
                     raise TestFailure("MainActivity 日志报告首页 AI 初始化失败，请检查 logcat")
                 self.log("MainActivity 已报告 Initial engine ready=true")
+                prefs = re.findall(r"preload boardSize=(\d+); backend=(CPU|GPU)", logs)
+                if prefs:
+                    self.selected_size = int(prefs[-1][0])
+                    self.selected_backend = prefs[-1][1]
+                    self.log(f"已读取 APP 会话设置：{self.selected_size}路，{self.selected_backend}")
+                self.use_log_wait = (not self.args.slow_ui and self.read_log_state()["debug_active"])
+                self.log("动态状态使用 " + ("logcat 快速检测" if self.use_log_wait else "UIAutomator 后备检测"))
                 return
             if "FATAL EXCEPTION" in logs:
                 raise TestFailure("引擎启动期间发生 Java 崩溃")
@@ -468,6 +477,11 @@ class AppTest:
         return self.screen_size_cached
 
     def open_home_ai(self):
+        cached = self.cached_center("aiBattleButton")
+        if cached is not None:
+            self.tap(*cached)
+            self.log(f"打开 AI训练（本地缓存），坐标={cached}")
+            return
         width, height = self.screen_size()
         self.log("寻找首页 AI训练按钮（如不在当前屏幕，会自动上滑）")
         for attempt in range(9):
@@ -487,8 +501,27 @@ class AppTest:
             time.sleep(0.7)
         raise TestFailure("首页已启动但找不到可点击的 AI训练 按钮，已保存失败截图和 UI XML")
 
-    def wait_turn(self, size, backend, minimum=1):
-        def ready(root):
+    def wait_turn(self, size, backend, minimum=1, baseline=None, require_ai=False):
+        if self.use_log_wait and baseline is not None:
+            def ready_from_log(state):
+                if not state["backend"]:
+                    return None
+                if not require_ai and len(state["backend"]) <= len(baseline["backend"]):
+                    return None
+                requested, actual, ready = state["backend"][-1]
+                expected = BACKEND_TEXT[backend]
+                if requested != backend.upper() or actual != expected or not ready:
+                    raise TestFailure(f"后端不匹配：请求={backend} 实际={actual} ready={ready}")
+                if require_ai and state["ai_moves"] <= baseline["ai_moves"]:
+                    return None
+                if state["turns"] <= baseline["turns"]:
+                    return None
+                return minimum
+            turn = self.wait_log(ready_from_log, self.args.think_timeout, f"{backend} 第{minimum}手回合")
+            self.log(f"{backend.upper()} 就绪，第 {turn} 手（logcat）")
+            return turn
+
+        def ready_from_ui(root):
             status = self.text(root, "statusText")
             name = self.text(root, "aiDifficultyText")
             title = self.text(root, "gameTitleText")
@@ -505,8 +538,8 @@ class AppTest:
                     raise TestFailure(f"请求 {backend}，但界面实际显示 {name}，可能回退了")
                 return int(m.group(1))
             return None
-        turn = self.poll(ready, self.args.think_timeout, f"{backend} 没有进入玩家回合")
-        self.log(f"{backend.upper()} 就绪，第 {turn} 手")
+        turn = self.poll(ready_from_ui, self.args.think_timeout, f"{backend} 没有进入玩家回合")
+        self.log(f"{backend.upper()} 就绪，第 {turn} 手（UI后备）")
         return turn
 
     def check_process(self):
@@ -528,32 +561,35 @@ class AppTest:
         return self.density_cache
 
     def move(self, size, backend, current_turn, index):
-        # The coordinates below are grid intersections, not screen pixels.
         choices = [(2, 2), (size - 3, size - 3), (size - 3, 2),
                    (2, size - 3), (size // 2, size // 2), (1, size // 2)]
-        for offset in range(len(choices)):
-            ix, iy = choices[(index + offset) % len(choices)]
+        cached = self.geometry.get("boardView")
+        if cached is None:
             root = self.hierarchy()
             item = self.node(root, rid="boardView")
             if item is None:
                 raise TestFailure("找不到棋盘 boardView，停止点击")
-            m = BOUNDS.fullmatch(item.get("bounds", ""))
-            if not m:
-                raise TestFailure("棋盘 bounds 无效")
-            x1, y1, x2, y2 = map(int, m.groups())
-            side = min(x2 - x1, y2 - y1)
-            outer = 2.0 * self.density()
-            cell = (side - 2 * outer) / (size - 1 + 2 * 0.68)
-            pad = outer + 0.68 * cell
+            cached = list(map(int, BOUNDS.fullmatch(item.get("bounds", "")).groups()))
+        x1, y1, x2, y2 = cached
+        side = min(x2 - x1, y2 - y1)
+        outer = 2.0 * self.density()
+        cell = (side - 2 * outer) / (size - 1 + 2 * 0.68)
+        pad = outer + 0.68 * cell
+        for offset in range(len(choices)):
+            ix, iy = choices[(index + offset) % len(choices)]
             px, py = round(x1 + pad + ix * cell), round(y1 + pad + iy * cell)
             if not (x1 <= px < x2 and y1 <= py < y2):
                 raise TestFailure("棋盘点超出可见区域")
+            baseline = self.read_log_state() if self.use_log_wait else None
             self.tap(px, py)
-            time.sleep(0.7)
+            self.log(f"落子 ({ix},{iy})，屏幕 ({px},{py})" + ("（缓存棋盘）" if cached else ""))
+            if self.use_log_wait:
+                return self.wait_turn(size, backend, current_turn + 2,
+                                      baseline=baseline, require_ai=True)
+            time.sleep(0.45)
             title = self.text(self.hierarchy(), "gameTitleText")
             m = TURN.search(title)
             if m and int(m.group(1)) > current_turn:
-                self.log(f"落子 ({ix},{iy})，屏幕 ({px},{py})")
                 return self.wait_turn(size, backend, current_turn + 2)
             self.log(f"尝试 ({ix},{iy}) 未落子，换交叉点")
         raise TestFailure("未能在任何候选位置落子")
@@ -597,27 +633,33 @@ class AppTest:
             self.click(rid="newRoundButton")
         self.spinner("sizeSpinner", f"{self.args.size}路")
         self.ensure_black()
-        root = self.hierarchy()
-        gpu = self.node(root, rid="backendSpinner")
-        if gpu is None:
-            raise TestFailure("新开一局界面找不到 backendSpinner")
+        if self.cached_center("backendSpinner") is None:
+            root = self.hierarchy()
+            if self.node(root, rid="backendSpinner") is None:
+                raise TestFailure("新开一局界面找不到 backendSpinner")
         # Check actual dropdown selection instead of trusting enabled=false.
         # An APK without the GPU library has no GPU option, in which case
         # spinner() will fail with the observed list of available options.
         self.spinner("backendSpinner", "GPU / OpenCL" if backend == "gpu" else "CPU / Eigen")
+        baseline = self.read_log_state() if self.use_log_wait else None
         self.start_game_from_layout()
-        turn = self.wait_turn(self.args.size, backend)
+        turn = self.wait_turn(self.args.size, backend, baseline=baseline)
         self.check_process()
         for n in range(self.args.moves):
             turn = self.move(self.args.size, backend, turn, n)
         if self.args.undo and self.args.moves >= 2:
+            baseline = self.read_log_state() if self.use_log_wait else None
             self.click(rid="undoButton")
             prior = turn
-            def undone(root):
-                m = TURN.search(self.text(root, "gameTitleText"))
-                return bool(m and int(m.group(1)) <= prior - 2
-                            and "轮到你了" in self.text(root, "statusText"))
-            self.poll(undone, self.args.think_timeout, "悔棋没有完成")
+            if self.use_log_wait:
+                self.wait_log(lambda state: state["undo_done"] > baseline["undo_done"],
+                              self.args.think_timeout, "悔棋完成")
+            else:
+                def undone(root):
+                    m = TURN.search(self.text(root, "gameTitleText"))
+                    return bool(m and int(m.group(1)) <= prior - 2
+                                and "轮到你了" in self.text(root, "statusText"))
+                self.poll(undone, self.args.think_timeout, "悔棋没有完成")
             turn -= 2
             self.log("悔棋通过")
         if self.args.pass_move:
@@ -650,7 +692,7 @@ class AppTest:
                 index += 1
                 self.case(backend, index)
         self.diagnostics("final")
-        self.log("全部 PASS")
+        self.log(f"全部 PASS；本次 UIAutomator 导出次数={self.ui_dumps}")
 
 
     def upload_report(self, status, failure):
@@ -700,7 +742,8 @@ class AppTest:
                     r"Game backend requested=(CPU|GPU) actual=(CPU/Eigen JNI|GPU/OpenCL JNI|PIE/ProcessBuilder) ready=(true|false)", content):
                 backend_results.append({"requested": requested, "actual": actual, "ready": ready == "true"})
         report = {
-            "schema": 2, "status": status, "timestamp_utc": timestamp,
+            "schema": 3, "status": status, "timestamp_utc": timestamp,
+            "ui_dumps": self.ui_dumps, "cached_controls": len(self.geometry),
             "serial": self.serial, "backends": self.args.backends,
             "rounds": self.args.rounds, "size": self.args.size,
             "moves": self.args.moves, "undo": self.args.undo, "pass": self.args.pass_move,
@@ -760,6 +803,7 @@ def main():
     parser.add_argument("--install", help="测试前安装 APK 路径")
     parser.add_argument("--start-timeout", type=int, default=300)
     parser.add_argument("--think-timeout", type=int, default=180)
+    parser.add_argument("--slow-ui", action="store_true", help="强制旧版 UI 树检测，调试对照用")
     parser.add_argument("--no-upload", action="store_true", help="只保存本地报告，不上传 GitHub")
     parser.add_argument("--upload-remote", default="origin", help="使用现有 git remote 凭据上传")
     parser.add_argument("--upload-branch", default="ui-test-results", help="单独保存报告的分支")
@@ -789,7 +833,7 @@ def main():
         runner.log("脚本异常: " + failure[:250])
     finally:
         (runner.out / "report.json").write_text(json.dumps({
-            "status": status, "serial": runner.serial, "backends": args.backends,
+            "status": status, "ui_dumps": runner.ui_dumps, "serial": runner.serial, "backends": args.backends,
             "rounds": args.rounds, "size": args.size, "moves": args.moves,
             "undo": args.undo, "pass": args.pass_move, "failure": failure,
             "events": runner.events
