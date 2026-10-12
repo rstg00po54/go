@@ -198,6 +198,32 @@ class AppTest:
         self.tap(x, y)
         self.log(f"点击 {label}，坐标=({x}, {y})")
 
+    def start_game_from_layout(self):
+        """Click the start button using its real Android XML layout geometry.
+
+        dialog_new_game.xml places startGameButton directly below the fifth
+        50dp row (difficultySpinner), with a 12dp margin and a 46dp height.
+        The row center to button center is therefore 25+12+23 = 60dp.
+        This avoids relying on UIAutomator exporting the bottom Button.
+        """
+        root = self.hierarchy()
+        button = self.node(root, rid="startGameButton") or self.node(root, text="开始对局")
+        if button is not None:
+            x, y = self.center(button)
+            how = "实际控件"
+        else:
+            anchor = self.node(root, rid="difficultySpinner") or self.node(root, text="棋力等级")
+            if anchor is None:
+                raise TestFailure("无法找到 startGameButton，也没有棋力等级锚点；请查看 failed.xml")
+            x = self.screen_size()[0] // 2
+            y = self.center(anchor)[1] + round(60 * self.density())
+            how = "dialog_new_game.xml: 棋力等级行中心向下60dp"
+        width, height = self.screen_size()
+        if not (0 < x < width and 0 < y < height):
+            raise TestFailure(f"开始对局坐标超出 RK3588 屏幕: ({x}, {y})")
+        self.log(f"点击开始对局（{how}），坐标=({x},{y})")
+        self.tap(x, y)
+
     def spinner_selected(self, root, rid):
         """Return visible current Spinner label when exposed by UIAutomator."""
         spinner = self.node(root, rid=rid)
@@ -441,7 +467,7 @@ class AppTest:
         # An APK without the GPU library has no GPU option, in which case
         # spinner() will fail with the observed list of available options.
         self.spinner("backendSpinner", "GPU / OpenCL" if backend == "gpu" else "CPU / Eigen")
-        self.click(rid="startGameButton")
+        self.start_game_from_layout()
         turn = self.wait_turn(self.args.size, backend)
         self.check_process()
         for n in range(self.args.moves):
