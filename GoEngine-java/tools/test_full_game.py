@@ -21,7 +21,7 @@ def completed_game_logs():
         line(100, "KataGoEngine", "sendCommandSync in, command=final_score, running=true"),
         line(130, "KataGoEngine", "parseGtpResponse in, response== 0"),
         line(640, "KataGoEngine", "parseGtpResponse in, response== W+86.5"),
-        line(645, "MainActivity", "ENDGAME_TIMING phase=score_done elapsedMs=645 scoreMs=545 valid=true"),
+        line(645, "MainActivity", "ENDGAME_TIMING phase=score_done elapsedMs=645 scoreMs=545 valid=true score=W+86.5"),
         line(650, "KataGoEngine", "sendCommandSync in, command=final_status_list dead, running=true"),
         line(4000, "KataGoEngine", "sendCommandSync in, command=kata-raw-nn 0, running=true"),
         line(4500, "KataGoEngine", "Position evaluation whiteWin=0.50 elapsedMs=499"),
