@@ -1,0 +1,160 @@
+{
+  "schema": 3,
+  "status": "FAIL",
+  "timestamp_utc": "20261012T033906512268Z",
+  "ui_dumps": 12,
+  "cached_controls": 10,
+  "serial": "8719e18a71a2a66c",
+  "backends": "cpu,gpu,cpu",
+  "rounds": 1,
+  "size": 9,
+  "moves": 2,
+  "undo": true,
+  "pass": false,
+  "failure": "下拉选项不可见: backendSpinner=GPU / OpenCL，等待 15s；最近界面: 新开一局 棋盘路数 9路 执棋颜色 猜先 执黑 执白 对局条件 分先 AI 运行 CPU / Eigen 棋力等级 12级 开始对局 ✕",
+  "events": [
+    {
+      "seconds": 0.004,
+      "message": "连接设备 8719e18a71a2a66c"
+    },
+    {
+      "seconds": 0.152,
+      "message": "首次运行，建立 UI 坐标缓存"
+    },
+    {
+      "seconds": 0.824,
+      "message": "启动 APP"
+    },
+    {
+      "seconds": 0.824,
+      "message": "等待 MainActivity 的引擎完成日志（不依赖屏幕下方的按钮）"
+    },
+    {
+      "seconds": 0.876,
+      "message": "首页引擎尚未发出 ready 日志，已等待 0s"
+    },
+    {
+      "seconds": 4.973,
+      "message": "MainActivity 已报告 Initial engine ready=true"
+    },
+    {
+      "seconds": 4.974,
+      "message": "已读取 APP 会话设置：9路，CPU"
+    },
+    {
+      "seconds": 5.008,
+      "message": "动态状态使用 UIAutomator 后备检测"
+    },
+    {
+      "seconds": 5.008,
+      "message": "=== Case 1: CPU / 9x9 ==="
+    },
+    {
+      "seconds": 5.008,
+      "message": "寻找首页 AI训练按钮（如不在当前屏幕，会自动上滑）"
+    },
+    {
+      "seconds": 7.305,
+      "message": "已进入 AI训练新开一局界面"
+    },
+    {
+      "seconds": 7.305,
+      "message": "sizeSpinner 已选择 9路，跳过下拉菜单"
+    },
+    {
+      "seconds": 7.305,
+      "message": "执黑已由本次会话确认，跳过 UI 检查"
+    },
+    {
+      "seconds": 9.536,
+      "message": "backendSpinner 已选择 CPU / Eigen，跳过下拉菜单"
+    },
+    {
+      "seconds": 9.585,
+      "message": "点击开始对局（本地缓存），坐标=(539, 1333)"
+    },
+    {
+      "seconds": 12.587,
+      "message": "CPU 就绪，第 1 手（UI后备）"
+    },
+    {
+      "seconds": 12.651,
+      "message": "主进程 PID=5612，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 12.702,
+      "message": "落子 (2,2)，屏幕 (310,757)（缓存棋盘）"
+    },
+    {
+      "seconds": 16.137,
+      "message": "CPU 就绪，第 3 手（UI后备）"
+    },
+    {
+      "seconds": 16.198,
+      "message": "落子 (6,6)，屏幕 (765,1212)（缓存棋盘）"
+    },
+    {
+      "seconds": 19.553,
+      "message": "CPU 就绪，第 5 手（UI后备）"
+    },
+    {
+      "seconds": 19.597,
+      "message": "点击 undoButton（本地缓存），坐标=(671, 1594)"
+    },
+    {
+      "seconds": 21.763,
+      "message": "悔棋通过"
+    },
+    {
+      "seconds": 21.828,
+      "message": "主进程 PID=5612，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 22.12,
+      "message": "截图 case_001_cpu.png"
+    },
+    {
+      "seconds": 22.12,
+      "message": "=== Case 1: PASS ==="
+    },
+    {
+      "seconds": 22.12,
+      "message": "=== Case 2: GPU / 9x9 ==="
+    },
+    {
+      "seconds": 22.174,
+      "message": "点击 newRoundButton（本地缓存），坐标=(933, 1594)"
+    },
+    {
+      "seconds": 22.174,
+      "message": "sizeSpinner 已选择 9路，跳过下拉菜单"
+    },
+    {
+      "seconds": 22.174,
+      "message": "执黑已由本次会话确认，跳过 UI 检查"
+    },
+    {
+      "seconds": 22.334,
+      "message": "点击 backendSpinner（本地缓存），坐标=(639, 1035)"
+    },
+    {
+      "seconds": 33.916,
+      "message": "等待: 下拉选项不可见: backendSpinner=GPU / OpenCL；已过 11s；界面: 新开一局 棋盘路数 9路 执棋颜色 猜先 执黑 执白 对局条件 分先 AI 运行 CPU / Eigen 棋力等级 12级 开始对局 ✕"
+    },
+    {
+      "seconds": 38.071,
+      "message": "失败: 下拉选项不可见: backendSpinner=GPU / OpenCL，等待 15s；最近界面: 新开一局 棋盘路数 9路 执棋颜色 猜先 执黑 执白 对局条件 分先 AI 运行 CPU / Eigen 棋力等级 12级 开始对局 ✕"
+    },
+    {
+      "seconds": 40.548,
+      "message": "截图 failed.png"
+    },
+    {
+      "seconds": 40.605,
+      "message": "本地报告: /mnt/hgfs/D/code/go/GoEngine-java/build/app_ui_test/20261012_113825"
+    }
+  ],
+  "startup_timings": [],
+  "game_backends": [],
+  "note": "PUBLIC and NOT REDACTED, diagnostics under runs/20261012T033906512268Z_2416875/"
+}
