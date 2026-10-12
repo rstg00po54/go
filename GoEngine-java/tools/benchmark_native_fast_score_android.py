@@ -54,6 +54,52 @@ def validate_native_result(data, fixture):
         raise ValueError("Native score changed despite zero predicted dead stones")
     return normalized
 
+GTP_LETTERS = "ABCDEFGHJKLMNOPQRST"
+
+
+def describe_disagreement_groups(rows, fast_only, original_only):
+    """Group discrepancies by actual connected chain, with geometric liberty counts.
+
+    A low liberty count is NOT proof that a chain is dead. These diagnostics
+    let us distinguish missing a whole chain from mismarking an isolated stone.
+    """
+    if not rows:
+        return []
+    size = len(rows)
+    issues = []
+    for source, vertices in (("native_only", fast_only), ("original_only", original_only)):
+        seen = set()
+        for vertex in vertices:
+            x = GTP_LETTERS.index(vertex[0].upper())
+            y = size - int(vertex[1:])
+            color = rows[y][x]
+            if color not in "BW" or (x, y) in seen:
+                raise ValueError("Disagreement location is not an unprocessed stone: " + vertex)
+            queue, group, liberties = [(x, y)], set(), set()
+            while queue:
+                point = queue.pop()
+                if point in group:
+                    continue
+                group.add(point)
+                seen.add(point)
+                px, py = point
+                for nx, ny in ((px-1, py), (px+1, py), (px, py-1), (px, py+1)):
+                    if not (0 <= nx < size and 0 <= ny < size):
+                        continue
+                    neighbor = rows[ny][nx]
+                    if neighbor == ".":
+                        liberties.add((nx, ny))
+                    elif neighbor == color and (nx, ny) not in group:
+                        queue.append((nx, ny))
+            to_gtp = lambda point: GTP_LETTERS[point[0]] + str(size-point[1])
+            issues.append({
+                "source": source, "color": color, "stone_count": len(group),
+                "liberties": len(liberties),
+                "stones": sorted(to_gtp(p) for p in group),
+                "liberty_vertices": sorted(to_gtp(p) for p in liberties),
+            })
+    return issues
+
 
 def measure_case(engine, fixture, backend, name, repeat):
     engine.command("loadsgf " + fixture["remote"])
@@ -96,6 +142,9 @@ def measure_case(engine, fixture, backend, name, repeat):
         "dead_same": native_set == original_set,
         "dead_only_native": sorted(native_set - original_set),
         "dead_only_original": sorted(original_set - native_set),
+        "disagreement_groups": describe_disagreement_groups(
+            fixture.get("grid"), sorted(native_set - original_set),
+            sorted(original_set - native_set)),
         "dead_groups": native["deadGroups"], "groups": native["groups"],
         "black_area": native["blackArea"], "white_area": native["whiteArea"],
     }
