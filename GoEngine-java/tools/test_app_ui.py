@@ -465,8 +465,11 @@ class AppTest:
                     self.selected_size = int(prefs[-1][0])
                     self.selected_backend = prefs[-1][1]
                     self.log(f"已读取 APP 会话设置：{self.selected_size}路，{self.selected_backend}")
-                self.use_log_wait = (not self.args.slow_ui and self.read_log_state()["debug_active"])
-                self.log("动态状态使用 " + ("logcat 快速检测" if self.use_log_wait else "UIAutomator 后备检测"))
+                # At this point no game has started yet, so there cannot be
+                # any "render in, message=轮到你了" log. Detect DebugLog after
+                # start_game_confirmed(), not during home initialization.
+                self.use_log_wait = False
+                self.log("动态检测将在第一局启动后选择 logcat 或 UIAutomator")
                 return
             if "FATAL EXCEPTION" in logs:
                 raise TestFailure("引擎启动期间发生 Java 崩溃")
@@ -686,6 +689,19 @@ class AppTest:
                     if int(size) != self.args.size or actual_backend != backend.upper():
                         raise TestFailure(f"新局参数不符：{size}路，{actual_backend}")
                     self.log(f"MainActivity 已确认开始：{size}路 {actual_backend}")
+                    if not self.args.slow_ui and not self.use_log_wait:
+                        # DebugLog may be emitted a few ms after the Info
+                        # acknowledgment. Probe briefly, never wait for a
+                        # full UI dump just to decide which backend to use.
+                        until = time.monotonic() + 0.9
+                        while time.monotonic() < until:
+                            if self.read_log_state()["debug_active"]:
+                                self.use_log_wait = True
+                                self.log("MainActivity DebugLog 已就绪，切换到 logcat 快速检测")
+                                break
+                            time.sleep(0.12)
+                        if not self.use_log_wait:
+                            self.log("APP 未输出对局 DebugLog，继续使用 UIAutomator 后备检测")
                     return
                 time.sleep(0.25)
         raise TestFailure("两次点击开始对局后 MainActivity 均未响应（未发现 Saved new-game preference 日志）")
@@ -707,7 +723,9 @@ class AppTest:
         # An APK without the GPU library has no GPU option, in which case
         # spinner() will fail with the observed list of available options.
         self.spinner("backendSpinner", "GPU / OpenCL" if backend == "gpu" else "CPU / Eigen")
-        baseline = self.read_log_state() if self.use_log_wait else None
+        # Record counters before the click, even if log mode is not active
+        # yet: the first started game can enable DebugLog fast detection.
+        baseline = self.read_log_state() if not self.args.slow_ui else None
         self.start_game_confirmed(backend)
         turn = self.wait_turn(self.args.size, backend, baseline=baseline)
         self.check_process()
