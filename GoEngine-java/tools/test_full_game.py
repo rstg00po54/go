@@ -100,6 +100,17 @@ class DefensiveStrategyTests(unittest.TestCase):
         self.assertEqual(result["black_territory"], 12)
         self.assertFalse(result["tracker_matches_score"])
 
+    def test_dead_stones_reconcile_with_unadjudicated_board(self):
+        board = BoardTracker(9)
+        board.play("B", (2, 2))
+        board.play("W", (6, 6))
+        area = ("Chinese area score B stones=0 territory=0, "
+                "W stones=1 territory=20, dead B=1 W=0")
+        result = assess_final_position(area, board)
+        self.assertTrue(result["tracker_matches_score"])
+        self.assertEqual(result["dead_black"], 1)
+        self.assertEqual(result["benchmark_quality"], "UNREPRESENTATIVE")
+
     def test_missing_area_log_is_unknown(self):
         self.assertEqual(assess_final_position(None, BoardTracker(9))["benchmark_quality"], "UNKNOWN")
 
