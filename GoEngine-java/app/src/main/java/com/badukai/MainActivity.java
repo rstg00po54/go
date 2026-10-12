@@ -732,19 +732,31 @@ public class MainActivity extends AppCompatActivity {
         final GoBoard snapshot = board;
         final int moves = board.getMoveCount();
         final long epoch = winRateEpoch;
-        final String deadStones = finalDeadStones;
+        final String preliminaryDead = finalDeadStones;
+        final double preliminaryLead = fastEndgameLead;
         final long startedNs = System.nanoTime();
-        render("正在深度搜索估算目差...");
+        render("正在深度搜索对照目差...");
         engineExecutor.execute(() -> {
             String score = engine.getFinalScore();
+            String actualDead = score == null ? null : engine.getFinalDeadStones();
+            final String deadStones = actualDead == null ? preliminaryDead : actualDead;
             long elapsedMs = (System.nanoTime() - startedNs) / 1000000L;
-            Log.i(TAG, "ENDGAME_TIMING phase=precise_done elapsedMs=" + elapsedMs
-                    + " valid=" + (score != null));
+            double deepLead = parseScoreWhiteLead(score);
+            Log.i(TAG, String.format(Locale.US,
+                    "ENDGAME_TIMING phase=precise_done elapsedMs=%d valid=%s score=%s",
+                    elapsedMs, score != null, score == null ? "null" : score.trim()));
+            if (Double.isFinite(preliminaryLead) && Double.isFinite(deepLead)) {
+                Log.i(TAG, String.format(Locale.US,
+                        "ENDGAME_COMPARE fastLead=%.3f deepLead=%.3f delta=%.3f fastDead=%s deepDead=%s",
+                        preliminaryLead, deepLead, deepLead - preliminaryLead,
+                        preliminaryDead, actualDead == null ? "unavailable" : actualDead));
+            }
             mainHandler.post(() -> {
                 if (board != snapshot || board.getMoveCount() != moves || winRateEpoch != epoch) return;
                 evaluating = false;
                 if (score != null) {
                     preciseScoreReady = true;
+                    finalDeadStones = deadStones;
                     gameResultText = formatFinalResult(score);
                     finalScoreText = finalPointsSummary(score, deadStones);
                     recordFinalWinRate(snapshot, moves, epoch, score);
@@ -783,6 +795,19 @@ public class MainActivity extends AppCompatActivity {
                 render(finalScoreText == null ? "认输结束\n未进行数子" : finalScoreText);
             });
         });
+    }
+
+    private double parseScoreWhiteLead(String score) {
+        if (score == null) return Double.NaN;
+        try {
+            String text = score.trim().toUpperCase(Locale.US);
+            if ("0".equals(text)) return 0.0;
+            if (text.startsWith("W+")) return Double.parseDouble(text.substring(2));
+            if (text.startsWith("B+")) return -Double.parseDouble(text.substring(2));
+        } catch (NumberFormatException ignored) {
+            // Resign/no-result formats have no numeric lead.
+        }
+        return Double.NaN;
     }
 
     private String formatFinalResult(String score) {
@@ -1403,7 +1428,9 @@ public class MainActivity extends AppCompatActivity {
         boolean playerTurn = engineReady && gameReady && !engineStarting && !thinking && !evaluating && currentPlayer == playerColor && !board.isGameOver();
         newGameButton.setEnabled(!thinking && !engineStarting && !evaluating);
         newRoundButton.setEnabled(!thinking && !engineStarting && !evaluating);
-        countTerritoryButton.setText(board.isGameOver() ? (preciseScoreReady ? "已结算" : "重新估算") : "数目");
+        countTerritoryButton.setText(board.isGameOver()
+                ? (preciseScoreReady ? "已结算" : Double.isFinite(fastEndgameLead) ? "深度对照" : "重新估算")
+                : "数目");
         countTerritoryButton.setEnabled(engineReady && gameReady && board.isGameOver()
                 && !thinking && !engineStarting && !evaluating && finalDeadStones != null && !preciseScoreReady);
         situationButton.setEnabled(variationBoard == null && engineReady && gameReady && !engineStarting
