@@ -17,7 +17,9 @@ def line(milliseconds, tag, message):
 def completed_game_logs():
     return "\n".join([
         line(0, "MainActivity", "finishByScore in, pendingPassColor=black"),
+        line(50, "KataGoEngine", "parseGtpResponse in, response== 0"),
         line(100, "KataGoEngine", "sendCommandSync in, command=final_score, running=true"),
+        line(130, "KataGoEngine", "parseGtpResponse in, response== 0"),
         line(640, "KataGoEngine", "parseGtpResponse in, response== W+86.5"),
         line(650, "KataGoEngine", "sendCommandSync in, command=final_status_list dead, running=true"),
         line(4000, "KataGoEngine", "sendCommandSync in, command=kata-raw-nn 0, running=true"),
