@@ -37,7 +37,7 @@ GPU 通过后再尝试 `--backends cpu,gpu`，以比较不同引擎的结算时�
 - 玩家黑棋正常下棋，脚本维护简单的棋盘模型（落子、提子、避免自杀和立即打劫）来避免无效交叉点；
 - 监测 `handleAiMove` 的坐标/停一手，持续下棋。AI 停一手后，玩家立即停一手，以真实结束对局；
 - 当棋盘没有适合落子的点时，玩家停一手，等待 AI 决定是继续还是也停一手；
-- 只有出现 `finishByScore`、有效的 KataGo `final_score` 数值、死子判断、`kata-raw-nn 0`、`Chinese area score` 和最终数目渲染才算通过。当前 APP 默认完整计算、采用 `scoring_mode=full`；日志解析器可以分析上一版 `fast` 数据，但完整对局验收不允许把上一版快速估算当成 PASS。
+- 当前试验版默认 `scoring_mode=fast_nn`：只有出现 `finishByScore`、一次成功的 `kata-raw-nn 0`、有效 `nnWhiteLead`、`Chinese area score` 和最终渲染，才算实验模式 PASS。启用原版/发生回退时走 `scoring_mode=full`，必须包含有效的 `final_score`、死子命令及数子日志才算 PASS。脚本不允许上一版只有死子搜索的 `fast` 模式冒充实验版通过。`fast_nn` 的 PASS **不代表估算目数与原版一致**。
 
 如果 AI 提前认输、测试期间崩溃、回棋/结算超时、最终没有数目日志，脚本会 FAIL 并保存故障日志；不会伪造一个完成的棋局。可以用 Ctrl+C 中断，仍生成中断报告。
 
@@ -46,15 +46,16 @@ GPU 通过后再尝试 `--backends cpu,gpu`，以比较不同引擎的结算时�
 | JSON 字段 | 含义 |
 |---|---|
 | `total_ms` | `finishByScore` → 最终数目界面 render |
-| `final_score_ms` | `final_score` → `final_status_list dead`，保留原结算口径 |
-| `dead_stones_ms` | 发送 `final_status_list dead` → 发送 `kata-raw-nn 0` |
+| `final_score_ms` | 仅 `full` 模式：`final_score` → `final_status_list dead`；实验 `fast_nn` 为 `null` |
+| `dead_stones_ms` | 仅 `full` 模式：`final_status_list dead` → `kata-raw-nn 0`；`fast_nn` 为 `null` |
 | `raw_nn_to_render_ms` | 发送 `kata-raw-nn 0` → 结果呈现 |
 | `position_evaluation_ms` | APP 内部 Position evaluation 的 `elapsedMs`（如有） |
 | `gtp_final_score` | `final_score` 的 GTP 返回值（上一版快速路径为 `null`） |
-| `scoring_mode` | `full`（当前默认）或 `fast`（上一版实验路径） |
-| `time_to_first_result_ms` | 开始结算到首个 `final_score` 有效结果的日志时间（新版）；旧版回退最终 render 时间 |
+| `scoring_mode` | `fast_nn`（当前实验默认，单次 NN）、`full`（原版或回退）、`fast`（历史实验） |
+| `time_to_first_result_ms` | 结算到首次可用结果：`fast_nn` 为结果显示时间，`full` 为 `final_score` 返回时间（如有） |
+| `raw_white_lead` | `fast_nn` 模式里 KataGo 神经网络一次推理的预估白方领先目数 |
 
-阶段时间使用 Android `logcat -v time` 的 GTP 命令发送事件及下一事件相减，**属于近似墙钟时间**，包含 Java 串行处理和 GTP 开销，不是纯 GPU/CPU 推理时间。当前默认先执行原来的 `final_score`，返回后就显示 KataGo 搜索预测的胜负，然后继续完成死子判断、中国数目和归属图。后台独立胜率分析任务在终局时取消排队，避免无用负载。
+阶段时间使用 Android `logcat -v time` 的 GTP 命令发送事件及下一事件相减，**属于近似墙钟时间**，包含 Java 串行处理和 GTP 开销，不是纯 GPU/CPU 推理时间。本次实验默认只做单次原始 NN 推理、棋块级快速死子建议与中国数子（计分仅保留日志）；原版 `final_score` 需要点击终局「深度对照」按钮才能发起。详细操作见 `tools/README_fast_nn_endgame.md`。
 
 每局输出 `full_game.json`（累计成功的棋局，含 `position_quality`）、单局截图、最终原始 logcat，以及 GitHub `ui-test-results` 分支上的自动报告。上传沿用现有的**公开、未脱敏**报告方式，请仅在测试设备上运行；如不希望公开上传，加 `--no-upload`。
 
