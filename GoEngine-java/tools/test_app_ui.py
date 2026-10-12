@@ -625,12 +625,26 @@ class AppTest:
         except TestFailure as exc:
             self.log("无法提取 logcat: " + str(exc))
 
+    def wait_new_game_dialog(self):
+        """Do not tap cached Spinner coordinates before AlertDialog is visible.
+
+        Even if ADB input tap has returned, Android can still be creating the
+        popup window. Exporting the tree once here serves as a synchronization
+        barrier; the rest of the dialog uses the local coordinate cache.
+        """
+        def dialog_ready(root):
+            return (self.node(root, rid="backendSpinner") is not None and
+                    self.node(root, rid="startGameButton") is not None)
+        self.poll(dialog_ready, 12, "等待新开一局弹窗完全显示")
+        self.log("新开一局弹窗已显示")
+
     def case(self, backend, index):
         self.log(f"=== Case {index}: {backend.upper()} / {self.args.size}x{self.args.size} ===")
         if index == 1:
             self.open_home_ai()
         else:
             self.click(rid="newRoundButton")
+        self.wait_new_game_dialog()
         self.spinner("sizeSpinner", f"{self.args.size}路")
         self.ensure_black()
         if self.cached_center("backendSpinner") is None:
