@@ -114,6 +114,8 @@ def summarize_comparisons(rows):
             "native_ms_average": round(statistics.mean(r["native_ms"] for r in group), 3),
             "original_ms_average": round(statistics.mean(
                 r["original_score_ms"] + r["original_dead_ms"] for r in group), 3),
+            "nn_to_original_delta_average_abs": round(statistics.mean(
+                abs(r["nn_white_lead"] - r["original_white_lead"]) for r in group), 3),
             "prediction_to_rule_delta_average_abs": round(statistics.mean(
                 abs(r["native_white_lead"] - r["original_white_lead"]) for r in group), 3),
             "original_prediction_range": round(max(original_leads) - min(original_leads), 3),
@@ -218,12 +220,13 @@ def main(argv=None):
         }
         (output / "endgame.json").write_text(
             json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        print("\\nSummary (prediction vs current-rule scoring is NOT a correctness metric):")
+        print("\nSummary (agreement is NOT certified correctness):")
         for key, item in report["summary"].items():
             print("%s n=%d dead-mismatches=%d, native=%.1fms original=%.1fms, "
-                  "prediction-difference=%.1f, original-variance=%.1f" % (
+                  "NN-to-original=%.1f目, rule-to-original=%.1f目, original-variance=%.1f目" % (
                       key, item["samples"], item["dead_disagreements"],
                       item["native_ms_average"], item["original_ms_average"],
+                      item["nn_to_original_delta_average_abs"],
                       item["prediction_to_rule_delta_average_abs"],
                       item["original_prediction_range"]), flush=True)
         print("Local report: " + str(output))
