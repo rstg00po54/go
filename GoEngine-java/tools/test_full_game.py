@@ -41,6 +41,17 @@ def completed_fast_game_logs():
     ])
 
 
+def completed_fast_nn_game_logs():
+    return "\n".join([
+        line(0, "MainActivity", "finishByScore in, pendingPassColor=black"),
+        line(10, "KataGoEngine", "sendCommandSync in, command=kata-raw-nn 0, running=true"),
+        line(38, "KataGoEngine", "Position evaluation whiteWin=0.95 whiteLead=57.51 size=9 elapsedMs=28"),
+        line(40, "MainActivity", "Chinese area score B stones=11 territory=2, W stones=38 territory=30, dead B=14 W=0, total B=13.0 W=73.5, lead local=60.5 mode=fast_nn"),
+        line(42, "MainActivity", "ENDGAME_TIMING phase=fast_nn_done elapsedMs=42 evalMs=30 nnWhiteLead=57.510 localWhiteLead=60.500 suggestedDead=14 groups=7"),
+        line(47, "MainActivity", "render in, message=快速AI预估"),
+    ])
+
+
 class BoardTrackerTests(unittest.TestCase):
     def test_gtp_coordinates_skip_i_and_flip_y(self):
         self.assertEqual(from_gtp("A9", 9), (0, 0))
@@ -139,6 +150,35 @@ class EndgameTests(unittest.TestCase):
         self.assertEqual(result["dead_stones_ms"], 3350)
         self.assertEqual(result["gtp_final_score"], "W+86.5")
         self.assertEqual(result["raw_nn_to_render_ms"], 900)
+
+    def test_single_inference_fast_nn_settlement(self):
+        result = score_timings(completed_fast_nn_game_logs(), year=2026)
+        self.assertEqual(result["scoring_mode"], "fast_nn")
+        self.assertEqual(result["total_ms"], 47)
+        self.assertEqual(result["time_to_first_result_ms"], 47)
+        self.assertEqual(result["position_evaluation_ms"], 28)
+        self.assertEqual(result["raw_nn_to_render_ms"], 37)
+        self.assertAlmostEqual(result["raw_white_lead"], 57.51)
+        self.assertIsNone(result["final_score_ms"])
+        self.assertIsNone(result["dead_stones_ms"])
+        self.assertIsNone(result["gtp_final_score"])
+
+    def test_fast_nn_rejects_unwanted_slow_search(self):
+        raw = completed_fast_nn_game_logs().replace(
+            line(38, "KataGoEngine", "Position evaluation whiteWin=0.95 whiteLead=57.51 size=9 elapsedMs=28"),
+            line(25, "KataGoEngine", "sendCommandSync in, command=final_status_list dead, running=true")
+            + "\n" + line(38, "KataGoEngine", "Position evaluation whiteWin=0.95 whiteLead=57.51 size=9 elapsedMs=28"))
+        with self.assertRaisesRegex(ValueError, "不应提前调用"):
+            score_timings(raw, year=2026)
+
+    def test_fast_nn_ignores_later_optional_deep_compare(self):
+        raw = completed_fast_nn_game_logs() + "\n" + "\n".join([
+            line(1000, "KataGoEngine", "sendCommandSync in, command=final_score, running=true"),
+            line(4000, "MainActivity", "ENDGAME_COMPARE fastLead=57.510 deepLead=58.500 delta=0.990"),
+        ])
+        result = score_timings(raw, year=2026)
+        self.assertEqual(result["scoring_mode"], "fast_nn")
+        self.assertEqual(result["total_ms"], 47)
 
     def test_fast_dead_stones_first_without_final_score(self):
         result = score_timings(completed_fast_game_logs(), year=2026)
