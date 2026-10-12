@@ -207,12 +207,16 @@ class AppTest:
         This avoids relying on UIAutomator exporting the bottom Button.
         """
         root = self.hierarchy()
-        button = self.node(root, rid="startGameButton") or self.node(root, text="开始对局")
+        button = self.node(root, rid="startGameButton")
+        if button is None:
+            button = self.node(root, text="开始对局")
         if button is not None:
             x, y = self.center(button)
             how = "实际控件"
         else:
-            anchor = self.node(root, rid="difficultySpinner") or self.node(root, text="棋力等级")
+            anchor = self.node(root, rid="difficultySpinner")
+            if anchor is None:
+                anchor = self.node(root, text="棋力等级")
             if anchor is None:
                 raise TestFailure("无法找到 startGameButton，也没有棋力等级锚点；请查看 failed.xml")
             x = self.screen_size()[0] // 2
@@ -433,6 +437,12 @@ class AppTest:
             self.log("截图 " + filename)
 
     def diagnostics(self, label):
+        # Always capture the current hierarchy; do not upload a stale cached
+        # XML snapshot from a previous popup or spinner selection.
+        try:
+            self.hierarchy(fresh=True)
+        except TestFailure as exc:
+            self.log("故障时无法刷新 UI XML: " + str(exc)[:180])
         try:
             self.screenshot(label + ".png")
         except TestFailure as exc:
