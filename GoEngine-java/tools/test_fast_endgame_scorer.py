@@ -66,7 +66,7 @@ public final class FastEndgameTest {
         try {FastEndgameScorer.suggest(b,new float[80]);}
         catch(IllegalArgumentException expected){threw=true;}
         ok(threw,"reject ownership with wrong dimensions");
-        System.out.println("FastEndgameScorer: 9 Java checks passed");
+        System.out.println("FastEndgameScorer: 10 Java checks passed");
     }
 }
 """,
@@ -93,7 +93,7 @@ class NativeJavaScorerTests(unittest.TestCase):
                            check=True, text=True, capture_output=True, timeout=45)
             result = subprocess.run([java, "-cp", str(root), "com.badukai.game.FastEndgameTest"],
                                     check=True, text=True, capture_output=True, timeout=20)
-            self.assertIn("9 Java checks passed", result.stdout)
+            self.assertIn("10 Java checks passed", result.stdout)
 
 
 if __name__ == "__main__":
