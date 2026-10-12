@@ -78,9 +78,9 @@ VERTEX = re.compile(r"[A-HJ-T](?:[1-9]|1[0-9])", re.I)
 
 def inspect_grid(rows):
     size = len(rows)
-    if size != 9 or any(len(row) != size or any(c not in ".BW" for c in row)
-                         for row in rows):
-        raise ValueError("Fixtures must be 9x9 with B/W/. cells")
+    if size not in (9, 13, 19) or any(len(row) != size or any(c not in ".BW" for c in row)
+                                          for row in rows):
+        raise ValueError("Fixtures must be 9x9, 13x13, or 19x19 grids of B/W/. cells")
     stones = {(x, y): cell for y, row in enumerate(rows)
               for x, cell in enumerate(row) if cell != "."}
     if min(sum(c == "B" for c in stones.values()),
@@ -122,7 +122,7 @@ def inspect_grid(rows):
 
 def make_sgf(rows, description):
     info = inspect_grid(rows)
-    fields = ["FF[4]", "GM[1]", "SZ[9]", "RU[Chinese]", "KM[5.5]", "PL[B]"]
+    fields = ["FF[4]", "GM[1]", "SZ[%d]" % info["size"], "RU[Chinese]", "KM[5.5]", "PL[B]"]
     for color, property_name in (("B", "AB"), ("W", "AW")):
         coords = ["[%s%s]" % (chr(97+x), chr(97+y))
                   for y, row in enumerate(rows) for x, cell in enumerate(row) if cell == color]
@@ -235,12 +235,14 @@ def prepare_device(adb, serial, backends, binaries, model, config, report_dir):
     return gpu_egl_first
 
 
-def load_fixtures(adb, serial, report_dir, selected):
+def load_fixtures(adb, serial, report_dir, selected, positions=None):
+    if positions is None:
+        positions = POSITIONS
     folder = report_dir / "positions"
     folder.mkdir(parents=True, exist_ok=True)
     manifest = {}
     for name in selected:
-        fixture = POSITIONS[name]
+        fixture = positions[name]
         sgf, info = make_sgf(fixture["rows"], fixture["description"])
         local = folder / (name + ".sgf")
         local.write_text(sgf, encoding="ascii")
@@ -248,6 +250,7 @@ def load_fixtures(adb, serial, report_dir, selected):
         remote_name = "%s/positions/%s.sgf" % (REMOTE, name)
         run([adb, "-s", serial, "push", local, remote_name])
         manifest[name] = dict(description=fixture["description"], grid=fixture["rows"],
+                              focus=fixture.get("focus", ""), expected_atari=fixture.get("atari", ()),
                               sha256=digest, remote=remote_name, **info)
     (report_dir / "fixtures.json").write_text(
         json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
