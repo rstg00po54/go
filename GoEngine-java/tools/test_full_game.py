@@ -29,6 +29,17 @@ def completed_game_logs():
     ])
 
 
+def completed_fast_game_logs():
+    return "\\n".join([
+        line(0, "MainActivity", "finishByScore in, pendingPassColor=black"),
+        line(12, "KataGoEngine", "sendCommandSync in, command=final_status_list dead, running=true"),
+        line(2190, "KataGoEngine", "sendCommandSync in, command=kata-raw-nn 0, running=true"),
+        line(2214, "KataGoEngine", "Position evaluation whiteLead=1.2 elapsedMs=24"),
+        line(2240, "MainActivity", "Chinese area score B stones=12 territory=2, W stones=13 territory=3, lead local=7.5 engine=NaN agrees=false mode=fast"),
+        line(2270, "MainActivity", "render in, message=黑约14目"),
+    ])
+
+
 class BoardTrackerTests(unittest.TestCase):
     def test_gtp_coordinates_skip_i_and_flip_y(self):
         self.assertEqual(from_gtp("A9", 9), (0, 0))
@@ -126,6 +137,25 @@ class EndgameTests(unittest.TestCase):
         self.assertEqual(result["dead_stones_ms"], 3350)
         self.assertEqual(result["gtp_final_score"], "W+86.5")
         self.assertEqual(result["raw_nn_to_render_ms"], 900)
+
+    def test_fast_dead_stones_first_without_final_score(self):
+        result = score_timings(completed_fast_game_logs(), year=2026)
+        self.assertEqual(result["scoring_mode"], "fast")
+        self.assertEqual(result["total_ms"], 2270)
+        self.assertIsNone(result["final_score_ms"])
+        self.assertEqual(result["before_dead_ms"], 12)
+        self.assertEqual(result["dead_stones_ms"], 2178)
+        self.assertEqual(result["raw_nn_to_render_ms"], 80)
+        self.assertIsNone(result["gtp_final_score"])
+
+    def test_fast_mode_ignores_later_optional_deep_search(self):
+        raw = completed_fast_game_logs() + "\\n" + "\\n".join([
+            line(3000, "KataGoEngine", "sendCommandSync in, command=final_score, running=true"),
+            line(8050, "KataGoEngine", "parseGtpResponse in, response== W+6.5"),
+        ])
+        result = score_timings(raw, year=2026)
+        self.assertEqual(result["scoring_mode"], "fast")
+        self.assertEqual(result["total_ms"], 2270)
 
     def test_missing_dead_stones_command_is_failure(self):
         broken = completed_game_logs().replace("final_status_list dead", "not_dead")
