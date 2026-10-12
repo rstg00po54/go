@@ -73,8 +73,10 @@ def describe_disagreement_groups(rows, fast_only, original_only):
             x = GTP_LETTERS.index(vertex[0].upper())
             y = size - int(vertex[1:])
             color = rows[y][x]
-            if color not in "BW" or (x, y) in seen:
-                raise ValueError("Disagreement location is not an unprocessed stone: " + vertex)
+            if color not in "BW":
+                raise ValueError("Disagreement location is not a stone: " + vertex)
+            if (x, y) in seen:
+                continue  # Several differing stones may be in the same chain.
             queue, group, liberties = [(x, y)], set(), set()
             while queue:
                 point = queue.pop()
