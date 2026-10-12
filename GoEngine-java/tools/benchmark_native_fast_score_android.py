@@ -185,8 +185,16 @@ def main(argv=None):
                     engine.command("komi 5.5")
                     engine.command("kata-set-rules chinese")
                     engine.command("kata-raw-nn 0")  # Warmup, not part of measured time.
+                    warmed_sizes = {9}
                     for repeat in range(1, args.repeats + 1):
                         for name in selected:
+                            # First 13x13/19x19 inference may trigger OpenCL allocation
+                            # or shape-specific warm-up. Keep it outside timed native calls.
+                            size = fixtures[name]["size"]
+                            if size not in warmed_sizes:
+                                engine.command("loadsgf " + fixtures[name]["remote"])
+                                engine.command("kata-raw-nn 0")
+                                warmed_sizes.add(size)
                             item = measure_case(engine, fixtures[name], backend, name, repeat)
                             rows.append(item)
                             writer.writerow(item)
