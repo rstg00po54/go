@@ -653,7 +653,7 @@ public class MainActivity extends AppCompatActivity {
                 gameResultText = synced ? formatFinalResult(score) : "对局结束 · 同步失败";
                 if (result != null) territorySummary(result);
                 recordFinalWinRate(snapshot, moves, epoch, score);
-                finalScoreText = synced ? finalPointsSummary(score, deadStones) : "终局数子\\n同步失败";
+                finalScoreText = synced ? finalPointsSummary(score, deadStones) : "终局数子\n同步失败";
                 render(finalScoreText);
             });
         });
