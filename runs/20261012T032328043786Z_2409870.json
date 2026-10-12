@@ -1,0 +1,129 @@
+{
+  "schema": 2,
+  "status": "FAIL",
+  "timestamp_utc": "20261012T032328043786Z",
+  "serial": "8719e18a71a2a66c",
+  "backends": "cpu,gpu,cpu",
+  "rounds": 1,
+  "size": 9,
+  "moves": 2,
+  "undo": true,
+  "pass": false,
+  "failure": "未找到控件或可见文字: undoButton，等待 20s；最近界面: ← 9路　分先　　第5手 ⚙ 围棋精灵 12级 · Human SL · CPU/Eigen JNI 白棋提子 0 白胜率 37.6% 轮到你了 安静01006 13级 黑棋提子 0 黑胜率 62.4% 认输 停一手 悔棋 新开一局 形势 AI推荐 数目 后续变化",
+  "events": [
+    {
+      "seconds": 0.003,
+      "message": "连接设备 8719e18a71a2a66c"
+    },
+    {
+      "seconds": 0.668,
+      "message": "启动 APP"
+    },
+    {
+      "seconds": 0.668,
+      "message": "等待 MainActivity 的引擎完成日志（不依赖屏幕下方的按钮）"
+    },
+    {
+      "seconds": 0.718,
+      "message": "首页引擎尚未发出 ready 日志，已等待 0s"
+    },
+    {
+      "seconds": 4.816,
+      "message": "MainActivity 已报告 Initial engine ready=true"
+    },
+    {
+      "seconds": 4.816,
+      "message": "=== Case 1: CPU / 9x9 ==="
+    },
+    {
+      "seconds": 4.868,
+      "message": "寻找首页 AI训练按钮（如不在当前屏幕，会自动上滑）"
+    },
+    {
+      "seconds": 7.2,
+      "message": "已进入 AI训练新开一局界面"
+    },
+    {
+      "seconds": 9.425,
+      "message": "sizeSpinner 已选择 9路，跳过下拉菜单"
+    },
+    {
+      "seconds": 9.426,
+      "message": "执黑已选中，无需重复点击"
+    },
+    {
+      "seconds": 9.426,
+      "message": "backendSpinner 已选择 CPU / Eigen，跳过下拉菜单"
+    },
+    {
+      "seconds": 9.426,
+      "message": "点击开始对局（实际控件），坐标=(539,1333)"
+    },
+    {
+      "seconds": 12.643,
+      "message": "CPU 就绪，第 1 手"
+    },
+    {
+      "seconds": 12.708,
+      "message": "主进程 PID=4405，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 16.352,
+      "message": "落子 (2,2)，屏幕 (310,757)"
+    },
+    {
+      "seconds": 16.353,
+      "message": "CPU 就绪，第 3 手"
+    },
+    {
+      "seconds": 19.946,
+      "message": "落子 (6,6)，屏幕 (765,1212)"
+    },
+    {
+      "seconds": 19.946,
+      "message": "CPU 就绪，第 5 手"
+    },
+    {
+      "seconds": 32.516,
+      "message": "等待: 未找到控件或可见文字: undoButton；已过 12s；界面: ← 9路　分先　　第5手 ⚙ 围棋精灵 12级 · Human SL · CPU/Eigen JNI 白棋提子 0 白胜率 37.6% 轮到你了 安静01006 13级 黑棋提子 0 黑胜率 62.4% 认输 停一手 悔棋 新开一局 形势 AI推荐 数目 后续变化"
+    },
+    {
+      "seconds": 42.921,
+      "message": "失败: 未找到控件或可见文字: undoButton，等待 20s；最近界面: ← 9路　分先　　第5手 ⚙ 围棋精灵 12级 · Human SL · CPU/Eigen JNI 白棋提子 0 白胜率 37.6% 轮到你了 安静01006 13级 黑棋提子 0 黑胜率 62.4% 认输 停一手 悔棋 新开一局 形势 AI推荐 数目 后续变化"
+    },
+    {
+      "seconds": 45.346,
+      "message": "截图 failed.png"
+    },
+    {
+      "seconds": 45.421,
+      "message": "本地报告: /mnt/hgfs/D/code/go/GoEngine-java/build/app_ui_test/20261012_112242"
+    }
+  ],
+  "startup_timings": [
+    {
+      "phase": "engine_backend_and_paths",
+      "ms": 9.195667
+    },
+    {
+      "phase": "engine_prepare_config",
+      "ms": 32.362004
+    },
+    {
+      "phase": "engine_prepare_model_asset",
+      "ms": 0.415333
+    },
+    {
+      "phase": "engine_find_human_model",
+      "ms": 0.003792
+    }
+  ],
+  "game_backends": [
+    {
+      "requested": "CPU",
+      "actual": "CPU/Eigen JNI",
+      "ready": true
+    }
+  ],
+  "note": "PUBLIC and NOT REDACTED, diagnostics under runs/20261012T032328043786Z_2409870/"
+}

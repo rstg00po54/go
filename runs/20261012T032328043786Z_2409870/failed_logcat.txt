@@ -1,0 +1,1374 @@
+--------- beginning of main
+10-12 11:22:41.894 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'ViewRootImpl[QuickstepLauncher]#7(BLAST Consumer)7'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0xb00, consumer_usage : 0xb00, , stride : 0, alloc_format : 1, size : 8486912, layer_count : 1
+10-12 11:22:41.894 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1088, alloc_height : 1920
+10-12 11:22:41.894 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:41.902 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0
+10-12 11:22:41.902 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0 usage=0x20001a00 alloc_width=1080, alloc_height=1920
+10-12 11:22:41.902 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x20001a00, consumer_usage : 0x20001a00, , stride : 0, alloc_format : 1, size : 8355840, layer_count : 1
+10-12 11:22:41.902 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1080, alloc_height : 1920
+10-12 11:22:41.902 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:41.910 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0
+10-12 11:22:41.910 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0 usage=0x20001a00 alloc_width=1080, alloc_height=1920
+10-12 11:22:41.910 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x20001a00, consumer_usage : 0x20001a00, , stride : 0, alloc_format : 1, size : 8355840, layer_count : 1
+10-12 11:22:41.910 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1080, alloc_height : 1920
+10-12 11:22:41.910 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:41.917 I/OpenGLRenderer( 1017): Davey! duration=1180910ms; Flags=1, FrameTimelineVsyncId=5280, IntendedVsync=1799374084298, Vsync=1799374084298, InputEventId=0, HandleInputStart=1799376844149, AnimationStart=1799376844441, PerformTraversalsStart=1799376848816, DrawStart=1799380883150, FrameDeadline=1799407417630, FrameInterval=1799376841524, FrameStartTime=16666666, SyncQueued=1799381324733, SyncStart=1799381367900, IssueDrawCommandsStart=1799381414275, SwapBuffers=1799382398358, FrameCompleted=2980285043553, DequeueBufferDuration=302166, QueueBufferDuration=382375, GpuCompleted=2980285043553, SwapBuffersCompleted=1799383065983, DisplayPresentTime=0, 
+10-12 11:22:41.919 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0
+10-12 11:22:41.919 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0 usage=0x20001a00 alloc_width=1080, alloc_height=1920
+10-12 11:22:41.920 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x20001a00, consumer_usage : 0x20001a00, , stride : 0, alloc_format : 1, size : 8355840, layer_count : 1
+10-12 11:22:41.920 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1080, alloc_height : 1920
+10-12 11:22:41.920 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+--------- beginning of system
+10-12 11:22:41.924 V/ActivityManager(  612): Got obituary of 4114:com.badukai.java
+10-12 11:22:41.924 W/ActivityManager(  612): setHasOverlayUi called on unknown pid: 4114
+--------- beginning of kernel
+10-12 11:22:44.244 I/binder  (  142): undelivered transaction 546118, process died.
+10-12 11:22:44.244 I/binder  (  142): undelivered transaction 546432, process died.
+10-12 11:22:44.244 I/binder  (  142): undelivered transaction 546117, process died.
+10-12 11:22:44.244 I/binder  (  142): undelivered transaction 546113, process died.
+10-12 11:22:44.244 I/binder  (  142): undelivered transaction 546114, process died.
+10-12 11:22:44.244 I/binder  (  142): undelivered transaction 546431, process died.
+10-12 11:22:41.924 I/Zygote  (  411): Process 4114 exited due to signal 9 (Killed)
+10-12 11:22:41.925 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0
+10-12 11:22:41.925 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0 usage=0x20001a00 alloc_width=1080, alloc_height=1920
+10-12 11:22:41.926 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x20001a00, consumer_usage : 0x20001a00, , stride : 0, alloc_format : 1, size : 8355840, layer_count : 1
+10-12 11:22:41.926 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1080, alloc_height : 1920
+10-12 11:22:41.926 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:41.933 E/BpTransactionCompletedListener(  325): Failed to transact (-32)
+10-12 11:22:41.933 E/BpTransactionCompletedListener(  325): Failed to transact (-32)
+10-12 11:22:41.935 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0
+10-12 11:22:41.935 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0 usage=0x20001a00 alloc_width=1080, alloc_height=1920
+10-12 11:22:41.936 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x20001a00, consumer_usage : 0x20001a00, , stride : 0, alloc_format : 1, size : 8355840, layer_count : 1
+10-12 11:22:41.936 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1080, alloc_height : 1920
+10-12 11:22:41.936 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:41.939 I/ActivityTaskManager(  612): START u0 {flg=0x10000000 cmp=com.badukai.java/com.badukai.MainActivity} from uid 2000
+10-12 11:22:41.939 W/ActivityTaskManager(  612): Can't find TaskDisplayArea to determine support for multi window. Task id=145 attached=false
+10-12 11:22:41.940 D/CompatibilityChangeReporter(  612): Compat change id reported: 174042980; UID 10086; state: DISABLED
+10-12 11:22:41.940 D/CompatibilityChangeReporter(  612): Compat change id reported: 184838306; UID 10086; state: DISABLED
+10-12 11:22:41.940 D/CompatibilityChangeReporter(  612): Compat change id reported: 185004937; UID 10086; state: DISABLED
+10-12 11:22:41.940 D/CompatibilityChangeReporter(  612): Compat change id reported: 181136395; UID 10086; state: DISABLED
+10-12 11:22:41.941 D/CompatibilityChangeReporter(  612): Compat change id reported: 174042936; UID 10086; state: DISABLED
+10-12 11:22:41.941 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0
+10-12 11:22:41.941 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0 usage=0x20001a00 alloc_width=1080, alloc_height=1920
+10-12 11:22:41.941 D/CompatibilityChangeReporter(  612): Compat change id reported: 197654537; UID 10086; state: ENABLED
+10-12 11:22:41.941 D/CompatibilityChangeReporter(  612): Compat change id reported: 168419799; UID 10086; state: DISABLED
+10-12 11:22:41.942 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x20001a00, consumer_usage : 0x20001a00, , stride : 0, alloc_format : 1, size : 8355840, layer_count : 1
+10-12 11:22:41.942 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1080, alloc_height : 1920
+10-12 11:22:41.942 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:41.944 D/SplashScreenView(  789): Build android.window.SplashScreenView{3bfe8fd V.E...... ......ID 0,0-0,0}
+10-12 11:22:41.944 D/SplashScreenView(  789): Icon: view: null drawable: null size: 0
+10-12 11:22:41.944 D/SplashScreenView(  789): Branding: view: android.view.View{26179f2 G.ED..... ......I. 0,0-0,0 #10204a9 android:id/splashscreen_branding_view} drawable: null size w: 0 h: 0
+10-12 11:22:41.947 D/CompatibilityChangeReporter(  612): Compat change id reported: 135634846; UID 10086; state: DISABLED
+10-12 11:22:41.947 D/CompatibilityChangeReporter(  612): Compat change id reported: 177438394; UID 10086; state: DISABLED
+10-12 11:22:41.947 D/CompatibilityChangeReporter(  612): Compat change id reported: 135772972; UID 10086; state: DISABLED
+10-12 11:22:41.947 D/CompatibilityChangeReporter(  612): Compat change id reported: 135754954; UID 10086; state: ENABLED
+10-12 11:22:41.948 D/CompatibilityChangeReporter(  612): Compat change id reported: 143937733; UID 10086; state: ENABLED
+10-12 11:22:41.955 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:41.955 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0xb00 alloc_width=1088, alloc_height=1920
+10-12 11:22:41.955 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'ViewRootImpl[java]#13(BLAST Consumer)13'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0xb00, consumer_usage : 0xb00, , stride : 0, alloc_format : 1, size : 8486912, layer_count : 1
+10-12 11:22:41.955 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1088, alloc_height : 1920
+10-12 11:22:41.955 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:41.955 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:41.955 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0xb00 alloc_width=1088, alloc_height=1920
+10-12 11:22:41.956 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'ViewRootImpl[java]#13(BLAST Consumer)13'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0xb00, consumer_usage : 0xb00, , stride : 0, alloc_format : 1, size : 8486912, layer_count : 1
+10-12 11:22:41.956 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1088, alloc_height : 1920
+10-12 11:22:41.956 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:41.956 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:41.956 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0xb00 alloc_width=1088, alloc_height=1920
+10-12 11:22:41.956 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'ViewRootImpl[java]#13(BLAST Consumer)13'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0xb00, consumer_usage : 0xb00, , stride : 0, alloc_format : 1, size : 8486912, layer_count : 1
+10-12 11:22:41.956 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1088, alloc_height : 1920
+10-12 11:22:41.956 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:41.957 D/Zygote  (  411): Forked child process 4405
+10-12 11:22:41.957 I/ActivityManager(  612): Start proc 4405:com.badukai.java/u0a86 for pre-top-activity {com.badukai.java/com.badukai.MainActivity}
+10-12 11:22:41.959 I/Zygote  ( 4405): seccomp disabled by setenforce 0
+10-12 11:22:41.961 I/om.badukai.jav( 4405): Late-enabling -Xcheck:jni
+10-12 11:22:41.977 I/adbd    (  455): jdwp connection from 4405
+10-12 11:22:41.992 D/CompatibilityChangeReporter( 4405): Compat change id reported: 171979766; UID 10086; state: ENABLED
+10-12 11:22:42.005 V/GraphicsEnvironment( 4405): ANGLE Developer option for 'com.badukai.java' set to: 'default'
+10-12 11:22:42.005 V/GraphicsEnvironment( 4405): ANGLE GameManagerService for com.badukai.java: false
+10-12 11:22:42.005 V/GraphicsEnvironment( 4405): Neither updatable production driver nor prerelease driver is supported.
+10-12 11:22:42.006 D/NetworkSecurityConfig( 4405): No Network Security Config specified, using platform default
+10-12 11:22:42.007 D/NetworkSecurityConfig( 4405): No Network Security Config specified, using platform default
+10-12 11:22:42.019 D/BadukaiApplication( 4405): onCreate in
+10-12 11:22:42.019 I/BadukaiApplication( 4405): Badukai application created
+10-12 11:22:42.045 D/GoBoard ( 4405): GoBoard in, size=9
+10-12 11:22:42.056 D/AppCompatDelegate( 4405): Checking for metadata for AppLocalesMetadataHolderService : Service not found
+10-12 11:22:42.062 D/MainActivity( 4405): onCreate in, savedInstanceState=null
+10-12 11:22:42.088 W/om.badukai.jav( 4405): Accessing hidden method Landroid/view/ViewGroup;->makeOptionalFitsSystemWindows()V (unsupported, reflection, allowed)
+10-12 11:22:42.100 D/CompatibilityChangeReporter( 4405): Compat change id reported: 171228096; UID 10086; state: ENABLED
+10-12 11:22:42.151 E/CompositionEngine(  325): [Splash Screen com.badukai.java#0] Invalid device requested composition type change: DEVICE (2) --> DEVICE (2)
+10-12 11:22:42.151 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:42.151 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0x1a00 alloc_width=1088, alloc_height=1920
+10-12 11:22:42.153 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x1a00, consumer_usage : 0x1a00, , stride : 0, alloc_format : 1, size : 8486912, layer_count : 1
+10-12 11:22:42.153 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1088, alloc_height : 1920
+10-12 11:22:42.153 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:42.157 E/CompositionEngine(  325): [Splash Screen com.badukai.java#0] Invalid device requested composition type change: DEVICE (2) --> DEVICE (2)
+10-12 11:22:42.157 E/CompositionEngine(  325): [StatusBar#0] Invalid device requested composition type change: DEVICE (2) --> DEVICE (2)
+10-12 11:22:42.157 E/CompositionEngine(  325): [NavigationBar0#0] Invalid device requested composition type change: DEVICE (2) --> DEVICE (2)
+10-12 11:22:42.166 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:42.166 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0x1a00 alloc_width=1088, alloc_height=1920
+10-12 11:22:42.167 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x1a00, consumer_usage : 0x1a00, , stride : 0, alloc_format : 1, size : 8486912, layer_count : 1
+10-12 11:22:42.167 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1088, alloc_height : 1920
+10-12 11:22:42.167 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:42.183 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:42.183 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0x1a00 alloc_width=1088, alloc_height=1920
+10-12 11:22:42.184 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x1a00, consumer_usage : 0x1a00, , stride : 0, alloc_format : 1, size : 8486912, layer_count : 1
+10-12 11:22:42.184 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1088, alloc_height : 1920
+10-12 11:22:42.184 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:42.192 D/GoBoard ( 4405): GoBoard in, size=19
+10-12 11:22:42.192 D/GoBoardView( 4405): GoBoardView in, context=com.badukai.MainActivity@af21b34, attrs=android.content.res.XmlBlock$Parser@46de70c
+10-12 11:22:42.192 D/GoBoardView( 4405): init in
+10-12 11:22:42.205 D/GoBoard ( 4405): GoBoard in, size=9
+10-12 11:22:42.211 I/MainActivity( 4405): Game engine preference=JNI if bundled; preload boardSize=9; backend=CPU; winrate engine=PIE
+10-12 11:22:42.211 D/MainActivity( 4405): bindViews in
+10-12 11:22:42.213 D/GoBoardView( 4405): setOnIntersectionClickListener in, listener=com.badukai.MainActivity$$ExternalSyntheticLambda23@2efbd77
+10-12 11:22:42.214 D/MainActivity( 4405): render in, message=正在启动 AI..., engineReady=false, thinking=false, currentPlayer=BLACK
+10-12 11:22:42.214 D/GoBoardView( 4405): setBoard in, board=com.badukai.game.GoBoard@cd81de4
+10-12 11:22:42.214 D/GoBoardView( 4405): setLastMove in, point=null
+10-12 11:22:42.214 D/GoBoardView( 4405): setInputEnabled in, enabled=false
+10-12 11:22:42.216 D/MainActivity( 4405): updateButtons in, engineReady=false, thinking=false, currentPlayer=BLACK, playerColor=BLACK
+10-12 11:22:42.222 D/MainActivity( 4405): showMainPage in
+10-12 11:22:42.222 D/MainActivity( 4405): startEngine in, engineStarting=false, engineReady=false, boardSize=9
+10-12 11:22:42.222 D/MainActivity( 4405): updateButtons in, engineReady=false, thinking=false, currentPlayer=BLACK, playerColor=BLACK
+10-12 11:22:42.223 I/KataGoEngine( 4405): Human SL model ready: /data/user/0/com.badukai.java/files/engine/b18c384nbt-humanv0.bin
+10-12 11:22:42.223 I/MainActivity( 4405): Initial engine phase=human_model_prepare elapsedMs=0
+10-12 11:22:42.224 D/KataGoEngine( 4405): Model in, displayName=Human, fileName=10b.bin, description=10-block
+10-12 11:22:42.224 D/KataGoEngine( 4405): Model in, displayName=Superhuman, fileName=18b.bin, description=18-block
+10-12 11:22:42.224 D/KataGoEngine( 4405): Model in, displayName=Godlike, fileName=28b.bin, description=28-block
+10-12 11:22:42.224 D/KataGoEngine( 4405): start in, model=HUMAN, running=false
+10-12 11:22:42.224 I/KataGoEngine( 4405): === JAVA KATAGO ENGINE / ANDROID ARM64 ===
+10-12 11:22:42.224 I/KataGoEngine( 4405): STARTUP_TIMING phase=engine_backend_and_paths ms=0.14875
+10-12 11:22:42.224 D/KataGoEngine( 4405): copyAssetToFile in, assetPath=engine/human_gtp.cfg, dest=/data/user/0/com.badukai.java/files/engine/human_gtp.cfg
+10-12 11:22:42.229 I/KataGoEngine( 4405): Native GTP defaultBoardSize=9
+10-12 11:22:42.229 I/KataGoEngine( 4405): STARTUP_TIMING phase=engine_prepare_config ms=5.330793
+10-12 11:22:42.229 D/KataGoEngine( 4405): copyAssetToFile in, assetPath=engine/10b.bin, dest=/data/user/0/com.badukai.java/files/engine/10b.bin
+10-12 11:22:42.231 I/KataGoEngine( 4405): Reusing installed model asset: /data/user/0/com.badukai.java/files/engine/10b.bin
+10-12 11:22:42.231 I/KataGoEngine( 4405): STARTUP_TIMING phase=engine_prepare_model_asset ms=1.910125
+10-12 11:22:42.231 I/KataGoEngine( 4405): Human SL model: /data/user/0/com.badukai.java/files/engine/b18c384nbt-humanv0.bin size=107185997
+10-12 11:22:42.231 I/KataGoEngine( 4405): STARTUP_TIMING phase=engine_find_human_model ms=0.121334
+10-12 11:22:42.231 I/KataGoEngine( 4405): Model: /data/user/0/com.badukai.java/files/engine/10b.bin size=12003218
+10-12 11:22:42.231 I/KataGoEngine( 4405): Config: /data/user/0/com.badukai.java/files/engine/human_gtp.cfg
+10-12 11:22:42.231 I/KataGoEngine( 4405): Backend requested: CPU/JNI Eigen
+10-12 11:22:42.233 I/KataGoNative( 4405): STARTUP_TIMING phase=jni_load_library ms=0.981458 library=katago
+10-12 11:22:42.233 I/KataGoNative( 4405): STARTUP_TIMING phase=jni_native_create_session ms=0.098292 humanSL=true ok=true
+10-12 11:22:42.233 I/KataGoNative( 4405): STARTUP_TIMING phase=jni_create_session_total ms=1.190292
+10-12 11:22:42.233 I/KataGoEngine( 4405): STARTUP_TIMING phase=engine_cpu_jni_create ms=1.436459
+10-12 11:22:42.233 D/KataGoEngine( 4405): startReaderThread in
+10-12 11:22:42.233 D/KataGoEngine( 4405): sendCommandSync in, command=name, running=true
+10-12 11:22:42.233 D/KataGoEngine( 4405): JNI GTP command=name queued=true enqueueMs=0
+10-12 11:22:42.233 I/KataGoEngine( 4405): STARTUP_TIMING phase=engine_cpu_gtp_name_send ms=0.123667
+10-12 11:22:42.293 D/android.widget.GridLayout( 4405): vertical constraints: y1-y0>=379, y2-y1>=339, y2-y0<=677 are inconsistent; permanently removing: y2-y0<=677. 
+10-12 11:22:42.311 I/RenderThread( 4405): type=1400 audit(0.0:240): avc: denied { open } for path="/dev/__properties__/u:object_r:vendor_default_prop:s0" dev="tmpfs" ino=283 scontext=u:r:untrusted_app:s0:c86,c256,c512,c768 tcontext=u:object_r:vendor_default_prop:s0 tclass=file permissive=1 app=com.badukai.java
+10-12 11:22:42.317 I/mali_so ( 4405): [File] : hardware/arm/maliT760/driver/product/base/src/mali_base_kbase.c; [Line] : 1392; [Func] : base_context_deal_with_version_affairs_rk_ext;
+10-12 11:22:42.317 I/mali_so ( 4405): arm_release_ver of this mali_so is 'g18p0-01eac0', rk_so_ver is '2 '.
+10-12 11:22:42.317 I/mali_so ( 4405): [File] : hardware/arm/maliT760/driver/product/base/src/mali_base_kbase.c; [Line] : 1408; [Func] : base_context_deal_with_version_affairs_rk_ext;
+10-12 11:22:42.317 I/mali_so ( 4405): arm_release_vers are match. to set the full mali_ver 'g18p0-01eac0-2' as value of 'sys.gmali.version'.
+10-12 11:22:42.311 I/RenderThread( 4405): type=1400 audit(0.0:241): avc: denied { getattr } for path="/dev/__properties__/u:object_r:vendor_default_prop:s0" dev="tmpfs" ino=283 scontext=u:r:untrusted_app:s0:c86,c256,c512,c768 tcontext=u:object_r:vendor_default_prop:s0 tclass=file permissive=1 app=com.badukai.java
+10-12 11:22:42.311 I/RenderThread( 4405): type=1400 audit(0.0:242): avc: denied { map } for path="/dev/__properties__/u:object_r:vendor_default_prop:s0" dev="tmpfs" ino=283 scontext=u:r:untrusted_app:s0:c86,c256,c512,c768 tcontext=u:object_r:vendor_default_prop:s0 tclass=file permissive=1 app=com.badukai.java
+10-12 11:22:42.315 I/RenderThread( 4405): type=1400 audit(0.0:243): avc: denied { write } for name="property_service" dev="tmpfs" ino=313 scontext=u:r:untrusted_app:s0:c86,c256,c512,c768 tcontext=u:object_r:property_socket:s0 tclass=sock_file permissive=1 app=com.badukai.java
+10-12 11:22:42.320 I/hwservicemanager(  286): getTransport: Cannot find entry android.hardware.configstore@1.0::ISurfaceFlingerConfigs/default in either framework or device VINTF manifest.
+10-12 11:22:42.315 I/RenderThread( 4405): type=1400 audit(0.0:244): avc: denied { connectto } for path="/dev/socket/property_service" scontext=u:r:untrusted_app:s0:c86,c256,c512,c768 tcontext=u:r:init:s0 tclass=unix_stream_socket permissive=1 app=com.badukai.java
+10-12 11:22:42.330 E/HWComposer(  325): getSupportedContentTypes: getSupportedContentTypes failed for display 0: Unsupported (8)
+10-12 11:22:42.331 E/HWComposer(  325): getSupportedContentTypes: getSupportedContentTypes failed for display 1: Unsupported (8)
+10-12 11:22:42.332 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:42.332 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0xb00 alloc_width=1088, alloc_height=1920
+10-12 11:22:42.334 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'ViewRootImpl[MainActivity]#0(BLAST Consumer)0'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0xb00, consumer_usage : 0xb00, , stride : 0, alloc_format : 1, size : 8486912, layer_count : 1
+10-12 11:22:42.334 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1088, alloc_height : 1920
+10-12 11:22:42.334 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:42.334 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:42.334 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0xb00 alloc_width=1088, alloc_height=1920
+10-12 11:22:42.335 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'ViewRootImpl[MainActivity]#0(BLAST Consumer)0'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0xb00, consumer_usage : 0xb00, , stride : 0, alloc_format : 1, size : 8486912, layer_count : 1
+10-12 11:22:42.335 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1088, alloc_height : 1920
+10-12 11:22:42.335 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:42.335 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:42.335 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0xb00 alloc_width=1088, alloc_height=1920
+10-12 11:22:42.337 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'ViewRootImpl[MainActivity]#0(BLAST Consumer)0'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0xb00, consumer_usage : 0xb00, , stride : 0, alloc_format : 1, size : 8486912, layer_count : 1
+10-12 11:22:42.337 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1088, alloc_height : 1920
+10-12 11:22:42.337 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:42.343 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{4d11a01 V.E...... ......ID 32,0-1048,220} during layout: running second layout pass
+10-12 11:22:42.343 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{ba90a6 V.ED..... ......ID 43,32-199,188} during layout: running second layout pass
+10-12 11:22:42.343 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{de65ae7 V.E...... ......ID 231,0-610,220} during layout: running second layout pass
+10-12 11:22:42.343 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{714694 V.ED..... ......ID 0,41-283,120} during layout: running second layout pass
+10-12 11:22:42.343 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{e34553d V.ED..... ......ID 0,120-167,178} during layout: running second layout pass
+10-12 11:22:42.343 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{86f1132 V.ED..... ......ID 610,73-812,146} during layout: running second layout pass
+10-12 11:22:42.343 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{d33be83 V.ED..... ......ID 844,45-973,174} during layout: running second layout pass
+10-12 11:22:42.343 W/View    ( 4405): requestLayout() improperly called by android.widget.HorizontalScrollView{f663800 VFED..... ......ID 32,220-1048,381} during layout: running second layout pass
+10-12 11:22:42.343 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{3960839 V.E...... ......ID 0,0-1170,161} during layout: running second layout pass
+10-12 11:22:42.343 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{2790e7e V.ED..... ......ID 16,0-162,161} during layout: running second layout pass
+10-12 11:22:42.343 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{369bfdf V.ED..... ......ID 162,0-410,161} during layout: running second layout pass
+10-12 11:22:42.344 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{1f6d42c V.ED..... ......ID 410,0-658,161} during layout: running second layout pass
+10-12 11:22:42.344 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{c5eef5 V.ED..... ......ID 658,0-906,161} during layout: running second layout pass
+10-12 11:22:42.344 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{993948a V.ED..... ......ID 906,0-1154,161} during layout: running second layout pass
+10-12 11:22:42.344 W/View    ( 4405): requestLayout() improperly called by android.widget.ScrollView{7d47afb VFED..... ......ID 32,381-1048,726} during layout: running second layout pass
+10-12 11:22:42.344 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{c130718 V.E...... ......ID 0,0-1016,1746} during layout: running second layout pass
+10-12 11:22:42.344 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{4d38571 V.E...... ......ID 0,11-1016,291} during layout: running second layout pass
+10-12 11:22:42.344 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{71e6f56 V.ED..... ......ID 27,16-989,83} during layout: running second layout pass
+10-12 11:22:42.344 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{65cbd7 V.E...... ......ID 27,83-989,267} during layout: running second layout pass
+10-12 11:22:42.344 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{ebd7cc4 V.ED..... ......ID 0,35-113,148} during layout: running second layout pass
+10-12 11:22:42.344 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{64a07ad V.E...... ......ID 132,0-389,184} during layout: running second layout pass
+10-12 11:22:42.344 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{8aa2ae2 V.ED..... ......ID 0,39-257,101} during layout: running second layout pass
+10-12 11:22:42.344 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{6514e73 V.ED..... ......ID 0,101-257,144} during layout: running second layout pass
+10-12 11:22:42.344 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{677a130 V.ED..... ......ID 389,0-572,184} during layout: running second layout pass
+10-12 11:22:42.344 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{f2c71a9 V.E...... ......ID 572,0-830,184} during layout: running second layout pass
+10-12 11:22:42.344 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{244132e V.ED..... ......ID 0,39-258,101} during layout: running second layout pass
+10-12 11:22:42.344 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{8685ecf V.ED..... ......ID 0,101-258,144} during layout: running second layout pass
+10-12 11:22:42.344 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{46da05c V.ED..... ......ID 849,35-962,148} during layout: running second layout pass
+10-12 11:22:42.344 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{cb17f65 V.E...... ......ID 0,302-1016,582} during layout: running second layout pass
+10-12 11:22:42.344 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{982343a V.ED..... ......ID 27,16-989,83} during layout: running second layout pass
+10-12 11:22:42.344 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{73618eb V.E...... ......ID 27,83-989,267} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{e626648 V.ED..... ......ID 0,35-113,148} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{ebface1 V.E...... ......ID 132,0-389,184} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{54f5a06 V.ED..... ......ID 0,39-257,101} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{6db58c7 V.ED..... ......ID 0,101-257,144} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{15b9ef4 V.ED..... ......ID 389,0-572,184} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{329361d V.E...... ......ID 572,0-830,184} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{e771092 V.ED..... ......ID 0,39-258,101} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{2aaba63 V.ED..... ......ID 0,101-258,144} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{30db660 V.ED..... ......ID 849,35-962,148} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{8a81719 V.E...... ......ID 0,593-1016,873} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{cf1a3de V.ED..... ......ID 27,16-989,83} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{e8499bf V.E...... ......ID 27,83-989,267} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{e07d88c V.ED..... ......ID 0,35-113,148} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{59a0bd5 V.E...... ......ID 132,0-389,184} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{df01fea V.ED..... ......ID 0,39-257,101} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{1f312db V.ED..... ......ID 0,101-257,144} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{49ff178 V.ED..... ......ID 389,0-572,184} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{e7c9051 V.E...... ......ID 572,0-830,184} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{ea850b6 V.ED..... ......ID 0,39-258,101} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{90601b7 V.ED..... ......ID 0,101-258,144} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{69ead24 V.ED..... ......ID 849,35-962,148} during layout: running second layout pass
+10-12 11:22:42.345 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{828e08d V.E...... ......ID 0,884-1016,1164} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{7e0c242 V.ED..... ......ID 27,16-989,83} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{6ef0253 V.E...... ......ID 27,83-989,267} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{5ab7790 V.ED..... ......ID 0,35-113,148} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{1cff889 V.E...... ......ID 132,0-389,184} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{63cc08e V.ED..... ......ID 0,39-257,101} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{65d70af V.ED..... ......ID 0,101-257,144} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{4787cbc V.ED..... ......ID 389,0-572,184} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{2b69445 V.E...... ......ID 572,0-830,184} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{b48579a V.ED..... ......ID 0,39-258,101} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{39a68cb V.ED..... ......ID 0,101-258,144} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{caea8a8 V.ED..... ......ID 849,35-962,148} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{7b12fc1 V.E...... ......ID 0,1175-1016,1455} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{3445366 V.ED..... ......ID 27,16-989,83} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{c64c6a7 V.E...... ......ID 27,83-989,267} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{799a754 V.ED..... ......ID 0,35-113,148} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{c6006fd V.E...... ......ID 132,0-389,184} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{bb23ff2 V.ED..... ......ID 0,39-257,101} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{18d2643 V.ED..... ......ID 0,101-257,144} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{593e4c0 V.ED..... ......ID 389,0-572,184} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{c2b15f9 V.E...... ......ID 572,0-830,184} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{6a0693e V.ED..... ......ID 0,39-258,101} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{651e39f V.ED..... ......ID 0,101-258,144} during layout: running second layout pass
+10-12 11:22:42.346 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{328cec V.ED..... ......ID 849,35-962,148} during layout: running second layout pass
+10-12 11:22:42.347 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{6fe18b5 V.E...... ......ID 0,1466-1016,1746} during layout: running second layout pass
+10-12 11:22:42.347 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{6b5db4a V.ED..... ......ID 27,16-989,83} during layout: running second layout pass
+10-12 11:22:42.347 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{97b1abb V.E...... ......ID 27,83-989,267} during layout: running second layout pass
+10-12 11:22:42.347 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{3318bd8 V.ED..... ......ID 0,35-113,148} during layout: running second layout pass
+10-12 11:22:42.347 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{5c48b31 V.E...... ......ID 132,0-389,184} during layout: running second layout pass
+10-12 11:22:42.347 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{ffe6216 V.ED..... ......ID 0,39-257,101} during layout: running second layout pass
+10-12 11:22:42.347 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{436a797 V.ED..... ......ID 0,101-257,144} during layout: running second layout pass
+10-12 11:22:42.347 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{81f8d84 V.ED..... ......ID 389,0-572,184} during layout: running second layout pass
+10-12 11:22:42.347 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{aa5a96d V.E...... ......ID 572,0-830,184} during layout: running second layout pass
+10-12 11:22:42.347 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{97689a2 V.ED..... ......ID 0,39-258,101} during layout: running second layout pass
+10-12 11:22:42.347 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{ab42633 V.ED..... ......ID 0,101-258,144} during layout: running second layout pass
+10-12 11:22:42.347 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{c9fdf0 V.ED..... ......ID 849,35-962,148} during layout: running second layout pass
+10-12 11:22:42.347 W/View    ( 4405): requestLayout() improperly called by android.widget.GridLayout{9006f69 V.E...... ......ID 32,726-1048,1425} during layout: running second layout pass
+10-12 11:22:42.347 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatButton{b579dee VFED..C.. ......ID 97,22-328,339 #7f080079 app:id/match19Button} during layout: running second layout pass
+10-12 11:22:42.347 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatButton{a80f28f VFED..C.. ......ID 392,62-624,379 #7f08007a app:id/match913Button} during layout: running second layout pass
+10-12 11:22:42.347 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatButton{c69091c VFED..C.. ......ID 688,22-919,339 #7f08004d app:id/challengeButton} during layout: running second layout pass
+10-12 11:22:42.347 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatButton{1279925 VFED..C.. ......ID 97,401-328,718 #7f080073 app:id/lifeDeathButton} during layout: running second layout pass
+10-12 11:22:42.347 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatButton{623aafa VF.D..C.. ......ID 392,401-624,718 #7f08003b app:id/aiBattleButton} during layout: running second layout pass
+10-12 11:22:42.347 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatButton{2a428ab VFED..C.. ......ID 688,401-919,718 #7f080066 app:id/friendButton} during layout: running second layout pass
+10-12 11:22:42.347 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{38b9b08 V.E...... ......ID 32,1425-1048,1726} during layout: running second layout pass
+10-12 11:22:42.347 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{bdda2a1 V.E...... ......ID 0,0-169,301} during layout: running second layout pass
+10-12 11:22:42.348 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{e717cc6 V.ED..... ......ID 0,57-169,170} during layout: running second layout pass
+10-12 11:22:42.348 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{17aa487 V.ED..... ......ID 0,170-169,243} during layout: running second layout pass
+10-12 11:22:42.348 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{6c35fb4 V.E...... ......ID 169,0-338,301} during layout: running second layout pass
+10-12 11:22:42.348 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{190c7dd V.ED..... ......ID 0,57-169,170} during layout: running second layout pass
+10-12 11:22:42.348 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{9789f52 V.ED..... ......ID 0,170-169,243} during layout: running second layout pass
+10-12 11:22:42.348 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{4530223 V.E...... ......ID 338,0-507,301} during layout: running second layout pass
+10-12 11:22:42.348 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{c10c320 V.ED..... ......ID 0,57-169,170} during layout: running second layout pass
+10-12 11:22:42.348 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{95704d9 V.ED..... ......ID 0,170-169,243} during layout: running second layout pass
+10-12 11:22:42.348 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{65d5e9e V.E...... ......ID 507,0-676,301} during layout: running second layout pass
+10-12 11:22:42.348 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{4c99d7f V.ED..... ......ID 0,57-169,170} during layout: running second layout pass
+10-12 11:22:42.348 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{70ef14c V.ED..... ......ID 0,170-169,243} during layout: running second layout pass
+10-12 11:22:42.348 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{baa1595 V.E...... ......ID 676,0-846,301} during layout: running second layout pass
+10-12 11:22:42.348 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{3cc6aa V.ED..... ......ID 0,57-170,170} during layout: running second layout pass
+10-12 11:22:42.348 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{fe4929b V.ED..... ......ID 0,170-170,243} during layout: running second layout pass
+10-12 11:22:42.348 W/View    ( 4405): requestLayout() improperly called by android.widget.LinearLayout{7dfd638 V.E...... ......ID 846,0-1016,301} during layout: running second layout pass
+10-12 11:22:42.348 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{4e37611 V.ED..... ......ID 0,57-170,170} during layout: running second layout pass
+10-12 11:22:42.348 W/View    ( 4405): requestLayout() improperly called by androidx.appcompat.widget.AppCompatTextView{4f8a376 V.ED..... ......ID 0,170-170,243} during layout: running second layout pass
+10-12 11:22:42.356 D/android.widget.GridLayout( 4405): vertical constraints: y1-y0>=182, y2-y1>=182, y2-y0<=363 are inconsistent; permanently removing: y2-y0<=363. 
+10-12 11:22:42.418 I/ActivityTaskManager(  612): Displayed com.badukai.java/com.badukai.MainActivity: +477ms
+10-12 11:22:42.425 D/android.widget.GridLayout( 4405): vertical constraints: y1-y0>=182, y2-y1>=182, y2-y0<=363 are inconsistent; permanently removing: y2-y0<=363. 
+10-12 11:22:42.434 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0
+10-12 11:22:42.434 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0 usage=0x20001a00 alloc_width=1080, alloc_height=1920
+10-12 11:22:42.435 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x20001a00, consumer_usage : 0x20001a00, , stride : 0, alloc_format : 1, size : 8355840, layer_count : 1
+10-12 11:22:42.435 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1080, alloc_height : 1920
+10-12 11:22:42.435 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:44.757 I/logd    (  301): logdr: UID=2000 GID=2000 PID=4437 n tail=0 logMask=99 pid=0 start=0ns deadline=0ns
+10-12 11:22:42.442 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:22:42.442 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:22:42.450 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0
+10-12 11:22:42.451 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0 usage=0x20001a00 alloc_width=1080, alloc_height=1920
+10-12 11:22:42.451 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x20001a00, consumer_usage : 0x20001a00, , stride : 0, alloc_format : 1, size : 8355840, layer_count : 1
+10-12 11:22:42.451 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1080, alloc_height : 1920
+10-12 11:22:42.451 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:42.468 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0
+10-12 11:22:42.468 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0 usage=0x20001a00 alloc_width=1080, alloc_height=1920
+10-12 11:22:42.469 V/WindowManager(  612): getPackagePerformanceMode -- ComponentInfo{com.badukai.java/com.badukai.MainActivity} -- com.badukai.java -- mode=0
+10-12 11:22:42.469 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x20001a00, consumer_usage : 0x20001a00, , stride : 0, alloc_format : 1, size : 8355840, layer_count : 1
+10-12 11:22:42.469 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1080, alloc_height : 1920
+10-12 11:22:42.469 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:42.705 W/InputManager-JNI(  612): Input channel object '4294964 Splash Screen com.badukai.java (client)' was disposed without first being removed with the input manager!
+10-12 11:22:42.811 E/WifiVendorHal(  612): getWifiLinkLayerStats_1_5_Internal(l.1191) failed {.code = ERROR_UNKNOWN, .description = unknown error}
+10-12 11:22:42.818 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:42.818 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0x1a00 alloc_width=1088, alloc_height=1920
+10-12 11:22:42.819 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x1a00, consumer_usage : 0x1a00, , stride : 0, alloc_format : 1, size : 8486912, layer_count : 1
+10-12 11:22:42.819 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1088, alloc_height : 1920
+10-12 11:22:42.819 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:43.442 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:22:43.443 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:22:43.712 D/BufferPoolAccessor2.0( 2448): bufferpool2 0xb400007cc38162b8 : 5(19200 size) total buffers - 4(15360 size) used buffers - 112893/112898 (recycle/alloc) - 9/225787 (fetch/transfer)
+10-12 11:22:43.713 D/BufferPoolAccessor2.0(  485): bufferpool2 0xb400006f4c7e3348 : 2(48000 size) total buffers - 1(24000 size) used buffers - 112893/112895 (recycle/alloc) - 2/112893 (fetch/transfer)
+10-12 11:22:44.443 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:22:44.443 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:22:46.813 I/logd    (  301): logdr: UID=2000 GID=2000 PID=4447 n tail=0 logMask=99 pid=0 start=0ns deadline=0ns
+10-12 11:22:44.577 D/KataGoEngine( 4405): KataGo JNI GTP response: = KataGo
+10-12 11:22:44.577 I/KataGoEngine( 4405): KataGo GTP ready response: = KataGo
+10-12 11:22:44.577 I/KataGoEngine( 4405): STARTUP_TIMING phase=engine_cpu_gtp_name_wait ms=2343.827735
+10-12 11:22:44.577 I/KataGoEngine( 4405): STARTUP_TIMING phase=engine_java_start_total ms=2353.507278
+10-12 11:22:44.577 I/KataGoEngine( 4405): === JNI/EIGEN ENGINE STARTED SUCCESSFULLY ===
+10-12 11:22:44.577 I/MainActivity( 4405): Initial engine phase=engine_start elapsedMs=2353 ok=true
+10-12 11:22:44.577 D/KataGoEngine( 4405): setBoardSize in, size=9
+10-12 11:22:44.577 D/KataGoEngine( 4405): isReady in, running=true
+10-12 11:22:44.577 D/KataGoEngine( 4405): simpleCommand in, command=boardsize 9, timeoutMs=90000
+10-12 11:22:44.577 D/KataGoEngine( 4405): sendCommandSync in, command=boardsize 9, running=true
+10-12 11:22:44.577 D/KataGoEngine( 4405): JNI GTP command=boardsize 9 queued=true enqueueMs=0
+10-12 11:22:44.577 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=90000
+10-12 11:22:44.577 D/KataGoEngine( 4405): KataGo JNI GTP response: =
+10-12 11:22:44.578 I/KataGoEngine( 4405): GTP boardsize=9 ok=true elapsedMs=0
+10-12 11:22:44.578 D/KataGoEngine( 4405): clearBoard in
+10-12 11:22:44.578 D/KataGoEngine( 4405): simpleCommand in, command=clear_board, timeoutMs=5000
+10-12 11:22:44.578 D/KataGoEngine( 4405): sendCommandSync in, command=clear_board, running=true
+10-12 11:22:44.578 D/KataGoEngine( 4405): JNI GTP command=clear_board queued=true enqueueMs=0
+10-12 11:22:44.578 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=5000
+10-12 11:22:44.578 D/KataGoEngine( 4405): KataGo JNI GTP response: =
+10-12 11:22:44.578 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-rules chinese, timeoutMs=10000
+10-12 11:22:44.578 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-rules chinese, running=true
+10-12 11:22:44.578 D/KataGoEngine( 4405): JNI GTP command=kata-set-rules chinese queued=true enqueueMs=0
+10-12 11:22:44.578 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:44.578 D/KataGoEngine( 4405): KataGo JNI GTP response: =
+10-12 11:22:44.578 D/KataGoEngine( 4405): sendCommandSync in, command=kata-get-rules, running=true
+10-12 11:22:44.578 D/KataGoEngine( 4405): JNI GTP command=kata-get-rules queued=true enqueueMs=0
+10-12 11:22:44.578 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:44.578 D/KataGoEngine( 4405): KataGo JNI GTP response: = {"friendlyPassOk":true,"hasButton":false,"ko":"SIMPLE","scoring":"AREA","suicide":false,"tax":"NONE","whiteHandicapBonus":"N"}
+10-12 11:22:44.578 D/KataGoEngine( 4405): parseGtpResponse in, response== {"friendlyPassOk":true,"hasButton":false,"ko":"SIMPLE","scoring":"AREA","suicide":false,"tax":"NONE","whiteHandicapBonus":"N"}
+10-12 11:22:44.578 D/KataGoEngine( 4405): 
+10-12 11:22:44.579 I/KataGoEngine( 4405): Chinese rules verified=true rules={"friendlyPassOk":true,"hasButton":false,"ko":"SIMPLE","scoring":"AREA","suicide":false,"tax":"NONE","whiteHandicapBonus":"N"}
+10-12 11:22:44.579 D/MainActivity( 4405): komiFor in, size=9, condition=0
+10-12 11:22:44.579 D/KataGoEngine( 4405): setKomi in, komi=5.5
+10-12 11:22:44.579 D/KataGoEngine( 4405): simpleCommand in, command=komi 5.5, timeoutMs=5000
+10-12 11:22:44.579 D/KataGoEngine( 4405): sendCommandSync in, command=komi 5.5, running=true
+10-12 11:22:44.579 D/KataGoEngine( 4405): JNI GTP command=komi 5.5 queued=true enqueueMs=0
+10-12 11:22:44.579 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=5000
+10-12 11:22:44.579 D/KataGoEngine( 4405): KataGo JNI GTP response: =
+10-12 11:22:44.579 I/MainActivity( 4405): Initial engine phase=gtp_board_setup elapsedMs=1 ok=true
+10-12 11:22:44.579 I/MainActivity( 4405): Initial engine ready=true humanSL=true elapsedMs=2356
+10-12 11:22:44.580 D/MainActivity( 4405): render in, message=准备好了, engineReady=true, thinking=false, currentPlayer=BLACK
+10-12 11:22:44.581 D/GoBoardView( 4405): setBoard in, board=com.badukai.game.GoBoard@cd81de4
+10-12 11:22:44.581 D/GoBoardView( 4405): setLastMove in, point=null
+10-12 11:22:44.581 D/GoBoardView( 4405): setInputEnabled in, enabled=false
+10-12 11:22:44.582 D/MainActivity( 4405): updateButtons in, engineReady=true, thinking=false, currentPlayer=BLACK, playerColor=BLACK
+10-12 11:22:44.600 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:44.600 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0x1a00 alloc_width=1088, alloc_height=1920
+10-12 11:22:44.601 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x1a00, consumer_usage : 0x1a00, , stride : 0, alloc_format : 1, size : 8486912, layer_count : 1
+10-12 11:22:44.601 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1088, alloc_height : 1920
+10-12 11:22:44.601 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:45.443 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:22:45.443 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:22:45.625 D/BufferPoolAccessor2.0(  429): bufferpool2 0xecbc21e8 : 1(2088960 size) total buffers - 1(2088960 size) used buffers - 11485/11486 (recycle/alloc) - 2/11485 (fetch/transfer)
+10-12 11:22:45.817 E/WifiVendorHal(  612): getWifiLinkLayerStats_1_5_Internal(l.1191) failed {.code = ERROR_UNKNOWN, .description = unknown error}
+10-12 11:22:45.888 E/TaskPersister(  612): File error accessing recents directory (directory doesn't exist?).
+10-12 11:22:46.444 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:22:46.444 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:22:48.881 I/logd    (  301): logdr: UID=2000 GID=2000 PID=4454 n tail=0 logMask=99 pid=0 start=0ns deadline=0ns
+10-12 11:22:46.732 D/AndroidRuntime( 4466): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-12 11:22:46.735 I/AndroidRuntime( 4466): Using default boot image
+10-12 11:22:46.735 I/AndroidRuntime( 4466): Leaving lock profiling enabled
+10-12 11:22:46.731 I/app_process( 4466): type=1400 audit(0.0:245): avc: denied { read } for name="u:object_r:odsign_prop:s0" dev="tmpfs" ino=213 scontext=u:r:shell:s0 tcontext=u:object_r:odsign_prop:s0 tclass=file permissive=1
+10-12 11:22:46.731 I/app_process( 4466): type=1400 audit(0.0:246): avc: denied { open } for path="/dev/__properties__/u:object_r:odsign_prop:s0" dev="tmpfs" ino=213 scontext=u:r:shell:s0 tcontext=u:object_r:odsign_prop:s0 tclass=file permissive=1
+10-12 11:22:46.731 I/app_process( 4466): type=1400 audit(0.0:247): avc: denied { getattr } for path="/dev/__properties__/u:object_r:odsign_prop:s0" dev="tmpfs" ino=213 scontext=u:r:shell:s0 tcontext=u:object_r:odsign_prop:s0 tclass=file permissive=1
+10-12 11:22:46.731 I/app_process( 4466): type=1400 audit(0.0:248): avc: denied { map } for path="/dev/__properties__/u:object_r:odsign_prop:s0" dev="tmpfs" ino=213 scontext=u:r:shell:s0 tcontext=u:object_r:odsign_prop:s0 tclass=file permissive=1
+10-12 11:22:46.737 W/app_process( 4466): ART APEX data files are untrusted.
+10-12 11:22:46.737 I/app_process( 4466): Core platform API reporting enabled, enforcing=false
+10-12 11:22:46.800 D/app_process( 4466): Time zone APEX ICU file found: /apex/com.android.tzdata/etc/icu/icu_tzdata.dat
+10-12 11:22:46.800 D/app_process( 4466): I18n APEX ICU file found: /apex/com.android.i18n/etc/icu/icudt68l.dat
+10-12 11:22:46.806 W/app_process( 4466): ClassLoaderContext classpath size mismatch. expected=0, found=1 (PCL[] | PCL[/system/framework/android.test.runner.jar*3487696984])
+10-12 11:22:46.820 D/AndroidRuntime( 4466): Calling main entry com.android.commands.uiautomator.Launcher
+10-12 11:22:46.828 D/BatterySaverPolicy(  612): accessibility changed to true, updating policy.
+10-12 11:22:46.829 V/UiAutomation( 4466): Init UiAutomation@24ff60d[id=82, flags=0]
+10-12 11:22:46.833 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:46.833 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0x1a00 alloc_width=1088, alloc_height=1920
+10-12 11:22:46.834 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x1a00, consumer_usage : 0x1a00, , stride : 0, alloc_format : 1, size : 8486912, layer_count : 1
+10-12 11:22:46.834 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1088, alloc_height : 1920
+10-12 11:22:46.834 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:47.444 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:22:47.445 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:22:47.841 I/uiautomator( 4466): type=1400 audit(0.0:249): avc: denied { read } for name="u:object_r:qemu_sf_lcd_density_prop:s0" dev="tmpfs" ino=230 scontext=u:r:shell:s0 tcontext=u:object_r:qemu_sf_lcd_density_prop:s0 tclass=file permissive=1
+10-12 11:22:47.841 I/uiautomator( 4466): type=1400 audit(0.0:250): avc: denied { open } for path="/dev/__properties__/u:object_r:qemu_sf_lcd_density_prop:s0" dev="tmpfs" ino=230 scontext=u:r:shell:s0 tcontext=u:object_r:qemu_sf_lcd_density_prop:s0 tclass=file permissive=1
+10-12 11:22:47.841 I/uiautomator( 4466): type=1400 audit(0.0:251): avc: denied { getattr } for path="/dev/__properties__/u:object_r:qemu_sf_lcd_density_prop:s0" dev="tmpfs" ino=230 scontext=u:r:shell:s0 tcontext=u:object_r:qemu_sf_lcd_density_prop:s0 tclass=file permissive=1
+10-12 11:22:47.841 I/uiautomator( 4466): type=1400 audit(0.0:252): avc: denied { map } for path="/dev/__properties__/u:object_r:qemu_sf_lcd_density_prop:s0" dev="tmpfs" ino=230 scontext=u:r:shell:s0 tcontext=u:object_r:qemu_sf_lcd_density_prop:s0 tclass=file permissive=1
+10-12 11:22:48.036 W/AccessibilityNodeInfoDumper( 4466): Fetch time: 188ms
+10-12 11:22:48.040 D/BatterySaverPolicy(  612): accessibility changed to false, updating policy.
+10-12 11:22:48.060 D/AndroidRuntime( 4466): Shutting down VM
+10-12 11:22:48.156 D/ProfileInstaller( 4405): Installing profile for com.badukai.java
+10-12 11:22:48.445 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:22:48.445 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:22:48.825 E/WifiVendorHal(  612): getWifiLinkLayerStats_1_5_Internal(l.1191) failed {.code = ERROR_UNKNOWN, .description = unknown error}
+10-12 11:22:48.833 D/BufferPoolAccessor2.0( 2448): bufferpool2 0xb400007cc38162b8 : 5(19200 size) total buffers - 4(15360 size) used buffers - 113149/113154 (recycle/alloc) - 9/226299 (fetch/transfer)
+10-12 11:22:48.834 D/BufferPoolAccessor2.0(  485): bufferpool2 0xb400006f4c7e3348 : 2(48000 size) total buffers - 1(24000 size) used buffers - 113149/113151 (recycle/alloc) - 2/113149 (fetch/transfer)
+10-12 11:22:48.952 D/MainActivity( 4405): showNewGameDialog in, boardSize=9, playerColor=BLACK
+10-12 11:22:48.956 D/AudioFlinger(  440): ro.audio.silent will be ignored for threads on AUDIO_DEVICE_OUT_REMOTE_SUBMIX
+10-12 11:22:49.065 D/AndroidRuntime( 4494): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-12 11:22:49.069 I/AndroidRuntime( 4494): Using default boot image
+10-12 11:22:49.069 I/AndroidRuntime( 4494): Leaving lock profiling enabled
+10-12 11:22:49.071 W/app_process( 4494): ART APEX data files are untrusted.
+10-12 11:22:49.065 I/app_process( 4494): type=1400 audit(0.0:253): avc: denied { read } for name="u:object_r:odsign_prop:s0" dev="tmpfs" ino=213 scontext=u:r:shell:s0 tcontext=u:object_r:odsign_prop:s0 tclass=file permissive=1
+10-12 11:22:49.071 I/app_process( 4494): Core platform API reporting enabled, enforcing=false
+10-12 11:22:49.065 I/app_process( 4494): type=1400 audit(0.0:254): avc: denied { open } for path="/dev/__properties__/u:object_r:odsign_prop:s0" dev="tmpfs" ino=213 scontext=u:r:shell:s0 tcontext=u:object_r:odsign_prop:s0 tclass=file permissive=1
+10-12 11:22:49.065 I/app_process( 4494): type=1400 audit(0.0:255): avc: denied { getattr } for path="/dev/__properties__/u:object_r:odsign_prop:s0" dev="tmpfs" ino=213 scontext=u:r:shell:s0 tcontext=u:object_r:odsign_prop:s0 tclass=file permissive=1
+10-12 11:22:49.065 I/app_process( 4494): type=1400 audit(0.0:256): avc: denied { map } for path="/dev/__properties__/u:object_r:odsign_prop:s0" dev="tmpfs" ino=213 scontext=u:r:shell:s0 tcontext=u:object_r:odsign_prop:s0 tclass=file permissive=1
+10-12 11:22:49.129 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:49.129 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0xb00 alloc_width=1200, alloc_height=1280
+10-12 11:22:49.130 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'ViewRootImpl[MainActivity]#1(BLAST Consumer)1'. share_fd : 10, share_attr_fd : 11, width : 1195, height : 1279, req_format : 0x1, producer_usage : 0xb00, consumer_usage : 0xb00, , stride : 0, alloc_format : 1, size : 6240256, layer_count : 1
+10-12 11:22:49.130 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4800, alloc_width : 1200, alloc_height : 1280
+10-12 11:22:49.130 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:49.130 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:49.130 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0xb00 alloc_width=1200, alloc_height=1280
+10-12 11:22:49.131 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'ViewRootImpl[MainActivity]#1(BLAST Consumer)1'. share_fd : 10, share_attr_fd : 11, width : 1195, height : 1279, req_format : 0x1, producer_usage : 0xb00, consumer_usage : 0xb00, , stride : 0, alloc_format : 1, size : 6240256, layer_count : 1
+10-12 11:22:49.131 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4800, alloc_width : 1200, alloc_height : 1280
+10-12 11:22:49.131 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:49.131 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:49.131 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0xb00 alloc_width=1200, alloc_height=1280
+10-12 11:22:49.132 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'ViewRootImpl[MainActivity]#1(BLAST Consumer)1'. share_fd : 10, share_attr_fd : 11, width : 1195, height : 1279, req_format : 0x1, producer_usage : 0xb00, consumer_usage : 0xb00, , stride : 0, alloc_format : 1, size : 6240256, layer_count : 1
+10-12 11:22:49.132 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4800, alloc_width : 1200, alloc_height : 1280
+10-12 11:22:49.132 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:49.136 D/app_process( 4494): Time zone APEX ICU file found: /apex/com.android.tzdata/etc/icu/icu_tzdata.dat
+10-12 11:22:49.136 D/app_process( 4494): I18n APEX ICU file found: /apex/com.android.i18n/etc/icu/icudt68l.dat
+10-12 11:22:49.143 W/app_process( 4494): ClassLoaderContext classpath size mismatch. expected=0, found=1 (PCL[] | PCL[/system/framework/android.test.runner.jar*3487696984])
+10-12 11:22:49.158 D/AndroidRuntime( 4494): Calling main entry com.android.commands.uiautomator.Launcher
+10-12 11:22:49.163 D/BatterySaverPolicy(  612): accessibility changed to true, updating policy.
+10-12 11:22:49.165 V/UiAutomation( 4494): Init UiAutomation@a37c548[id=83, flags=0]
+10-12 11:22:49.202 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0
+10-12 11:22:49.203 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0 usage=0x20001a00 alloc_width=1080, alloc_height=1920
+10-12 11:22:49.204 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x20001a00, consumer_usage : 0x20001a00, , stride : 0, alloc_format : 1, size : 8355840, layer_count : 1
+10-12 11:22:49.204 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1080, alloc_height : 1920
+10-12 11:22:49.204 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:49.206 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:49.206 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0xb00 alloc_width=1136, alloc_height=1200
+10-12 11:22:49.207 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'ViewRootImpl[MainActivity]#1(BLAST Consumer)1'. share_fd : 10, share_attr_fd : 11, width : 1122, height : 1193, req_format : 0x1, producer_usage : 0xb00, consumer_usage : 0xb00, , stride : 0, alloc_format : 1, size : 5538816, layer_count : 1
+10-12 11:22:49.207 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4544, alloc_width : 1136, alloc_height : 1200
+10-12 11:22:49.207 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:49.218 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0
+10-12 11:22:49.218 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0 usage=0x20001a00 alloc_width=1080, alloc_height=1920
+10-12 11:22:49.219 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x20001a00, consumer_usage : 0x20001a00, , stride : 0, alloc_format : 1, size : 8355840, layer_count : 1
+10-12 11:22:49.219 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1080, alloc_height : 1920
+10-12 11:22:49.219 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:49.228 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:49.228 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0xb00 alloc_width=1136, alloc_height=1200
+10-12 11:22:49.229 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'ViewRootImpl[MainActivity]#1(BLAST Consumer)1'. share_fd : 10, share_attr_fd : 11, width : 1122, height : 1193, req_format : 0x1, producer_usage : 0xb00, consumer_usage : 0xb00, , stride : 0, alloc_format : 1, size : 5538816, layer_count : 1
+10-12 11:22:49.229 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4544, alloc_width : 1136, alloc_height : 1200
+10-12 11:22:49.229 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:49.234 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0
+10-12 11:22:49.235 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0 usage=0x100000020000830 alloc_width=960, alloc_height=544
+10-12 11:22:49.235 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'SolidColor'. share_fd : 10, share_attr_fd : 11, width : 960, height : 544, req_format : 0x1, producer_usage : 0x100000020000830, consumer_usage : 0x100000020000830, , stride : 960, alloc_format : 1, size : 2088960, layer_count : 1
+10-12 11:22:49.235 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 3840, alloc_width : 960, alloc_height : 544
+10-12 11:22:49.235 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:49.238 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:49.238 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0xb00 alloc_width=1136, alloc_height=1200
+10-12 11:22:49.238 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'ViewRootImpl[MainActivity]#1(BLAST Consumer)1'. share_fd : 10, share_attr_fd : 11, width : 1122, height : 1193, req_format : 0x1, producer_usage : 0xb00, consumer_usage : 0xb00, , stride : 0, alloc_format : 1, size : 5538816, layer_count : 1
+10-12 11:22:49.239 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4544, alloc_width : 1136, alloc_height : 1200
+10-12 11:22:49.239 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:49.240 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:49.240 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0x1a00 alloc_width=1088, alloc_height=1920
+10-12 11:22:49.242 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x1a00, consumer_usage : 0x1a00, , stride : 0, alloc_format : 1, size : 8486912, layer_count : 1
+10-12 11:22:49.242 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1088, alloc_height : 1920
+10-12 11:22:49.242 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:49.251 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:49.251 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0x1a00 alloc_width=1088, alloc_height=1920
+10-12 11:22:49.252 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x1a00, consumer_usage : 0x1a00, , stride : 0, alloc_format : 1, size : 8486912, layer_count : 1
+10-12 11:22:49.252 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1088, alloc_height : 1920
+10-12 11:22:49.252 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:49.256 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:49.256 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0x1a00 alloc_width=1088, alloc_height=1920
+10-12 11:22:49.257 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x1a00, consumer_usage : 0x1a00, , stride : 0, alloc_format : 1, size : 8486912, layer_count : 1
+10-12 11:22:49.257 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1088, alloc_height : 1920
+10-12 11:22:49.257 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:49.267 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:49.267 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0x1a00 alloc_width=1088, alloc_height=1920
+10-12 11:22:49.269 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x1a00, consumer_usage : 0x1a00, , stride : 0, alloc_format : 1, size : 8486912, layer_count : 1
+10-12 11:22:49.269 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1088, alloc_height : 1920
+10-12 11:22:49.269 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:49.275 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0x10000
+10-12 11:22:49.275 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0x10000 usage=0x1a00 alloc_width=1088, alloc_height=1920
+10-12 11:22:49.277 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'FramebufferSurface'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0x1a00, consumer_usage : 0x1a00, , stride : 0, alloc_format : 1, size : 8486912, layer_count : 1
+10-12 11:22:49.277 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1088, alloc_height : 1920
+10-12 11:22:49.277 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:22:49.446 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:22:49.446 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:22:50.306 W/AccessibilityNodeInfoDumper( 4494): Fetch time: 61ms
+10-12 11:22:50.308 D/BatterySaverPolicy(  612): accessibility changed to false, updating policy.
+10-12 11:22:50.325 D/AndroidRuntime( 4494): Shutting down VM
+10-12 11:22:50.446 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:22:50.447 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:22:51.047 D/BufferPoolAccessor2.0(  429): bufferpool2 0xecbc21e8 : 1(2088960 size) total buffers - 1(2088960 size) used buffers - 11545/11546 (recycle/alloc) - 2/11545 (fetch/transfer)
+10-12 11:22:51.238 I/MainActivity( 4405): Saved new-game preference boardSize=9 backend=CPU
+10-12 11:22:51.238 D/MainActivity( 4405): showGamePage in, boardSize=9
+10-12 11:22:51.240 D/MainActivity( 4405): startNewGame in, engineReady=true, boardSize=9, kyu=12
+10-12 11:22:51.240 D/GoBoard ( 4405): GoBoard in, size=9
+10-12 11:22:51.241 D/KataGoEngine( 4405): isReady in, running=true
+10-12 11:22:51.241 D/MainActivity( 4405): render in, message=正在初始化棋局..., engineReady=false, thinking=false, currentPlayer=BLACK
+10-12 11:22:51.241 D/GoBoardView( 4405): setBoard in, board=com.badukai.game.GoBoard@255692e
+10-12 11:22:51.241 D/GoBoardView( 4405): setLastMove in, point=null
+10-12 11:22:51.241 D/GoBoardView( 4405): setInputEnabled in, enabled=false
+10-12 11:22:51.243 D/MainActivity( 4405): updateButtons in, engineReady=false, thinking=false, currentPlayer=BLACK, playerColor=BLACK
+10-12 11:22:51.245 D/KataGoEngine( 4405): isReady in, running=true
+10-12 11:22:51.245 I/MainActivity( 4405): Reusing running Human SL KataGo process for new game
+10-12 11:22:51.245 D/KataGoEngine( 4405): setBoardSize in, size=9
+10-12 11:22:51.245 D/KataGoEngine( 4405): isReady in, running=true
+10-12 11:22:51.245 I/KataGoEngine( 4405): Reuse existing GTP boardsize=9; clear_board will reset game state
+10-12 11:22:51.245 I/MainActivity( 4405): New game setup boardsize elapsedMs=0 ok=true
+10-12 11:22:51.245 D/KataGoEngine( 4405): clearBoard in
+10-12 11:22:51.246 D/KataGoEngine( 4405): simpleCommand in, command=clear_board, timeoutMs=5000
+10-12 11:22:51.246 D/KataGoEngine( 4405): sendCommandSync in, command=clear_board, running=true
+10-12 11:22:51.246 D/KataGoEngine( 4405): JNI GTP command=clear_board queued=true enqueueMs=0
+10-12 11:22:51.246 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=5000
+10-12 11:22:51.246 D/KataGoEngine( 4405): KataGo JNI GTP response: =
+10-12 11:22:51.246 I/MainActivity( 4405): New game setup clear_board elapsedMs=0 ok=true
+10-12 11:22:51.247 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-rules chinese, timeoutMs=10000
+10-12 11:22:51.247 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-rules chinese, running=true
+10-12 11:22:51.247 D/KataGoEngine( 4405): JNI GTP command=kata-set-rules chinese queued=true enqueueMs=0
+10-12 11:22:51.247 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:51.248 D/KataGoEngine( 4405): KataGo JNI GTP response: =
+10-12 11:22:51.248 D/KataGoEngine( 4405): sendCommandSync in, command=kata-get-rules, running=true
+10-12 11:22:51.248 D/KataGoEngine( 4405): JNI GTP command=kata-get-rules queued=true enqueueMs=0
+10-12 11:22:51.249 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:51.249 D/KataGoEngine( 4405): KataGo JNI GTP response: = {"friendlyPassOk":true,"hasButton":false,"ko":"SIMPLE","scoring":"AREA","suicide":false,"tax":"NONE","whiteHandicapBonus":"N"}
+10-12 11:22:51.249 D/KataGoEngine( 4405): parseGtpResponse in, response== {"friendlyPassOk":true,"hasButton":false,"ko":"SIMPLE","scoring":"AREA","suicide":false,"tax":"NONE","whiteHandicapBonus":"N"}
+10-12 11:22:51.249 D/KataGoEngine( 4405): 
+10-12 11:22:51.250 I/KataGoEngine( 4405): Chinese rules verified=true rules={"friendlyPassOk":true,"hasButton":false,"ko":"SIMPLE","scoring":"AREA","suicide":false,"tax":"NONE","whiteHandicapBonus":"N"}
+10-12 11:22:51.250 I/MainActivity( 4405): New game setup chinese_rules elapsedMs=3 ok=true
+10-12 11:22:51.250 D/MainActivity( 4405): komiFor in, size=9, condition=0
+10-12 11:22:51.250 D/KataGoEngine( 4405): setKomi in, komi=5.5
+10-12 11:22:51.251 D/KataGoEngine( 4405): simpleCommand in, command=komi 5.5, timeoutMs=5000
+10-12 11:22:51.251 D/KataGoEngine( 4405): sendCommandSync in, command=komi 5.5, running=true
+10-12 11:22:51.251 D/KataGoEngine( 4405): JNI GTP command=komi 5.5 queued=true enqueueMs=0
+10-12 11:22:51.251 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=5000
+10-12 11:22:51.251 D/KataGoEngine( 4405): KataGo JNI GTP response: =
+10-12 11:22:51.251 I/MainActivity( 4405): New game setup komi elapsedMs=1 ok=true
+10-12 11:22:51.252 D/KataGoEngine( 4405): setSearchLimits in, visits=8, seconds=8.0
+10-12 11:22:51.252 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxVisits 8, timeoutMs=10000
+10-12 11:22:51.253 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxVisits 8, running=true
+10-12 11:22:51.253 D/KataGoEngine( 4405): JNI GTP command=kata-set-param maxVisits 8 queued=true enqueueMs=0
+10-12 11:22:51.253 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:51.253 D/KataGoEngine( 4405): KataGo JNI GTP response: =
+10-12 11:22:51.254 W/InputManager-JNI(  612): Input channel object '80d0ffd com.badukai.java/com.badukai.MainActivity (client)' was disposed without first being removed with the input manager!
+10-12 11:22:51.256 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxTime 8.000, timeoutMs=10000
+10-12 11:22:51.258 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxTime 8.000, running=true
+10-12 11:22:51.258 D/KataGoEngine( 4405): JNI GTP command=kata-set-param maxTime 8.000 queued=true enqueueMs=0
+10-12 11:22:51.258 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:51.259 D/KataGoEngine( 4405): KataGo JNI GTP response: =
+10-12 11:22:51.259 D/KataGoEngine( 4405): sendCommandSync in, command=kata-get-param maxVisits, running=true
+10-12 11:22:51.260 D/KataGoEngine( 4405): JNI GTP command=kata-get-param maxVisits queued=true enqueueMs=0
+10-12 11:22:51.260 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:51.260 D/KataGoEngine( 4405): KataGo JNI GTP response: = 8
+10-12 11:22:51.260 D/KataGoEngine( 4405): parseGtpResponse in, response== 8
+10-12 11:22:51.260 D/KataGoEngine( 4405): 
+10-12 11:22:51.260 D/KataGoEngine( 4405): sendCommandSync in, command=kata-get-param maxTime, running=true
+10-12 11:22:51.260 D/KataGoEngine( 4405): KataGo JNI GTP response: = 8.0
+10-12 11:22:51.260 D/KataGoEngine( 4405): JNI GTP command=kata-get-param maxTime queued=true enqueueMs=0
+10-12 11:22:51.260 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:51.260 D/KataGoEngine( 4405): parseGtpResponse in, response== 8.0
+10-12 11:22:51.260 D/KataGoEngine( 4405): 
+10-12 11:22:51.260 I/KataGoEngine( 4405): Search limits verified=true requested: maxVisits=8 maxTime=8.000 readback: maxVisits=8 maxTime=8.0
+10-12 11:22:51.261 I/MainActivity( 4405): New game setup search_limits elapsedMs=9
+10-12 11:22:51.261 D/KataGoEngine( 4405): isReady in, running=true
+10-12 11:22:51.261 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param humanSLProfile rank_12k, timeoutMs=10000
+10-12 11:22:51.261 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param humanSLProfile rank_12k, running=true
+10-12 11:22:51.261 D/KataGoEngine( 4405): KataGo JNI GTP response: =
+10-12 11:22:51.261 D/KataGoEngine( 4405): JNI GTP command=kata-set-param humanSLProfile rank_12k queued=true enqueueMs=0
+10-12 11:22:51.261 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:51.261 D/KataGoEngine( 4405): sendCommandSync in, command=kata-get-param humanSLProfile, running=true
+10-12 11:22:51.261 D/KataGoEngine( 4405): JNI GTP command=kata-get-param humanSLProfile queued=true enqueueMs=0
+10-12 11:22:51.261 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:51.261 D/KataGoEngine( 4405): KataGo JNI GTP response: = rank_12k
+10-12 11:22:51.261 D/KataGoEngine( 4405): parseGtpResponse in, response== rank_12k
+10-12 11:22:51.261 D/KataGoEngine( 4405): 
+10-12 11:22:51.262 I/KataGoEngine( 4405): Human SL rank verified=true requested=rank_12k readback=rank_12k
+10-12 11:22:51.262 I/MainActivity( 4405): New game setup human_rank elapsedMs=1 totalMs=16
+10-12 11:22:51.262 D/KataGoEngine( 4405): isReady in, running=true
+10-12 11:22:51.262 D/KataGoEngine( 4405): isReady in, running=true
+10-12 11:22:51.262 I/MainActivity( 4405): Game backend requested=CPU actual=CPU/Eigen JNI ready=true
+10-12 11:22:51.266 V/WindowManager(  612): Unknown focus tokens, dropping reportFocusChanged
+10-12 11:22:51.275 D/android.widget.GridLayout( 4405): vertical constraints: y2-y0>=247, y2-y1<=123, y1-y0<=123 are inconsistent; permanently removing: y2-y1<=123. 
+10-12 11:22:51.285 D/MainActivity( 4405): komiFor in, size=9, condition=0
+10-12 11:22:51.285 D/MainActivity( 4405): render in, message=轮到你了, engineReady=true, thinking=false, currentPlayer=BLACK
+10-12 11:22:51.285 D/KataGoEngine( 4405): start in, model=HUMAN, running=false
+10-12 11:22:51.285 I/KataGoEngine( 4405): === JAVA KATAGO ENGINE / ANDROID ARM64 ===
+10-12 11:22:51.287 D/GoBoardView( 4405): setBoard in, board=com.badukai.game.GoBoard@255692e
+10-12 11:22:51.287 D/GoBoardView( 4405): setLastMove in, point=null
+10-12 11:22:51.287 D/GoBoard ( 4405): isGameOver in, consecutivePasses=0, moveCount=0
+10-12 11:22:51.287 D/GoBoardView( 4405): setInputEnabled in, enabled=true
+10-12 11:22:51.289 D/MainActivity( 4405): updateButtons in, engineReady=true, thinking=false, currentPlayer=BLACK, playerColor=BLACK
+10-12 11:22:51.289 D/GoBoard ( 4405): isGameOver in, consecutivePasses=0, moveCount=0
+10-12 11:22:51.290 D/GoBoard ( 4405): isGameOver in, consecutivePasses=0, moveCount=0
+10-12 11:22:51.294 I/KataGoEngine( 4405): STARTUP_TIMING phase=engine_backend_and_paths ms=9.195667
+10-12 11:22:51.294 D/KataGoEngine( 4405): copyAssetToFile in, assetPath=engine/default_gtp.cfg, dest=/data/user/0/com.badukai.java/files/engine_winrate/default_gtp.cfg
+10-12 11:22:51.327 I/KataGoEngine( 4405): Native GTP defaultBoardSize=9
+10-12 11:22:51.327 I/KataGoEngine( 4405): STARTUP_TIMING phase=engine_prepare_config ms=32.362004
+10-12 11:22:51.327 D/KataGoEngine( 4405): copyAssetToFile in, assetPath=engine/10b.bin, dest=/data/user/0/com.badukai.java/files/engine_winrate/10b.bin
+10-12 11:22:51.327 I/KataGoEngine( 4405): Reusing installed model asset: /data/user/0/com.badukai.java/files/engine_winrate/10b.bin
+10-12 11:22:51.327 I/KataGoEngine( 4405): STARTUP_TIMING phase=engine_prepare_model_asset ms=0.415333
+10-12 11:22:51.327 I/KataGoEngine( 4405): STARTUP_TIMING phase=engine_find_human_model ms=0.003792
+10-12 11:22:51.327 I/KataGoEngine( 4405): Model: /data/user/0/com.badukai.java/files/engine_winrate/10b.bin size=12003218
+10-12 11:22:51.327 I/KataGoEngine( 4405): Config: /data/user/0/com.badukai.java/files/engine_winrate/default_gtp.cfg
+10-12 11:22:51.327 I/KataGoEngine( 4405): Backend requested: PIE/ProcessBuilder
+10-12 11:22:51.328 I/KataGoEngine( 4405): Command: /data/app/~~NlEFYHDbT3MmhRO8AeoOpw==/com.badukai.java-pclqpwEmWevSyPYAMrttAw==/lib/arm64/libkatago_exec.so gtp -model /data/user/0/com.badukai.java/files/engine_winrate/10b.bin -config /data/user/0/com.badukai.java/files/engine_winrate/default_gtp.cfg
+10-12 11:22:51.330 D/KataGoEngine( 4405): startReaderThread in
+10-12 11:22:51.330 D/AndroidRuntime( 4525): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-12 11:22:51.330 D/KataGoEngine( 4405): startErrorReaderThread in
+10-12 11:22:51.330 D/KataGoEngine( 4405): sendCommandSync in, command=name, running=true
+10-12 11:22:51.330 D/KataGoEngine( 4405): Sending: name
+10-12 11:22:51.333 I/AndroidRuntime( 4525): Using default boot image
+10-12 11:22:51.333 I/AndroidRuntime( 4525): Leaving lock profiling enabled
+10-12 11:22:51.328 I/libkatago_exec.( 4529): type=1400 audit(0.0:257): avc: denied { getattr } for path="/postinstall" dev="dm-0" ino=45 scontext=u:r:untrusted_app:s0:c86,c256,c512,c768 tcontext=u:object_r:postinstall_mnt_dir:s0 tclass=dir permissive=1 app=com.badukai.java
+10-12 11:22:51.335 W/app_process( 4525): ART APEX data files are untrusted.
+10-12 11:22:51.335 I/app_process( 4525): Core platform API reporting enabled, enforcing=false
+10-12 11:22:51.371 E/CompositionEngine(  325): [StatusBar#0] Invalid device requested composition type change: DEVICE (2) --> DEVICE (2)
+10-12 11:22:51.371 E/CompositionEngine(  325): [NavigationBar0#0] Invalid device requested composition type change: DEVICE (2) --> DEVICE (2)
+10-12 11:22:51.401 D/KataGoEngine( 4405): KataGo stderr: KataGo v1.15.0
+10-12 11:22:51.401 D/KataGoEngine( 4405): KataGo stderr: Using Chinese rules initially, unless GTP/GUI overrides this
+10-12 11:22:51.405 D/app_process( 4525): Time zone APEX ICU file found: /apex/com.android.tzdata/etc/icu/icu_tzdata.dat
+10-12 11:22:51.405 D/app_process( 4525): I18n APEX ICU file found: /apex/com.android.i18n/etc/icu/icudt68l.dat
+10-12 11:22:51.412 W/app_process( 4525): ClassLoaderContext classpath size mismatch. expected=0, found=1 (PCL[] | PCL[/system/framework/android.test.runner.jar*3487696984])
+10-12 11:22:51.427 D/AndroidRuntime( 4525): Calling main entry com.android.commands.uiautomator.Launcher
+10-12 11:22:51.434 D/BatterySaverPolicy(  612): accessibility changed to true, updating policy.
+10-12 11:22:51.437 V/UiAutomation( 4525): Init UiAutomation@f7cfa1a[id=84, flags=0]
+10-12 11:22:51.447 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:22:51.447 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:22:51.814 D/KataGoEngine( 4405): KataGo stderr: Initializing board with boardXSize 9 boardYSize 9
+10-12 11:22:51.823 D/KataGoEngine( 4405): KataGo stdout: = KataGo
+10-12 11:22:51.823 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:51.823 I/KataGoEngine( 4405): KataGo GTP ready response: = KataGo
+10-12 11:22:51.823 I/KataGoEngine( 4405): === ENGINE STARTED SUCCESSFULLY ===
+10-12 11:22:51.823 D/KataGoEngine( 4405): setBoardSize in, size=9
+10-12 11:22:51.823 D/KataGoEngine( 4405): isReady in, running=true
+10-12 11:22:51.823 D/KataGoEngine( 4405): KataGo stderr: Loaded config /data/user/0/com.badukai.java/files/engine_winrate/default_gtp.cfg
+10-12 11:22:51.823 D/KataGoEngine( 4405): simpleCommand in, command=boardsize 9, timeoutMs=5000
+10-12 11:22:51.823 D/KataGoEngine( 4405): KataGo stderr: Loaded model /data/user/0/com.badukai.java/files/engine_winrate/10b.bin
+10-12 11:22:51.823 D/KataGoEngine( 4405): sendCommandSync in, command=boardsize 9, running=true
+10-12 11:22:51.823 D/KataGoEngine( 4405): KataGo stderr: Model name: g170-b10c128-s1141046784-d204142634
+10-12 11:22:51.823 D/KataGoEngine( 4405): Sending: boardsize 9
+10-12 11:22:51.823 D/KataGoEngine( 4405): KataGo stderr: GTP ready, beginning main protocol loop
+10-12 11:22:51.823 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=5000
+10-12 11:22:51.823 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:51.823 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:51.823 I/KataGoEngine( 4405): GTP boardsize=9 ok=true elapsedMs=0
+10-12 11:22:51.823 D/KataGoEngine( 4405): clearBoard in
+10-12 11:22:51.823 D/KataGoEngine( 4405): simpleCommand in, command=clear_board, timeoutMs=5000
+10-12 11:22:51.823 D/KataGoEngine( 4405): sendCommandSync in, command=clear_board, running=true
+10-12 11:22:51.823 D/KataGoEngine( 4405): Sending: clear_board
+10-12 11:22:51.823 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=5000
+10-12 11:22:51.824 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:51.824 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:51.824 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-rules chinese, timeoutMs=10000
+10-12 11:22:51.824 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-rules chinese, running=true
+10-12 11:22:51.824 D/KataGoEngine( 4405): Sending: kata-set-rules chinese
+10-12 11:22:51.824 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:51.824 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:51.824 D/KataGoEngine( 4405): KataGo stderr: Changed rules to Chinese
+10-12 11:22:51.824 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:51.824 D/KataGoEngine( 4405): sendCommandSync in, command=kata-get-rules, running=true
+10-12 11:22:51.824 D/KataGoEngine( 4405): Sending: kata-get-rules
+10-12 11:22:51.824 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:51.824 D/KataGoEngine( 4405): KataGo stdout: = {"friendlyPassOk":true,"hasButton":false,"ko":"SIMPLE","scoring":"AREA","suicide":false,"tax":"NONE","whiteHandicapBonus":"N"}
+10-12 11:22:51.824 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:51.825 D/KataGoEngine( 4405): parseGtpResponse in, response== {"friendlyPassOk":true,"hasButton":false,"ko":"SIMPLE","scoring":"AREA","suicide":false,"tax":"NONE","whiteHandicapBonus":"N"}
+10-12 11:22:51.825 D/KataGoEngine( 4405): 
+10-12 11:22:51.825 I/KataGoEngine( 4405): Chinese rules verified=true rules={"friendlyPassOk":true,"hasButton":false,"ko":"SIMPLE","scoring":"AREA","suicide":false,"tax":"NONE","whiteHandicapBonus":"N"}
+10-12 11:22:51.825 D/KataGoEngine( 4405): setKomi in, komi=5.5
+10-12 11:22:51.825 D/KataGoEngine( 4405): simpleCommand in, command=komi 5.5, timeoutMs=5000
+10-12 11:22:51.825 D/KataGoEngine( 4405): sendCommandSync in, command=komi 5.5, running=true
+10-12 11:22:51.825 D/KataGoEngine( 4405): Sending: komi 5.5
+10-12 11:22:51.825 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=5000
+10-12 11:22:51.825 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:51.825 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:51.825 D/StoneColor( 4405): toGtp in, color=BLACK
+10-12 11:22:51.825 D/KataGoEngine( 4405): isReady in, running=true
+10-12 11:22:51.825 D/KataGoEngine( 4405): sendCommandSync in, command=kata-get-param maxVisits, running=true
+10-12 11:22:51.825 D/KataGoEngine( 4405): Sending: kata-get-param maxVisits
+10-12 11:22:51.825 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:51.826 D/KataGoEngine( 4405): KataGo stdout: = 20
+10-12 11:22:51.826 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:51.826 D/KataGoEngine( 4405): parseGtpResponse in, response== 20
+10-12 11:22:51.826 D/KataGoEngine( 4405): 
+10-12 11:22:51.826 D/KataGoEngine( 4405): sendCommandSync in, command=kata-get-param maxTime, running=true
+10-12 11:22:51.826 D/KataGoEngine( 4405): Sending: kata-get-param maxTime
+10-12 11:22:51.826 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:51.826 D/KataGoEngine( 4405): KataGo stdout: = 0.4
+10-12 11:22:51.826 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:51.826 D/KataGoEngine( 4405): parseGtpResponse in, response== 0.4
+10-12 11:22:51.826 D/KataGoEngine( 4405): 
+10-12 11:22:51.826 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxVisits 48, timeoutMs=10000
+10-12 11:22:51.826 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxVisits 48, running=true
+10-12 11:22:51.826 D/KataGoEngine( 4405): Sending: kata-set-param maxVisits 48
+10-12 11:22:51.826 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:51.827 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:51.827 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:51.827 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxTime 1.200, timeoutMs=10000
+10-12 11:22:51.827 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxTime 1.200, running=true
+10-12 11:22:51.827 D/KataGoEngine( 4405): Sending: kata-set-param maxTime 1.200
+10-12 11:22:51.827 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:51.827 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:51.827 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:51.827 D/KataGoEngine( 4405): sendCommandSync in, command=kata-search_analyze black 20 minmoves 1 maxmoves 1 rootInfo true, running=true
+10-12 11:22:51.827 D/KataGoEngine( 4405): Sending: kata-search_analyze black 20 minmoves 1 maxmoves 1 rootInfo true
+10-12 11:22:51.828 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=20000
+10-12 11:22:51.828 D/KataGoEngine( 4405): KataGo stdout: =
+10-12 11:22:51.831 E/WifiVendorHal(  612): getWifiLinkLayerStats_1_5_Internal(l.1191) failed {.code = ERROR_UNKNOWN, .description = unknown error}
+10-12 11:22:52.056 D/KataGoEngine( 4405): KataGo stdout: info move F5 visits 8 edgeVisits 8 utility 0.244139 winrate 0.620785 scoreMean 0.419493 scoreStdev 10.2578 scoreLead 0.419493 scoreSelfplay 0.624843 prior 0.213668 lcb 0.579061 utilityLcb 0.12731 weight 8 order 0 pv F5 D5 E7 C7 E3 rootInfo visits 16 utility 0.232483 winrate 0.616231 scoreMean 0.444431 scoreStdev 10.2471 scoreLead 0.444431 scoreSelfplay 0.653517 weight 15.3715 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 11:22:52.256 D/KataGoEngine( 4405): KataGo stdout: info move F5 visits 16 edgeVisits 16 utility 0.2055 winrate 0.606837 scoreMean 0.407636 scoreStdev 10.667 scoreLead 0.407636 scoreSelfplay 0.627702 prior 0.213668 lcb 0.586459 utilityLcb 0.148442 weight 16 order 0 pv F5 D5 E7 C7 E3 G7 rootInfo visits 33 utility 0.177545 winrate 0.595637 scoreMean 0.358432 scoreStdev 10.3866 scoreLead 0.358432 scoreSelfplay 0.568762 weight 31.7271 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 11:22:52.425 D/KataGoEngine( 4405): KataGo stdout: info move F5 visits 26 edgeVisits 26 utility 0.160101 winrate 0.592225 scoreMean 0.400344 scoreStdev 10.6916 scoreLead 0.400344 scoreSelfplay 0.587009 prior 0.213668 lcb 0.564549 utilityLcb 0.0826094 weight 26 order 0 pv F5 D5 E3 C3 E7 G3 H4 D7 D8 rootInfo visits 49 utility 0.16614 winrate 0.592294 scoreMean 0.383719 scoreStdev 10.4463 scoreLead 0.383719 scoreSelfplay 0.579428 weight 48.8287 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 11:22:52.425 D/KataGoEngine( 4405): KataGo stdout: play F5
+10-12 11:22:52.425 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:52.427 D/KataGoEngine( 4405): MCTS winrate: toPlay=black rootVisits=49 black=0.592 white=0.408
+10-12 11:22:52.427 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxVisits 20, timeoutMs=10000
+10-12 11:22:52.427 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxVisits 20, running=true
+10-12 11:22:52.427 D/KataGoEngine( 4405): Sending: kata-set-param maxVisits 20
+10-12 11:22:52.427 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:52.428 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:52.428 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:52.428 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxTime 0.4, timeoutMs=10000
+10-12 11:22:52.428 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxTime 0.4, running=true
+10-12 11:22:52.428 D/KataGoEngine( 4405): Sending: kata-set-param maxTime 0.4
+10-12 11:22:52.429 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:52.429 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:52.429 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:52.447 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:22:52.447 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:22:53.447 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:22:53.448 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:22:53.493 W/AccessibilityNodeInfoDumper( 4525): Fetch time: 51ms
+10-12 11:22:53.497 D/BatterySaverPolicy(  612): accessibility changed to false, updating policy.
+10-12 11:22:53.533 D/AndroidRuntime( 4525): Shutting down VM
+10-12 11:22:53.953 D/BufferPoolAccessor2.0( 2448): bufferpool2 0xb400007cc38162b8 : 5(19200 size) total buffers - 4(15360 size) used buffers - 113405/113410 (recycle/alloc) - 9/226811 (fetch/transfer)
+10-12 11:22:53.953 D/BufferPoolAccessor2.0(  485): bufferpool2 0xb400006f4c7e3348 : 2(48000 size) total buffers - 1(24000 size) used buffers - 113405/113407 (recycle/alloc) - 2/113405 (fetch/transfer)
+10-12 11:22:54.322 I/r_submix(  414): out_standby()
+10-12 11:22:54.448 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:22:54.448 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:22:54.560 D/MainActivity( 4405): onBoardTap in, x=2, y=2, engineReady=true, thinking=false, currentPlayer=BLACK, playerColor=BLACK
+10-12 11:22:54.560 D/GoBoard ( 4405): isGameOver in, consecutivePasses=0, moveCount=0
+10-12 11:22:54.560 D/GoBoard ( 4405): isLegalMove in, point=Point(2,2), color=BLACK, koPoint=null
+10-12 11:22:54.561 D/GoBoard ( 4405): GoBoard in, size=9
+10-12 11:22:54.561 D/StoneColor( 4405): opposite in, color=BLACK
+10-12 11:22:54.563 D/Move    ( 4405): Move in, color=BLACK
+10-12 11:22:54.564 D/Move    ( 4405): Stone in, point=Point(2,2), color=BLACK
+10-12 11:22:54.564 D/GoBoard ( 4405): playMove in, move=com.badukai.game.Move$Stone@d473324
+10-12 11:22:54.564 D/GoBoard ( 4405): playStone in, point=Point(2,2), color=BLACK
+10-12 11:22:54.564 D/Move    ( 4405): Move in, color=BLACK
+10-12 11:22:54.564 D/Move    ( 4405): Stone in, point=Point(2,2), color=BLACK
+10-12 11:22:54.564 D/StoneColor( 4405): opposite in, color=BLACK
+10-12 11:22:54.565 D/StoneColor( 4405): opposite in, color=BLACK
+10-12 11:22:54.565 D/MainActivity( 4405): render in, message=AI 思考中..., engineReady=true, thinking=false, currentPlayer=WHITE
+10-12 11:22:54.567 D/GoBoardView( 4405): setBoard in, board=com.badukai.game.GoBoard@255692e
+10-12 11:22:54.567 D/GoBoardView( 4405): setLastMove in, point=Point(2,2)
+10-12 11:22:54.567 D/GoBoardView( 4405): setInputEnabled in, enabled=false
+10-12 11:22:54.569 D/MainActivity( 4405): updateButtons in, engineReady=true, thinking=false, currentPlayer=WHITE, playerColor=BLACK
+10-12 11:22:54.569 D/GoBoard ( 4405): isGameOver in, consecutivePasses=0, moveCount=1
+10-12 11:22:54.571 D/Point   ( 4405): toGtp in, x=2, y=2, boardSize=9
+10-12 11:22:54.571 D/GoBoardView( 4405): performClick in
+10-12 11:22:54.571 D/StoneColor( 4405): toGtp in, color=BLACK
+10-12 11:22:54.571 D/KataGoEngine( 4405): playMove in, color=black, move=C7
+10-12 11:22:54.571 D/KataGoEngine( 4405): simpleCommand in, command=play black C7, timeoutMs=5000
+10-12 11:22:54.572 D/KataGoEngine( 4405): sendCommandSync in, command=play black C7, running=true
+10-12 11:22:54.572 D/KataGoEngine( 4405): JNI GTP command=play black C7 queued=true enqueueMs=0
+10-12 11:22:54.572 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=5000
+10-12 11:22:54.575 D/KataGoEngine( 4405): KataGo JNI GTP response: =
+10-12 11:22:54.576 D/StoneColor( 4405): opposite in, color=BLACK
+10-12 11:22:54.576 D/MainActivity( 4405): requestAiMove in, engineReady=true, thinking=false, currentPlayer=WHITE, playerColor=BLACK
+10-12 11:22:54.576 D/StoneColor( 4405): toGtp in, color=BLACK
+10-12 11:22:54.577 D/GoBoard ( 4405): isGameOver in, consecutivePasses=0, moveCount=1
+10-12 11:22:54.577 D/MainActivity( 4405): render in, message=AI 思考中..., engineReady=true, thinking=true, currentPlayer=WHITE
+10-12 11:22:54.577 D/KataGoEngine( 4405): playMove in, color=black, move=C7
+10-12 11:22:54.577 D/KataGoEngine( 4405): simpleCommand in, command=play black C7, timeoutMs=5000
+10-12 11:22:54.577 D/KataGoEngine( 4405): sendCommandSync in, command=play black C7, running=true
+10-12 11:22:54.577 D/KataGoEngine( 4405): Sending: play black C7
+10-12 11:22:54.577 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=5000
+10-12 11:22:54.578 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:54.578 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:54.578 D/StoneColor( 4405): toGtp in, color=WHITE
+10-12 11:22:54.578 D/KataGoEngine( 4405): isReady in, running=true
+10-12 11:22:54.579 D/KataGoEngine( 4405): sendCommandSync in, command=kata-get-param maxVisits, running=true
+10-12 11:22:54.579 D/KataGoEngine( 4405): Sending: kata-get-param maxVisits
+10-12 11:22:54.579 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:54.579 D/GoBoardView( 4405): setBoard in, board=com.badukai.game.GoBoard@255692e
+10-12 11:22:54.579 D/GoBoardView( 4405): setLastMove in, point=Point(2,2)
+10-12 11:22:54.580 D/GoBoardView( 4405): setInputEnabled in, enabled=false
+10-12 11:22:54.580 D/KataGoEngine( 4405): KataGo stdout: = 20
+10-12 11:22:54.580 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:54.580 D/KataGoEngine( 4405): parseGtpResponse in, response== 20
+10-12 11:22:54.580 D/KataGoEngine( 4405): 
+10-12 11:22:54.580 D/KataGoEngine( 4405): sendCommandSync in, command=kata-get-param maxTime, running=true
+10-12 11:22:54.580 D/KataGoEngine( 4405): Sending: kata-get-param maxTime
+10-12 11:22:54.581 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:54.581 D/KataGoEngine( 4405): KataGo stdout: = 0.4
+10-12 11:22:54.581 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:54.582 D/KataGoEngine( 4405): parseGtpResponse in, response== 0.4
+10-12 11:22:54.582 D/KataGoEngine( 4405): 
+10-12 11:22:54.582 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxVisits 48, timeoutMs=10000
+10-12 11:22:54.582 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxVisits 48, running=true
+10-12 11:22:54.582 D/KataGoEngine( 4405): Sending: kata-set-param maxVisits 48
+10-12 11:22:54.582 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:54.583 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:54.583 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:54.583 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxTime 1.200, timeoutMs=10000
+10-12 11:22:54.583 D/MainActivity( 4405): updateButtons in, engineReady=true, thinking=true, currentPlayer=WHITE, playerColor=BLACK
+10-12 11:22:54.583 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxTime 1.200, running=true
+10-12 11:22:54.583 D/KataGoEngine( 4405): Sending: kata-set-param maxTime 1.200
+10-12 11:22:54.584 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:54.584 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:54.584 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:54.584 D/KataGoEngine( 4405): sendCommandSync in, command=kata-search_analyze white 20 minmoves 1 maxmoves 1 rootInfo true, running=true
+10-12 11:22:54.585 D/KataGoEngine( 4405): Sending: kata-search_analyze white 20 minmoves 1 maxmoves 1 rootInfo true
+10-12 11:22:54.585 D/StoneColor( 4405): toGtp in, color=WHITE
+10-12 11:22:54.585 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=20000
+10-12 11:22:54.585 D/KataGoEngine( 4405): generateMove in, color=white
+10-12 11:22:54.585 D/KataGoEngine( 4405): KataGo stdout: =
+10-12 11:22:54.586 D/KataGoEngine( 4405): sendCommandSync in, command=genmove white, running=true
+10-12 11:22:54.586 D/KataGoEngine( 4405): JNI GTP command=genmove white queued=true enqueueMs=0
+10-12 11:22:54.586 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=60000
+10-12 11:22:54.813 D/KataGoEngine( 4405): KataGo stdout: info move F4 visits 9 edgeVisits 9 utility 0.103894 winrate 0.570817 scoreMean 0.500236 scoreStdev 9.60245 scoreLead 0.500236 scoreSelfplay 0.448935 prior 0.610841 lcb 0.493857 utilityLcb -0.111594 weight 9 order 0 pv F4 D4 F6 F3 G3 rootInfo visits 17 utility 0.0869624 winrate 0.559491 scoreMean 0.433161 scoreStdev 9.74001 scoreLead 0.433161 scoreSelfplay 0.380803 weight 16.3265 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 11:22:54.834 E/WifiVendorHal(  612): getWifiLinkLayerStats_1_5_Internal(l.1191) failed {.code = ERROR_UNKNOWN, .description = unknown error}
+10-12 11:22:55.013 D/KataGoEngine( 4405): KataGo stdout: info move D6 visits 9 edgeVisits 9 utility 0.323463 winrate 0.645114 scoreMean 0.904966 scoreStdev 10.6228 scoreLead 0.904966 scoreSelfplay 1.05179 prior 0.0503726 lcb 0.545432 utilityLcb 0.0443526 weight 9 order 0 pv D6 F6 D7 C6 D5 rootInfo visits 35 utility 0.184603 winrate 0.586603 scoreMean 0.572479 scoreStdev 10.0752 scoreLead 0.572479 scoreSelfplay 0.575346 weight 35 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 11:22:55.176 D/KataGoEngine( 4405): KataGo stdout: info move D6 visits 20 edgeVisits 20 utility 0.343957 winrate 0.653633 scoreMean 0.972979 scoreStdev 10.7193 scoreLead 0.972979 scoreSelfplay 1.10155 prior 0.0503726 lcb 0.591985 utilityLcb 0.171343 weight 20 order 0 pv D6 D7 E6 F3 C6 rootInfo visits 49 utility 0.230731 winrate 0.604786 scoreMean 0.683744 scoreStdev 10.2389 scoreLead 0.683744 scoreSelfplay 0.710297 weight 49 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 11:22:55.176 D/KataGoEngine( 4405): KataGo stdout: play D6
+10-12 11:22:55.176 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:55.176 D/KataGoEngine( 4405): MCTS winrate: toPlay=white rootVisits=49 black=0.395 white=0.605
+10-12 11:22:55.176 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxVisits 20, timeoutMs=10000
+10-12 11:22:55.176 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxVisits 20, running=true
+10-12 11:22:55.176 D/KataGoEngine( 4405): Sending: kata-set-param maxVisits 20
+10-12 11:22:55.177 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:55.177 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:55.177 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:55.177 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxTime 0.4, timeoutMs=10000
+10-12 11:22:55.177 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxTime 0.4, running=true
+10-12 11:22:55.177 D/KataGoEngine( 4405): Sending: kata-set-param maxTime 0.4
+10-12 11:22:55.177 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:55.177 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:55.177 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:55.367 D/AndroidRuntime( 4576): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-12 11:22:55.370 I/AndroidRuntime( 4576): Using default boot image
+10-12 11:22:55.370 I/AndroidRuntime( 4576): Leaving lock profiling enabled
+10-12 11:22:55.372 W/app_process( 4576): ART APEX data files are untrusted.
+10-12 11:22:55.372 I/app_process( 4576): Core platform API reporting enabled, enforcing=false
+10-12 11:22:55.437 D/app_process( 4576): Time zone APEX ICU file found: /apex/com.android.tzdata/etc/icu/icu_tzdata.dat
+10-12 11:22:55.437 D/app_process( 4576): I18n APEX ICU file found: /apex/com.android.i18n/etc/icu/icudt68l.dat
+10-12 11:22:55.443 W/app_process( 4576): ClassLoaderContext classpath size mismatch. expected=0, found=1 (PCL[] | PCL[/system/framework/android.test.runner.jar*3487696984])
+10-12 11:22:55.448 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:22:55.448 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:22:55.458 D/AndroidRuntime( 4576): Calling main entry com.android.commands.uiautomator.Launcher
+10-12 11:22:55.462 D/KataGoEngine( 4405): KataGo JNI GTP response: = E5
+10-12 11:22:55.462 D/KataGoEngine( 4405): parseGtpResponse in, response== E5
+10-12 11:22:55.462 D/KataGoEngine( 4405): 
+10-12 11:22:55.462 I/KataGoEngine( 4405): genmove color=white move=E5 rootVisits=unavailable newPlayouts=unavailable elapsedMs=876 (wall time includes GTP and inference overhead)
+10-12 11:22:55.463 D/MainActivity( 4405): handleAiMove in, move=E5, aiColor=WHITE
+10-12 11:22:55.463 D/Point   ( 4405): fromGtp in, gtp=E5, boardSize=9
+10-12 11:22:55.463 D/Move    ( 4405): Move in, color=WHITE
+10-12 11:22:55.463 D/Move    ( 4405): Stone in, point=Point(4,4), color=WHITE
+10-12 11:22:55.463 D/GoBoard ( 4405): playMove in, move=com.badukai.game.Move$Stone@abdee8d
+10-12 11:22:55.463 D/GoBoard ( 4405): playStone in, point=Point(4,4), color=WHITE
+10-12 11:22:55.463 D/Move    ( 4405): Move in, color=WHITE
+10-12 11:22:55.463 D/Move    ( 4405): Stone in, point=Point(4,4), color=WHITE
+10-12 11:22:55.463 D/StoneColor( 4405): opposite in, color=WHITE
+10-12 11:22:55.463 D/StoneColor( 4405): opposite in, color=WHITE
+10-12 11:22:55.463 D/MainActivity( 4405): render in, message=轮到你了, engineReady=true, thinking=false, currentPlayer=BLACK
+10-12 11:22:55.464 D/GoBoardView( 4405): setBoard in, board=com.badukai.game.GoBoard@255692e
+10-12 11:22:55.464 D/GoBoardView( 4405): setLastMove in, point=Point(4,4)
+10-12 11:22:55.464 D/GoBoard ( 4405): isGameOver in, consecutivePasses=0, moveCount=2
+10-12 11:22:55.464 D/GoBoardView( 4405): setInputEnabled in, enabled=true
+10-12 11:22:55.465 D/BatterySaverPolicy(  612): accessibility changed to true, updating policy.
+10-12 11:22:55.466 V/UiAutomation( 4576): Init UiAutomation@a0763be[id=85, flags=0]
+10-12 11:22:55.466 D/MainActivity( 4405): updateButtons in, engineReady=true, thinking=false, currentPlayer=BLACK, playerColor=BLACK
+10-12 11:22:55.466 D/GoBoard ( 4405): isGameOver in, consecutivePasses=0, moveCount=2
+10-12 11:22:55.467 D/GoBoard ( 4405): isGameOver in, consecutivePasses=0, moveCount=2
+10-12 11:22:55.469 D/StoneColor( 4405): toGtp in, color=WHITE
+10-12 11:22:55.469 D/KataGoEngine( 4405): playMove in, color=white, move=E5
+10-12 11:22:55.469 D/KataGoEngine( 4405): simpleCommand in, command=play white E5, timeoutMs=5000
+10-12 11:22:55.469 D/KataGoEngine( 4405): sendCommandSync in, command=play white E5, running=true
+10-12 11:22:55.469 D/KataGoEngine( 4405): Sending: play white E5
+10-12 11:22:55.469 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=5000
+10-12 11:22:55.470 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:55.470 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:55.470 D/StoneColor( 4405): toGtp in, color=BLACK
+10-12 11:22:55.470 D/KataGoEngine( 4405): isReady in, running=true
+10-12 11:22:55.470 D/KataGoEngine( 4405): sendCommandSync in, command=kata-get-param maxVisits, running=true
+10-12 11:22:55.470 D/KataGoEngine( 4405): Sending: kata-get-param maxVisits
+10-12 11:22:55.470 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:55.470 D/KataGoEngine( 4405): KataGo stdout: = 20
+10-12 11:22:55.470 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:55.470 D/KataGoEngine( 4405): parseGtpResponse in, response== 20
+10-12 11:22:55.470 D/KataGoEngine( 4405): 
+10-12 11:22:55.470 D/KataGoEngine( 4405): sendCommandSync in, command=kata-get-param maxTime, running=true
+10-12 11:22:55.470 D/KataGoEngine( 4405): Sending: kata-get-param maxTime
+10-12 11:22:55.471 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:55.471 D/KataGoEngine( 4405): KataGo stdout: = 0.4
+10-12 11:22:55.471 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:55.471 D/KataGoEngine( 4405): parseGtpResponse in, response== 0.4
+10-12 11:22:55.471 D/KataGoEngine( 4405): 
+10-12 11:22:55.471 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxVisits 48, timeoutMs=10000
+10-12 11:22:55.471 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxVisits 48, running=true
+10-12 11:22:55.471 D/KataGoEngine( 4405): Sending: kata-set-param maxVisits 48
+10-12 11:22:55.471 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:55.471 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:55.471 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:55.471 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxTime 1.200, timeoutMs=10000
+10-12 11:22:55.471 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxTime 1.200, running=true
+10-12 11:22:55.471 D/KataGoEngine( 4405): Sending: kata-set-param maxTime 1.200
+10-12 11:22:55.472 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:55.472 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:55.472 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:55.472 D/KataGoEngine( 4405): sendCommandSync in, command=kata-search_analyze black 20 minmoves 1 maxmoves 1 rootInfo true, running=true
+10-12 11:22:55.472 D/KataGoEngine( 4405): Sending: kata-search_analyze black 20 minmoves 1 maxmoves 1 rootInfo true
+10-12 11:22:55.472 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=20000
+10-12 11:22:55.472 D/KataGoEngine( 4405): KataGo stdout: =
+10-12 11:22:55.697 D/KataGoEngine( 4405): KataGo stdout: info move G4 visits 8 edgeVisits 8 utility -0.0985571 winrate 0.482732 scoreMean -0.201496 scoreStdev 10.4115 scoreLead -0.201496 scoreSelfplay -0.0531039 prior 0.239798 lcb 0.406731 utilityLcb -0.31136 weight 8 order 0 pv G4 F3 G3 C5 F7 F6 rootInfo visits 17 utility -0.0965344 winrate 0.469515 scoreMean -0.258836 scoreStdev 10.4128 scoreLead -0.258836 scoreSelfplay -0.139557 weight 17 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 11:22:55.898 D/KataGoEngine( 4405): KataGo stdout: info move G4 visits 17 edgeVisits 17 utility -0.00933313 winrate 0.504408 scoreMean -0.0780857 scoreStdev 10.2445 scoreLead -0.0780857 scoreSelfplay 0.098747 prior 0.239798 lcb 0.451376 utilityLcb -0.157824 weight 17 order 0 pv G4 F3 F6 E6 F7 C5 F4 E4 rootInfo visits 35 utility -0.0281452 winrate 0.490544 scoreMean -0.151438 scoreStdev 10.3093 scoreLead -0.151438 scoreSelfplay 0.00252418 weight 34.9583 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 11:22:56.055 D/KataGoEngine( 4405): KataGo stdout: info move G4 visits 24 edgeVisits 24 utility -0.10141 winrate 0.474438 scoreMean -0.242642 scoreStdev 9.95425 scoreLead -0.242642 scoreSelfplay -0.07369 prior 0.239798 lcb 0.426929 utilityLcb -0.234435 weight 24 order 0 pv G4 F3 F6 E6 F7 C5 F4 E4 E7 G3 rootInfo visits 49 utility -0.0959186 winrate 0.471013 scoreMean -0.253961 scoreStdev 10.1403 scoreLead -0.253961 scoreSelfplay -0.107565 weight 48.9583 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 11:22:56.055 D/KataGoEngine( 4405): KataGo stdout: play G3
+10-12 11:22:56.055 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:56.057 D/KataGoEngine( 4405): MCTS winrate: toPlay=black rootVisits=49 black=0.471 white=0.529
+10-12 11:22:56.057 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxVisits 20, timeoutMs=10000
+10-12 11:22:56.057 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxVisits 20, running=true
+10-12 11:22:56.057 D/KataGoEngine( 4405): Sending: kata-set-param maxVisits 20
+10-12 11:22:56.057 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:56.058 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:56.059 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:56.059 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxTime 0.4, timeoutMs=10000
+10-12 11:22:56.059 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxTime 0.4, running=true
+10-12 11:22:56.059 D/KataGoEngine( 4405): Sending: kata-set-param maxTime 0.4
+10-12 11:22:56.059 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:56.060 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:56.060 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:56.300 D/BufferPoolAccessor2.0(  429): bufferpool2 0xecbc21e8 : 1(2088960 size) total buffers - 1(2088960 size) used buffers - 11613/11614 (recycle/alloc) - 2/11613 (fetch/transfer)
+10-12 11:22:56.448 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:22:56.449 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:22:57.224 W/AccessibilityNodeInfoDumper( 4576): Fetch time: 53ms
+10-12 11:22:57.226 D/BatterySaverPolicy(  612): accessibility changed to false, updating policy.
+10-12 11:22:57.244 D/AndroidRuntime( 4576): Shutting down VM
+10-12 11:22:57.449 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:22:57.449 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:22:57.838 E/WifiVendorHal(  612): getWifiLinkLayerStats_1_5_Internal(l.1191) failed {.code = ERROR_UNKNOWN, .description = unknown error}
+10-12 11:22:58.143 D/MainActivity( 4405): onBoardTap in, x=6, y=6, engineReady=true, thinking=false, currentPlayer=BLACK, playerColor=BLACK
+10-12 11:22:58.143 D/GoBoard ( 4405): isGameOver in, consecutivePasses=0, moveCount=2
+10-12 11:22:58.143 D/GoBoard ( 4405): isLegalMove in, point=Point(6,6), color=BLACK, koPoint=null
+10-12 11:22:58.143 D/GoBoard ( 4405): GoBoard in, size=9
+10-12 11:22:58.143 D/StoneColor( 4405): opposite in, color=BLACK
+10-12 11:22:58.144 D/Move    ( 4405): Move in, color=BLACK
+10-12 11:22:58.144 D/Move    ( 4405): Stone in, point=Point(6,6), color=BLACK
+10-12 11:22:58.144 D/GoBoard ( 4405): playMove in, move=com.badukai.game.Move$Stone@aebc2bc
+10-12 11:22:58.144 D/GoBoard ( 4405): playStone in, point=Point(6,6), color=BLACK
+10-12 11:22:58.145 D/Move    ( 4405): Move in, color=BLACK
+10-12 11:22:58.145 D/Move    ( 4405): Stone in, point=Point(6,6), color=BLACK
+10-12 11:22:58.145 D/StoneColor( 4405): opposite in, color=BLACK
+10-12 11:22:58.145 D/StoneColor( 4405): opposite in, color=BLACK
+10-12 11:22:58.145 D/MainActivity( 4405): render in, message=AI 思考中..., engineReady=true, thinking=false, currentPlayer=WHITE
+10-12 11:22:58.147 D/GoBoardView( 4405): setBoard in, board=com.badukai.game.GoBoard@255692e
+10-12 11:22:58.147 D/GoBoardView( 4405): setLastMove in, point=Point(6,6)
+10-12 11:22:58.147 D/GoBoardView( 4405): setInputEnabled in, enabled=false
+10-12 11:22:58.151 D/MainActivity( 4405): updateButtons in, engineReady=true, thinking=false, currentPlayer=WHITE, playerColor=BLACK
+10-12 11:22:58.151 D/GoBoard ( 4405): isGameOver in, consecutivePasses=0, moveCount=3
+10-12 11:22:58.155 D/Point   ( 4405): toGtp in, x=6, y=6, boardSize=9
+10-12 11:22:58.155 D/GoBoardView( 4405): performClick in
+10-12 11:22:58.155 D/StoneColor( 4405): toGtp in, color=BLACK
+10-12 11:22:58.155 D/KataGoEngine( 4405): playMove in, color=black, move=G3
+10-12 11:22:58.155 D/KataGoEngine( 4405): simpleCommand in, command=play black G3, timeoutMs=5000
+10-12 11:22:58.155 D/KataGoEngine( 4405): sendCommandSync in, command=play black G3, running=true
+10-12 11:22:58.156 D/KataGoEngine( 4405): JNI GTP command=play black G3 queued=true enqueueMs=0
+10-12 11:22:58.156 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=5000
+10-12 11:22:58.156 D/KataGoEngine( 4405): KataGo JNI GTP response: =
+10-12 11:22:58.160 D/StoneColor( 4405): opposite in, color=BLACK
+10-12 11:22:58.160 D/MainActivity( 4405): requestAiMove in, engineReady=true, thinking=false, currentPlayer=WHITE, playerColor=BLACK
+10-12 11:22:58.160 D/StoneColor( 4405): toGtp in, color=BLACK
+10-12 11:22:58.160 D/KataGoEngine( 4405): playMove in, color=black, move=G3
+10-12 11:22:58.160 D/KataGoEngine( 4405): simpleCommand in, command=play black G3, timeoutMs=5000
+10-12 11:22:58.160 D/KataGoEngine( 4405): sendCommandSync in, command=play black G3, running=true
+10-12 11:22:58.160 D/GoBoard ( 4405): isGameOver in, consecutivePasses=0, moveCount=3
+10-12 11:22:58.160 D/KataGoEngine( 4405): Sending: play black G3
+10-12 11:22:58.160 D/MainActivity( 4405): render in, message=AI 思考中..., engineReady=true, thinking=true, currentPlayer=WHITE
+10-12 11:22:58.161 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=5000
+10-12 11:22:58.161 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:58.161 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:58.161 D/StoneColor( 4405): toGtp in, color=WHITE
+10-12 11:22:58.161 D/KataGoEngine( 4405): isReady in, running=true
+10-12 11:22:58.161 D/KataGoEngine( 4405): sendCommandSync in, command=kata-get-param maxVisits, running=true
+10-12 11:22:58.161 D/KataGoEngine( 4405): Sending: kata-get-param maxVisits
+10-12 11:22:58.162 D/GoBoardView( 4405): setBoard in, board=com.badukai.game.GoBoard@255692e
+10-12 11:22:58.162 D/GoBoardView( 4405): setLastMove in, point=Point(6,6)
+10-12 11:22:58.162 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:58.162 D/GoBoardView( 4405): setInputEnabled in, enabled=false
+10-12 11:22:58.162 D/KataGoEngine( 4405): KataGo stdout: = 20
+10-12 11:22:58.162 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:58.162 D/KataGoEngine( 4405): parseGtpResponse in, response== 20
+10-12 11:22:58.162 D/KataGoEngine( 4405): 
+10-12 11:22:58.162 D/KataGoEngine( 4405): sendCommandSync in, command=kata-get-param maxTime, running=true
+10-12 11:22:58.162 D/KataGoEngine( 4405): Sending: kata-get-param maxTime
+10-12 11:22:58.163 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:58.163 D/KataGoEngine( 4405): KataGo stdout: = 0.4
+10-12 11:22:58.163 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:58.163 D/KataGoEngine( 4405): parseGtpResponse in, response== 0.4
+10-12 11:22:58.163 D/KataGoEngine( 4405): 
+10-12 11:22:58.163 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxVisits 48, timeoutMs=10000
+10-12 11:22:58.164 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxVisits 48, running=true
+10-12 11:22:58.164 D/KataGoEngine( 4405): Sending: kata-set-param maxVisits 48
+10-12 11:22:58.164 D/MainActivity( 4405): updateButtons in, engineReady=true, thinking=true, currentPlayer=WHITE, playerColor=BLACK
+10-12 11:22:58.165 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:58.165 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:58.165 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:58.165 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxTime 1.200, timeoutMs=10000
+10-12 11:22:58.165 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxTime 1.200, running=true
+10-12 11:22:58.165 D/KataGoEngine( 4405): Sending: kata-set-param maxTime 1.200
+10-12 11:22:58.166 D/StoneColor( 4405): toGtp in, color=WHITE
+10-12 11:22:58.166 D/KataGoEngine( 4405): generateMove in, color=white
+10-12 11:22:58.166 D/KataGoEngine( 4405): sendCommandSync in, command=genmove white, running=true
+10-12 11:22:58.166 D/KataGoEngine( 4405): JNI GTP command=genmove white queued=true enqueueMs=0
+10-12 11:22:58.166 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=60000
+10-12 11:22:58.166 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:58.166 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:58.166 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:58.167 D/KataGoEngine( 4405): sendCommandSync in, command=kata-search_analyze white 20 minmoves 1 maxmoves 1 rootInfo true, running=true
+10-12 11:22:58.167 D/KataGoEngine( 4405): Sending: kata-search_analyze white 20 minmoves 1 maxmoves 1 rootInfo true
+10-12 11:22:58.167 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=20000
+10-12 11:22:58.168 D/KataGoEngine( 4405): KataGo stdout: =
+10-12 11:22:58.399 D/KataGoEngine( 4405): KataGo stdout: info move C5 visits 8 edgeVisits 8 utility 0.219086 winrate 0.577845 scoreMean 0.472755 scoreStdev 9.85205 scoreLead 0.472755 scoreSelfplay 0.439534 prior 0.0416277 lcb 0.515443 utilityLcb 0.0443594 weight 8 order 0 pv C5 E7 E3 G6 G5 rootInfo visits 17 utility 0.0822241 winrate 0.534514 scoreMean 0.315003 scoreStdev 10.0973 scoreLead 0.315003 scoreSelfplay 0.213413 weight 16.4667 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 11:22:58.449 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:22:58.449 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:22:58.599 D/KataGoEngine( 4405): KataGo stdout: info move C5 visits 25 edgeVisits 25 utility 0.234981 winrate 0.604579 scoreMean 0.553484 scoreStdev 9.87699 scoreLead 0.553484 scoreSelfplay 0.583944 prior 0.0416277 lcb 0.569848 utilityLcb 0.137734 weight 25 order 0 pv C5 E7 E3 G6 G5 H5 rootInfo visits 34 utility 0.226635 winrate 0.600888 scoreMean 0.542429 scoreStdev 9.90935 scoreLead 0.542429 scoreSelfplay 0.566612 weight 33.8977 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 11:22:58.766 D/KataGoEngine( 4405): KataGo stdout: info move C5 visits 40 edgeVisits 40 utility 0.102692 winrate 0.564335 scoreMean 0.372655 scoreStdev 10.132 scoreLead 0.372655 scoreSelfplay 0.339496 prior 0.0416277 lcb 0.515584 utilityLcb -0.0338112 weight 40 order 0 pv C5 D4 D5 E7 F3 F2 E3 E2 rootInfo visits 49 utility 0.100626 winrate 0.562976 scoreMean 0.370055 scoreStdev 10.1457 scoreLead 0.370055 scoreSelfplay 0.334468 weight 49 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 11:22:58.766 D/KataGoEngine( 4405): KataGo stdout: play C5
+10-12 11:22:58.766 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:58.767 D/KataGoEngine( 4405): MCTS winrate: toPlay=white rootVisits=49 black=0.437 white=0.563
+10-12 11:22:58.767 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxVisits 20, timeoutMs=10000
+10-12 11:22:58.767 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxVisits 20, running=true
+10-12 11:22:58.767 D/KataGoEngine( 4405): Sending: kata-set-param maxVisits 20
+10-12 11:22:58.767 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:58.768 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:58.768 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:58.768 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxTime 0.4, timeoutMs=10000
+10-12 11:22:58.768 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxTime 0.4, running=true
+10-12 11:22:58.768 D/KataGoEngine( 4405): Sending: kata-set-param maxTime 0.4
+10-12 11:22:58.768 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:58.768 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:58.768 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:58.946 D/AndroidRuntime( 4605): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-12 11:22:58.949 I/AndroidRuntime( 4605): Using default boot image
+10-12 11:22:58.949 I/AndroidRuntime( 4605): Leaving lock profiling enabled
+10-12 11:22:58.951 W/app_process( 4605): ART APEX data files are untrusted.
+10-12 11:22:58.951 I/app_process( 4605): Core platform API reporting enabled, enforcing=false
+10-12 11:22:59.018 D/app_process( 4605): Time zone APEX ICU file found: /apex/com.android.tzdata/etc/icu/icu_tzdata.dat
+10-12 11:22:59.018 D/app_process( 4605): I18n APEX ICU file found: /apex/com.android.i18n/etc/icu/icudt68l.dat
+10-12 11:22:59.024 W/app_process( 4605): ClassLoaderContext classpath size mismatch. expected=0, found=1 (PCL[] | PCL[/system/framework/android.test.runner.jar*3487696984])
+10-12 11:22:59.040 D/AndroidRuntime( 4605): Calling main entry com.android.commands.uiautomator.Launcher
+10-12 11:22:59.043 D/KataGoEngine( 4405): KataGo JNI GTP response: = C3
+10-12 11:22:59.044 D/KataGoEngine( 4405): parseGtpResponse in, response== C3
+10-12 11:22:59.044 D/KataGoEngine( 4405): 
+10-12 11:22:59.044 I/KataGoEngine( 4405): genmove color=white move=C3 rootVisits=unavailable newPlayouts=unavailable elapsedMs=877 (wall time includes GTP and inference overhead)
+10-12 11:22:59.044 D/MainActivity( 4405): handleAiMove in, move=C3, aiColor=WHITE
+10-12 11:22:59.044 D/Point   ( 4405): fromGtp in, gtp=C3, boardSize=9
+10-12 11:22:59.044 D/Move    ( 4405): Move in, color=WHITE
+10-12 11:22:59.044 D/Move    ( 4405): Stone in, point=Point(2,6), color=WHITE
+10-12 11:22:59.044 D/GoBoard ( 4405): playMove in, move=com.badukai.game.Move$Stone@51f6245
+10-12 11:22:59.044 D/GoBoard ( 4405): playStone in, point=Point(2,6), color=WHITE
+10-12 11:22:59.044 D/Move    ( 4405): Move in, color=WHITE
+10-12 11:22:59.044 D/Move    ( 4405): Stone in, point=Point(2,6), color=WHITE
+10-12 11:22:59.044 D/StoneColor( 4405): opposite in, color=WHITE
+10-12 11:22:59.044 D/StoneColor( 4405): opposite in, color=WHITE
+10-12 11:22:59.044 D/MainActivity( 4405): render in, message=轮到你了, engineReady=true, thinking=false, currentPlayer=BLACK
+10-12 11:22:59.045 D/GoBoardView( 4405): setBoard in, board=com.badukai.game.GoBoard@255692e
+10-12 11:22:59.045 D/GoBoardView( 4405): setLastMove in, point=Point(2,6)
+10-12 11:22:59.045 D/GoBoard ( 4405): isGameOver in, consecutivePasses=0, moveCount=4
+10-12 11:22:59.045 D/GoBoardView( 4405): setInputEnabled in, enabled=true
+10-12 11:22:59.045 D/BatterySaverPolicy(  612): accessibility changed to true, updating policy.
+10-12 11:22:59.046 V/UiAutomation( 4605): Init UiAutomation@1ef32f9[id=86, flags=0]
+10-12 11:22:59.047 D/MainActivity( 4405): updateButtons in, engineReady=true, thinking=false, currentPlayer=BLACK, playerColor=BLACK
+10-12 11:22:59.047 D/GoBoard ( 4405): isGameOver in, consecutivePasses=0, moveCount=4
+10-12 11:22:59.047 D/GoBoard ( 4405): isGameOver in, consecutivePasses=0, moveCount=4
+10-12 11:22:59.049 D/StoneColor( 4405): toGtp in, color=WHITE
+10-12 11:22:59.049 D/KataGoEngine( 4405): playMove in, color=white, move=C3
+10-12 11:22:59.049 D/KataGoEngine( 4405): simpleCommand in, command=play white C3, timeoutMs=5000
+10-12 11:22:59.049 D/KataGoEngine( 4405): sendCommandSync in, command=play white C3, running=true
+10-12 11:22:59.049 D/KataGoEngine( 4405): Sending: play white C3
+10-12 11:22:59.049 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=5000
+10-12 11:22:59.050 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:59.050 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:59.050 D/StoneColor( 4405): toGtp in, color=BLACK
+10-12 11:22:59.050 D/KataGoEngine( 4405): isReady in, running=true
+10-12 11:22:59.050 D/KataGoEngine( 4405): sendCommandSync in, command=kata-get-param maxVisits, running=true
+10-12 11:22:59.050 D/KataGoEngine( 4405): Sending: kata-get-param maxVisits
+10-12 11:22:59.050 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:59.051 D/KataGoEngine( 4405): KataGo stdout: = 20
+10-12 11:22:59.051 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:59.053 D/KataGoEngine( 4405): parseGtpResponse in, response== 20
+10-12 11:22:59.053 D/KataGoEngine( 4405): 
+10-12 11:22:59.053 D/KataGoEngine( 4405): sendCommandSync in, command=kata-get-param maxTime, running=true
+10-12 11:22:59.053 D/KataGoEngine( 4405): Sending: kata-get-param maxTime
+10-12 11:22:59.054 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:59.055 D/KataGoEngine( 4405): KataGo stdout: = 0.4
+10-12 11:22:59.055 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:59.055 D/KataGoEngine( 4405): parseGtpResponse in, response== 0.4
+10-12 11:22:59.055 D/KataGoEngine( 4405): 
+10-12 11:22:59.055 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxVisits 48, timeoutMs=10000
+10-12 11:22:59.056 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxVisits 48, running=true
+10-12 11:22:59.056 D/KataGoEngine( 4405): Sending: kata-set-param maxVisits 48
+10-12 11:22:59.056 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:59.056 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:59.056 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:59.057 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxTime 1.200, timeoutMs=10000
+10-12 11:22:59.057 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxTime 1.200, running=true
+10-12 11:22:59.057 D/KataGoEngine( 4405): Sending: kata-set-param maxTime 1.200
+10-12 11:22:59.057 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:59.057 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:59.057 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:59.058 D/KataGoEngine( 4405): sendCommandSync in, command=kata-search_analyze black 20 minmoves 1 maxmoves 1 rootInfo true, running=true
+10-12 11:22:59.058 D/KataGoEngine( 4405): Sending: kata-search_analyze black 20 minmoves 1 maxmoves 1 rootInfo true
+10-12 11:22:59.058 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=20000
+10-12 11:22:59.058 D/KataGoEngine( 4405): KataGo stdout: =
+10-12 11:22:59.073 D/BufferPoolAccessor2.0( 2448): bufferpool2 0xb400007cc38162b8 : 5(19200 size) total buffers - 4(15360 size) used buffers - 113661/113666 (recycle/alloc) - 10/227323 (fetch/transfer)
+10-12 11:22:59.074 D/BufferPoolAccessor2.0(  485): bufferpool2 0xb400006f4c7e3348 : 2(48000 size) total buffers - 1(24000 size) used buffers - 113661/113663 (recycle/alloc) - 2/113661 (fetch/transfer)
+10-12 11:22:59.283 D/KataGoEngine( 4405): KataGo stdout: info move G5 visits 8 edgeVisits 8 utility 0.185093 winrate 0.594813 scoreMean 0.335626 scoreStdev 10.7714 scoreLead 0.335626 scoreSelfplay 0.578419 prior 0.18499 lcb 0.544304 utilityLcb 0.0436652 weight 8 order 0 pv G5 E7 C5 F4 G4 rootInfo visits 17 utility 0.205703 winrate 0.608546 scoreMean 0.396738 scoreStdev 10.7472 scoreLead 0.396738 scoreSelfplay 0.641292 weight 17 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 11:22:59.450 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:22:59.450 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:22:59.483 D/KataGoEngine( 4405): KataGo stdout: info move G5 visits 17 edgeVisits 17 utility 0.266151 winrate 0.604352 scoreMean 0.44403 scoreStdev 10.5483 scoreLead 0.44403 scoreSelfplay 0.663276 prior 0.18499 lcb 0.567468 utilityLcb 0.162876 weight 17 order 0 pv G5 G6 F6 F5 G7 H6 H5 F7 rootInfo visits 35 utility 0.225099 winrate 0.599502 scoreMean 0.396761 scoreStdev 10.6753 scoreLead 0.396761 scoreSelfplay 0.62531 weight 34.3669 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 11:22:59.634 D/KataGoEngine( 4405): KataGo stdout: info move G5 visits 28 edgeVisits 28 utility 0.318812 winrate 0.630928 scoreMean 0.63587 scoreStdev 10.3752 scoreLead 0.63587 scoreSelfplay 0.882393 prior 0.18499 lcb 0.598941 utilityLcb 0.229251 weight 28 order 0 pv G5 G6 F6 F5 G7 H6 H5 F7 E6 D6 rootInfo visits 49 utility 0.295462 winrate 0.623845 scoreMean 0.589177 scoreStdev 10.4127 scoreLead 0.589177 scoreSelfplay 0.832594 weight 49 rawStWrError -1 rawStScoreError -1 rawVarTimeLeft -1
+10-12 11:22:59.634 D/KataGoEngine( 4405): KataGo stdout: play G5
+10-12 11:22:59.634 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:59.637 D/KataGoEngine( 4405): MCTS winrate: toPlay=black rootVisits=49 black=0.624 white=0.376
+10-12 11:22:59.637 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxVisits 20, timeoutMs=10000
+10-12 11:22:59.637 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxVisits 20, running=true
+10-12 11:22:59.637 D/KataGoEngine( 4405): Sending: kata-set-param maxVisits 20
+10-12 11:22:59.637 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:59.639 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:59.639 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:22:59.639 D/KataGoEngine( 4405): simpleCommand in, command=kata-set-param maxTime 0.4, timeoutMs=10000
+10-12 11:22:59.640 D/KataGoEngine( 4405): sendCommandSync in, command=kata-set-param maxTime 0.4, running=true
+10-12 11:22:59.640 D/KataGoEngine( 4405): Sending: kata-set-param maxTime 0.4
+10-12 11:22:59.640 D/KataGoEngine( 4405): waitForResponse in, timeoutMs=10000
+10-12 11:22:59.641 D/KataGoEngine( 4405): KataGo stdout: = 
+10-12 11:22:59.641 D/KataGoEngine( 4405): KataGo stdout: 
+10-12 11:23:00.450 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:00.450 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:00.816 W/AccessibilityNodeInfoDumper( 4605): Fetch time: 62ms
+10-12 11:23:00.824 D/BatterySaverPolicy(  612): accessibility changed to false, updating policy.
+10-12 11:23:00.841 D/AndroidRuntime( 4605): Shutting down VM
+10-12 11:23:00.845 E/WifiVendorHal(  612): getWifiLinkLayerStats_1_5_Internal(l.1191) failed {.code = ERROR_UNKNOWN, .description = unknown error}
+10-12 11:23:01.451 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:01.451 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:01.653 D/BufferPoolAccessor2.0(  429): bufferpool2 0xecbc21e8 : 1(2088960 size) total buffers - 1(2088960 size) used buffers - 11670/11671 (recycle/alloc) - 2/11670 (fetch/transfer)
+10-12 11:23:02.451 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:02.451 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:02.807 D/AndroidRuntime( 4628): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-12 11:23:02.810 I/AndroidRuntime( 4628): Using default boot image
+10-12 11:23:02.810 I/AndroidRuntime( 4628): Leaving lock profiling enabled
+10-12 11:23:02.811 W/app_process( 4628): ART APEX data files are untrusted.
+10-12 11:23:02.811 I/app_process( 4628): Core platform API reporting enabled, enforcing=false
+10-12 11:23:02.875 D/app_process( 4628): Time zone APEX ICU file found: /apex/com.android.tzdata/etc/icu/icu_tzdata.dat
+10-12 11:23:02.875 D/app_process( 4628): I18n APEX ICU file found: /apex/com.android.i18n/etc/icu/icudt68l.dat
+10-12 11:23:02.881 W/app_process( 4628): ClassLoaderContext classpath size mismatch. expected=0, found=1 (PCL[] | PCL[/system/framework/android.test.runner.jar*3487696984])
+10-12 11:23:02.895 D/AndroidRuntime( 4628): Calling main entry com.android.commands.uiautomator.Launcher
+10-12 11:23:02.899 D/BatterySaverPolicy(  612): accessibility changed to true, updating policy.
+10-12 11:23:02.900 V/UiAutomation( 4628): Init UiAutomation@c799c9d[id=87, flags=0]
+10-12 11:23:03.452 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:03.453 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:03.852 E/WifiVendorHal(  612): getWifiLinkLayerStats_1_5_Internal(l.1191) failed {.code = ERROR_UNKNOWN, .description = unknown error}
+10-12 11:23:03.943 W/AccessibilityNodeInfoDumper( 4628): Fetch time: 30ms
+10-12 11:23:03.945 D/BatterySaverPolicy(  612): accessibility changed to false, updating policy.
+10-12 11:23:03.964 D/AndroidRuntime( 4628): Shutting down VM
+10-12 11:23:04.194 D/BufferPoolAccessor2.0( 2448): bufferpool2 0xb400007cc38162b8 : 5(19200 size) total buffers - 4(15360 size) used buffers - 113917/113922 (recycle/alloc) - 10/227835 (fetch/transfer)
+10-12 11:23:04.195 D/BufferPoolAccessor2.0(  485): bufferpool2 0xb400006f4c7e3348 : 2(48000 size) total buffers - 1(24000 size) used buffers - 113917/113919 (recycle/alloc) - 2/113917 (fetch/transfer)
+10-12 11:23:04.453 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:04.453 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:05.453 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:05.453 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:05.927 D/AndroidRuntime( 4649): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-12 11:23:05.929 I/AndroidRuntime( 4649): Using default boot image
+10-12 11:23:05.929 I/AndroidRuntime( 4649): Leaving lock profiling enabled
+10-12 11:23:05.931 W/app_process( 4649): ART APEX data files are untrusted.
+10-12 11:23:05.931 I/app_process( 4649): Core platform API reporting enabled, enforcing=false
+10-12 11:23:05.995 D/app_process( 4649): Time zone APEX ICU file found: /apex/com.android.tzdata/etc/icu/icu_tzdata.dat
+10-12 11:23:05.995 D/app_process( 4649): I18n APEX ICU file found: /apex/com.android.i18n/etc/icu/icudt68l.dat
+10-12 11:23:06.000 W/app_process( 4649): ClassLoaderContext classpath size mismatch. expected=0, found=1 (PCL[] | PCL[/system/framework/android.test.runner.jar*3487696984])
+10-12 11:23:06.014 D/AndroidRuntime( 4649): Calling main entry com.android.commands.uiautomator.Launcher
+10-12 11:23:06.021 V/UiAutomation( 4649): Init UiAutomation@4616bd8[id=88, flags=0]
+10-12 11:23:06.022 D/BatterySaverPolicy(  612): accessibility changed to true, updating policy.
+10-12 11:23:08.753 W/healthd (  428): battery l=50 v=3 t=2.6 h=2 st=3 c=-1600 fc=100 chg=au
+10-12 11:23:06.454 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:06.454 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:06.860 E/WifiVendorHal(  612): getWifiLinkLayerStats_1_5_Internal(l.1191) failed {.code = ERROR_UNKNOWN, .description = unknown error}
+10-12 11:23:07.066 W/AccessibilityNodeInfoDumper( 4649): Fetch time: 35ms
+10-12 11:23:07.068 D/BufferPoolAccessor2.0(  429): bufferpool2 0xecbc21e8 : 1(2088960 size) total buffers - 1(2088960 size) used buffers - 11707/11708 (recycle/alloc) - 2/11707 (fetch/transfer)
+10-12 11:23:07.068 D/BatterySaverPolicy(  612): accessibility changed to false, updating policy.
+10-12 11:23:07.088 D/AndroidRuntime( 4649): Shutting down VM
+10-12 11:23:07.454 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:07.455 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:08.455 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:08.455 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:09.070 D/AndroidRuntime( 4671): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-12 11:23:09.073 I/AndroidRuntime( 4671): Using default boot image
+10-12 11:23:09.073 I/AndroidRuntime( 4671): Leaving lock profiling enabled
+10-12 11:23:09.074 W/app_process( 4671): ART APEX data files are untrusted.
+10-12 11:23:09.075 I/app_process( 4671): Core platform API reporting enabled, enforcing=false
+10-12 11:23:09.138 D/app_process( 4671): Time zone APEX ICU file found: /apex/com.android.tzdata/etc/icu/icu_tzdata.dat
+10-12 11:23:09.138 D/app_process( 4671): I18n APEX ICU file found: /apex/com.android.i18n/etc/icu/icudt68l.dat
+10-12 11:23:09.144 W/app_process( 4671): ClassLoaderContext classpath size mismatch. expected=0, found=1 (PCL[] | PCL[/system/framework/android.test.runner.jar*3487696984])
+10-12 11:23:09.165 D/AndroidRuntime( 4671): Calling main entry com.android.commands.uiautomator.Launcher
+10-12 11:23:09.171 V/UiAutomation( 4671): Init UiAutomation@eebd57c[id=89, flags=0]
+10-12 11:23:09.171 D/BatterySaverPolicy(  612): accessibility changed to true, updating policy.
+10-12 11:23:09.314 D/BufferPoolAccessor2.0( 2448): bufferpool2 0xb400007cc38162b8 : 5(19200 size) total buffers - 4(15360 size) used buffers - 114173/114178 (recycle/alloc) - 10/228347 (fetch/transfer)
+10-12 11:23:09.315 D/BufferPoolAccessor2.0(  485): bufferpool2 0xb400006f4c7e3348 : 2(48000 size) total buffers - 1(24000 size) used buffers - 114173/114175 (recycle/alloc) - 2/114173 (fetch/transfer)
+10-12 11:23:09.456 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:09.456 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:09.868 E/WifiVendorHal(  612): getWifiLinkLayerStats_1_5_Internal(l.1191) failed {.code = ERROR_UNKNOWN, .description = unknown error}
+10-12 11:23:10.227 W/AccessibilityNodeInfoDumper( 4671): Fetch time: 45ms
+10-12 11:23:10.229 D/BatterySaverPolicy(  612): accessibility changed to false, updating policy.
+10-12 11:23:10.257 D/AndroidRuntime( 4671): Shutting down VM
+10-12 11:23:10.456 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:10.457 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:11.457 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:11.457 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:12.242 D/AndroidRuntime( 4692): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-12 11:23:12.245 I/AndroidRuntime( 4692): Using default boot image
+10-12 11:23:12.245 I/AndroidRuntime( 4692): Leaving lock profiling enabled
+10-12 11:23:12.246 W/app_process( 4692): ART APEX data files are untrusted.
+10-12 11:23:12.246 I/app_process( 4692): Core platform API reporting enabled, enforcing=false
+10-12 11:23:12.310 D/app_process( 4692): Time zone APEX ICU file found: /apex/com.android.tzdata/etc/icu/icu_tzdata.dat
+10-12 11:23:12.310 D/app_process( 4692): I18n APEX ICU file found: /apex/com.android.i18n/etc/icu/icudt68l.dat
+10-12 11:23:12.316 W/app_process( 4692): ClassLoaderContext classpath size mismatch. expected=0, found=1 (PCL[] | PCL[/system/framework/android.test.runner.jar*3487696984])
+10-12 11:23:12.330 D/AndroidRuntime( 4692): Calling main entry com.android.commands.uiautomator.Launcher
+10-12 11:23:12.335 D/BatterySaverPolicy(  612): accessibility changed to true, updating policy.
+10-12 11:23:12.336 V/UiAutomation( 4692): Init UiAutomation@6d3a4b7[id=90, flags=0]
+10-12 11:23:12.357 D/BufferPoolAccessor2.0(  429): bufferpool2 0xecbc21e8 : 1(2088960 size) total buffers - 1(2088960 size) used buffers - 11742/11743 (recycle/alloc) - 2/11742 (fetch/transfer)
+10-12 11:23:12.458 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:12.458 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:12.875 E/WifiVendorHal(  612): getWifiLinkLayerStats_1_5_Internal(l.1191) failed {.code = ERROR_UNKNOWN, .description = unknown error}
+10-12 11:23:13.383 W/AccessibilityNodeInfoDumper( 4692): Fetch time: 38ms
+10-12 11:23:13.386 D/BatterySaverPolicy(  612): accessibility changed to false, updating policy.
+10-12 11:23:13.412 D/AndroidRuntime( 4692): Shutting down VM
+10-12 11:23:13.458 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:13.458 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:14.434 D/BufferPoolAccessor2.0( 2448): bufferpool2 0xb400007cc38162b8 : 5(19200 size) total buffers - 4(15360 size) used buffers - 114429/114434 (recycle/alloc) - 10/228859 (fetch/transfer)
+10-12 11:23:14.435 D/BufferPoolAccessor2.0(  485): bufferpool2 0xb400006f4c7e3348 : 2(48000 size) total buffers - 1(24000 size) used buffers - 114429/114431 (recycle/alloc) - 2/114429 (fetch/transfer)
+10-12 11:23:14.459 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:14.459 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:14.913 D/ControlsListingControllerImpl(  789): Subscribing callback, service count: 0
+10-12 11:23:14.946 D/ControlsListingControllerImpl(  789): Unsubscribing callback
+10-12 11:23:15.376 D/AndroidRuntime( 4713): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-12 11:23:15.379 I/AndroidRuntime( 4713): Using default boot image
+10-12 11:23:15.379 I/AndroidRuntime( 4713): Leaving lock profiling enabled
+10-12 11:23:15.381 W/app_process( 4713): ART APEX data files are untrusted.
+10-12 11:23:15.381 I/app_process( 4713): Core platform API reporting enabled, enforcing=false
+10-12 11:23:15.444 D/app_process( 4713): Time zone APEX ICU file found: /apex/com.android.tzdata/etc/icu/icu_tzdata.dat
+10-12 11:23:15.444 D/app_process( 4713): I18n APEX ICU file found: /apex/com.android.i18n/etc/icu/icudt68l.dat
+10-12 11:23:15.450 W/app_process( 4713): ClassLoaderContext classpath size mismatch. expected=0, found=1 (PCL[] | PCL[/system/framework/android.test.runner.jar*3487696984])
+10-12 11:23:15.459 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:15.459 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:15.474 D/AndroidRuntime( 4713): Calling main entry com.android.commands.uiautomator.Launcher
+10-12 11:23:15.480 V/UiAutomation( 4713): Init UiAutomation@ebb73f2[id=91, flags=0]
+10-12 11:23:15.480 D/BatterySaverPolicy(  612): accessibility changed to true, updating policy.
+10-12 11:23:15.883 E/WifiVendorHal(  612): getWifiLinkLayerStats_1_5_Internal(l.1191) failed {.code = ERROR_UNKNOWN, .description = unknown error}
+10-12 11:23:16.460 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:16.460 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:16.538 W/AccessibilityNodeInfoDumper( 4713): Fetch time: 47ms
+10-12 11:23:16.541 D/BatterySaverPolicy(  612): accessibility changed to false, updating policy.
+10-12 11:23:16.554 D/AndroidRuntime( 4713): Shutting down VM
+10-12 11:23:17.460 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:17.461 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:17.566 D/BufferPoolAccessor2.0(  429): bufferpool2 0xecbc21e8 : 1(2088960 size) total buffers - 1(2088960 size) used buffers - 11787/11788 (recycle/alloc) - 2/11787 (fetch/transfer)
+10-12 11:23:18.461 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:18.461 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:18.505 D/AndroidRuntime( 4734): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-12 11:23:18.508 I/AndroidRuntime( 4734): Using default boot image
+10-12 11:23:18.508 I/AndroidRuntime( 4734): Leaving lock profiling enabled
+10-12 11:23:18.510 W/app_process( 4734): ART APEX data files are untrusted.
+10-12 11:23:18.510 I/app_process( 4734): Core platform API reporting enabled, enforcing=false
+10-12 11:23:18.573 D/app_process( 4734): Time zone APEX ICU file found: /apex/com.android.tzdata/etc/icu/icu_tzdata.dat
+10-12 11:23:18.573 D/app_process( 4734): I18n APEX ICU file found: /apex/com.android.i18n/etc/icu/icudt68l.dat
+10-12 11:23:18.579 W/app_process( 4734): ClassLoaderContext classpath size mismatch. expected=0, found=1 (PCL[] | PCL[/system/framework/android.test.runner.jar*3487696984])
+10-12 11:23:18.601 D/AndroidRuntime( 4734): Calling main entry com.android.commands.uiautomator.Launcher
+10-12 11:23:18.607 V/UiAutomation( 4734): Init UiAutomation@6a3432d[id=92, flags=0]
+10-12 11:23:18.607 D/BatterySaverPolicy(  612): accessibility changed to true, updating policy.
+10-12 11:23:18.892 E/WifiVendorHal(  612): getWifiLinkLayerStats_1_5_Internal(l.1191) failed {.code = ERROR_UNKNOWN, .description = unknown error}
+10-12 11:23:19.461 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:19.461 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:19.554 D/BufferPoolAccessor2.0( 2448): bufferpool2 0xb400007cc38162b8 : 5(19200 size) total buffers - 4(15360 size) used buffers - 114685/114690 (recycle/alloc) - 10/229371 (fetch/transfer)
+10-12 11:23:19.555 D/BufferPoolAccessor2.0(  485): bufferpool2 0xb400006f4c7e3348 : 2(48000 size) total buffers - 1(24000 size) used buffers - 114685/114687 (recycle/alloc) - 2/114685 (fetch/transfer)
+10-12 11:23:19.611 I/uiautomator( 4734): type=1400 audit(0.0:258): avc: denied { read } for name="u:object_r:qemu_sf_lcd_density_prop:s0" dev="tmpfs" ino=230 scontext=u:r:shell:s0 tcontext=u:object_r:qemu_sf_lcd_density_prop:s0 tclass=file permissive=1
+10-12 11:23:19.611 I/uiautomator( 4734): type=1400 audit(0.0:259): avc: denied { open } for path="/dev/__properties__/u:object_r:qemu_sf_lcd_density_prop:s0" dev="tmpfs" ino=230 scontext=u:r:shell:s0 tcontext=u:object_r:qemu_sf_lcd_density_prop:s0 tclass=file permissive=1
+10-12 11:23:19.611 I/uiautomator( 4734): type=1400 audit(0.0:260): avc: denied { getattr } for path="/dev/__properties__/u:object_r:qemu_sf_lcd_density_prop:s0" dev="tmpfs" ino=230 scontext=u:r:shell:s0 tcontext=u:object_r:qemu_sf_lcd_density_prop:s0 tclass=file permissive=1
+10-12 11:23:19.611 I/uiautomator( 4734): type=1400 audit(0.0:261): avc: denied { map } for path="/dev/__properties__/u:object_r:qemu_sf_lcd_density_prop:s0" dev="tmpfs" ino=230 scontext=u:r:shell:s0 tcontext=u:object_r:qemu_sf_lcd_density_prop:s0 tclass=file permissive=1
+10-12 11:23:19.648 W/AccessibilityNodeInfoDumper( 4734): Fetch time: 29ms
+10-12 11:23:19.650 D/BatterySaverPolicy(  612): accessibility changed to false, updating policy.
+10-12 11:23:19.665 D/AndroidRuntime( 4734): Shutting down VM
+10-12 11:23:20.462 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:20.462 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:21.462 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:21.463 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:21.627 D/AndroidRuntime( 4755): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-12 11:23:21.630 I/AndroidRuntime( 4755): Using default boot image
+10-12 11:23:21.630 I/AndroidRuntime( 4755): Leaving lock profiling enabled
+10-12 11:23:21.632 W/app_process( 4755): ART APEX data files are untrusted.
+10-12 11:23:21.632 I/app_process( 4755): Core platform API reporting enabled, enforcing=false
+10-12 11:23:21.695 D/app_process( 4755): Time zone APEX ICU file found: /apex/com.android.tzdata/etc/icu/icu_tzdata.dat
+10-12 11:23:21.695 D/app_process( 4755): I18n APEX ICU file found: /apex/com.android.i18n/etc/icu/icudt68l.dat
+10-12 11:23:21.701 W/app_process( 4755): ClassLoaderContext classpath size mismatch. expected=0, found=1 (PCL[] | PCL[/system/framework/android.test.runner.jar*3487696984])
+10-12 11:23:21.715 D/AndroidRuntime( 4755): Calling main entry com.android.commands.uiautomator.Launcher
+10-12 11:23:21.720 D/BatterySaverPolicy(  612): accessibility changed to true, updating policy.
+10-12 11:23:21.721 V/UiAutomation( 4755): Init UiAutomation@e8b1268[id=93, flags=0]
+10-12 11:23:21.900 E/WifiVendorHal(  612): getWifiLinkLayerStats_1_5_Internal(l.1191) failed {.code = ERROR_UNKNOWN, .description = unknown error}
+10-12 11:23:22.463 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:22.463 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:22.768 D/BufferPoolAccessor2.0(  429): bufferpool2 0xecbc21e8 : 1(2088960 size) total buffers - 1(2088960 size) used buffers - 11822/11823 (recycle/alloc) - 2/11822 (fetch/transfer)
+10-12 11:23:22.783 W/AccessibilityNodeInfoDumper( 4755): Fetch time: 52ms
+10-12 11:23:22.785 D/BatterySaverPolicy(  612): accessibility changed to false, updating policy.
+10-12 11:23:22.819 D/AndroidRuntime( 4755): Shutting down VM
+10-12 11:23:23.464 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:23.464 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:24.464 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:24.464 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:24.674 D/BufferPoolAccessor2.0( 2448): bufferpool2 0xb400007cc38162b8 : 5(19200 size) total buffers - 4(15360 size) used buffers - 114941/114946 (recycle/alloc) - 10/229883 (fetch/transfer)
+10-12 11:23:24.675 D/BufferPoolAccessor2.0(  485): bufferpool2 0xb400006f4c7e3348 : 2(48000 size) total buffers - 1(24000 size) used buffers - 114941/114943 (recycle/alloc) - 2/114941 (fetch/transfer)
+10-12 11:23:24.786 D/AndroidRuntime( 4776): >>>>>> START com.android.internal.os.RuntimeInit uid 2000 <<<<<<
+10-12 11:23:24.788 I/AndroidRuntime( 4776): Using default boot image
+10-12 11:23:24.788 I/AndroidRuntime( 4776): Leaving lock profiling enabled
+10-12 11:23:24.790 W/app_process( 4776): ART APEX data files are untrusted.
+10-12 11:23:24.790 I/app_process( 4776): Core platform API reporting enabled, enforcing=false
+10-12 11:23:24.853 D/app_process( 4776): Time zone APEX ICU file found: /apex/com.android.tzdata/etc/icu/icu_tzdata.dat
+10-12 11:23:24.854 D/app_process( 4776): I18n APEX ICU file found: /apex/com.android.i18n/etc/icu/icudt68l.dat
+10-12 11:23:24.860 W/app_process( 4776): ClassLoaderContext classpath size mismatch. expected=0, found=1 (PCL[] | PCL[/system/framework/android.test.runner.jar*3487696984])
+10-12 11:23:24.874 D/AndroidRuntime( 4776): Calling main entry com.android.commands.uiautomator.Launcher
+10-12 11:23:24.879 V/UiAutomation( 4776): Init UiAutomation@672e1a3[id=94, flags=0]
+10-12 11:23:24.880 D/BatterySaverPolicy(  612): accessibility changed to true, updating policy.
+10-12 11:23:24.908 E/WifiVendorHal(  612): getWifiLinkLayerStats_1_5_Internal(l.1191) failed {.code = ERROR_UNKNOWN, .description = unknown error}
+10-12 11:23:25.465 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:25.465 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:25.935 W/AccessibilityNodeInfoDumper( 4776): Fetch time: 38ms
+10-12 11:23:25.937 D/BatterySaverPolicy(  612): accessibility changed to false, updating policy.
+10-12 11:23:25.961 D/AndroidRuntime( 4776): Shutting down VM
+10-12 11:23:26.465 D/gps_ql  (  425): Error connecting rild-nmea (Connection refused)
+10-12 11:23:26.465 D/gps_ql  (  425): fail to open GPS channel <rild-nmea>!
+10-12 11:23:26.883 I/android.hardware.graphics.allocator@4.0-service(  382): alloc_format: FMT:0x1,MOD:0
+10-12 11:23:26.884 I/android.hardware.graphics.allocator@4.0-service(  382): mali_gralloc_adjust_dimensions: alloc_format=FMT:0x1,MOD:0 usage=0xb33 alloc_width=1080, alloc_height=1920
+10-12 11:23:26.884 D/android.hardware.graphics.allocator@4.0-service(  382): got new private_handle_t instance for buffer 'screenshot'. share_fd : 10, share_attr_fd : 11, width : 1080, height : 1920, req_format : 0x1, producer_usage : 0xb33, consumer_usage : 0xb33, , stride : 1088, alloc_format : 1, size : 8355840, layer_count : 1
+10-12 11:23:26.884 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[0]: offset : 0, byte_stride : 4352, alloc_width : 1080, alloc_height : 1920
+10-12 11:23:26.884 D/android.hardware.graphics.allocator@4.0-service(  382): plane_info[1]: offset : 0, byte_stride : 0, alloc_width : 0, alloc_height : 0
+10-12 11:23:29.442 I/logd    (  301): logdr: UID=2000 GID=2000 PID=4798 n tail=0 logMask=99 pid=0 start=0ns deadline=0ns
