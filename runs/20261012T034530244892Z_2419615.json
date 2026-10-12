@@ -1,0 +1,180 @@
+{
+  "schema": 3,
+  "status": "INTERRUPTED",
+  "timestamp_utc": "20261012T034530244892Z",
+  "ui_dumps": 17,
+  "cached_controls": 11,
+  "serial": "8719e18a71a2a66c",
+  "backends": "cpu,gpu,cpu",
+  "rounds": 1,
+  "size": 9,
+  "moves": 2,
+  "undo": true,
+  "pass": false,
+  "failure": "用户按 Ctrl+C 中断测试",
+  "events": [
+    {
+      "seconds": 0.004,
+      "message": "连接设备 8719e18a71a2a66c"
+    },
+    {
+      "seconds": 0.185,
+      "message": "已加载本地 UI 缓存：10 个控件/菜单位置"
+    },
+    {
+      "seconds": 0.873,
+      "message": "启动 APP"
+    },
+    {
+      "seconds": 0.873,
+      "message": "等待 MainActivity 的引擎完成日志（不依赖屏幕下方的按钮）"
+    },
+    {
+      "seconds": 0.924,
+      "message": "首页引擎尚未发出 ready 日志，已等待 0s"
+    },
+    {
+      "seconds": 5.026,
+      "message": "MainActivity 已报告 Initial engine ready=true"
+    },
+    {
+      "seconds": 5.026,
+      "message": "已读取 APP 会话设置：9路，CPU"
+    },
+    {
+      "seconds": 5.067,
+      "message": "动态状态使用 UIAutomator 后备检测"
+    },
+    {
+      "seconds": 5.067,
+      "message": "=== Case 1: CPU / 9x9 ==="
+    },
+    {
+      "seconds": 5.117,
+      "message": "打开 AI训练（本地缓存），坐标=(540, 1534)"
+    },
+    {
+      "seconds": 7.33,
+      "message": "新开一局弹窗已显示"
+    },
+    {
+      "seconds": 7.33,
+      "message": "sizeSpinner 已选择 9路，跳过下拉菜单"
+    },
+    {
+      "seconds": 7.33,
+      "message": "执黑已由本次会话确认，跳过 UI 检查"
+    },
+    {
+      "seconds": 7.33,
+      "message": "backendSpinner 已选择 CPU / Eigen，跳过下拉菜单"
+    },
+    {
+      "seconds": 7.395,
+      "message": "点击开始对局（本地缓存），坐标=(539, 1333)"
+    },
+    {
+      "seconds": 10.393,
+      "message": "CPU 就绪，第 1 手（UI后备）"
+    },
+    {
+      "seconds": 10.455,
+      "message": "主进程 PID=6047，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 10.511,
+      "message": "落子 (2,2)，屏幕 (310,757)（缓存棋盘）"
+    },
+    {
+      "seconds": 14.023,
+      "message": "CPU 就绪，第 3 手（UI后备）"
+    },
+    {
+      "seconds": 14.079,
+      "message": "落子 (6,6)，屏幕 (765,1212)（缓存棋盘）"
+    },
+    {
+      "seconds": 16.675,
+      "message": "尝试 (6,6) 未落子，换交叉点"
+    },
+    {
+      "seconds": 16.732,
+      "message": "落子 (6,2)，屏幕 (765,757)（缓存棋盘）"
+    },
+    {
+      "seconds": 20.212,
+      "message": "CPU 就绪，第 5 手（UI后备）"
+    },
+    {
+      "seconds": 20.266,
+      "message": "点击 undoButton（本地缓存），坐标=(671, 1594)"
+    },
+    {
+      "seconds": 22.408,
+      "message": "悔棋通过"
+    },
+    {
+      "seconds": 22.472,
+      "message": "主进程 PID=6047，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 22.762,
+      "message": "截图 case_001_cpu.png"
+    },
+    {
+      "seconds": 22.762,
+      "message": "=== Case 1: PASS ==="
+    },
+    {
+      "seconds": 22.762,
+      "message": "=== Case 2: GPU / 9x9 ==="
+    },
+    {
+      "seconds": 22.808,
+      "message": "点击 newRoundButton（本地缓存），坐标=(933, 1594)"
+    },
+    {
+      "seconds": 24.939,
+      "message": "新开一局弹窗已显示"
+    },
+    {
+      "seconds": 24.939,
+      "message": "sizeSpinner 已选择 9路，跳过下拉菜单"
+    },
+    {
+      "seconds": 24.939,
+      "message": "执黑已由本次会话确认，跳过 UI 检查"
+    },
+    {
+      "seconds": 24.984,
+      "message": "点击 backendSpinner（本地缓存），坐标=(639, 1035)"
+    },
+    {
+      "seconds": 27.258,
+      "message": "选择 backendSpinner: GPU / OpenCL，坐标=(575, 1169)"
+    },
+    {
+      "seconds": 27.321,
+      "message": "点击开始对局（本地缓存），坐标=(539, 1333)"
+    },
+    {
+      "seconds": 38.825,
+      "message": "等待: gpu 没有进入玩家回合；已过 11s；界面: 新开一局 棋盘路数 9路 执棋颜色 猜先 执黑 执白 对局条件 分先 AI 运行 GPU / OpenCL 棋力等级 12级 开始对局 ✕"
+    },
+    {
+      "seconds": 51.225,
+      "message": "等待: gpu 没有进入玩家回合；已过 23s；界面: 新开一局 棋盘路数 9路 执棋颜色 猜先 执黑 执白 对局条件 分先 AI 运行 GPU / OpenCL 棋力等级 12级 开始对局 ✕"
+    },
+    {
+      "seconds": 54.232,
+      "message": "收到 Ctrl+C，停止测试并保存已完成的结果"
+    },
+    {
+      "seconds": 54.236,
+      "message": "本地报告: /mnt/hgfs/D/code/go/GoEngine-java/build/app_ui_test/20261012_114435"
+    }
+  ],
+  "startup_timings": [],
+  "game_backends": [],
+  "note": "PUBLIC and NOT REDACTED, diagnostics under runs/20261012T034530244892Z_2419615/"
+}
