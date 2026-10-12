@@ -663,7 +663,7 @@ public class MainActivity extends AppCompatActivity {
                             finalDeadStones = estimatedDead;
                             fastEndgameLead = lead;
                             gameResultText = formatFastEndgameResult(lead);
-                            finalScoreText = String.format(Locale.CHINA, "快速AI预估\\n%s",
+                            finalScoreText = String.format(Locale.CHINA, "快速AI预估\n%s",
                                     Math.abs(lead) < 0.05 ? "接近平局" : String.format(Locale.CHINA, "%s领先约%.1f目",
                                     lead > 0 ? "白" : "黑", Math.abs(lead)));
                             territorySummary(quick);
@@ -709,7 +709,7 @@ public class MainActivity extends AppCompatActivity {
                 gameResultText = synced ? formatFinalResult(score) : "对局结束 · 同步失败";
                 if (result != null) territorySummary(result);
                 recordFinalWinRate(snapshot, moves, epoch, score);
-                finalScoreText = synced ? finalPointsSummary(score, deadStones) : "终局数子\\n同步失败";
+                finalScoreText = synced ? finalPointsSummary(score, deadStones) : "终局数子\n同步失败";
                 render(finalScoreText);
             });
         });
@@ -721,7 +721,7 @@ public class MainActivity extends AppCompatActivity {
                 lead > 0 ? "白" : "黑", Math.abs(lead));
     }
 
-    /** Retry the original KataGo final_score only if its automatic request failed. */
+    /** Optional same-game comparison using original KataGo final_score and dead-status search. */
     private void requestPreciseEndgame() {
         DebugLog.enter(TAG, "requestPreciseEndgame in, evaluating=" + evaluating);
         if (!engineReady || evaluating || !board.isGameOver() || finalDeadStones == null || preciseScoreReady) {
