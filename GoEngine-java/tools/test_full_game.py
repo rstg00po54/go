@@ -21,6 +21,7 @@ def completed_game_logs():
         line(100, "KataGoEngine", "sendCommandSync in, command=final_score, running=true"),
         line(130, "KataGoEngine", "parseGtpResponse in, response== 0"),
         line(640, "KataGoEngine", "parseGtpResponse in, response== W+86.5"),
+        line(645, "MainActivity", "ENDGAME_TIMING phase=score_done elapsedMs=645 scoreMs=545 valid=true"),
         line(650, "KataGoEngine", "sendCommandSync in, command=final_status_list dead, running=true"),
         line(4000, "KataGoEngine", "sendCommandSync in, command=kata-raw-nn 0, running=true"),
         line(4500, "KataGoEngine", "Position evaluation whiteWin=0.50 elapsedMs=499"),
@@ -132,6 +133,7 @@ class EndgameTests(unittest.TestCase):
     def test_endgame_stage_durations(self):
         result = score_timings(completed_game_logs(), year=2026)
         self.assertEqual(result["total_ms"], 4900)
+        self.assertEqual(result["time_to_first_result_ms"], 645)
         self.assertEqual(result["before_final_score_ms"], 100)
         self.assertEqual(result["final_score_ms"], 550)
         self.assertEqual(result["dead_stones_ms"], 3350)
