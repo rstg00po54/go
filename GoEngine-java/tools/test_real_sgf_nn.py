@@ -54,8 +54,8 @@ class RealSgfTests(unittest.TestCase):
 
     def test_reject_non_scored_or_unsupported_game(self):
         samples = [
-            ("RE[W+R]", "Only numeric scored"),
-            ("RE[B+Time]", "Only numeric scored"),
+            ("RE[W+R]RU[Chinese]", "Only numeric scored"),
+            ("RE[B+Time]RU[Chinese]", "Only numeric scored"),
             ("RE[W+2]RU[Japanese]", "Only explicitly Chinese"),
             ("RE[W+2]RU[Chinese]HA[2]AB[aa][bb]", "Handicap/setup"),
         ]
