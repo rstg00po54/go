@@ -1,0 +1,41 @@
+{
+  "description": "Archived completed games with numeric recorded RE, not synthetic or verified independent rescoring",
+  "cases": [
+    {
+      "name": "cgos9_1",
+      "url": "https://raw.githubusercontent.com/LatinScribe/BetaGoZero/main/DataSet/2015-Go9-super-small/2015-06-30T13_28_05.990Z_j15601s5g8gk.sgf",
+      "origin": "BetaGoZero / 2015-Go9-super-small (archived 9x9 server games)",
+      "sgf": "(;GM[1]SZ[9]RE[B+2]KM[7]RU[Chinese]\nPB[Easons (2438)]\nPW[danna77 (2458)]\n;B[gd];W[df];B[de];W[ce];B[cd];W[cf];B[dd];W[ff];B[gf];W[fd];B[ge];W[fe];B[fc];W[ec];B[ed];W[fg];B[gg];W[eb];B[fb];W[cb];B[bb];W[bc];B[cc];W[ab];B[ba];W[bd];B[db];W[gh];B[hh];W[fh];B[hi];W[ee];B[ca];W[be];B[gi];W[fi];B[ea];W[ac];B[aa];W[];B[dc];W[];B[hf];W[];B[])"
+    },
+    {
+      "name": "cgos9_2",
+      "url": "https://raw.githubusercontent.com/LatinScribe/BetaGoZero/main/DataSet/2015-Go9-super-small/2015-07-19T12_32_03.406Z_ycdor3fuul2s.sgf",
+      "origin": "BetaGoZero / 2015-Go9-super-small (archived 9x9 server games)",
+      "sgf": "(;GM[1]SZ[9]RE[W+2]KM[7]RU[Chinese]\nPB[Easons (2443)]\nPW[aomoriboy (2347)]\n;B[fd];W[df];B[ef];W[eg];B[de];W[ce];B[ee];W[cd];B[dg];W[cf];B[fg];W[eh];B[fh];W[ec];B[fc];W[eb];B[dh];W[gb];B[fb];W[fa];B[gc];W[hb];B[dd];W[dc];B[bg];W[ic];B[cc];W[bc];B[cb];W[bb];B[bf];W[be];B[cg];W[hf];B[ae];W[bd];B[hd];W[id];B[hc];W[ib];B[he];W[ie];B[gf];W[hg];B[hh];W[ih];B[hi];W[ad];B[af];W[gg];B[gh];W[if];B[ii];W[ig];B[ed];W[ca];B[ei];W[db];B[];W[])"
+    },
+    {
+      "name": "cgos9_3",
+      "url": "https://raw.githubusercontent.com/LatinScribe/BetaGoZero/main/DataSet/2015-Go9-super-small/2015-07-19T12_40_05.361Z_ds8v8n0s4al0.sgf",
+      "origin": "BetaGoZero / 2015-Go9-super-small (archived 9x9 server games)",
+      "sgf": "(;GM[1]SZ[9]RE[W+8]KM[7]RU[Chinese]\nPB[moonabal (2446)]\nPW[Easons (2431)]\n;B[ee];W[ce];B[cf];W[df];B[de];W[cg];B[bf];W[cd];B[dc];W[bg];B[dg];W[ef];B[ff];W[eg];B[fg];W[dh];B[eh];W[dg];B[ec];W[ge];B[hf];W[gf];B[gg];W[he];B[hc];W[hg];B[hh];W[if];B[ih];W[cc];B[cb];W[fe];B[fh];W[fc];B[be];W[ei];B[gi];W[di];B[fi];W[fb];B[dd];W[bi];B[hb];W[fd];B[ig];W[hd];B[hf];W[gc];B[ie];W[id];B[eb];W[ea];B[da];W[fa];B[bc];W[if];B[ha];W[hg];B[af];W[ah];B[hf];W[ed];B[bd];W[hg];B[ag];W[hf];B[];W[ic];B[];W[ib];B[];W[gb];B[];W[ga];B[];W[ch];B[];W[ia];B[];W[])"
+    },
+    {
+      "name": "cgos9_4",
+      "url": "https://raw.githubusercontent.com/LatinScribe/BetaGoZero/main/DataSet/2015-Go9-super-small/2015-07-22T02_24_09.532Z_3cn8heoszqv2.sgf",
+      "origin": "BetaGoZero / 2015-Go9-super-small (archived 9x9 server games)",
+      "sgf": "(;GM[1]SZ[9]RE[W+2]KM[7]RU[Chinese]\nPB[naotin15 (2478)]\nPW[ookini (2263)]\n;B[de];W[ff];B[gd];W[fd];B[ge];W[fe];B[gf];W[gc];B[gg];W[dc];B[cc];W[fg];B[dg];W[fh];B[hc];W[hb];B[gb];W[fc];B[ib];W[ha];B[ga];W[cd];B[dd];W[bc];B[cb];W[db];B[bd];W[ce];B[be];W[cf];B[bb];W[cg];B[gh];W[fb];B[ch];W[df];B[bg];W[ef];B[bf];W[fa];B[eh];W[hd];B[he];W[gi];B[hi];W[fi];B[id];W[ei];B[dh];W[hh];B[hg];W[ii];B[da];W[ea];B[ca];W[di];B[ci];W[ig];B[if];W[hi];B[bh];W[ia];B[ic];W[ih];B[eg];W[];B[ac];W[];B[])"
+    },
+    {
+      "name": "cgos9_5",
+      "url": "https://raw.githubusercontent.com/LatinScribe/BetaGoZero/main/DataSet/2015-Go9-super-small/2015-07-23T16_19_56.959Z_vsamvj917b7m.sgf",
+      "origin": "BetaGoZero / 2015-Go9-super-small (archived 9x9 server games)",
+      "sgf": "(;GM[1]SZ[9]RE[B+22]KM[7]RU[Chinese]\nPB[mimumimumimu (2442)]\nPW[masaki05 (2150)]\n;B[ee];W[eg];B[ff];W[fg];B[df];W[ec];B[dg];W[gf];B[ge];W[hf];B[dc];W[db];B[cc];W[cb];B[he];W[hh];B[fb];W[eb];B[gc];W[bc];B[bd];W[ac];B[ba];W[bb];B[aa];W[ea];B[ca];W[dh];B[ch];W[eh];B[ce];W[ie];B[id];W[if];B[hd];W[bh];B[bg];W[ci];B[cg];W[ef];B[fe];W[bi];B[ah];W[di];B[ag];W[ai];B[ed];W[gh];B[fc];W[fa];B[ga];W[ad];B[ae];W[gg];B[];W[])"
+    },
+    {
+      "name": "alphago_kejie19_20170523",
+      "url": "https://raw.githubusercontent.com/akitaonrails/frank_go/main/data/games/famous/2017-alphago-ke-jie-game-1.sgf",
+      "origin": "frank_go / famous / AlphaGo vs Ke Jie, official counted game",
+      "sgf": "(;\nEV[Future of Go Summit]\nRO[1]\nPB[Ke Jie]\nBR[9p]\nPW[AlphaGo]\nWR[9p]\nTM[3h]\nKM[7.5]\nRE[W+0.5]\nDT[2017-05-23]\nPC[Wuzhen, China]\nRU[Chinese]\n\n;B[qd];W[pp];B[cc];W[cp];B[nc];W[fp];B[qq];W[pq];B[qp];W[qn]\n;B[qo];W[po];B[rn];W[qr];B[rr];W[rm];B[pr];W[or];B[pn];W[qm]\n;B[qs];W[on];B[dj];W[nk];B[ph];W[ch];B[cf];W[eh];B[ci];W[de]\n;B[df];W[dc];B[cd];W[dd];B[ef];W[di];B[ei];W[dh];B[cj];W[ce]\n;B[be];W[bf];B[bg];W[bd];B[af];W[bc];B[fi];W[cm];B[hq];W[ek]\n;B[fh];W[gq];B[hp];W[ej];B[eq];W[gr];B[cq];W[dp];B[dq];W[ep]\n;B[bp];W[bh];B[ah];W[bo];B[bq];W[fg];B[gg];W[kp];B[ko];W[jo]\n;B[jn];W[in];B[jp];W[io];B[lp];W[kq];B[lq];W[kr];B[lr];W[ir]\n;B[kn];W[il];B[oq];W[pf];B[nh];W[rf];B[od];W[qi];B[qg];W[rd]\n;B[qf];W[qe];B[pe];W[re];B[qc];W[rg];B[kh];W[ic];B[gc];W[kc]\n;B[jd];W[id];B[ge];W[hb];B[gb];W[jf];B[je];W[ie];B[ld];W[hg]\n;B[eg];W[lc];B[le];W[hf];B[qh];W[rh];B[pi];W[qj];B[gk];W[fd]\n;B[gd];W[lf];B[mf];W[lg];B[gm];W[gn];B[fn];W[go];B[dl];W[mo]\n;B[oo];W[pm];B[op];W[mg];B[nf];W[lo];B[nn];W[lm];B[pn];W[dk]\n;B[ck];W[cl];B[el];W[bk];B[bi];W[li];B[ii];W[ds];B[dr];W[hi]\n;B[ik];W[jk];B[ij];W[md];B[mc];W[ke];B[me];W[kd];B[om];W[ls]\n;B[ms];W[ks];B[nr];W[ng];B[og];W[es];B[cs];W[fr];B[er];W[fs]\n;B[bs];W[hl];B[pl];W[ql];B[rc];W[ro];B[rp];W[sn];B[hm];W[im]\n;B[kk];W[kj];B[lk];W[jl];B[mj];W[mi];B[nj];W[pk];B[fm];W[cn]\n;B[ol];W[ok];B[ni];W[ih];B[ji];W[mb];B[nb];W[lb];B[fe];W[cb]\n;B[mp];W[mm];B[eb];W[na];B[oa];W[ma];B[qb];W[bj];B[ai];W[aj]\n;B[ag];W[gl];B[fk];W[bl];B[kg];W[kf];B[ib];W[jb];B[ga];W[ha]\n;B[ed];W[ec];B[fc];W[gf];B[ff];W[gj];B[hk];W[hh];B[fj];W[no]\n;B[fq];W[hr];B[kl];W[km];B[mn];W[ln];B[nl];W[db];B[da];W[ca]\n;B[ea];W[np];B[nq];W[oj];B[oi];W[en];B[em];W[eo];B[dm];W[dn]\n;B[sp];W[so];B[hn];W[ho];B[hc];W[ia];B[ao];W[an];B[ap];W[sc]\n;B[sb];W[sd];B[jg];W[ad];B[gh];W[ae];B[ee];W[ml];B[mk];W[pj]\n;B[bf];W[nm];B[on];W[he];B[ig];W[ki];B[jh];W[fl];B[jj];W[fo]\n;B[hj];W[gi];B[ll];W[jm];B[lh];W[mh];B[lj];W[if];B[hd])\n"
+    }
+  ]
+}
