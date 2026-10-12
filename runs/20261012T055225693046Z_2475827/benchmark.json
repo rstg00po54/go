@@ -1,0 +1,327 @@
+{
+  "schema": 1,
+  "measurement": "Android MainActivity wall-clock event timestamps",
+  "meaning": "tap to handleAiMove includes JNI/GTP, move sync and AI search; NOT isolated neural-network inference",
+  "p95_method": "nearest-rank",
+  "expected_moves_per_case": 8,
+  "warmup_moves_per_case": 1,
+  "cases": [
+    {
+      "case": 1,
+      "requested": "cpu",
+      "size": 9,
+      "actual": "CPU/Eigen JNI",
+      "engine_ready": true,
+      "startup_ms": 21.0,
+      "rejected_taps": 0,
+      "incomplete_moves": 0,
+      "moves": [
+        {
+          "move_index": 1,
+          "coordinate": "(2,2)",
+          "ai_move": "F4",
+          "tap_to_ai_ms": 918.0,
+          "tap_to_ready_ms": 919.0,
+          "ai_search_from_accept_ms": 915.0
+        },
+        {
+          "move_index": 2,
+          "coordinate": "(6,6)",
+          "ai_move": "C5",
+          "tap_to_ai_ms": 916.0,
+          "tap_to_ready_ms": 917.0,
+          "ai_search_from_accept_ms": 913.0
+        },
+        {
+          "move_index": 3,
+          "coordinate": "(6,2)",
+          "ai_move": "F6",
+          "tap_to_ai_ms": 924.0,
+          "tap_to_ready_ms": 925.0,
+          "ai_search_from_accept_ms": 921.0
+        },
+        {
+          "move_index": 4,
+          "coordinate": "(2,6)",
+          "ai_move": "D3",
+          "tap_to_ai_ms": 923.0,
+          "tap_to_ready_ms": 924.0,
+          "ai_search_from_accept_ms": 920.0
+        },
+        {
+          "move_index": 5,
+          "coordinate": "(4,4)",
+          "ai_move": "D6",
+          "tap_to_ai_ms": 924.0,
+          "tap_to_ready_ms": 928.0,
+          "ai_search_from_accept_ms": 923.0
+        },
+        {
+          "move_index": 6,
+          "coordinate": "(1,4)",
+          "ai_move": "E4",
+          "tap_to_ai_ms": 917.0,
+          "tap_to_ready_ms": 918.0,
+          "ai_search_from_accept_ms": 913.0
+        },
+        {
+          "move_index": 7,
+          "coordinate": "(1,1)",
+          "ai_move": "G4",
+          "tap_to_ai_ms": 936.0,
+          "tap_to_ready_ms": 937.0,
+          "ai_search_from_accept_ms": 933.0
+        },
+        {
+          "move_index": 8,
+          "coordinate": "(2,1)",
+          "ai_move": "D2",
+          "tap_to_ai_ms": 928.0,
+          "tap_to_ready_ms": 929.0,
+          "ai_search_from_accept_ms": 926.0
+        }
+      ],
+      "warmup_moves": 1,
+      "response": {
+        "samples": 7,
+        "average_ms": 924.0,
+        "median_ms": 924.0,
+        "p95_ms": 936.0,
+        "min_ms": 916.0,
+        "max_ms": 936.0
+      },
+      "player_ready": {
+        "samples": 7,
+        "average_ms": 925.429,
+        "median_ms": 925.0,
+        "p95_ms": 937.0,
+        "min_ms": 917.0,
+        "max_ms": 937.0
+      }
+    },
+    {
+      "case": 2,
+      "requested": "gpu",
+      "size": 9,
+      "actual": "GPU/OpenCL JNI",
+      "engine_ready": true,
+      "startup_ms": 794.0,
+      "rejected_taps": 3,
+      "incomplete_moves": 0,
+      "moves": [
+        {
+          "move_index": 1,
+          "coordinate": "(2,2)",
+          "ai_move": "C6",
+          "tap_to_ai_ms": 454.0,
+          "tap_to_ready_ms": 455.0,
+          "ai_search_from_accept_ms": 451.0
+        },
+        {
+          "move_index": 2,
+          "coordinate": "(6,6)",
+          "ai_move": "E5",
+          "tap_to_ai_ms": 481.0,
+          "tap_to_ready_ms": 484.0,
+          "ai_search_from_accept_ms": 479.0
+        },
+        {
+          "move_index": 3,
+          "coordinate": "(6,2)",
+          "ai_move": "D7",
+          "tap_to_ai_ms": 479.0,
+          "tap_to_ready_ms": 480.0,
+          "ai_search_from_accept_ms": 477.0
+        },
+        {
+          "move_index": 4,
+          "coordinate": "(2,6)",
+          "ai_move": "B7",
+          "tap_to_ai_ms": 411.0,
+          "tap_to_ready_ms": 413.0,
+          "ai_search_from_accept_ms": 409.0
+        },
+        {
+          "move_index": 5,
+          "coordinate": "(1,4)",
+          "ai_move": "C8",
+          "tap_to_ai_ms": 393.0,
+          "tap_to_ready_ms": 394.0,
+          "ai_search_from_accept_ms": 390.0
+        },
+        {
+          "move_index": 6,
+          "coordinate": "(1,1)",
+          "ai_move": "A8",
+          "tap_to_ai_ms": 419.0,
+          "tap_to_ready_ms": 421.0,
+          "ai_search_from_accept_ms": 415.0
+        },
+        {
+          "move_index": 7,
+          "coordinate": "(3,1)",
+          "ai_move": "B9",
+          "tap_to_ai_ms": 419.0,
+          "tap_to_ready_ms": 419.0,
+          "ai_search_from_accept_ms": 413.0
+        },
+        {
+          "move_index": 8,
+          "coordinate": "(4,1)",
+          "ai_move": "C4",
+          "tap_to_ai_ms": 487.0,
+          "tap_to_ready_ms": 489.0,
+          "ai_search_from_accept_ms": 484.0
+        }
+      ],
+      "warmup_moves": 1,
+      "response": {
+        "samples": 7,
+        "average_ms": 441.286,
+        "median_ms": 419.0,
+        "p95_ms": 487.0,
+        "min_ms": 393.0,
+        "max_ms": 487.0
+      },
+      "player_ready": {
+        "samples": 7,
+        "average_ms": 442.857,
+        "median_ms": 421.0,
+        "p95_ms": 489.0,
+        "min_ms": 394.0,
+        "max_ms": 489.0
+      }
+    },
+    {
+      "case": 3,
+      "requested": "cpu",
+      "size": 9,
+      "actual": "CPU/Eigen JNI",
+      "engine_ready": true,
+      "startup_ms": 2470.0,
+      "rejected_taps": 0,
+      "incomplete_moves": 0,
+      "moves": [
+        {
+          "move_index": 1,
+          "coordinate": "(2,2)",
+          "ai_move": "D6",
+          "tap_to_ai_ms": 892.0,
+          "tap_to_ready_ms": 893.0,
+          "ai_search_from_accept_ms": 891.0
+        },
+        {
+          "move_index": 2,
+          "coordinate": "(6,6)",
+          "ai_move": "F4",
+          "tap_to_ai_ms": 909.0,
+          "tap_to_ready_ms": 910.0,
+          "ai_search_from_accept_ms": 909.0
+        },
+        {
+          "move_index": 3,
+          "coordinate": "(6,2)",
+          "ai_move": "D7",
+          "tap_to_ai_ms": 924.0,
+          "tap_to_ready_ms": 924.0,
+          "ai_search_from_accept_ms": 922.0
+        },
+        {
+          "move_index": 4,
+          "coordinate": "(2,6)",
+          "ai_move": "B6",
+          "tap_to_ai_ms": 934.0,
+          "tap_to_ready_ms": 935.0,
+          "ai_search_from_accept_ms": 933.0
+        },
+        {
+          "move_index": 5,
+          "coordinate": "(4,4)",
+          "ai_move": "F3",
+          "tap_to_ai_ms": 940.0,
+          "tap_to_ready_ms": 941.0,
+          "ai_search_from_accept_ms": 939.0
+        },
+        {
+          "move_index": 6,
+          "coordinate": "(1,4)",
+          "ai_move": "C6",
+          "tap_to_ai_ms": 962.0,
+          "tap_to_ready_ms": 963.0,
+          "ai_search_from_accept_ms": 961.0
+        },
+        {
+          "move_index": 7,
+          "coordinate": "(1,1)",
+          "ai_move": "B7",
+          "tap_to_ai_ms": 963.0,
+          "tap_to_ready_ms": 963.0,
+          "ai_search_from_accept_ms": 962.0
+        },
+        {
+          "move_index": 8,
+          "coordinate": "(2,1)",
+          "ai_move": "D8",
+          "tap_to_ai_ms": 964.0,
+          "tap_to_ready_ms": 964.0,
+          "ai_search_from_accept_ms": 962.0
+        }
+      ],
+      "warmup_moves": 1,
+      "response": {
+        "samples": 7,
+        "average_ms": 942.286,
+        "median_ms": 940.0,
+        "p95_ms": 964.0,
+        "min_ms": 909.0,
+        "max_ms": 964.0
+      },
+      "player_ready": {
+        "samples": 7,
+        "average_ms": 942.857,
+        "median_ms": 941.0,
+        "p95_ms": 964.0,
+        "min_ms": 910.0,
+        "max_ms": 964.0
+      }
+    }
+  ],
+  "by_backend": {
+    "cpu": {
+      "response": {
+        "samples": 14,
+        "average_ms": 933.143,
+        "median_ms": 926.0,
+        "p95_ms": 964.0,
+        "min_ms": 909.0,
+        "max_ms": 964.0
+      },
+      "player_ready": {
+        "samples": 14,
+        "average_ms": 934.143,
+        "median_ms": 928.5,
+        "p95_ms": 964.0,
+        "min_ms": 910.0,
+        "max_ms": 964.0
+      }
+    },
+    "gpu": {
+      "response": {
+        "samples": 7,
+        "average_ms": 441.286,
+        "median_ms": 419.0,
+        "p95_ms": 487.0,
+        "min_ms": 393.0,
+        "max_ms": 487.0
+      },
+      "player_ready": {
+        "samples": 7,
+        "average_ms": 442.857,
+        "median_ms": 421.0,
+        "p95_ms": 489.0,
+        "min_ms": 394.0,
+        "max_ms": 489.0
+      }
+    }
+  }
+}
