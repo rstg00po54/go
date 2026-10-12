@@ -22,14 +22,14 @@
 git pull origin rk3588-engine
 python3 tools/test_native_fast_score.py
 bash tools/build_katago_from_source.sh opencl
-python3 tools/benchmark_native_fast_score_android.py --serial 8719e18a71a2a66c --mode gpu --threads 1 --repeats 2
+python3 tools/benchmark_native_fast_score_android.py --serial 8719e18a71a2a66c --mode gpu --threads 1 --repeats 2 --suite baseline
 ```
 
 首次构建需要原项目已经安装的 Android NDK、CMake、Ninja、OpenCL headers、Android ARM64 OpenCL stub。构建输出默认是 `build/katago_android_arm64_opencl/libkatago_exec_opencl.so`，独立于正在使用的 APP/JNI GPU 动态库。
 
 脚本先对 Android 上的原生 GTP 执行 `known_command kata-fast-final-score`；如果仍是旧二进制，直接报错要求重新构建，不会偷偷回退或报告伪造的对比结果。
 
-对每个固定 SGF 的 `simple`、`territory`、`tactical`，加载后依次执行黑/白 `pass`，同盘比较：
+旧的三份基线棋谱（`--suite baseline`）仍为 `simple`、`territory`、`tactical`。新增复杂压力测试请见 `tools/README_complex_endgame.md`；默认 `--suite complex` 可测 9 路、13 路、19 路合成棋盘。每个 SGF 加载后依次执行黑/白 `pass`，同盘比较：
 
 ```text
 kata-fast-final-score
