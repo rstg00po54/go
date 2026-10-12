@@ -1,0 +1,487 @@
+{
+  "schema": 1,
+  "device": "8719e18a71a2a66c",
+  "type": "native_gtp_sgf_setup",
+  "note": "Synthetic fixed SGF snapshots; not Android UI/JNI Human SL; GTP command wall time via ADB.",
+  "same_model": "/mnt/hgfs/D/code/go/GoEngine-java/app/src/main/assets/engine/10b.bin",
+  "model_sha256": "49b75eacdfd8587fe153e6889070d509504750a45fda16105e67bf8c456148d4",
+  "binaries": {
+    "cpu": {
+      "path": "/mnt/hgfs/D/code/go/GoEngine-java/app/build/generated/katagoJniLibs/arm64-v8a/libkatago_exec.so",
+      "sha256": "c368dfe28400c577f04e1cef7cade72b1c1b697c98a928594bbfb815c85e2de5"
+    },
+    "gpu": {
+      "path": "/mnt/hgfs/D/code/go/GoEngine-java/build/katago_android_arm64_opencl/libkatago_exec_opencl.so",
+      "sha256": "95a454b419d5d8a2bde8d4db168a2ffd4729e76937537a7cfd270385cca9dcc4"
+    }
+  },
+  "engines": {
+    "cpu": {
+      "name": "KataGo",
+      "version": "1.15.0+g170-b10c128-s1141M"
+    },
+    "gpu": {
+      "name": "KataGo",
+      "version": "1.15.0+g170-b10c128-s1141M"
+    }
+  },
+  "rules": "Chinese AREA, komi 5.5",
+  "threads": 1,
+  "max_visits": 8,
+  "max_time_s": 8.0,
+  "repeats": 2,
+  "fixtures": {
+    "simple": {
+      "description": "Two stable separated two-eye groups; basic score baseline",
+      "grid": [
+        "BBBBB....",
+        "B.B.B....",
+        "BBBBB....",
+        ".........",
+        ".........",
+        ".........",
+        "....WWWWW",
+        "....W.W.W",
+        "....WWWWW"
+      ],
+      "sha256": "bf58d4629694fef9b8f12749decb929e720efda9b6692ceb3ba13c45160cf04d",
+      "remote": "/data/local/tmp/katago_bench/positions/simple.sgf",
+      "size": 9,
+      "black_stones": 13,
+      "white_stones": 13,
+      "black_eyes": [
+        [
+          1,
+          1
+        ],
+        [
+          3,
+          1
+        ]
+      ],
+      "white_eyes": [
+        [
+          5,
+          7
+        ],
+        [
+          7,
+          7
+        ]
+      ]
+    },
+    "territory": {
+      "description": "Two alive corner groups with longer opposing borders",
+      "grid": [
+        "BBBBB....",
+        "B.B.B..WW",
+        "BBBBB.W.W",
+        "..B...WWW",
+        "..B...W..",
+        "..BB.WW..",
+        "....WWWWW",
+        "....W.W.W",
+        "....WWWWW"
+      ],
+      "sha256": "906eca60867b9521f82bf82423042304eb04093c488dee1b73402852ee773dd5",
+      "remote": "/data/local/tmp/katago_bench/positions/territory.sgf",
+      "size": 9,
+      "black_stones": 17,
+      "white_stones": 23,
+      "black_eyes": [
+        [
+          1,
+          1
+        ],
+        [
+          3,
+          1
+        ]
+      ],
+      "white_eyes": [
+        [
+          7,
+          2
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          7,
+          7
+        ]
+      ]
+    },
+    "tactical": {
+      "description": "Two alive corner groups plus weak central groups; unsettled status",
+      "grid": [
+        "BBBBB.WWW",
+        "B.B.B.W.W",
+        "BBBBB.WWW",
+        "..B.B.W..",
+        "..BWWBW..",
+        "..BB.WWW.",
+        "....WWWWW",
+        "....W.W.W",
+        "....WWWWW"
+      ],
+      "sha256": "13c850d1c64a8acf893eb6c4514c49f049f7402a865facee58c6e1c83ca4d4d3",
+      "remote": "/data/local/tmp/katago_bench/positions/tactical.sgf",
+      "size": 9,
+      "black_stones": 19,
+      "white_stones": 28,
+      "black_eyes": [
+        [
+          1,
+          1
+        ],
+        [
+          3,
+          1
+        ]
+      ],
+      "white_eyes": [
+        [
+          7,
+          1
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          7,
+          7
+        ]
+      ]
+    }
+  },
+  "rows": [
+    {
+      "backend": "cpu",
+      "fixture": "simple",
+      "repeat": 1,
+      "threads": 1,
+      "sha256": "bf58d4629694fef9b8f12749decb929e720efda9b6692ceb3ba13c45160cf04d",
+      "black_stones": 13,
+      "white_stones": 13,
+      "score": "W+2.5",
+      "dead": "",
+      "raw_white_lead": 1.282,
+      "rules": "{\"friendlyPassOk\":true,\"hasButton\":false,\"ko\":\"SIMPLE\",\"scoring\":\"AREA\",\"suicide\":false,\"tax\":\"NONE\",\"whiteHandicapBonus\":\"N\"}",
+      "local_white_lead": 5.5,
+      "score_minus_local_lead": -3.0,
+      "load_sgf_ms": 1.932,
+      "final_score_ms": 5630.871,
+      "dead_stones_ms": 2177.011,
+      "raw_nn_ms": 25.374,
+      "total_ms": 7833.255
+    },
+    {
+      "backend": "cpu",
+      "fixture": "territory",
+      "repeat": 1,
+      "threads": 1,
+      "sha256": "906eca60867b9521f82bf82423042304eb04093c488dee1b73402852ee773dd5",
+      "black_stones": 17,
+      "white_stones": 23,
+      "score": "W+6.5",
+      "dead": "",
+      "raw_white_lead": 6.279,
+      "rules": "{\"friendlyPassOk\":true,\"hasButton\":false,\"ko\":\"SIMPLE\",\"scoring\":\"AREA\",\"suicide\":false,\"tax\":\"NONE\",\"whiteHandicapBonus\":\"N\"}",
+      "local_white_lead": 16.5,
+      "score_minus_local_lead": -10.0,
+      "load_sgf_ms": 2.051,
+      "final_score_ms": 5589.909,
+      "dead_stones_ms": 2083.411,
+      "raw_nn_ms": 24.537,
+      "total_ms": 7697.857
+    },
+    {
+      "backend": "cpu",
+      "fixture": "tactical",
+      "repeat": 1,
+      "threads": 1,
+      "sha256": "13c850d1c64a8acf893eb6c4514c49f049f7402a865facee58c6e1c83ca4d4d3",
+      "black_stones": 19,
+      "white_stones": 28,
+      "score": "W+10.5",
+      "dead": "F5",
+      "raw_white_lead": 9.649,
+      "rules": "{\"friendlyPassOk\":true,\"hasButton\":false,\"ko\":\"SIMPLE\",\"scoring\":\"AREA\",\"suicide\":false,\"tax\":\"NONE\",\"whiteHandicapBonus\":\"N\"}",
+      "local_white_lead": 21.5,
+      "score_minus_local_lead": -11.0,
+      "load_sgf_ms": 1.953,
+      "final_score_ms": 5537.06,
+      "dead_stones_ms": 2212.353,
+      "raw_nn_ms": 23.898,
+      "total_ms": 7773.311
+    },
+    {
+      "backend": "cpu",
+      "fixture": "simple",
+      "repeat": 2,
+      "threads": 1,
+      "sha256": "bf58d4629694fef9b8f12749decb929e720efda9b6692ceb3ba13c45160cf04d",
+      "black_stones": 13,
+      "white_stones": 13,
+      "score": "W+2.5",
+      "dead": "",
+      "raw_white_lead": 1.282,
+      "rules": "{\"friendlyPassOk\":true,\"hasButton\":false,\"ko\":\"SIMPLE\",\"scoring\":\"AREA\",\"suicide\":false,\"tax\":\"NONE\",\"whiteHandicapBonus\":\"N\"}",
+      "local_white_lead": 5.5,
+      "score_minus_local_lead": -3.0,
+      "load_sgf_ms": 1.496,
+      "final_score_ms": 5594.323,
+      "dead_stones_ms": 2180.825,
+      "raw_nn_ms": 24.359,
+      "total_ms": 7799.507
+    },
+    {
+      "backend": "cpu",
+      "fixture": "territory",
+      "repeat": 2,
+      "threads": 1,
+      "sha256": "906eca60867b9521f82bf82423042304eb04093c488dee1b73402852ee773dd5",
+      "black_stones": 17,
+      "white_stones": 23,
+      "score": "W+6.5",
+      "dead": "",
+      "raw_white_lead": 6.279,
+      "rules": "{\"friendlyPassOk\":true,\"hasButton\":false,\"ko\":\"SIMPLE\",\"scoring\":\"AREA\",\"suicide\":false,\"tax\":\"NONE\",\"whiteHandicapBonus\":\"N\"}",
+      "local_white_lead": 16.5,
+      "score_minus_local_lead": -10.0,
+      "load_sgf_ms": 1.849,
+      "final_score_ms": 5577.723,
+      "dead_stones_ms": 2204.657,
+      "raw_nn_ms": 24.229,
+      "total_ms": 7806.609
+    },
+    {
+      "backend": "cpu",
+      "fixture": "tactical",
+      "repeat": 2,
+      "threads": 1,
+      "sha256": "13c850d1c64a8acf893eb6c4514c49f049f7402a865facee58c6e1c83ca4d4d3",
+      "black_stones": 19,
+      "white_stones": 28,
+      "score": "W+10.5",
+      "dead": "F5",
+      "raw_white_lead": 9.649,
+      "rules": "{\"friendlyPassOk\":true,\"hasButton\":false,\"ko\":\"SIMPLE\",\"scoring\":\"AREA\",\"suicide\":false,\"tax\":\"NONE\",\"whiteHandicapBonus\":\"N\"}",
+      "local_white_lead": 21.5,
+      "score_minus_local_lead": -11.0,
+      "load_sgf_ms": 1.635,
+      "final_score_ms": 5581.929,
+      "dead_stones_ms": 2162.71,
+      "raw_nn_ms": 23.658,
+      "total_ms": 7768.296
+    },
+    {
+      "backend": "gpu",
+      "fixture": "simple",
+      "repeat": 1,
+      "threads": 1,
+      "sha256": "bf58d4629694fef9b8f12749decb929e720efda9b6692ceb3ba13c45160cf04d",
+      "black_stones": 13,
+      "white_stones": 13,
+      "score": "W+2.5",
+      "dead": "",
+      "raw_white_lead": 1.302,
+      "rules": "{\"friendlyPassOk\":true,\"hasButton\":false,\"ko\":\"SIMPLE\",\"scoring\":\"AREA\",\"suicide\":false,\"tax\":\"NONE\",\"whiteHandicapBonus\":\"N\"}",
+      "local_white_lead": 5.5,
+      "score_minus_local_lead": -3.0,
+      "load_sgf_ms": 2.263,
+      "final_score_ms": 6127.11,
+      "dead_stones_ms": 2377.36,
+      "raw_nn_ms": 25.158,
+      "total_ms": 8529.629
+    },
+    {
+      "backend": "gpu",
+      "fixture": "territory",
+      "repeat": 1,
+      "threads": 1,
+      "sha256": "906eca60867b9521f82bf82423042304eb04093c488dee1b73402852ee773dd5",
+      "black_stones": 17,
+      "white_stones": 23,
+      "score": "W+6.5",
+      "dead": "",
+      "raw_white_lead": 6.298,
+      "rules": "{\"friendlyPassOk\":true,\"hasButton\":false,\"ko\":\"SIMPLE\",\"scoring\":\"AREA\",\"suicide\":false,\"tax\":\"NONE\",\"whiteHandicapBonus\":\"N\"}",
+      "local_white_lead": 16.5,
+      "score_minus_local_lead": -10.0,
+      "load_sgf_ms": 2.964,
+      "final_score_ms": 6044.043,
+      "dead_stones_ms": 2467.001,
+      "raw_nn_ms": 29.43,
+      "total_ms": 8540.475
+    },
+    {
+      "backend": "gpu",
+      "fixture": "tactical",
+      "repeat": 1,
+      "threads": 1,
+      "sha256": "13c850d1c64a8acf893eb6c4514c49f049f7402a865facee58c6e1c83ca4d4d3",
+      "black_stones": 19,
+      "white_stones": 28,
+      "score": "W+11.5",
+      "dead": "F5",
+      "raw_white_lead": 9.598,
+      "rules": "{\"friendlyPassOk\":true,\"hasButton\":false,\"ko\":\"SIMPLE\",\"scoring\":\"AREA\",\"suicide\":false,\"tax\":\"NONE\",\"whiteHandicapBonus\":\"N\"}",
+      "local_white_lead": 21.5,
+      "score_minus_local_lead": -10.0,
+      "load_sgf_ms": 2.803,
+      "final_score_ms": 6231.848,
+      "dead_stones_ms": 2394.461,
+      "raw_nn_ms": 29.523,
+      "total_ms": 8655.832
+    },
+    {
+      "backend": "gpu",
+      "fixture": "simple",
+      "repeat": 2,
+      "threads": 1,
+      "sha256": "bf58d4629694fef9b8f12749decb929e720efda9b6692ceb3ba13c45160cf04d",
+      "black_stones": 13,
+      "white_stones": 13,
+      "score": "W+2.5",
+      "dead": "",
+      "raw_white_lead": 1.302,
+      "rules": "{\"friendlyPassOk\":true,\"hasButton\":false,\"ko\":\"SIMPLE\",\"scoring\":\"AREA\",\"suicide\":false,\"tax\":\"NONE\",\"whiteHandicapBonus\":\"N\"}",
+      "local_white_lead": 5.5,
+      "score_minus_local_lead": -3.0,
+      "load_sgf_ms": 4.133,
+      "final_score_ms": 5895.756,
+      "dead_stones_ms": 2378.534,
+      "raw_nn_ms": 26.76,
+      "total_ms": 8301.05
+    },
+    {
+      "backend": "gpu",
+      "fixture": "territory",
+      "repeat": 2,
+      "threads": 1,
+      "sha256": "906eca60867b9521f82bf82423042304eb04093c488dee1b73402852ee773dd5",
+      "black_stones": 17,
+      "white_stones": 23,
+      "score": "W+7.5",
+      "dead": "",
+      "raw_white_lead": 6.298,
+      "rules": "{\"friendlyPassOk\":true,\"hasButton\":false,\"ko\":\"SIMPLE\",\"scoring\":\"AREA\",\"suicide\":false,\"tax\":\"NONE\",\"whiteHandicapBonus\":\"N\"}",
+      "local_white_lead": 16.5,
+      "score_minus_local_lead": -9.0,
+      "load_sgf_ms": 3.773,
+      "final_score_ms": 6146.721,
+      "dead_stones_ms": 2300.17,
+      "raw_nn_ms": 29.305,
+      "total_ms": 8476.195
+    },
+    {
+      "backend": "gpu",
+      "fixture": "tactical",
+      "repeat": 2,
+      "threads": 1,
+      "sha256": "13c850d1c64a8acf893eb6c4514c49f049f7402a865facee58c6e1c83ca4d4d3",
+      "black_stones": 19,
+      "white_stones": 28,
+      "score": "W+11.5",
+      "dead": "F5",
+      "raw_white_lead": 9.598,
+      "rules": "{\"friendlyPassOk\":true,\"hasButton\":false,\"ko\":\"SIMPLE\",\"scoring\":\"AREA\",\"suicide\":false,\"tax\":\"NONE\",\"whiteHandicapBonus\":\"N\"}",
+      "local_white_lead": 21.5,
+      "score_minus_local_lead": -10.0,
+      "load_sgf_ms": 4.426,
+      "final_score_ms": 6056.842,
+      "dead_stones_ms": 2417.08,
+      "raw_nn_ms": 27.976,
+      "total_ms": 8501.897
+    }
+  ],
+  "summary": {
+    "simple": {
+      "cpu": {
+        "final_score_ms": 5612.597,
+        "dead_stones_ms": 2178.918,
+        "raw_nn_ms": 24.867,
+        "total_ms": 7816.381,
+        "samples": 2,
+        "scores": [
+          "W+2.5"
+        ]
+      },
+      "gpu": {
+        "final_score_ms": 6011.433,
+        "dead_stones_ms": 2377.947,
+        "raw_nn_ms": 25.959,
+        "total_ms": 8415.34,
+        "samples": 2,
+        "scores": [
+          "W+2.5"
+        ]
+      }
+    },
+    "territory": {
+      "cpu": {
+        "final_score_ms": 5583.816,
+        "dead_stones_ms": 2144.034,
+        "raw_nn_ms": 24.383,
+        "total_ms": 7752.233,
+        "samples": 2,
+        "scores": [
+          "W+6.5"
+        ]
+      },
+      "gpu": {
+        "final_score_ms": 6095.382,
+        "dead_stones_ms": 2383.586,
+        "raw_nn_ms": 29.367,
+        "total_ms": 8508.335,
+        "samples": 2,
+        "scores": [
+          "W+6.5",
+          "W+7.5"
+        ]
+      }
+    },
+    "tactical": {
+      "cpu": {
+        "final_score_ms": 5559.495,
+        "dead_stones_ms": 2187.532,
+        "raw_nn_ms": 23.778,
+        "total_ms": 7770.803,
+        "samples": 2,
+        "scores": [
+          "W+10.5"
+        ]
+      },
+      "gpu": {
+        "final_score_ms": 6144.345,
+        "dead_stones_ms": 2405.77,
+        "raw_nn_ms": 28.749,
+        "total_ms": 8578.864,
+        "samples": 2,
+        "scores": [
+          "W+11.5"
+        ]
+      }
+    }
+  },
+  "warnings": [
+    "cpu/simple #1: GTP final_score differs from local Chinese count by -3.0 points",
+    "cpu/territory #1: GTP final_score differs from local Chinese count by -10.0 points",
+    "cpu/tactical #1: GTP final_score differs from local Chinese count by -11.0 points",
+    "cpu/simple #2: GTP final_score differs from local Chinese count by -3.0 points",
+    "cpu/territory #2: GTP final_score differs from local Chinese count by -10.0 points",
+    "cpu/tactical #2: GTP final_score differs from local Chinese count by -11.0 points",
+    "gpu/simple #1: GTP final_score differs from local Chinese count by -3.0 points",
+    "gpu/territory #1: GTP final_score differs from local Chinese count by -10.0 points",
+    "gpu/tactical #1: GTP final_score differs from local Chinese count by -10.0 points",
+    "gpu/simple #2: GTP final_score differs from local Chinese count by -3.0 points",
+    "gpu/territory #2: GTP final_score differs from local Chinese count by -9.0 points",
+    "gpu/tactical #2: GTP final_score differs from local Chinese count by -10.0 points",
+    "territory: CPU/GPU final_score differs (['W+6.5'] / ['W+6.5', 'W+7.5']); numerical/search variations possible",
+    "tactical: CPU/GPU final_score differs (['W+10.5'] / ['W+11.5']); numerical/search variations possible"
+  ]
+}
