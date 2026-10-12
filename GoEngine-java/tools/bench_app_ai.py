@@ -31,8 +31,11 @@ AI = re.compile(r"handleAiMove in, move=([^,\s]+)")
 
 def log_time(stamp, year):
     moment = datetime.datetime.strptime(f"{year}-{stamp}", "%Y-%m-%d %H:%M:%S.%f")
-    return (moment.toordinal() * 86400 + moment.hour * 3600 +
-            moment.minute * 60 + moment.second + moment.microsecond / 1000000)
+    # Integer microseconds avoid catastrophic cancellation when subtracting
+    # two large absolute floating-point timestamps (~1e11 seconds). Android
+    # -v time is millisecond-resolution, so the difference is exact.
+    return (((moment.toordinal() * 24 + moment.hour) * 60 + moment.minute) *
+            60 + moment.second) * 1000000 + moment.microsecond
 
 
 def parse_cases(log_text, year=None):
@@ -79,7 +82,7 @@ def parse_cases(log_text, year=None):
         if backend:
             current["actual"] = backend.group(2).strip()
             current["engine_ready"] = backend.group(3) == "true"
-            current["startup_ms"] = round((when - current["start_time"]) * 1000, 3)
+            current["startup_ms"] = round((when - current["start_time"]) / 1000, 3)
             continue
         tap = TAP.search(message)
         if tap:
@@ -104,10 +107,10 @@ def parse_cases(log_text, year=None):
                 "move_index": len(current["moves"]) + 1,
                 "coordinate": pending_move["coord"],
                 "ai_move": pending_move["ai_move"],
-                "tap_to_ai_ms": round((pending_move["ai_return_time"] - tap_time) * 1000, 3),
-                "tap_to_ready_ms": round((when - tap_time) * 1000, 3),
+                "tap_to_ai_ms": round((pending_move["ai_return_time"] - tap_time) / 1000, 3),
+                "tap_to_ready_ms": round((when - tap_time) / 1000, 3),
                 "ai_search_from_accept_ms": round(
-                    (pending_move["ai_return_time"] - pending_move["accepted_time"]) * 1000, 3)
+                    (pending_move["ai_return_time"] - pending_move["accepted_time"]) / 1000, 3)
             })
             pending_move = None
     flush_tap()
