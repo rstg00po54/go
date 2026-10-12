@@ -1,0 +1,619 @@
+{
+  "schema": 3,
+  "status": "PASS",
+  "timestamp_utc": "20261012T054613237186Z",
+  "ui_dumps": 3,
+  "cached_controls": 12,
+  "serial": "8719e18a71a2a66c",
+  "backends": "cpu,gpu,cpu",
+  "rounds": 1,
+  "size": 9,
+  "moves": 4,
+  "undo": false,
+  "pass": false,
+  "failure": null,
+  "events": [
+    {
+      "seconds": 0.003,
+      "message": "连接设备 8719e18a71a2a66c"
+    },
+    {
+      "seconds": 0.136,
+      "message": "已加载本地 UI 缓存：12 个控件/菜单位置"
+    },
+    {
+      "seconds": 0.805,
+      "message": "启动 APP"
+    },
+    {
+      "seconds": 0.806,
+      "message": "等待 MainActivity 的引擎完成日志（不依赖屏幕下方的按钮）"
+    },
+    {
+      "seconds": 0.868,
+      "message": "首页引擎尚未发出 ready 日志，已等待 0s"
+    },
+    {
+      "seconds": 4.965,
+      "message": "MainActivity 已报告 Initial engine ready=true"
+    },
+    {
+      "seconds": 4.966,
+      "message": "已读取 APP 会话设置：9路，CPU"
+    },
+    {
+      "seconds": 4.966,
+      "message": "动态检测将在第一局启动后选择 logcat 或 UIAutomator"
+    },
+    {
+      "seconds": 4.966,
+      "message": "=== Case 1: CPU / 9x9 ==="
+    },
+    {
+      "seconds": 5.013,
+      "message": "打开 AI训练（本地缓存），坐标=(540, 1534)"
+    },
+    {
+      "seconds": 7.224,
+      "message": "新开一局弹窗已显示"
+    },
+    {
+      "seconds": 7.224,
+      "message": "sizeSpinner 已选择 9路，跳过下拉菜单"
+    },
+    {
+      "seconds": 7.224,
+      "message": "执黑已由本次会话确认，跳过 UI 检查"
+    },
+    {
+      "seconds": 7.224,
+      "message": "backendSpinner 已选择 CPU / Eigen，跳过下拉菜单"
+    },
+    {
+      "seconds": 7.342,
+      "message": "点击开始对局（本地缓存），坐标=(539, 1333)"
+    },
+    {
+      "seconds": 7.389,
+      "message": "MainActivity 已确认开始：9路 CPU"
+    },
+    {
+      "seconds": 7.427,
+      "message": "MainActivity DebugLog 已就绪，切换到 logcat 快速检测"
+    },
+    {
+      "seconds": 7.452,
+      "message": "CPU 就绪，第 1 手（logcat）"
+    },
+    {
+      "seconds": 7.511,
+      "message": "主进程 PID=9455，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 7.603,
+      "message": "落子 (2,2)，屏幕 (310,757)（缓存棋盘）"
+    },
+    {
+      "seconds": 8.767,
+      "message": "CPU 就绪，第 3 手（logcat）"
+    },
+    {
+      "seconds": 8.853,
+      "message": "落子 (6,6)，屏幕 (765,1212)（缓存棋盘）"
+    },
+    {
+      "seconds": 10.03,
+      "message": "CPU 就绪，第 5 手（logcat）"
+    },
+    {
+      "seconds": 10.105,
+      "message": "落子 (6,2)，屏幕 (765,757)（缓存棋盘）"
+    },
+    {
+      "seconds": 11.281,
+      "message": "CPU 就绪，第 7 手（logcat）"
+    },
+    {
+      "seconds": 11.354,
+      "message": "落子 (2,6)，屏幕 (310,1212)（缓存棋盘）"
+    },
+    {
+      "seconds": 12.796,
+      "message": "落子 (2,6) 未被接受，换下一个交叉点"
+    },
+    {
+      "seconds": 12.893,
+      "message": "落子 (4,4)，屏幕 (538,984)（缓存棋盘）"
+    },
+    {
+      "seconds": 13.809,
+      "message": "CPU 就绪，第 9 手（logcat）"
+    },
+    {
+      "seconds": 13.859,
+      "message": "主进程 PID=9455，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 14.17,
+      "message": "截图 case_001_cpu.png"
+    },
+    {
+      "seconds": 14.17,
+      "message": "=== Case 1: PASS ==="
+    },
+    {
+      "seconds": 14.17,
+      "message": "=== Case 2: GPU / 9x9 ==="
+    },
+    {
+      "seconds": 14.23,
+      "message": "点击 newRoundButton（本地缓存），坐标=(933, 1594)"
+    },
+    {
+      "seconds": 16.424,
+      "message": "新开一局弹窗已显示"
+    },
+    {
+      "seconds": 16.424,
+      "message": "sizeSpinner 已选择 9路，跳过下拉菜单"
+    },
+    {
+      "seconds": 16.425,
+      "message": "执黑已由本次会话确认，跳过 UI 检查"
+    },
+    {
+      "seconds": 16.475,
+      "message": "点击 backendSpinner（本地缓存），坐标=(639, 1035)"
+    },
+    {
+      "seconds": 16.645,
+      "message": "选择 backendSpinner（本地缓存）: CPU / Eigen -> GPU / OpenCL，坐标=(575, 1169)"
+    },
+    {
+      "seconds": 17.095,
+      "message": "backendSpinner 已点击 GPU / OpenCL，等待开局日志确认实际参数"
+    },
+    {
+      "seconds": 17.238,
+      "message": "点击开始对局（本地缓存），坐标=(539, 1333)"
+    },
+    {
+      "seconds": 17.282,
+      "message": "MainActivity 已确认开始：9路 GPU"
+    },
+    {
+      "seconds": 18.181,
+      "message": "GPU 就绪，第 1 手（logcat）"
+    },
+    {
+      "seconds": 18.247,
+      "message": "主进程 PID=9455，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 18.354,
+      "message": "落子 (2,2)，屏幕 (310,757)（缓存棋盘）"
+    },
+    {
+      "seconds": 19.012,
+      "message": "GPU 就绪，第 3 手（logcat）"
+    },
+    {
+      "seconds": 19.071,
+      "message": "落子 (6,6)，屏幕 (765,1212)（缓存棋盘）"
+    },
+    {
+      "seconds": 20.519,
+      "message": "落子 (6,6) 未被接受，换下一个交叉点"
+    },
+    {
+      "seconds": 20.633,
+      "message": "落子 (6,2)，屏幕 (765,757)（缓存棋盘）"
+    },
+    {
+      "seconds": 21.283,
+      "message": "GPU 就绪，第 5 手（logcat）"
+    },
+    {
+      "seconds": 21.356,
+      "message": "落子 (2,6)，屏幕 (310,1212)（缓存棋盘）"
+    },
+    {
+      "seconds": 22.815,
+      "message": "落子 (2,6) 未被接受，换下一个交叉点"
+    },
+    {
+      "seconds": 22.918,
+      "message": "落子 (4,4)，屏幕 (538,984)（缓存棋盘）"
+    },
+    {
+      "seconds": 23.562,
+      "message": "GPU 就绪，第 7 手（logcat）"
+    },
+    {
+      "seconds": 23.634,
+      "message": "落子 (2,6)，屏幕 (310,1212)（缓存棋盘）"
+    },
+    {
+      "seconds": 25.089,
+      "message": "落子 (2,6) 未被接受，换下一个交叉点"
+    },
+    {
+      "seconds": 25.192,
+      "message": "落子 (1,4)，屏幕 (196,984)（缓存棋盘）"
+    },
+    {
+      "seconds": 25.858,
+      "message": "GPU 就绪，第 9 手（logcat）"
+    },
+    {
+      "seconds": 25.919,
+      "message": "主进程 PID=9455，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 26.26,
+      "message": "截图 case_002_gpu.png"
+    },
+    {
+      "seconds": 26.26,
+      "message": "=== Case 2: PASS ==="
+    },
+    {
+      "seconds": 26.26,
+      "message": "=== Case 3: CPU / 9x9 ==="
+    },
+    {
+      "seconds": 26.309,
+      "message": "点击 newRoundButton（本地缓存），坐标=(933, 1594)"
+    },
+    {
+      "seconds": 28.443,
+      "message": "新开一局弹窗已显示"
+    },
+    {
+      "seconds": 28.443,
+      "message": "sizeSpinner 已选择 9路，跳过下拉菜单"
+    },
+    {
+      "seconds": 28.443,
+      "message": "执黑已由本次会话确认，跳过 UI 检查"
+    },
+    {
+      "seconds": 28.502,
+      "message": "点击 backendSpinner（本地缓存），坐标=(639, 1035)"
+    },
+    {
+      "seconds": 28.679,
+      "message": "选择 backendSpinner（本地缓存）: GPU / OpenCL -> CPU / Eigen，坐标=(575, 1040)"
+    },
+    {
+      "seconds": 29.13,
+      "message": "backendSpinner 已点击 CPU / Eigen，等待开局日志确认实际参数"
+    },
+    {
+      "seconds": 29.295,
+      "message": "点击开始对局（本地缓存），坐标=(539, 1333)"
+    },
+    {
+      "seconds": 29.337,
+      "message": "MainActivity 已确认开始：9路 CPU"
+    },
+    {
+      "seconds": 31.982,
+      "message": "CPU 就绪，第 1 手（logcat）"
+    },
+    {
+      "seconds": 32.044,
+      "message": "主进程 PID=9455，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 32.139,
+      "message": "落子 (2,2)，屏幕 (310,757)（缓存棋盘）"
+    },
+    {
+      "seconds": 33.068,
+      "message": "CPU 就绪，第 3 手（logcat）"
+    },
+    {
+      "seconds": 33.134,
+      "message": "落子 (6,6)，屏幕 (765,1212)（缓存棋盘）"
+    },
+    {
+      "seconds": 34.64,
+      "message": "落子 (6,6) 未被接受，换下一个交叉点"
+    },
+    {
+      "seconds": 34.762,
+      "message": "落子 (6,2)，屏幕 (765,757)（缓存棋盘）"
+    },
+    {
+      "seconds": 35.712,
+      "message": "CPU 就绪，第 5 手（logcat）"
+    },
+    {
+      "seconds": 35.801,
+      "message": "落子 (2,6)，屏幕 (310,1212)（缓存棋盘）"
+    },
+    {
+      "seconds": 36.756,
+      "message": "CPU 就绪，第 7 手（logcat）"
+    },
+    {
+      "seconds": 36.833,
+      "message": "落子 (4,4)，屏幕 (538,984)（缓存棋盘）"
+    },
+    {
+      "seconds": 37.775,
+      "message": "CPU 就绪，第 9 手（logcat）"
+    },
+    {
+      "seconds": 37.842,
+      "message": "主进程 PID=9455，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 38.173,
+      "message": "截图 case_003_cpu.png"
+    },
+    {
+      "seconds": 38.173,
+      "message": "=== Case 3: PASS ==="
+    },
+    {
+      "seconds": 38.486,
+      "message": "截图 final.png"
+    },
+    {
+      "seconds": 38.567,
+      "message": "性能 CPU: n=8 avg=914.875ms P95=938.995ms max=938.995ms"
+    },
+    {
+      "seconds": 38.567,
+      "message": "性能 GPU: n=4 avg=459.751ms P95=479.004ms max=479.004ms"
+    },
+    {
+      "seconds": 38.567,
+      "message": "性能明细已保存：benchmark.json / benchmark_moves.csv / benchmark_summary.log"
+    },
+    {
+      "seconds": 38.567,
+      "message": "全部 PASS；本次 UIAutomator 导出次数=3"
+    },
+    {
+      "seconds": 38.569,
+      "message": "本地报告: /mnt/hgfs/D/code/go/GoEngine-java/build/app_ui_test/20261012_134534"
+    }
+  ],
+  "startup_timings": [],
+  "game_backends": [],
+  "benchmark": {
+    "schema": 1,
+    "measurement": "Android MainActivity wall-clock event timestamps",
+    "meaning": "tap to handleAiMove includes JNI/GTP, move sync and AI search; NOT isolated neural-network inference",
+    "p95_method": "nearest-rank",
+    "expected_moves_per_case": 4,
+    "warmup_moves_per_case": 0,
+    "cases": [
+      {
+        "case": 1,
+        "requested": "cpu",
+        "size": 9,
+        "actual": "CPU/Eigen JNI",
+        "engine_ready": true,
+        "startup_ms": 26.001,
+        "rejected_taps": 1,
+        "incomplete_moves": 0,
+        "moves": [
+          {
+            "move_index": 1,
+            "coordinate": "(2,2)",
+            "ai_move": "F4",
+            "tap_to_ai_ms": 915.001,
+            "tap_to_ready_ms": 916.0,
+            "ai_search_from_accept_ms": 910.004
+          },
+          {
+            "move_index": 2,
+            "coordinate": "(6,6)",
+            "ai_move": "C3",
+            "tap_to_ai_ms": 917.0,
+            "tap_to_ready_ms": 917.999,
+            "ai_search_from_accept_ms": 916.0
+          },
+          {
+            "move_index": 3,
+            "coordinate": "(6,2)",
+            "ai_move": "G6",
+            "tap_to_ai_ms": 931.999,
+            "tap_to_ready_ms": 932.999,
+            "ai_search_from_accept_ms": 931.0
+          },
+          {
+            "move_index": 4,
+            "coordinate": "(4,4)",
+            "ai_move": "E4",
+            "tap_to_ai_ms": 912.003,
+            "tap_to_ready_ms": 913.002,
+            "ai_search_from_accept_ms": 908.005
+          }
+        ],
+        "warmup_moves": 0,
+        "response": {
+          "samples": 4,
+          "average_ms": 919.001,
+          "median_ms": 916.0,
+          "p95_ms": 931.999,
+          "min_ms": 912.003,
+          "max_ms": 931.999
+        },
+        "player_ready": {
+          "samples": 4,
+          "average_ms": 920.0,
+          "median_ms": 917.0,
+          "p95_ms": 932.999,
+          "min_ms": 913.002,
+          "max_ms": 932.999
+        }
+      },
+      {
+        "case": 2,
+        "requested": "gpu",
+        "size": 9,
+        "actual": "GPU/OpenCL JNI",
+        "engine_ready": true,
+        "startup_ms": 753.006,
+        "rejected_taps": 3,
+        "incomplete_moves": 0,
+        "moves": [
+          {
+            "move_index": 1,
+            "coordinate": "(2,2)",
+            "ai_move": "G3",
+            "tap_to_ai_ms": 445.0,
+            "tap_to_ready_ms": 445.999,
+            "ai_search_from_accept_ms": 443.001
+          },
+          {
+            "move_index": 2,
+            "coordinate": "(6,2)",
+            "ai_move": "C3",
+            "tap_to_ai_ms": 479.004,
+            "tap_to_ready_ms": 480.003,
+            "ai_search_from_accept_ms": 475.998
+          },
+          {
+            "move_index": 3,
+            "coordinate": "(4,4)",
+            "ai_move": "E3",
+            "tap_to_ai_ms": 449.997,
+            "tap_to_ready_ms": 450.996,
+            "ai_search_from_accept_ms": 446.999
+          },
+          {
+            "move_index": 4,
+            "coordinate": "(1,4)",
+            "ai_move": "G5",
+            "tap_to_ai_ms": 465.004,
+            "tap_to_ready_ms": 466.003,
+            "ai_search_from_accept_ms": 460.999
+          }
+        ],
+        "warmup_moves": 0,
+        "response": {
+          "samples": 4,
+          "average_ms": 459.751,
+          "median_ms": 457.5,
+          "p95_ms": 479.004,
+          "min_ms": 445.0,
+          "max_ms": 479.004
+        },
+        "player_ready": {
+          "samples": 4,
+          "average_ms": 460.75,
+          "median_ms": 458.5,
+          "p95_ms": 480.003,
+          "min_ms": 445.999,
+          "max_ms": 480.003
+        }
+      },
+      {
+        "case": 3,
+        "requested": "cpu",
+        "size": 9,
+        "actual": "CPU/Eigen JNI",
+        "engine_ready": true,
+        "startup_ms": 2463.005,
+        "rejected_taps": 1,
+        "incomplete_moves": 0,
+        "moves": [
+          {
+            "move_index": 1,
+            "coordinate": "(2,2)",
+            "ai_move": "G3",
+            "tap_to_ai_ms": 891.998,
+            "tap_to_ready_ms": 892.998,
+            "ai_search_from_accept_ms": 890.999
+          },
+          {
+            "move_index": 2,
+            "coordinate": "(6,2)",
+            "ai_move": "G6",
+            "tap_to_ai_ms": 902.0,
+            "tap_to_ready_ms": 903.0,
+            "ai_search_from_accept_ms": 897.995
+          },
+          {
+            "move_index": 3,
+            "coordinate": "(2,6)",
+            "ai_move": "H7",
+            "tap_to_ai_ms": 938.995,
+            "tap_to_ready_ms": 938.995,
+            "ai_search_from_accept_ms": 937.996
+          },
+          {
+            "move_index": 4,
+            "coordinate": "(4,4)",
+            "ai_move": "G8",
+            "tap_to_ai_ms": 910.004,
+            "tap_to_ready_ms": 911.003,
+            "ai_search_from_accept_ms": 909.004
+          }
+        ],
+        "warmup_moves": 0,
+        "response": {
+          "samples": 4,
+          "average_ms": 910.749,
+          "median_ms": 906.002,
+          "p95_ms": 938.995,
+          "min_ms": 891.998,
+          "max_ms": 938.995
+        },
+        "player_ready": {
+          "samples": 4,
+          "average_ms": 911.499,
+          "median_ms": 907.002,
+          "p95_ms": 938.995,
+          "min_ms": 892.998,
+          "max_ms": 938.995
+        }
+      }
+    ],
+    "by_backend": {
+      "cpu": {
+        "response": {
+          "samples": 8,
+          "average_ms": 914.875,
+          "median_ms": 913.502,
+          "p95_ms": 938.995,
+          "min_ms": 891.998,
+          "max_ms": 938.995
+        },
+        "player_ready": {
+          "samples": 8,
+          "average_ms": 915.75,
+          "median_ms": 914.501,
+          "p95_ms": 938.995,
+          "min_ms": 892.998,
+          "max_ms": 938.995
+        }
+      },
+      "gpu": {
+        "response": {
+          "samples": 4,
+          "average_ms": 459.751,
+          "median_ms": 457.5,
+          "p95_ms": 479.004,
+          "min_ms": 445.0,
+          "max_ms": 479.004
+        },
+        "player_ready": {
+          "samples": 4,
+          "average_ms": 460.75,
+          "median_ms": 458.5,
+          "p95_ms": 480.003,
+          "min_ms": 445.999,
+          "max_ms": 480.003
+        }
+      }
+    }
+  },
+  "note": "PUBLIC and NOT REDACTED, diagnostics under runs/20261012T054613237186Z_2472946/"
+}

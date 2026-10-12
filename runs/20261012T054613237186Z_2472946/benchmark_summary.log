@@ -1,0 +1,23 @@
+KataGo Android AI response benchmark (milliseconds)
+Timing: onBoardTap -> handleAiMove, and onBoardTap -> player-ready render
+Not a pure KataGo neural-network inference benchmark.
+P95: nearest-rank (with small N, P95 may equal maximum).
+
+Case 1 CPU startup=26.001ms accepted=4 rejected_taps=1 ignored_warmup=0 avg=919.0ms p95=932.0ms max=932.0ms
+   1.  (2,2) ->    F4: AI=915.0ms ready=916.0ms
+   2.  (6,6) ->    C3: AI=917.0ms ready=918.0ms
+   3.  (6,2) ->    G6: AI=932.0ms ready=933.0ms
+   4.  (4,4) ->    E4: AI=912.0ms ready=913.0ms
+Case 2 GPU startup=753.006ms accepted=4 rejected_taps=3 ignored_warmup=0 avg=459.8ms p95=479.0ms max=479.0ms
+   1.  (2,2) ->    G3: AI=445.0ms ready=446.0ms
+   2.  (6,2) ->    C3: AI=479.0ms ready=480.0ms
+   3.  (4,4) ->    E3: AI=450.0ms ready=451.0ms
+   4.  (1,4) ->    G5: AI=465.0ms ready=466.0ms
+Case 3 CPU startup=2463.005ms accepted=4 rejected_taps=1 ignored_warmup=0 avg=910.7ms p95=939.0ms max=939.0ms
+   1.  (2,2) ->    G3: AI=892.0ms ready=893.0ms
+   2.  (6,2) ->    G6: AI=902.0ms ready=903.0ms
+   3.  (2,6) ->    H7: AI=939.0ms ready=939.0ms
+   4.  (4,4) ->    G8: AI=910.0ms ready=911.0ms
+
+CPU total n=8: avg=914.9ms median=913.5ms p95=939.0ms max=939.0ms; ready_avg=915.8ms
+GPU total n=4: avg=459.8ms median=457.5ms p95=479.0ms max=479.0ms; ready_avg=460.8ms
