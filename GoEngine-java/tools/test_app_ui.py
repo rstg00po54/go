@@ -427,25 +427,29 @@ class AppTest:
             self.log(f"选择 {rid}: {option}，坐标={point}")
         if rid == "sizeSpinner":
             self.selected_size = int(option.replace("路", ""))
-        # An Android UI dump also acts as a synchronization barrier after
-        # dropdown dismissal. Only do it when the selection changed.
-        def selected_in_dialog(root):
-            if self.node(root, rid="startGameButton") is None:
+        if not getattr(getattr(self, "args", None), "slow_ui", True):
+            # The app-start acknowledgment validates the actual selected
+            # backend and board size; waiting a brief animation interval
+            # avoids another ~2-second UIAutomator export here.
+            time.sleep(0.45)
+            self.log(f"{rid} 已点击 {option}，等待开局日志确认实际参数")
+        else:
+            def selected_in_dialog(root):
+                if self.node(root, rid="startGameButton") is None:
+                    return None
+                try:
+                    actual = self.spinner_selected(root, rid)
+                except TestFailure:
+                    return None
+                if actual == option or (option == "CPU / Eigen" and actual.startswith("CPU / Eigen")):
+                    return True
                 return None
-            try:
-                actual = self.spinner_selected(root, rid)
-            except TestFailure:
-                return None
-            if actual == option or (option == "CPU / Eigen" and actual.startswith("CPU / Eigen")):
-                return True
-            return None
-        self.poll(selected_in_dialog, 12, f"等待 {rid} 显示已选择 {option}")
-        self.log(f"{rid} 已确认选中 {option}，可以继续点击")
+            self.poll(selected_in_dialog, 12, f"等待 {rid} 显示已选择 {option}")
+            self.log(f"{rid} 已确认选中 {option}，可以继续点击")
         if rid == "sizeSpinner":
             self.selected_size = int(option.replace("路", ""))
         if rid == "backendSpinner":
             self.selected_backend = "GPU" if option.startswith("GPU") else "CPU"
-
     def text(self, root, rid):
         item = self.node(root, rid=rid)
         return item.get("text", "") if item is not None else ""
