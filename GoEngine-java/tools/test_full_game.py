@@ -30,7 +30,7 @@ def completed_game_logs():
 
 
 def completed_fast_game_logs():
-    return "\\n".join([
+    return "\n".join([
         line(0, "MainActivity", "finishByScore in, pendingPassColor=black"),
         line(12, "KataGoEngine", "sendCommandSync in, command=final_status_list dead, running=true"),
         line(2190, "KataGoEngine", "sendCommandSync in, command=kata-raw-nn 0, running=true"),
@@ -149,7 +149,7 @@ class EndgameTests(unittest.TestCase):
         self.assertIsNone(result["gtp_final_score"])
 
     def test_fast_mode_ignores_later_optional_deep_search(self):
-        raw = completed_fast_game_logs() + "\\n" + "\\n".join([
+        raw = completed_fast_game_logs() + "\n" + "\n".join([
             line(3000, "KataGoEngine", "sendCommandSync in, command=final_score, running=true"),
             line(8050, "KataGoEngine", "parseGtpResponse in, response== W+6.5"),
         ])
