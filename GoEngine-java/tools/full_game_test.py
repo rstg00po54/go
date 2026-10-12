@@ -115,11 +115,11 @@ def score_timings(log_text, year=None):
                       if tag == "MainActivity" and "Chinese area score" in msg), None)
     final_gtp = next((m.group(1) for _, tag, msg in tail
                       if tag == "KataGoEngine"
-                      for m in [re.search(r"parseGtpResponse in, response==((?:[BW]\\+[0-9.]+)|0)", msg)]
+                      for m in [re.search(r"parseGtpResponse in, response==((?:[BW]\+[0-9.]+)|0)", msg)]
                       if m is not None), None)
     position_ms = next((int(m.group(1)) for _, tag, msg in tail
                         if tag == "KataGoEngine" and "Position evaluation" in msg
-                        for m in [re.search(r"elapsedMs=(\\d+)", msg)] if m is not None), None)
+                        for m in [re.search(r"elapsedMs=(\d+)", msg)] if m is not None), None)
     if not (begin is not None and score is not None and dead is not None
             and raw_nn is not None and render is not None and chinese is not None):
         raise ValueError("终局日志不完整，缺少 final_score / dead / raw-nn / Chinese area score / 最终显示")
