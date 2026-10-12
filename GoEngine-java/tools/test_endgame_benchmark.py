@@ -6,7 +6,7 @@ import unittest
 
 from benchmark_endgame_android import (
     POSITIONS, inspect_grid, make_sgf, measure_case, parse_score, parse_dead,
-    parse_raw_white_lead, summarize,
+    parse_raw_white_lead, summarize, chinese_area_score, white_lead_from_gtp,
 )
 
 
@@ -61,6 +61,26 @@ class GtpParserTests(unittest.TestCase):
             parse_raw_white_lead("whiteWin 0.5 whiteLoss 0.5")
 
 
+class AreaScoreTests(unittest.TestCase):
+    def test_java_style_area_on_two_separated_two_eye_groups(self):
+        simple = POSITIONS["simple"]["rows"]
+        result = chinese_area_score(simple, "")
+        self.assertEqual(result["black_territory"], 2)
+        self.assertEqual(result["white_territory"], 2)
+        self.assertEqual(result["black_points"], 15)
+        self.assertEqual(result["white_points"], 20.5)
+        self.assertEqual(result["white_lead"], 5.5)
+
+    def test_gtp_lead_sign(self):
+        self.assertEqual(white_lead_from_gtp("B+2.5"), -2.5)
+        self.assertEqual(white_lead_from_gtp("W+86.5"), 86.5)
+        self.assertEqual(white_lead_from_gtp("0"), 0)
+
+    def test_dead_stone_validation(self):
+        with self.assertRaisesRegex(ValueError, "empty point"):
+            chinese_area_score(POSITIONS["simple"]["rows"], "D5")
+
+
 class EngineTests(unittest.TestCase):
     def test_each_stage_measures_same_loaded_fixture(self):
         class FakeEngine:
@@ -78,7 +98,8 @@ class EngineTests(unittest.TestCase):
                 return self.responses[c]
 
         fixture = {"remote": "/positions/simple.sgf", "sha256": "abc",
-                   "black_stones": 13, "white_stones": 13}
+                   "black_stones": 13, "white_stones": 13,
+                   "grid": POSITIONS["simple"]["rows"]}
         engine = FakeEngine()
         result = measure_case(engine, "gpu", "simple", fixture, 1, 1, 8.0)
         self.assertEqual(engine.calls, ["loadsgf /positions/simple.sgf", "kata-get-rules",
@@ -87,6 +108,7 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(result["score"], "W+3.5")
         self.assertAlmostEqual(result["total_ms"], 870.75)
         self.assertEqual(result["dead"], "A1 B2")
+        self.assertIn("score_minus_local_lead", result)
 
     def test_wrong_rules_fail_before_scoring(self):
         class FakeEngine:
@@ -97,7 +119,7 @@ class EngineTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Unexpected rules"):
             measure_case(FakeEngine(), "cpu", "simple", {
                 "remote": "a.sgf", "sha256": "abc", "black_stones": 12,
-                "white_stones": 12}, 1, 1, 8.0)
+                "white_stones": 12, "grid": POSITIONS["simple"]["rows"]}, 1, 1, 8.0)
 
     def test_summary_independent_per_backend(self):
         rows = [dict(fixture="simple", backend=b, score=s, total_ms=v,
