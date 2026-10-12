@@ -111,6 +111,15 @@ def score_timings(log_text, year=None):
     render = first(lambda tag, m: tag == "MainActivity" and
                    ("render in, message=黑" in m or "render in, message=终局数子" in m))
     chinese = first(lambda tag, m: tag == "MainActivity" and "Chinese area score" in m)
+    area_line = next((msg for _, tag, msg in tail
+                      if tag == "MainActivity" and "Chinese area score" in msg), None)
+    final_gtp = next((m.group(1) for _, tag, msg in tail
+                      if tag == "KataGoEngine"
+                      for m in [re.search(r"parseGtpResponse in, response==((?:[BW]\\+[0-9.]+)|0)", msg)]
+                      if m is not None), None)
+    position_ms = next((int(m.group(1)) for _, tag, msg in tail
+                        if tag == "KataGoEngine" and "Position evaluation" in msg
+                        for m in [re.search(r"elapsedMs=(\\d+)", msg)] if m is not None), None)
     if not (begin is not None and score is not None and dead is not None
             and raw_nn is not None and render is not None and chinese is not None):
         raise ValueError("终局日志不完整，缺少 final_score / dead / raw-nn / Chinese area score / 最终显示")
@@ -123,6 +132,8 @@ def score_timings(log_text, year=None):
             "final_score_ms": ms(score, dead),
             "dead_stones_ms": ms(dead, raw_nn),
             "raw_nn_to_render_ms": ms(raw_nn, render),
+            "position_evaluation_ms": position_ms,
+            "gtp_final_score": final_gtp, "chinese_area_log": area_line,
             "has_chinese_area_score": True}
 
 
@@ -176,12 +187,16 @@ def run_full_game(runner, size, backend, max_actions=110, settlement_timeout=180
     black_moves, ai_moves, rejected, player_passes, ai_passes = 0, 0, 0, 0, 0
     started = time.monotonic()
     game_baseline = runner.read_log_state()
+    rejected_points = set()
     last_ai_pass = False
     end_type = None
     for action in range(max_actions):
         state = runner.read_log_state()
         # The player must pass immediately after an AI pass to end the game.
-        candidates = [] if last_ai_pass else [p for p in coords if board.legal("B", p)]
+        candidates = [] if last_ai_pass else [p for p in coords
+                                                if p not in rejected_points and board.legal("B", p)]
+        # Avoid spending minutes re-tapping a row of UI-rejected points.
+        candidates = candidates[:6]
         accepted = False
         before = state
         for point in candidates:
@@ -195,6 +210,7 @@ def run_full_game(runner, size, backend, max_actions=110, settlement_timeout=180
                 if "日志等待超过" not in str(exc):
                     raise
                 rejected += 1
+                rejected_points.add(point)
                 continue
             board.play("B",point)
             black_moves += 1
