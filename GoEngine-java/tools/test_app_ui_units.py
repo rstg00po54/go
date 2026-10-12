@@ -157,6 +157,23 @@ class CacheAndLogTests(unittest.TestCase):
             self.app.start_game_confirmed("gpu")
 
 
+    def test_full_game_mainactivity_events(self):
+        log = (
+            "D/MainActivity( 123): handleAiMove in, move=pass, aiColor=WHITE\n"
+            "D/MainActivity( 123): render in, message=AI 停一手，你下, engineReady=true\n"
+            "D/MainActivity( 123): pass in, engineReady=true, thinking=false\n"
+            "D/MainActivity( 123): finishByScore in, pendingPassColor=black\n"
+            "I/MainActivity( 123): Chinese area score B stones=5 territory=7 W stones=4\n"
+            "D/MainActivity( 123): render in, message=黑12目\n"
+        )
+        self.app.adb = lambda *args, **kwargs: log
+        result = self.app.read_log_state()
+        self.assertEqual(result["ai_replies"], ["pass"])
+        self.assertEqual(result["ai_pass_ready"], 1)
+        self.assertEqual(result["player_passes"], 1)
+        self.assertEqual(result["final_enter"], 1)
+        self.assertEqual(result["score_summary"], 1)
+        self.assertEqual(result["final_render"], 1)
     def test_read_log_state_keeps_debug_filter(self):
         # On Android a duplicate MainActivity:I spec can mask MainActivity:D.
         arguments = []
