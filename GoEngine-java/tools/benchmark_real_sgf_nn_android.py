@@ -277,6 +277,12 @@ def compare_game(engine, game, backend):
 
 def summarize(rows):
     groups = {"all": rows}
+    for backend in sorted(set(r["backend"] for r in rows)):
+        subset = [r for r in rows if r["backend"] == backend]
+        groups[backend + "/all"] = subset
+        for size in sorted(set(r["size"] for r in subset)):
+            groups[backend + "/" + str(size) + "x" + str(size)] = [
+                r for r in subset if r["size"] == size]
     for size in sorted(set(r["size"] for r in rows)):
         groups[str(size) + "x" + str(size)] = [r for r in rows if r["size"] == size]
     result = {}
