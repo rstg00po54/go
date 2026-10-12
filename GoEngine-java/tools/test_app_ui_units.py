@@ -221,6 +221,61 @@ class CacheAndLogTests(unittest.TestCase):
         self.assertEqual(len(clicks), 2)
         self.assertNotEqual(clicks[0], clicks[1])
 
+    def test_fast_spinner_uses_cache_without_dump(self):
+        self.app.args = SimpleNamespace(slow_ui=False)
+        self.app.geometry = {
+            "backendSpinner": [400, 940, 750, 1130],
+            "choice:backendSpinner:CPU / Eigen->GPU / OpenCL": [430, 1130, 725, 1210]
+        }
+        self.app.selected_backend = "CPU"
+        self.app.selected_size = 9
+        self.app.poll = lambda *args: self.fail("Fast menu must not dump the UI tree")
+        hits = []
+        self.app.click = lambda rid=None, text=None: hits.append(("click", rid))
+        self.app.tap = lambda x, y: hits.append(("tap", x, y))
+        self.app.spinner("backendSpinner", "GPU / OpenCL")
+        self.assertEqual(hits, [("click", "backendSpinner"), ("tap", 577, 1170)])
+        self.assertEqual(self.app.selected_backend, "GPU")
+
+    def test_slow_spinner_still_verifies_visible_selection(self):
+        self.app.args = SimpleNamespace(slow_ui=True)
+        self.app.geometry = {
+            "backendSpinner": [400, 940, 750, 1130],
+            "choice:backendSpinner:CPU / Eigen->GPU / OpenCL": [430, 1130, 725, 1210]
+        }
+        self.app.selected_backend = "CPU"
+        self.app.selected_size = 9
+        hits = []
+        self.app.click = lambda rid=None, text=None: hits.append(("click", rid))
+        self.app.tap = lambda x, y: hits.append(("tap", x, y))
+        root = ET.fromstring(
+            '<hierarchy><node resource-id="com.badukai.java:id/backendSpinner" '
+            'bounds="[400,940][750,1130]"><node text="GPU / OpenCL" '
+            'bounds="[410,980][740,1040]" /></node>'
+            '<node resource-id="com.badukai.java:id/startGameButton" '
+            'bounds="[400,1200][700,1300]" /></hierarchy>'
+        )
+        confirmations = []
+        def poll(predicate, timeout, description):
+            confirmations.append(description)
+            return predicate(root)
+        self.app.poll = poll
+        self.app.spinner("backendSpinner", "GPU / OpenCL")
+        self.assertEqual(len(confirmations), 1)
+        self.assertEqual(self.app.selected_backend, "GPU")
+
+    def test_success_diagnostics_skips_ui_dump(self):
+        with tempfile.TemporaryDirectory() as directory:
+            self.app.out = Path(directory)
+            self.app.last_xml = b'<hierarchy />'
+            self.app.hierarchy = lambda *args, **kwargs: self.fail("PASS must not export XML")
+            self.app.screenshot = lambda name: (self.app.out / name).write_bytes(b'PNG')
+            self.app.adb = lambda *args, **kwargs: 'I/MainActivity: ready'
+            self.app.diagnostics("final", capture_ui=False)
+            self.assertFalse((self.app.out / "final.xml").exists())
+            self.assertTrue((self.app.out / "final.png").exists())
+            self.assertTrue((self.app.out / "final_logcat.txt").exists())
+
 
 if __name__ == "__main__":
     unittest.main()
