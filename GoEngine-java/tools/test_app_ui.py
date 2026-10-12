@@ -158,6 +158,7 @@ class AppTest:
             "backend": backend,
             "turns": sum("render in, message=轮到你了" in line for line in lines),
             "ai_moves": sum("handleAiMove in" in line for line in lines),
+            "thinking": sum("render in, message=AI 思考中" in line for line in lines),
             "undo_done": sum("render in, message=已悔棋，轮到你了" in line for line in lines),
             "fatal": any("FATAL EXCEPTION" in line for line in lines),
             "debug_active": any("render in, message=" in line for line in lines),
@@ -603,6 +604,18 @@ class AppTest:
             self.tap(px, py)
             self.log(f"落子 ({ix},{iy})，屏幕 ({px},{py})" + ("（缓存棋盘）" if cached else ""))
             if self.use_log_wait:
+                # If the candidate point is occupied, Android reports the
+                # onBoardTap but never enters AI thinking. Check acceptance
+                # quickly before waiting for a reply; otherwise a rejected
+                # click would waste the entire think_timeout.
+                try:
+                    self.wait_log(lambda st: st["thinking"] > baseline["thinking"],
+                                  2.5, f"确认落子 ({ix},{iy}) 已被 APP 接受")
+                except TestFailure as exc:
+                    if "日志等待超过" not in str(exc):
+                        raise
+                    self.log(f"落子 ({ix},{iy}) 未被接受，换下一个交叉点")
+                    continue
                 return self.wait_turn(size, backend, current_turn + 2,
                                       baseline=baseline, require_ai=True)
             time.sleep(0.45)
