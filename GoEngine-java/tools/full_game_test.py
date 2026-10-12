@@ -126,16 +126,22 @@ def score_timings(log_text, year=None):
     position_ms = next((int(m.group(1)) for _, tag, msg in tail
                         if tag == "KataGoEngine" and "Position evaluation" in msg
                         for m in [re.search(r"elapsedMs=(\d+)", msg)] if m is not None), None)
-    if not (begin is not None and score is not None and dead is not None
-            and raw_nn is not None and render is not None and chinese is not None):
-        raise ValueError("终局日志不完整，缺少 final_score / dead / raw-nn / Chinese area score / 最终显示")
-    if not (begin <= score <= dead <= raw_nn <= render):
-        raise ValueError("终局阶段时间顺序异常")
+    if not (begin is not None and dead is not None and raw_nn is not None
+            and render is not None and chinese is not None):
+        raise ValueError("终局日志不完整，缺少 dead / raw-nn / Chinese area score / 最终显示")
+    fast = score is None
+    if fast and not (begin <= dead <= raw_nn <= chinese <= render):
+        raise ValueError("快速结算阶段时间顺序异常")
+    if not fast and not (begin <= score <= dead <= raw_nn <= chinese <= render):
+        raise ValueError("传统结算阶段时间顺序异常")
     def ms(start, end):
         return round((end-start)/1000, 3)
-    return {"total_ms": ms(begin, render),
-            "before_final_score_ms": ms(begin, score),
-            "final_score_ms": ms(score, dead),
+    return {"scoring_mode": "fast" if fast else "full",
+            "total_ms": ms(begin, render),
+            "time_to_first_result_ms": ms(begin, render),
+            "before_final_score_ms": ms(begin, score) if not fast else None,
+            "final_score_ms": ms(score, dead) if not fast else None,
+            "before_dead_ms": ms(begin, dead) if fast else None,
             "dead_stones_ms": ms(dead, raw_nn),
             "raw_nn_to_render_ms": ms(raw_nn, render),
             "position_evaluation_ms": position_ms,
@@ -272,6 +278,7 @@ def run_full_game(runner, size, backend, max_actions=110, settlement_timeout=180
               "ai_passes": ai_passes, "match_elapsed_s": round(time.monotonic()-started, 3),
               "settlement": stages, "position_quality": quality}
     runner.log("终局局面质量: " + quality["benchmark_quality"] + " — " + quality["quality_reason"])
-    runner.log(f"终局结算完成：总={stages['total_ms']}ms, score={stages['final_score_ms']}ms, "
-               f"dead={stages['dead_stones_ms']}ms, rawNN={stages['raw_nn_to_render_ms']}ms")
+    runner.log(f"终局结算完成：mode={stages['scoring_mode']} 总={stages['total_ms']}ms, "
+               f"score={stages['final_score_ms']}ms, dead={stages['dead_stones_ms']}ms, "
+               f"rawNN={stages['raw_nn_to_render_ms']}ms")
     return result
