@@ -141,10 +141,20 @@ class AppTest:
         self.adb("shell", "input", "tap", str(x), str(y), timeout=15)
 
     def click(self, rid=None, text=None, timeout=20):
-        item = self.poll(lambda r: self.node(r, rid=rid, text=text, enabled=True),
-                         timeout, f"控件不可点击: {rid or text}")
-        self.tap(*self.center(item))
-        self.log("点击 " + (rid or text))
+        # Some Android versions report enabled=false for visible, usable
+        # dialog controls. Do not turn that unreliable accessibility flag
+        # into a reason to wait until timeout; verify the next UI state instead.
+        label = rid or text
+        item = self.poll(lambda r: self.node(r, rid=rid, text=text),
+                         timeout, f"未找到控件: {label}")
+        x, y = self.center(item)
+        width, height = self.screen_size()
+        if not (0 <= x < width and 0 <= y < height):
+            raise TestFailure(f"{label} 在屏幕外，禁止盲点坐标: ({x}, {y})")
+        if item.get("enabled") != "true":
+            self.log(f"{label} 的 UI enabled={item.get('enabled')}，尝试点击可见控件")
+        self.tap(x, y)
+        self.log(f"点击 {label}，坐标=({x}, {y})")
 
     def spinner_selected(self, root, rid):
         """Return visible current Spinner label when exposed by UIAutomator."""
@@ -382,13 +392,10 @@ class AppTest:
         gpu = self.node(root, rid="backendSpinner")
         if gpu is None:
             raise TestFailure("新开一局界面找不到 backendSpinner")
-        current_backend = self.spinner_selected(root, "backendSpinner")
-        if backend == "gpu" and gpu.get("enabled") != "true":
-            raise TestFailure("GPU 选项不可用，APK 可能没有打包 libkatago_gpu.so")
-        if backend == "gpu" or gpu.get("enabled") == "true":
-            self.spinner("backendSpinner", "GPU / OpenCL" if backend == "gpu" else "CPU / Eigen")
-        elif not current_backend.startswith("CPU / Eigen"):
-            raise TestFailure("CPU 选择无法确认，当前显示: " + current_backend)
+        # Check actual dropdown selection instead of trusting enabled=false.
+        # An APK without the GPU library has no GPU option, in which case
+        # spinner() will fail with the observed list of available options.
+        self.spinner("backendSpinner", "GPU / OpenCL" if backend == "gpu" else "CPU / Eigen")
         self.click(rid="startGameButton")
         turn = self.wait_turn(self.args.size, backend)
         self.check_process()
