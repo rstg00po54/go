@@ -58,6 +58,7 @@ class AppTest:
         self.log_baseline = None
         self.ui_dumps = 0
         self.benchmark = None
+        self.bench_used_positions = set()
 
     def log(self, message):
         elapsed = round(time.monotonic() - self.started, 3)
@@ -591,6 +592,13 @@ class AppTest:
     def move(self, size, backend, current_turn, index):
         choices = [(2, 2), (size - 3, size - 3), (size - 3, 2),
                    (2, size - 3), (size // 2, size // 2), (1, size // 2)]
+        benchmark_mode = getattr(getattr(self, "args", None), "benchmark", False)
+        if benchmark_mode:
+            # The original six opening coordinates are insufficient for a
+            # longer benchmark. Add deterministic interior intersections and
+            # skip points already played by this test's human player.
+            choices += [(x, y) for y in range(1, size - 1) for x in range(1, size - 1)
+                        if (x, y) not in choices]
         cached = self.geometry.get("boardView")
         if cached is None:
             root = self.hierarchy()
@@ -605,6 +613,8 @@ class AppTest:
         pad = outer + 0.68 * cell
         for offset in range(len(choices)):
             ix, iy = choices[(index + offset) % len(choices)]
+            if benchmark_mode and (ix, iy) in self.bench_used_positions:
+                continue
             px, py = round(x1 + pad + ix * cell), round(y1 + pad + iy * cell)
             if not (x1 <= px < x2 and y1 <= py < y2):
                 raise TestFailure("棋盘点超出可见区域")
@@ -624,13 +634,19 @@ class AppTest:
                         raise
                     self.log(f"落子 ({ix},{iy}) 未被接受，换下一个交叉点")
                     continue
-                return self.wait_turn(size, backend, current_turn + 2,
-                                      baseline=baseline, require_ai=True)
+                next_turn = self.wait_turn(size, backend, current_turn + 2,
+                                           baseline=baseline, require_ai=True)
+                if benchmark_mode:
+                    self.bench_used_positions.add((ix, iy))
+                return next_turn
             time.sleep(0.45)
             title = self.text(self.hierarchy(), "gameTitleText")
             m = TURN.search(title)
             if m and int(m.group(1)) > current_turn:
-                return self.wait_turn(size, backend, current_turn + 2)
+                next_turn = self.wait_turn(size, backend, current_turn + 2)
+                if benchmark_mode:
+                    self.bench_used_positions.add((ix, iy))
+                return next_turn
             self.log(f"尝试 ({ix},{iy}) 未落子，换交叉点")
         raise TestFailure("未能在任何候选位置落子")
 
@@ -730,6 +746,8 @@ class AppTest:
 
     def case(self, backend, index):
         self.log(f"=== Case {index}: {backend.upper()} / {self.args.size}x{self.args.size} ===")
+        if self.args.benchmark:
+            self.bench_used_positions.clear()
         if index == 1:
             self.open_home_ai()
         else:
