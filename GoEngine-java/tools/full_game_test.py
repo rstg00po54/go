@@ -175,6 +175,7 @@ def run_full_game(runner, size, backend, max_actions=110, settlement_timeout=180
     coords.sort(key=lambda p: (abs(p[0]-mid)+abs(p[1]-mid), p[1], p[0]))
     black_moves, ai_moves, rejected, player_passes, ai_passes = 0, 0, 0, 0, 0
     started = time.monotonic()
+    game_baseline = runner.read_log_state()
     last_ai_pass = False
     end_type = None
     for action in range(max_actions):
@@ -232,8 +233,8 @@ def run_full_game(runner, size, backend, max_actions=110, settlement_timeout=180
     if end_type != "two_passes":
         raise TestFailure(f"整局 {max_actions} 次玩家行动内未出现连续两次停一手；未伪造结算结果")
     runner.log("连续停一手已触发 final_score，开始等待终局三个阶段")
-    before = runner.read_log_state()
-    runner.wait_log(lambda x: x["score_summary"] > 0 and x["final_render"] > 0 or None,
+    runner.wait_log(lambda x: x["score_summary"] > game_baseline["score_summary"]
+                    and x["final_render"] > game_baseline["final_render"] or None,
                     settlement_timeout, "等待实际地盘数目完成")
     raw = runner.adb("logcat", "-d", "-v", "time", timeout=45)
     try:
