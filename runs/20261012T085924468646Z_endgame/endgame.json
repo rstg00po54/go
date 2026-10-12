@@ -1,0 +1,397 @@
+{
+  "type": "fixed_sgf_fast_nn_vs_full",
+  "status": "COMPARISON_ONLY",
+  "note": "Static AB/AW SGF with two passes, 10b model, default GTP config. KataGo final_score is a prediction, NOT ground truth. NN death thresholds mirror FastEndgameScorer.java. APK Human SL configuration may differ. No formal correctness PASS is claimed.",
+  "device": "8719e18a71a2a66c",
+  "threads": 1,
+  "repeats": 2,
+  "model_sha256": "49b75eacdfd8587fe153e6889070d509504750a45fda16105e67bf8c456148d4",
+  "config_sha256": "e8f54b846909df9ecdac03717d02b626eefe5bbb92bc8e283ba05d931d3db30f",
+  "binaries": {
+    "gpu": "95a454b419d5d8a2bde8d4db168a2ffd4729e76937537a7cfd270385cca9dcc4"
+  },
+  "fixtures": {
+    "simple": {
+      "description": "Two stable separated two-eye groups; basic score baseline",
+      "grid": [
+        "BBBBB....",
+        "B.B.B....",
+        "BBBBB....",
+        ".........",
+        ".........",
+        ".........",
+        "....WWWWW",
+        "....W.W.W",
+        "....WWWWW"
+      ],
+      "sha256": "bf58d4629694fef9b8f12749decb929e720efda9b6692ceb3ba13c45160cf04d",
+      "remote": "/data/local/tmp/katago_bench/positions/simple.sgf",
+      "size": 9,
+      "black_stones": 13,
+      "white_stones": 13,
+      "black_eyes": [
+        [
+          1,
+          1
+        ],
+        [
+          3,
+          1
+        ]
+      ],
+      "white_eyes": [
+        [
+          5,
+          7
+        ],
+        [
+          7,
+          7
+        ]
+      ]
+    },
+    "territory": {
+      "description": "Two alive corner groups with longer opposing borders",
+      "grid": [
+        "BBBBB....",
+        "B.B.B..WW",
+        "BBBBB.W.W",
+        "..B...WWW",
+        "..B...W..",
+        "..BB.WW..",
+        "....WWWWW",
+        "....W.W.W",
+        "....WWWWW"
+      ],
+      "sha256": "906eca60867b9521f82bf82423042304eb04093c488dee1b73402852ee773dd5",
+      "remote": "/data/local/tmp/katago_bench/positions/territory.sgf",
+      "size": 9,
+      "black_stones": 17,
+      "white_stones": 23,
+      "black_eyes": [
+        [
+          1,
+          1
+        ],
+        [
+          3,
+          1
+        ]
+      ],
+      "white_eyes": [
+        [
+          7,
+          2
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          7,
+          7
+        ]
+      ]
+    },
+    "tactical": {
+      "description": "Two alive corner groups plus weak central groups; unsettled status",
+      "grid": [
+        "BBBBB.WWW",
+        "B.B.B.W.W",
+        "BBBBB.WWW",
+        "..B.B.W..",
+        "..BWWBW..",
+        "..BB.WWW.",
+        "....WWWWW",
+        "....W.W.W",
+        "....WWWWW"
+      ],
+      "sha256": "13c850d1c64a8acf893eb6c4514c49f049f7402a865facee58c6e1c83ca4d4d3",
+      "remote": "/data/local/tmp/katago_bench/positions/tactical.sgf",
+      "size": 9,
+      "black_stones": 19,
+      "white_stones": 28,
+      "black_eyes": [
+        [
+          1,
+          1
+        ],
+        [
+          3,
+          1
+        ]
+      ],
+      "white_eyes": [
+        [
+          7,
+          1
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          7,
+          7
+        ]
+      ]
+    }
+  },
+  "rows": [
+    {
+      "backend": "gpu",
+      "fixture": "simple",
+      "repeat": 1,
+      "sha256": "bf58d4629694fef9b8f12749decb929e720efda9b6692ceb3ba13c45160cf04d",
+      "threads": 1,
+      "raw_nn_ms": 36.061,
+      "original_score_ms": 6016.437,
+      "original_dead_ms": 2460.457,
+      "fast_white_lead": 1.223,
+      "original_white_lead": 2.5,
+      "lead_delta": -1.277,
+      "original_score": "W+2.5",
+      "fast_dead": "",
+      "original_dead": "",
+      "dead_same": true,
+      "dead_difference": {
+        "fast_only": [],
+        "original_only": []
+      },
+      "fast_area_lead": 5.5,
+      "original_area_lead": 5.5,
+      "fast_dead_count": 0,
+      "original_dead_count": 0,
+      "groups": 2,
+      "suggested_dead_groups": 0,
+      "rules": {
+        "friendlyPassOk": true,
+        "hasButton": false,
+        "ko": "SIMPLE",
+        "scoring": "AREA",
+        "suicide": false,
+        "tax": "NONE",
+        "whiteHandicapBonus": "N"
+      }
+    },
+    {
+      "backend": "gpu",
+      "fixture": "territory",
+      "repeat": 1,
+      "sha256": "906eca60867b9521f82bf82423042304eb04093c488dee1b73402852ee773dd5",
+      "threads": 1,
+      "raw_nn_ms": 17.299,
+      "original_score_ms": 6127.473,
+      "original_dead_ms": 2443.651,
+      "fast_white_lead": 6.455,
+      "original_white_lead": 6.5,
+      "lead_delta": -0.045,
+      "original_score": "W+6.5",
+      "fast_dead": "",
+      "original_dead": "",
+      "dead_same": true,
+      "dead_difference": {
+        "fast_only": [],
+        "original_only": []
+      },
+      "fast_area_lead": 16.5,
+      "original_area_lead": 16.5,
+      "fast_dead_count": 0,
+      "original_dead_count": 0,
+      "groups": 2,
+      "suggested_dead_groups": 0,
+      "rules": {
+        "friendlyPassOk": true,
+        "hasButton": false,
+        "ko": "SIMPLE",
+        "scoring": "AREA",
+        "suicide": false,
+        "tax": "NONE",
+        "whiteHandicapBonus": "N"
+      }
+    },
+    {
+      "backend": "gpu",
+      "fixture": "tactical",
+      "repeat": 1,
+      "sha256": "13c850d1c64a8acf893eb6c4514c49f049f7402a865facee58c6e1c83ca4d4d3",
+      "threads": 1,
+      "raw_nn_ms": 41.201,
+      "original_score_ms": 6270.897,
+      "original_dead_ms": 2390.758,
+      "fast_white_lead": 9.752,
+      "original_white_lead": 11.5,
+      "lead_delta": -1.748,
+      "original_score": "W+11.5",
+      "fast_dead": "",
+      "original_dead": "F5",
+      "dead_same": false,
+      "dead_difference": {
+        "fast_only": [],
+        "original_only": [
+          "F5"
+        ]
+      },
+      "fast_area_lead": 20.5,
+      "original_area_lead": 21.5,
+      "fast_dead_count": 0,
+      "original_dead_count": 1,
+      "groups": 4,
+      "suggested_dead_groups": 0,
+      "rules": {
+        "friendlyPassOk": true,
+        "hasButton": false,
+        "ko": "SIMPLE",
+        "scoring": "AREA",
+        "suicide": false,
+        "tax": "NONE",
+        "whiteHandicapBonus": "N"
+      }
+    },
+    {
+      "backend": "gpu",
+      "fixture": "simple",
+      "repeat": 2,
+      "sha256": "bf58d4629694fef9b8f12749decb929e720efda9b6692ceb3ba13c45160cf04d",
+      "threads": 1,
+      "raw_nn_ms": 16.559,
+      "original_score_ms": 6180.639,
+      "original_dead_ms": 2435.055,
+      "fast_white_lead": 1.223,
+      "original_white_lead": 2.5,
+      "lead_delta": -1.277,
+      "original_score": "W+2.5",
+      "fast_dead": "",
+      "original_dead": "",
+      "dead_same": true,
+      "dead_difference": {
+        "fast_only": [],
+        "original_only": []
+      },
+      "fast_area_lead": 5.5,
+      "original_area_lead": 5.5,
+      "fast_dead_count": 0,
+      "original_dead_count": 0,
+      "groups": 2,
+      "suggested_dead_groups": 0,
+      "rules": {
+        "friendlyPassOk": true,
+        "hasButton": false,
+        "ko": "SIMPLE",
+        "scoring": "AREA",
+        "suicide": false,
+        "tax": "NONE",
+        "whiteHandicapBonus": "N"
+      }
+    },
+    {
+      "backend": "gpu",
+      "fixture": "territory",
+      "repeat": 2,
+      "sha256": "906eca60867b9521f82bf82423042304eb04093c488dee1b73402852ee773dd5",
+      "threads": 1,
+      "raw_nn_ms": 39.943,
+      "original_score_ms": 6065.276,
+      "original_dead_ms": 2372.785,
+      "fast_white_lead": 6.455,
+      "original_white_lead": 6.5,
+      "lead_delta": -0.045,
+      "original_score": "W+6.5",
+      "fast_dead": "",
+      "original_dead": "",
+      "dead_same": true,
+      "dead_difference": {
+        "fast_only": [],
+        "original_only": []
+      },
+      "fast_area_lead": 16.5,
+      "original_area_lead": 16.5,
+      "fast_dead_count": 0,
+      "original_dead_count": 0,
+      "groups": 2,
+      "suggested_dead_groups": 0,
+      "rules": {
+        "friendlyPassOk": true,
+        "hasButton": false,
+        "ko": "SIMPLE",
+        "scoring": "AREA",
+        "suicide": false,
+        "tax": "NONE",
+        "whiteHandicapBonus": "N"
+      }
+    },
+    {
+      "backend": "gpu",
+      "fixture": "tactical",
+      "repeat": 2,
+      "sha256": "13c850d1c64a8acf893eb6c4514c49f049f7402a865facee58c6e1c83ca4d4d3",
+      "threads": 1,
+      "raw_nn_ms": 16.536,
+      "original_score_ms": 6099.316,
+      "original_dead_ms": 2396.102,
+      "fast_white_lead": 9.752,
+      "original_white_lead": 10.5,
+      "lead_delta": -0.748,
+      "original_score": "W+10.5",
+      "fast_dead": "",
+      "original_dead": "F5",
+      "dead_same": false,
+      "dead_difference": {
+        "fast_only": [],
+        "original_only": [
+          "F5"
+        ]
+      },
+      "fast_area_lead": 20.5,
+      "original_area_lead": 21.5,
+      "fast_dead_count": 0,
+      "original_dead_count": 1,
+      "groups": 4,
+      "suggested_dead_groups": 0,
+      "rules": {
+        "friendlyPassOk": true,
+        "hasButton": false,
+        "ko": "SIMPLE",
+        "scoring": "AREA",
+        "suicide": false,
+        "tax": "NONE",
+        "whiteHandicapBonus": "N"
+      }
+    }
+  ],
+  "summary": {
+    "gpu/simple": {
+      "samples": 2,
+      "nn_ms_avg": 26.31,
+      "full_ms_avg": 8546.29,
+      "abs_lead_delta_avg": 1.28,
+      "lead_deltas": [
+        -1.277,
+        -1.277
+      ],
+      "dead_matches": 2
+    },
+    "gpu/tactical": {
+      "samples": 2,
+      "nn_ms_avg": 28.87,
+      "full_ms_avg": 8578.54,
+      "abs_lead_delta_avg": 1.25,
+      "lead_deltas": [
+        -1.748,
+        -0.748
+      ],
+      "dead_matches": 0
+    },
+    "gpu/territory": {
+      "samples": 2,
+      "nn_ms_avg": 28.62,
+      "full_ms_avg": 8504.59,
+      "abs_lead_delta_avg": 0.04,
+      "lead_deltas": [
+        -0.045,
+        -0.045
+      ],
+      "dead_matches": 2
+    }
+  }
+}

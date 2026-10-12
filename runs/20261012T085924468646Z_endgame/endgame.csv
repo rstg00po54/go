@@ -1,0 +1,7 @@
+backend,fixture,repeat,sha256,threads,raw_nn_ms,original_score_ms,original_dead_ms,fast_white_lead,original_white_lead,lead_delta,fast_dead,original_dead,dead_same,fast_area_lead,original_area_lead,fast_dead_count,original_dead_count
+gpu,simple,1,bf58d4629694fef9b8f12749decb929e720efda9b6692ceb3ba13c45160cf04d,1,36.061,6016.437,2460.457,1.223,2.5,-1.277,,,True,5.5,5.5,0,0
+gpu,territory,1,906eca60867b9521f82bf82423042304eb04093c488dee1b73402852ee773dd5,1,17.299,6127.473,2443.651,6.455,6.5,-0.045,,,True,16.5,16.5,0,0
+gpu,tactical,1,13c850d1c64a8acf893eb6c4514c49f049f7402a865facee58c6e1c83ca4d4d3,1,41.201,6270.897,2390.758,9.752,11.5,-1.748,,F5,False,20.5,21.5,0,1
+gpu,simple,2,bf58d4629694fef9b8f12749decb929e720efda9b6692ceb3ba13c45160cf04d,1,16.559,6180.639,2435.055,1.223,2.5,-1.277,,,True,5.5,5.5,0,0
+gpu,territory,2,906eca60867b9521f82bf82423042304eb04093c488dee1b73402852ee773dd5,1,39.943,6065.276,2372.785,6.455,6.5,-0.045,,,True,16.5,16.5,0,0
+gpu,tactical,2,13c850d1c64a8acf893eb6c4514c49f049f7402a865facee58c6e1c83ca4d4d3,1,16.536,6099.316,2396.102,9.752,10.5,-0.748,,F5,False,20.5,21.5,0,1
