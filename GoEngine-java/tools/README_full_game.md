@@ -52,7 +52,7 @@ GPU 通过后再尝试 `--backends cpu,gpu`，以比较不同引擎的结算时�
 | `position_evaluation_ms` | APP 内部 Position evaluation 的 `elapsedMs`（如有） |
 | `gtp_final_score` | `final_score` 的 GTP 返回值（上一版快速路径为 `null`） |
 | `scoring_mode` | `full`（当前默认）或 `fast`（上一版实验路径） |
-| `time_to_first_result_ms` | 开始结算到首次显示可用结果 |
+| `time_to_first_result_ms` | 开始结算到首个 `final_score` 有效结果的日志时间（新版）；旧版回退最终 render 时间 |
 
 阶段时间使用 Android `logcat -v time` 的 GTP 命令发送事件及下一事件相减，**属于近似墙钟时间**，包含 Java 串行处理和 GTP 开销，不是纯 GPU/CPU 推理时间。当前默认先执行原来的 `final_score`，返回后就显示 KataGo 搜索预测的胜负，然后继续完成死子判断、中国数目和归属图。后台独立胜率分析任务在终局时取消排队，避免无用负载。
 
