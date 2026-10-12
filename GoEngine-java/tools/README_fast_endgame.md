@@ -1,20 +1,28 @@
-# Android KataGo 快速终局结算（2026-10-12）
+# KataGo 终局结算：保留原始结果的版本（2026-10-12）
 
-## 为什么以前慢
+## 为什么撤回默认快速数目
 
-原来 MainActivity.finishByScore() 必须串行等待 `final_score`、`final_status_list dead` 和 `kata-raw-nn 0`。
-终局 `final_score` 会改变贴目、重复搜索胜率来估算最终目差。在 RK3588 的固定 9×9 SGF 测试中，CPU 约 5.6s、GPU 约 6.1s；死子判断约 2.2/2.4s。它并不是一次简单数棋盘交叉点操作。
+前一版把 KataGo 的 `final_score` 省掉，只调用 `final_status_list dead` 后由 Java 计算当前局面的中国数子，实测在 RK3588 GPU 9×9 用了 1.92 秒。但 **不是等价替代**：`final_score` 包含改变贴目、反复搜索胜率，预测最终目差。双方死子清单相同，也不意味着它和当前局面的中国数子目差相同。不能为了速度让用户的最终胜负结果悄悄变了。
 
-## 新版交互（默认）
+## 当前默认行为
 
-1. 双方两次 pass 后，立即开始 `final_status_list dead`，**不再自动调用 final_score**；
-2. 使用 KataGo 判死结果 + Java 中国数子（移除死子后统计活子与空点、加贴目）得到 **预估目差**，并用 `kata-raw-nn 0` 显示棋盘归属率；
-3. 显示 `对局结束 · 预估白胜 N.N目` 及 `黑约X目/白约Y目`，结束等待，允许直接开新一局；
-4. 如需原来更耗时的搜索预测，请点击终局按钮 **「深度估算」**。此时才执行 `final_score`、显示它给出的搜索预测目差，并把结果与中国数子的值核对。
+恢复原来的 KataGo 结算命令和顺序：
 
-两种结果都不应被称为正式裁判确认的精确结果。`final_score` 对未明朗局面会预测后续棋局，因此它与基于死子移除的中国数子结果可能不同；以前固定棋谱测试中已有 3～11 目的差异。
+```text
+双方停棋
+  -> final_score             // 保留原算法和返回的胜负目差
+  -> final_status_list dead  // 保留 KataGo 的死子判断
+  -> kata-raw-nn 0           // 保留棋盘归属率显示
+  -> Java 中国数子核对      // 保留差异日志与「约」标记
+```
 
-## 构建与实机验证
+现在 `final_score` 一返回，主界面就先显示 KataGo 的搜索预测胜负，在后台继续运行死子判断；这比等到所有命令完成才显示胜负更早。它**不是让 final_score 本身更快**，不宣称同样的准确度在 2 秒完成。
+
+同时，游戏终局时递增 `winRateSession`，取消独立胜率分析引擎中尚未开始的任务，避免无效搜索与主结算争抢设备资源。这不会影响主 KataGo `final_score` 参数、访问信息和计算公式。已经运行中的胜率分析不会被强制中断。
+
+完结后按钮显示「已结算」，而不是要求用户额外点击「深度估算」才能获得原来的算法结果。如果 GTP `final_score` 失败但死子结果可用，才允许点击「重新估算」。
+
+## 运行
 
 在 GoEngine-java 目录：
 
@@ -27,18 +35,15 @@ adb -s 8719e18a71a2a66c install -r app/build/outputs/apk/debug/app-debug.apk
 python3 tools/test_app_ui.py -s 8719e18a71a2a66c --backends gpu --size 9 --full-game --game-max-actions 110 --settlement-timeout 180
 ```
 
-如果 CPU/GPU JNI 库尚不存在，不要用 `--apk-only`，改用项目原来的 `bash build.sh`。前述代码仓库改动没有修改 C++，所以使用已有 JNI 库即可。
-
-最新整局 JSON 报告中 `scoring_mode=fast`，`time_to_first_result_ms` 是进入结算到首次展示结果；`final_score_ms=null` 表示默认路径确实没有走慢的胜负搜索。旧 APK 的报告会显示 `scoring_mode=full`，便于对比。
-
-Android 日志也会记录：
+如果 CPU/GPU JNI 库缺失，改用普通 `bash build.sh`。如需明确查看原来胜负算法耗时，在 Logcat 中筛选：
 
 ```text
-ENDGAME_TIMING phase=fast_done elapsedMs=... deadMs=... synced=true deadAvailable=true
-ENDGAME_TIMING phase=precise_done elapsedMs=... valid=true
-Chinese area score ... mode=fast/precise
+ENDGAME_TIMING phase=score_done elapsedMs=... scoreMs=...
+ENDGAME_TIMING phase=full_done elapsedMs=... scoreMs=... deadMs=...
 ```
 
-上次单线程原生 GTP 基准中 GPU 死子判断约 2.4 秒，所以这次第一屏目标是约 2～3 秒，而不是原来的约 8 秒。**这只是基于已有数据的预计值，Java/JNI 真实 APP 必须重新安装并实测，不保证 19×19 有相同效果。**
+## 尚未解决的核心速度问题
 
-注意：整局自动测试在快速结果出现后结束，深度估算需在游戏界面手动点击「深度估算」。由于这是有意改变默认计分顺序，旧的必须按 `final_score → dead → raw-nn` 排列的日志断言已经适配为同时支持新旧两种流程。
+源码 `cpp/program/playutils.cpp` 中的 `PlayUtils::computeLead()` 会反复调用 `evalKomi()`，每个新的贴目都可能触发一轮 50-visits 搜索。`final_status_list dead` 另执行 100-visits 的归属率搜索。这一版保证不通过省略计算改变数值口径，但 **没有证据能把总计算时间从约 8 秒压缩到 2 秒**。
+
+接下来真正的性能工作是把相同 SGF 的单线程和多线程原生 GTP 速度及最终结果逐一对比；若线程数提升后结果变化，不能直接替换默认行为。切换 `friendlyPassOk=false` 会改变规则下双停棋的处理方式，也不能未经验证就上线。
