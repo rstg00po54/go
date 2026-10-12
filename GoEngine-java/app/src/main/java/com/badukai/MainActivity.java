@@ -27,6 +27,7 @@ import com.badukai.engine.GpuStartupLogProgress;
 import com.badukai.engine.KataGoOpenCLProbe;
 import com.badukai.engine.KataGoNative;
 import com.badukai.game.GoBoard;
+import com.badukai.game.FastEndgameScorer;
 import com.badukai.game.Intersection;
 import com.badukai.game.Move;
 import com.badukai.game.Point;
@@ -53,6 +54,9 @@ import java.util.concurrent.Executors;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final int DEFAULT_BOARD_SIZE = 9;
+    // Reversible experimental build option: false restores the original
+    // default final_score -> final_status_list dead -> kata-raw-nn 0 pipeline.
+    private static final boolean EXPERIMENTAL_FAST_ENDGAME = true;
     private static final int[] BOARD_SIZES = {9, 11, 13, 15, 19};
 
     private static boolean isSupportedBoardSize(int size) {
@@ -90,6 +94,7 @@ public class MainActivity extends AppCompatActivity {
     private String finalScoreText;
     private String finalDeadStones;
     private boolean preciseScoreReady;
+    private double fastEndgameLead = Double.NaN;
     private Point lastMove;
     private final List<KataGoEngine.SearchRecommendation> recommendationChoices = new ArrayList<>();
     private Point[] recommendationPoints;
@@ -610,23 +615,71 @@ public class MainActivity extends AppCompatActivity {
         finishByResignation("你认输了 · " + winner + "胜");
     }
 
-    /** Keep the original KataGo scoring result as the default.
-     * Reveal the GTP winner as soon as final_score returns, then append
-     * dead-stone-adjusted Chinese-area totals and ownership when ready.
-     * Commands and search parameters are otherwise unchanged. */
+    /**
+     * Experimental fast path: one raw NN pass (no MCTS), conservative
+     * chain-level dead suggestions and immediate display of raw whiteLead.
+     * Original KataGo final_score remains available via the Deep Compare button.
+     * If raw NN cannot be evaluated, fall back to the original slow pipeline.
+     */
     private void finishByScore(String pendingPassColor) {
         DebugLog.enter(TAG, "finishByScore in, pendingPassColor=" + pendingPassColor);
         if (evaluating) return;
         evaluating = true;
         winRateEpoch++;
-        winRateSession++; // Drop queued independent win-rate searches at the terminal position.
+        winRateSession++;
         final GoBoard snapshot = board;
         final int size = boardSize, moves = board.getMoveCount();
-        final long epoch = winRateEpoch;
-        final long startedNs = System.nanoTime();
-        render("正在搜索计算最终目差...");
+        final long epoch = winRateEpoch, startedNs = System.nanoTime();
+        render(EXPERIMENTAL_FAST_ENDGAME ? "正在快速AI估算..." : "正在搜索计算最终目差...");
         engineExecutor.execute(() -> {
             boolean synced = pendingPassColor == null || engine.playMove(pendingPassColor, "pass");
+            if (EXPERIMENTAL_FAST_ENDGAME && synced) {
+                long evalStartedNs = System.nanoTime();
+                KataGoEngine.PositionEvaluation quick = engine.evaluatePosition(size);
+                long evalMs = (System.nanoTime() - evalStartedNs) / 1000000L;
+                if (quick != null && Double.isFinite(quick.whiteLead)) {
+                    try {
+                        FastEndgameScorer.Result suggested = FastEndgameScorer.suggest(snapshot, quick.whiteOwnership);
+                        GoBoard.FinalScore local = snapshot.countChineseScore(suggested.deadStones,
+                                komiFor(size), gameCondition >= 2 ? gameCondition : 0);
+                        String estimatedDead = suggested.deadVertices(size);
+                        double lead = quick.whiteLead;
+                        long elapsedMs = (System.nanoTime() - startedNs) / 1000000L;
+                        Log.i(TAG, String.format(Locale.US,
+                                "Chinese area score B stones=%d territory=%d, W stones=%d territory=%d, "
+                                + "dead B=%d W=%d, total B=%.1f W=%.1f, lead local=%.1f mode=fast_nn",
+                                local.blackStones, local.blackTerritory, local.whiteStones, local.whiteTerritory,
+                                local.deadBlack, local.deadWhite, local.blackPoints, local.whitePoints,
+                                local.whitePoints - local.blackPoints));
+                        Log.i(TAG, String.format(Locale.US,
+                                "ENDGAME_TIMING phase=fast_nn_done elapsedMs=%d evalMs=%d "
+                                + "nnWhiteLead=%.3f localWhiteLead=%.3f suggestedDead=%d groups=%d",
+                                elapsedMs, evalMs, lead, local.whitePoints - local.blackPoints,
+                                suggested.deadStones.size(), suggested.scannedGroups));
+                        mainHandler.post(() -> {
+                            if (board != snapshot || board.getMoveCount() != moves || winRateEpoch != epoch) return;
+                            evaluating = false;
+                            preciseScoreReady = false;
+                            finalDeadStones = estimatedDead;
+                            fastEndgameLead = lead;
+                            gameResultText = formatFastEndgameResult(lead);
+                            finalScoreText = String.format(Locale.CHINA, "快速AI预估\\n%s",
+                                    Math.abs(lead) < 0.05 ? "接近平局" : String.format(Locale.CHINA, "%s领先约%.1f目",
+                                    lead > 0 ? "白" : "黑", Math.abs(lead)));
+                            territorySummary(quick);
+                            recordWinRate(snapshot, moves, epoch,
+                                    new KataGoEngine.WinRate((float) quick.blackWin, (float) quick.whiteWin));
+                            render(finalScoreText);
+                        });
+                        return;
+                    } catch (RuntimeException e) {
+                        Log.w(TAG, "Fast NN endgame failed; using unchanged KataGo final_score", e);
+                    }
+                } else {
+                    Log.w(TAG, "Fast NN endgame unavailable; using unchanged KataGo final_score");
+                }
+            }
+
             long scoreStartedNs = System.nanoTime();
             String score = synced ? engine.getFinalScore() : null;
             long scoreMs = (System.nanoTime() - scoreStartedNs) / 1000000L;
@@ -652,13 +705,20 @@ public class MainActivity extends AppCompatActivity {
                 evaluating = false;
                 finalDeadStones = deadStones;
                 preciseScoreReady = score != null;
+                fastEndgameLead = Double.NaN;
                 gameResultText = synced ? formatFinalResult(score) : "对局结束 · 同步失败";
                 if (result != null) territorySummary(result);
                 recordFinalWinRate(snapshot, moves, epoch, score);
-                finalScoreText = synced ? finalPointsSummary(score, deadStones) : "终局数子\n同步失败";
+                finalScoreText = synced ? finalPointsSummary(score, deadStones) : "终局数子\\n同步失败";
                 render(finalScoreText);
             });
         });
+    }
+
+    private String formatFastEndgameResult(double lead) {
+        if (Math.abs(lead) < 0.05) return "对局结束 · 快速AI预估接近平局";
+        return String.format(Locale.CHINA, "对局结束 · 快速AI预估%s领先约%.1f目",
+                lead > 0 ? "白" : "黑", Math.abs(lead));
     }
 
     /** Retry the original KataGo final_score only if its automatic request failed. */
@@ -1139,6 +1199,7 @@ public class MainActivity extends AppCompatActivity {
         finalScoreText = null;
         finalDeadStones = null;
         preciseScoreReady = false;
+        fastEndgameLead = Double.NaN;
         winRateEpoch++;
         winRateSession++;
         blackWinHistory.clear();
