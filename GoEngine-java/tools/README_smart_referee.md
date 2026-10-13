@@ -12,6 +12,7 @@
 1. 双方检查红叉（AI 仅提出候选，没有证明死活）、黄色提醒、双活/劫争/未收完官子。
 2. 需要修改判定时，点击任意一颗棋子可整块修改；点击 `确认裁判` 再确认双方结果。
 3. 选择 `双方已确认` 后才发布“确认数子”；也可以选择 `恢复 AI 建议` 或 `退出裁判`，不会覆盖原来的单次 NN 快速预测。
+4. 已确认后按钮变成 `复核裁判`，可以重新打开并修改整个棋块；中途退出会恢复上一次确认的死子名单，不会意外覆盖旧结果。
 
 **设计限制：** 这是试验性的终局**辅助工具**，目前正式面积计算复用 APP 既有 `GoBoard.countChineseScore` 的 Java 中国规则洪泛数子，**不是**在 C++ 新写了一套有争议的死活裁决。裁判 AI 建议也仍基于一次 NN 归属预测，不能证明死活，也不能自行处理复杂劫争/双活的最终争议；需要双方确认后才可当作本地记录。后续如果需“全流程 C++ 规则计分”，再把用户确认的死子名单传给 KataGo 原生数子接口。
 
@@ -23,8 +24,10 @@
 git pull origin rk3588-engine
 python3 tools/test_real_sgf_nn.py
 python3 tools/test_smart_referee.py
-python3 tools/benchmark_real_sgf_nn_android.py --preflight
-python3 tools/benchmark_real_sgf_nn_android.py --serial 8719e18a71a2a66c --mode gpu --repeats 2
+python3 tools/test_fetch_real_sgf_corpus.py
+python3 tools/fetch_real_sgf_corpus.py --nine 80 --nineteen 40
+python3 tools/benchmark_real_sgf_nn_android.py --preflight --sgf-dir build/real_sgf_corpus --limit 1000
+python3 tools/benchmark_real_sgf_nn_android.py --serial 8719e18a71a2a66c --mode gpu --sgf-dir build/real_sgf_corpus --limit 1000 --repeats 1 --upload
 ```
 
 **真实棋谱测试不需要重编 KataGo 和 APK**。智能裁判 UI 属于 Java 代码修改，需要重编 APK，但不需要重编 KataGo C++。如果之前已经成功编译 CPU/GPU JNI so，可快速：
@@ -37,3 +40,6 @@ adb -s 8719e18a71a2a66c install -r app/build/outputs/apk/debug/app-debug.apk
 `--apk-only` 会重用原生 so；若从未编译过 native so，再用 `bash build.sh`。真实棋谱测试原来只依赖单次 NN，**不用重装 APP**。
 
 还未在 RK3588 上实际安装或点选验证。运行 `python3 tools/test_smart_referee.py` 可在主机 JDK（不需要 Android）检查 Java 核心死子整块切换、9/13/19 路尺寸、规则数子和无棋盘副作用；APP 的触控与对话框仍需安装后测试。
+
+
+大批量真实棋谱下载与筛选、公开报告的说明见 [README_expanded_real_sgf.md](README_expanded_real_sgf.md)。
