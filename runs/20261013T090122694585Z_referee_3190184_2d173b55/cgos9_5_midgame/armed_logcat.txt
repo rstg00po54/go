@@ -1,0 +1,12 @@
+--------- beginning of main
+I/RefereeSmoke( 9060): START id=214d841cc4294bf0 game=cgos9_5 requested=cpu
+I/RefereeSmoke( 9060): REPLAY id=214d841cc4294bf0 game=cgos9_5 moves=56 terminal=true backend=PIE/ProcessBuilder lead=-22.60 dead=1 review=0 vulnerable=0
+I/RefereeSmoke( 9060): OVERLAY id=214d841cc4294bf0 dead=10 review=0 alerts=15
+I/RefereeSmoke( 9060): PASS id=214d841cc4294bf0 game=cgos9_5 stage=dispute_dialog verdict=REVIEW_REQUIRED moves=56 dead=1 review=0 vulnerable=0 minLead=NaN maxLead=NaN hasBlack=true hasWhite=true hasPV=true
+I/RefereeSmoke( 9060): ARMED id=214d841cc4294bf0 moves=56 terminal=true marked=10
+I/RefereeSmoke( 9060): RESUME id=214d841cc4294bf0 moves=54 terminal=false refereeMode=false gameReady=true
+I/RefereeSmoke( 9273): START id=0a777b2382624797 game=cgos9_5 requested=cpu midgame=true
+I/RefereeSmoke( 9273): REPLAY id=0a777b2382624797 game=cgos9_5 moves=54 terminal=false backend=PIE/ProcessBuilder lead=-23.46 dead=1 review=0 vulnerable=0
+I/RefereeSmoke( 9273): OVERLAY id=0a777b2382624797 dead=10 review=0 alerts=15
+I/RefereeSmoke( 9273): PASS id=0a777b2382624797 game=cgos9_5 stage=midgame_dialog verdict=REVIEW_REQUIRED moves=54 dead=1 review=0 vulnerable=0 minLead=NaN maxLead=NaN hasBlack=true hasWhite=true hasPV=true
+I/RefereeSmoke( 9273): ARMED id=0a777b2382624797 moves=54 terminal=false marked=10
