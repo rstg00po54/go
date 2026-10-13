@@ -922,15 +922,6 @@ public class MainActivity extends AppCompatActivity {
             } else showRefereeConfirmation();
             return;
         }
-        if (refereeConfirmed) {
-            refereeDead.clear();
-            refereeDead.addAll(refereeAccepted);
-            refereeMode = true;
-            refereeReview.clear();
-            boardView.setOwnership(null);
-            refreshRefereePreview();
-            return;
-        }
         // Fast raw NN estimate first, just like the automatic pass scoring.
         // Explicit dead-group search remains available as a separate action.
         showQuickNnRefereeEstimate();
@@ -981,7 +972,7 @@ public class MainActivity extends AppCompatActivity {
                         .setMessage(summary + (gameEnded
                                 ? "\n\n双方已停棋，以上仍是预估，不是确认数子结果。"
                                 : "\n\n当前棋形估算，仅供参考；不代表已经判定死活。"))
-                        .setPositiveButton("继续下棋",null)
+                        .setPositiveButton(gameEnded ? "关闭" : "继续下棋",null)
                         .setNeutralButton("详细死活分析", (dialog,which) -> startSmartReferee())
                         .show();
             });
