@@ -1070,24 +1070,9 @@ public class MainActivity extends AppCompatActivity {
                             .setPositiveButton("确认数子", null)
                             .setNegativeButton("稍后确认", null).show();
                 } else {
-                    // Step 1: show the dialog while the marks are ALREADY on the
-                    // real board. Step 2: Continue closes ONLY the dialog; the
-                    // next screen tap clears marks and resumes the game.
-                    StringBuilder prompt = new StringBuilder(String.format(Locale.CHINA,
-                            "棋盘上已标出争议：红叉 %d 处、黄圈 %d 处、橙圈 %d 处。\n",
-                            refereeDead.size(),refereeReview.size(),alerts.size()));
-                    int described = 0;
-                    for (EndgameAdjudicator.Finding finding : decision.findings) {
-                        if (described++ >= 2) break;
-                        prompt.append("· ").append(finding.message).append("\n");
-                    }
-                    prompt.append("\n点「继续下棋」关闭弹窗，争议标记仍保留。");
-                    prompt.append("\n然后再点屏幕任意位置，清除标记并恢复对局。");
-                    new AlertDialog.Builder(this).setTitle("智能裁判 · 存在争议")
-                            .setMessage(prompt.toString())
-                            .setCancelable(false)
-                            .setPositiveButton("继续下棋", (dialog, which) -> armRefereeTapToResume())
-                            .show();
+                    // No dialog for disputed positions: show the marked board
+                    // immediately and wait for ONE tap anywhere to resume.
+                    armRefereeTapToResume();
                     Log.i(TAG,"REFEREE_BOARD_DISPUTE dead=" + refereeDead.size()
                             + " review=" + refereeReview.size() + " alerts=" + alerts.size());
                     if (isRefereeSmokeIntent()) Log.i("RefereeSmoke","OVERLAY id=" + refereeSmokeId()
@@ -1117,7 +1102,7 @@ public class MainActivity extends AppCompatActivity {
                             "%s id=%s game=%s stage=%s verdict=%s moves=%d dead=%d review=%d vulnerable=%d "
                             + "minLead=%.1f maxLead=%.1f hasBlack=%s hasWhite=%s hasPV=%s",
                             good ? "PASS" : "FAIL",refereeSmokeId(),game,
-                            decision.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT ? "dialog" : "dispute_dialog",
+                            decision.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT ? "dialog" : "overlay",
                             decision.verdict,moves,
                             suggestion == null ? -1 : suggestion.suggestedGroups,
                             suggestion == null ? -1 : suggestion.reviewGroups,
@@ -1130,7 +1115,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /** The dialog's Continue button arms the NEXT screen tap; it does not undo moves. */
+    /** Arm the on-board dispute overlay immediately; the NEXT screen tap undoes both passes. */
     private void armRefereeTapToResume() {
         if (!refereeMode || !refereeRequiresContinuation() || !board.canResumeAfterPasses()) {
             Toast.makeText(this,"当前不能继续对局",Toast.LENGTH_LONG).show();
