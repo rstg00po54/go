@@ -812,6 +812,23 @@ public class MainActivity extends AppCompatActivity {
                 verdict = EndgameAdjudicator.analyze(snapshot, null);
             }
             final EndgameAdjudicator.Result decision = verdict;
+            String searchEvidence = "";
+            if (decision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT && nn != null) {
+                try {
+                    // Search as both sides, but NEVER treat the suggested moves as a solved life/death proof.
+                    List<KataGoEngine.SearchRecommendation> black = engine.searchRecommendations("black", 48, 1.0);
+                    List<KataGoEngine.SearchRecommendation> white = engine.searchRecommendations("white", 48, 1.0);
+                    String blackMove = black.isEmpty() ? "暂无" : black.get(0).move;
+                    String whiteMove = white.isEmpty() ? "暂无" : white.get(0).move;
+                    searchEvidence = "\n黑先短搜索：" + blackMove + "；白先短搜索：" + whiteMove
+                            + "\n搜索仅提供候选着点，不能直接证明某块棋死活。";
+                    Log.i(TAG, "ENDGAME_TWO_SIDE_SEARCH black=" + blackMove + " white=" + whiteMove);
+                } catch (RuntimeException ex) {
+                    Log.w(TAG, "Endgame two-sided search unavailable; keep manual review", ex);
+                    searchEvidence = "\n双方先手搜索不可用，请人工确认；不能凭此认定已经结束。";
+                }
+            }
+            final String mctsInfo = searchEvidence;
             mainHandler.post(() -> {
                 evaluating = false;
                 if (board != snapshot || board.getMoveCount() != moves || boardSize != size) return;
@@ -830,6 +847,16 @@ public class MainActivity extends AppCompatActivity {
                 }
                 boardView.setOwnership(null);
                 boardView.setRefereeMarks(refereeDead, refereeReview);
+                Set<Point> alerts = new HashSet<>();
+                for (EndgameAdjudicator.Finding finding : decision.findings) {
+                    if (finding.reason == EndgameAdjudicator.Reason.FIRST_MOVE_TACTIC
+                            || finding.reason == EndgameAdjudicator.Reason.POSSIBLE_KO
+                            || finding.reason == EndgameAdjudicator.Reason.POSSIBLE_SEKI) {
+                        if (finding.suggestedMove != null) alerts.add(finding.suggestedMove);
+                        else alerts.addAll(finding.points);
+                    }
+                }
+                boardView.setEndgameAlerts(alerts);
                 refreshRefereePreview();
                 String info = suggestion == null
                         ? "AI 建议不可用。可手动点击整块棋标记死子。"
@@ -847,7 +874,8 @@ public class MainActivity extends AppCompatActivity {
                     Log.i(TAG, "ENDGAME_REASON reason=" + finding.reason + " message=" + finding.message
                             + " point=" + finding.suggestedMove);
                 }
-                reasons.append("\n红叉：AI 建议判死；黄圈：需明确复核。\n"
+                reasons.append(mctsInfo);
+                reasons.append("\n红叉：AI 建议判死；黄圈：需明确复核；橙圈：需要关注的争议位置。\n"
                         + "以上均为辅助判断，不能代替双方确认。");
                 AlertDialog.Builder dialog = new AlertDialog.Builder(this)
                         .setTitle("智能裁判 · " + decision.summary()).setMessage(reasons.toString())
@@ -906,6 +934,24 @@ public class MainActivity extends AppCompatActivity {
                     }).show();
             return;
         }
+        if (!ignoreContinueAdvice && endgameDecision != null
+                && endgameDecision.verdict == EndgameAdjudicator.Verdict.REVIEW_REQUIRED) {
+            boolean sekiOrKo = false;
+            for (EndgameAdjudicator.Finding item : endgameDecision.findings)
+                if (item.reason == EndgameAdjudicator.Reason.POSSIBLE_SEKI
+                        || item.reason == EndgameAdjudicator.Reason.POSSIBLE_KO) sekiOrKo = true;
+            if (sekiOrKo) {
+                AlertDialog.Builder warning = new AlertDialog.Builder(this).setTitle("疑似双活或劫争尚未证明")
+                        .setMessage("AI 只发现了类似双活或劫形的结构，无法保证争议已经解决。"
+                                + "若双方同意可按双活/死子复核后计分；否则应继续下。")
+                        .setNeutralButton("人工确认并数子", (dialog, which) -> showRefereeConfirmation(true))
+                        .setNegativeButton("返回棋盘检查", null);
+                if (board.canResumeAfterPasses()) warning.setPositiveButton("继续对局",
+                        (dialog, which) -> resumeFromReferee());
+                warning.show();
+                return;
+            }
+        }
         double nnLead = endgameEvaluation == null ? fastEndgameLead : endgameEvaluation.whiteLead;
         SmartReferee.ScoreAudit audit = SmartReferee.audit(board, refereeDead, nnLead, komiFor(boardSize),
                 gameCondition >= 2 ? gameCondition : 0);
@@ -934,6 +980,7 @@ public class MainActivity extends AppCompatActivity {
                     refereeMode = false;
                     refereeReview.clear();
                     boardView.setRefereeMarks(refereeDead, null);
+                    boardView.setEndgameAlerts(null);
                     Log.i(TAG, "REFEREE_CONFIRMED score=" + verdict + " dead=" + finalDeadStones
                             + " black=" + totals.blackPoints + " white=" + totals.whitePoints);
                     render(finalScoreText);
@@ -988,6 +1035,7 @@ public class MainActivity extends AppCompatActivity {
                 refereeSuggested.clear();
                 refereeInitialReview.clear();
                 boardView.setRefereeMarks(null, null);
+                boardView.setEndgameAlerts(null);
                 boardView.setOwnership(null);
                 clearRecommendations();
                 finalDeadStones = null;
@@ -1560,6 +1608,7 @@ public class MainActivity extends AppCompatActivity {
         refereeReview.clear();
         refereeInitialReview.clear();
         boardView.setRefereeMarks(null, null);
+        boardView.setEndgameAlerts(null);
         winRateEpoch++;
         winRateSession++;
         blackWinHistory.clear();
