@@ -10,10 +10,18 @@ plugins {
 
 val enableKataGoProbe = providers.gradleProperty("enableKataGoProbe")
     .map { it.equals("true", ignoreCase = true) }.getOrElse(false)
+// Preserve already-built JNI backends on ordinary assembleDebug. Otherwise a
+// simple Java/UI rebuild silently deletes libkatago_gpu.so from the APK and
+// disables the CPU/GPU selector. Explicit -PenableKataGoGpuJni=false (or
+// -PenableKataGoJniCore=false) still opts out for a CPU-only test build.
+val cachedCpuJni = rootProject.file("build/katago_android_arm64_eigenjni/libkatago.so")
+val cachedGpuJni = rootProject.file("build/katago_android_arm64_opencljni/libkatago_gpu.so")
 val enableKataGoJniCore = providers.gradleProperty("enableKataGoJniCore")
-    .map { it.equals("true", ignoreCase = true) }.getOrElse(false)
+    .map { it.equals("true", ignoreCase = true) }
+    .getOrElse(cachedCpuJni.isFile && cachedCpuJni.length() > 0L)
 val enableKataGoGpuJni = providers.gradleProperty("enableKataGoGpuJni")
-    .map { it.equals("true", ignoreCase = true) }.getOrElse(false)
+    .map { it.equals("true", ignoreCase = true) }
+    .getOrElse(cachedGpuJni.isFile && cachedGpuJni.length() > 0L)
 
 android {
     namespace = "com.badukai"
