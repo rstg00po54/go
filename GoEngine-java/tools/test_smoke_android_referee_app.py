@@ -57,6 +57,42 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn('countTerritoryButton.setEnabled(engineReady && gameReady',activity)
         self.assertIn('if (refereeAwaitingTap) resumeFromReferee();',activity)
 
+    def test_midgame_referee_is_available_without_passes_or_scoring(self):
+        root = Path(__file__).resolve().parents[1]
+        activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
+        entry = activity.split("private void showEndgameScoringOptions()",1)[1].split("private static String refereeSearchSummary",1)[0]
+        self.assertNotIn('if (!board.isGameOver()) {',entry)
+        self.assertIn('startSmartReferee();',entry)
+        begin = activity.split("private void startSmartReferee()",1)[1].split("engineExecutor.execute",1)[0]
+        self.assertNotIn('!board.isGameOver()',begin)
+        self.assertIn('final boolean endedAtStart = board.isGameOver()',begin)
+        resume = activity.split("private void resumeFromReferee()",1)[1]
+        midgame = resume.split("if (!board.isGameOver()) {",1)[1].split("if (!board.canResumeAfterPasses())",1)[0]
+        self.assertIn("refereeMode = false;",midgame)
+        self.assertIn("boardView.setEndgameAlerts(null)",midgame)
+        self.assertNotIn("engine.undo()",midgame)
+        self.assertNotIn("board.resumeAfterPasses()",midgame)
+        self.assertIn('Log.i("RefereeSmoke","INSPECT_RESUME id="',midgame)
+
+    def test_midgame_modal_uses_two_tap_flow_without_forcing_scoring(self):
+        text = ("智能裁判 · 当前棋形分析 正在对局，当前棋形仅供参考，棋盘标记："
+                "红叉 1 处、黄圈 2 处、橙圈 3 处。点「继续下棋」关闭弹窗，"
+                "争议标记仍保留。然后再点屏幕任意位置，清除标记并继续当前对局；"
+                "不会撤销落子。")
+        self.assertEqual(validate_dialog(text,"cgos9_5",midgame=True),[])
+        self.assertIn("不会撤销落子",validate_dialog(text.replace("不会撤销落子",""),
+                                                   "cgos9_5",midgame=True))
+
+    def test_midgame_resume_event_keeps_all_moves(self):
+        logs = ("I/RefereeSmoke: INSPECT_RESUME id=other moves=58 after=58 terminal=false "
+                "refereeMode=false gameReady=true\\n"
+                "I/RefereeSmoke: INSPECT_RESUME id=active moves=54 after=54 terminal=false "
+                "refereeMode=false gameReady=true")
+        result = smoke.midgame_resume_event(logs,"active")
+        self.assertIn("moves=54 after=54",result)
+        self.assertIsNone(smoke.midgame_resume_event(logs,"missing"))
+        self.assertIsNone(smoke.resume_event(logs,"active"))
+
     def test_referee_overlay_is_above_game_page_and_hidden_by_default(self):
         root = Path(__file__).resolve().parents[1]
         layout = ET.parse(str(root/"app/src/main/res/layout/activity_main.xml")).getroot()
