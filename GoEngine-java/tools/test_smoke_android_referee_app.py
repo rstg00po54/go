@@ -9,7 +9,7 @@ import unittest
 from unittest import mock
 import smoke_android_referee_app as smoke
 from smoke_android_referee_app import (ACTIVITY, CASES, MAIN_ACTIVITY_CLASS, PACKAGE,
-                                      selected_cases, smoke_event, validate_dialog)
+                                      selected_cases, smoke_event, validate_dialog, validate_review_panel)
 
 
 class RefereeSmokeHostTests(unittest.TestCase):
@@ -36,6 +36,15 @@ class RefereeSmokeHostTests(unittest.TestCase):
                 "白先：H5 不同死子组合可能改变胜负 黄圈")
         self.assertEqual(validate_dialog(text), [])
         self.assertIn("白先：", validate_dialog(text.replace("白先：","")))
+
+    def test_review_toolbar_has_real_actions_and_pending_count(self):
+        panel = ("智能裁判 · 待复核 2 块 黑 34.0 · 白 41.0 "
+                 "黄圈 2 块待复核；红叉可撤销 恢复 AI 建议 确认数子 退出复核")
+        self.assertEqual(validate_review_panel(panel),[])
+        self.assertIn("退出复核",validate_review_panel(panel.replace("退出复核","")))
+        self.assertIn("待复核 2 块",validate_review_panel(panel.replace("待复核 2 块","")))
+        self.assertEqual(validate_review_panel(panel.replace("待复核 2 块","可以确认数子"),
+                                               "cgos9_1"),[])
 
     def test_curated_case_selection_and_input_validation(self):
         self.assertEqual(len(CASES), 4)
