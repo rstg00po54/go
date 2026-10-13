@@ -804,6 +804,16 @@ public class MainActivity extends AppCompatActivity {
             }
             final SmartReferee.Analysis suggestion = analysis;
             final KataGoEngine.PositionEvaluation evaluated = nn;
+            SmartReferee.ScoreWhatIf range = null;
+            if (analysis != null && analysis.reviewGroups > 0) {
+                try {
+                    range = SmartReferee.scoreWhatIf(snapshot,analysis.suggestedDead,analysis.needsReview,
+                            komiFor(size),gameCondition >= 2 ? gameCondition : 0);
+                } catch (RuntimeException ex) {
+                    Log.w(TAG, "Endgame hypothetical score range unavailable", ex);
+                }
+            }
+            final SmartReferee.ScoreWhatIf sensitivity = range;
             EndgameAdjudicator.Result verdict;
             try {
                 verdict = EndgameAdjudicator.analyze(snapshot, nn == null ? null : nn.whiteOwnership);
@@ -875,6 +885,13 @@ public class MainActivity extends AppCompatActivity {
                             + " point=" + finding.suggestedMove);
                 }
                 reasons.append(mctsInfo);
+                if (sensitivity != null && sensitivity.winnerCanChange()) {
+                    reasons.append(String.format(Locale.CHINA,
+                            "\n不同死子组合可能改变胜负：白方净胜目试算范围 %+.1f 至 %+.1f（负数为黑方领先）。",
+                            sensitivity.minWhiteLead,sensitivity.maxWhiteLead));
+                    if (!sensitivity.exhaustive()) reasons.append("仅分析前8块待复核棋，范围不完整。");
+                    reasons.append("\n这是极端假设，不表示任何棋块已死，必须人工复核。\n");
+                }
                 reasons.append("\n红叉：AI 建议判死；黄圈：需明确复核；橙圈：需要关注的争议位置。\n"
                         + "以上均为辅助判断，不能代替双方确认。");
                 AlertDialog.Builder dialog = new AlertDialog.Builder(this)
