@@ -69,6 +69,12 @@ class RefereeSmokeHostTests(unittest.TestCase):
         quick = activity.split("private void showQuickNnRefereeEstimate()",1)[1].split(
             "private static String refereeSearchSummary",1)[0]
         self.assertIn('engine.evaluatePosition(size)',quick)
+        self.assertIn("final Point immediateKo = board.getSimpleKoPoint()",quick)
+        self.assertIn("final int atariGroups = board.countAtariGroups()",quick)
+        self.assertIn("当前存在劫禁",quick)
+        self.assertIn("不能直接确认终局",quick)
+        self.assertIn("当前有 %d 块单气棋，建议复核死活",quick)
+        self.assertIn("ko=%s atariGroups=%d",quick)
         self.assertIn('final KataGoEngine.PositionEvaluation cached = gameEnded ? endgameEvaluation : null;',quick)
         self.assertIn('result.whiteLead',quick)
         self.assertIn('result.blackWin * 100.0,result.whiteWin * 100.0',quick)
@@ -137,7 +143,7 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn("snapshot.countAtariGroups()",inspection)
         self.assertIn("snapshot.getSimpleKoPoint()",inspection)
         self.assertIn("engine.searchRecommendations(",inspection)
-        self.assertIn("48,1.0",inspection)
+        self.assertIn("12,0.5",inspection)
         self.assertIn('if (!ended)',inspection)
         self.assertIn("REFEREE_UNFINISHED_CHECK",inspection)
         self.assertIn("不证明所有官子已收完",inspection)

@@ -2,7 +2,7 @@
 
 普通界面现在保留快速 NN 估分入口；详细裁判直接使用 KataGo 原生 GTP 命令，不再通过自定义死活启发式判断。
 
-- 点击「智能裁判」：先运行单次 kata-raw-nn 0，显示估计目差与胜率。
+- 点击「智能裁判」：先运行单次 kata-raw-nn 0，显示估计目差与胜率；同时做无需额外 NN 的棋规检查：当前有劫禁就提示不能直接确认终局、有单气棋块就提示复核死活（单气不等于必死）。
 - 选择「KataGo 原生裁判」：在当前棋形执行 final_score 与 final_status_list dead，展示预测赛果与死子，棋盘临时用红叉提示；选「查看棋盘」可保留标记，选「清除标记」立即清理；下一次棋局落子或重新开局也会自动清理。
 - 不停手、不回退、不发送落子。中盘的 final_score 是估计，不是既定的终局计分；复杂劫、双活和未收官子可能有误差。
 - GTP 的 final_status_list dead 可含多行坐标，已修复原来只解析首行的问题。
@@ -14,6 +14,16 @@ KataGo v1.15.0 原生源码中，final_score 采用至少 50 次访问、final_s
 
 ---
 
+## 2026-10-13 快速原生接口的真实耗时
+
+在 GitHub Linux x86_64 CPU Eigen AVX2 上，用库中同一批 19 个局面、每局两次，与完整原生计分对照：
+- KataGo v1.15.0：单次 kata-raw-nn 0 的中位数 **6.27ms**；不落子的 12 次访问搜索中位数 **69.45ms**。
+- KataGo v1.18.1：分别是 **10.16ms** 和 **124.43ms**。二者编译和运行环境有所不同，不能据此断言旧版算法更快。
+- 完整 final_score + final_status_list dead 在 9/13/19 路常需要几秒；**不得在每次普通智能裁判点击时强制执行**。
+- 快速 NN 的 whiteLead 与正式 final_score 是不同概念；12 次搜索的候选落点不证明棋局没收完，更不能判定棋子生死。
+- 手机和 RK3588 的 CPU/GPU 响应时间仍需安装 APK 后实测；以上仅是 Linux runner 的参考。
+- 基准复测：.github/workflows/katago-referee-fastpaths.yml；报告在 GitHub Actions 附件及 GoEngine-java/reports/20261013_katago_fastpaths.*。
+
 ## KataGo 实机 GTP 劫争回归（GitHub Actions）
 
 `.github/workflows/katago-native-ko-check.yml` 会下载官方 Linux CPU 引擎 / 从源码构建 v1.15.0，然后运行 `tools/test_native_katago_ko.py`。两版均使用仓库原有的 `10b.bin` 模型及中国规则配置，测试真实 `cgos9_3` 第 64 手和人工构造的标准单劫。具体 CI 结果见 GitHub Actions。
@@ -24,7 +34,7 @@ KataGo v1.15.0 原生源码中，final_score 采用至少 50 次访问、final_s
 
 ## 可选的局面检查（官子、打吃、劫）
 
-快速 NN 估分弹窗增加「局面检查」按钮；不改变已有快速估分速度。仅点击时执行一次有限的原生 KataGo `kata-search_analyze` 搜索（48 次访问上限、1 秒搜索时间上限），不会落子。棋盘规则层仅复用现有的棋块/气计算，显示当前单气棋块数量和简单劫禁点。日志：`REFEREE_UNFINISHED_CHECK`。
+快速 NN 估分弹窗增加「局面检查」按钮；不改变已有快速估分速度。仅点击时执行一次有限的原生 KataGo `kata-search_analyze` 搜索（12 次访问上限、0.5 秒搜索时间上限），不会落子。棋盘规则层仅复用现有的棋块/气计算，显示当前单气棋块数量和简单劫禁点。日志：`REFEREE_UNFINISHED_CHECK`。
 
 **没有自动“收官完成”断言**：KataGo 并无独立的“官子收完、打吃已解决、劫争彻底终结”GTP 布尔接口。短搜索第一候选不是 PASS，也不能证明没下完；第一候选是 PASS，同样不能证明已下完。单气棋块可能已死，简单劫禁不等于所有劫争。结果只展示线索，不修改棋局或自动停一手。需现场测试手机/RK3588 CPU/GPU 以及真实官子/劫争棋谱后，再考虑更强的分类策略。
 

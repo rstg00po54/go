@@ -940,6 +940,8 @@ public class MainActivity extends AppCompatActivity {
         final GoBoard snapshot = board;
         final int moves = board.getMoveCount(), size = boardSize;
         final boolean gameEnded = board.isGameOver();
+        final Point immediateKo = board.getSimpleKoPoint();
+        final int atariGroups = board.countAtariGroups();
         final KataGoEngine.PositionEvaluation cached = gameEnded ? endgameEvaluation : null;
         render("智能裁判：正在快速 NN 估分...");
         engineExecutor.execute(() -> {
@@ -969,10 +971,16 @@ public class MainActivity extends AppCompatActivity {
                         "%s\n黑棋胜率 %.1f%% · 白棋胜率 %.1f%%",
                         leader,result.blackWin * 100.0,result.whiteWin * 100.0);
                 render("快速 NN 预估：" + leader);
-                Log.i(TAG,String.format(Locale.US,"REFEREE_FAST_NN moves=%d terminal=%s whiteLead=%.3f blackWin=%.4f whiteWin=%.4f",
-                        moves,gameEnded,result.whiteLead,result.blackWin,result.whiteWin));
+                String positionWarning = immediateKo != null
+                        ? "\n\n当前存在劫禁（" + immediateKo.toGtp(size) + "），不能直接确认终局。"
+                        : atariGroups > 0 ? String.format(Locale.CHINA,
+                                "\n\n当前有 %d 块单气棋，建议复核死活。",atariGroups) : "";
+                Log.i(TAG,String.format(Locale.US,
+                        "REFEREE_FAST_NN moves=%d terminal=%s whiteLead=%.3f blackWin=%.4f whiteWin=%.4f ko=%s atariGroups=%d",
+                        moves,gameEnded,result.whiteLead,result.blackWin,result.whiteWin,
+                        immediateKo == null ? "none" : immediateKo.toGtp(size),atariGroups));
                 new AlertDialog.Builder(this).setTitle("智能裁判 · 快速 NN 估分")
-                        .setMessage(summary + (gameEnded
+                        .setMessage(summary + positionWarning + (gameEnded
                                 ? "\n\n双方已停棋，以上仍是预估，不是确认数子结果。"
                                 : "\n\n当前棋形估算，仅供参考；不代表已经判定死活。"))
                         .setPositiveButton(gameEnded ? "关闭" : "继续下棋",null)
@@ -1111,7 +1119,7 @@ public class MainActivity extends AppCompatActivity {
             List<KataGoEngine.SearchRecommendation> candidates = new ArrayList<>();
             if (!ended) {
                 try {
-                    candidates = engine.searchRecommendations(side == StoneColor.BLACK ? "black" : "white",48,1.0);
+                    candidates = engine.searchRecommendations(side == StoneColor.BLACK ? "black" : "white",12,0.5);
                 } catch (RuntimeException ex) {
                     Log.w(TAG,"KataGo unfinished-position search failed",ex);
                 }
