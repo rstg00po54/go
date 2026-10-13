@@ -1,0 +1,113 @@
+name: Build BadukaiJ downloadable referee APK
+on:
+  push:
+    branches: [rk3588-engine]
+    paths: [.github/workflows/build_badukai_referee_apk.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      KATAGO_JOBS: "3"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install native dependencies and Android SDK
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y cmake ninja-build libeigen3-dev opencl-headers binutils unzip
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -maxdepth 3 -type f -name sdkmanager | sort -V | tail -n 1)"
+          test -n "$SDKMANAGER"
+          "$SDKMANAGER" --install "platforms;android-34" "build-tools;34.0.0" "ndk;27.2.12479018"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
+          echo "KATAGO_WORKDIR=$RUNNER_TEMP/katago_android" >> "$GITHUB_ENV"
+      - name: Download verified offline Human SL model
+        run: |
+          set -euo pipefail
+          MODEL=GoEngine-java/app/src/main/assets/engine/b18c384nbt-humanv0.bin.gz
+          curl -fL --retry 5 --retry-delay 5 --connect-timeout 30 https://github.com/lightvector/KataGo/releases/download/v1.15.0/b18c384nbt-humanv0.bin.gz -o "$MODEL"
+          test "$(stat -c '%s' "$MODEL")" -eq 99066230
+          echo "637746e44f0efe00ad1245a50aa9bbf0716efe3645d84ab5  $MODEL" | sha256sum -c -
+          gzip -t "$MODEL"
+      - name: Build native CPU JNI engine
+        working-directory: GoEngine-java
+        run: |
+          set -euo pipefail
+          bash tools/build_katago_from_source.sh eigenjni
+          test -s build/katago_android_arm64_eigenjni/libkatago.so
+      - name: Build and verify CPU fallback APK
+        working-directory: GoEngine-java
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug -PenableKataGoJniCore=true -PenableKataGoGpuJni=false
+          python3 tools/check_android_16kb.py app/build/outputs/apk/debug/app-debug.apk
+          mkdir -p build/apks
+          cp app/build/outputs/apk/debug/app-debug.apk build/apks/BadukaiJ-referee-CPU-arm64-debug.apk
+          sha256sum build/apks/BadukaiJ-referee-CPU-arm64-debug.apk
+          ls -lh build/apks/BadukaiJ-referee-CPU-arm64-debug.apk
+      - name: Upload CPU fallback
+        uses: actions/upload-artifact@v4
+        with:
+          name: BadukaiJ-referee-CPU-arm64-debug
+          path: GoEngine-java/build/apks/BadukaiJ-referee-CPU-arm64-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+      - name: Create link-only OpenCL library (not included in APK)
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/opencl_link"
+          python3 - "$RUNNER_TEMP/opencl_link/stub.c" <<'PY'
+          from pathlib import Path
+          import re,sys
+          names={"clGetPlatformIDs"}
+          for header in Path("/usr/include/CL").glob("*.h"):
+              names.update(re.findall(r'\b(cl[A-Z]\w*)\s*\(',header.read_text(errors="ignore")))
+          Path(sys.argv[1]).write_text("\n".join('__attribute__((visibility("default"))) void '+n+'(void) {}' for n in sorted(names))+"\n")
+          print("OpenCL link-only symbols:",len(names))
+          PY
+          "$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang" \
+            -shared -fPIC -Wl,-soname,libOpenCL.so \
+            -Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384 \
+            "$RUNNER_TEMP/opencl_link/stub.c" -o "$RUNNER_TEMP/opencl_link/libOpenCL.so"
+          echo "OPENCL_LIBRARY=$RUNNER_TEMP/opencl_link/libOpenCL.so" >> "$GITHUB_ENV"
+          echo "OPENCL_INCLUDE_DIR=/usr/include" >> "$GITHUB_ENV"
+      - name: Build GPU OpenCL JNI engine
+        working-directory: GoEngine-java
+        run: |
+          set -euo pipefail
+          bash tools/build_katago_from_source.sh opencljni
+          test -s build/katago_android_arm64_opencljni/libkatago_gpu.so
+      - name: Package and verify full CPU/GPU APK
+        working-directory: GoEngine-java
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon assembleDebug -PenableKataGoJniCore=true -PenableKataGoGpuJni=true
+          python3 tools/check_android_16kb.py app/build/outputs/apk/debug/app-debug.apk
+          python3 - <<'PY'
+          import zipfile
+          with zipfile.ZipFile("app/build/outputs/apk/debug/app-debug.apk") as z:
+              names=set(z.namelist())
+              required={"lib/arm64-v8a/libkatago.so","lib/arm64-v8a/libkatago_gpu.so","lib/arm64-v8a/libkatago_exec.so"}
+              assert required <= names, f"Missing JNI backends: {required-names}"
+              assert "lib/arm64-v8a/libOpenCL.so" not in names, "Never package link-only OpenCL stub"
+              assert any(x.endswith("b18c384nbt-humanv0.bin.gz") for x in names), "Human SL model missing"
+              print("CPU JNI, GPU JNI and offline Human SL verified")
+          PY
+          cp app/build/outputs/apk/debug/app-debug.apk build/apks/BadukaiJ-referee-CPU-GPU-arm64-debug.apk
+          sha256sum build/apks/BadukaiJ-referee-CPU-GPU-arm64-debug.apk
+          ls -lh build/apks/BadukaiJ-referee-CPU-GPU-arm64-debug.apk
+      - name: Upload full CPU/GPU APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BadukaiJ-referee-CPU-GPU-arm64-debug
+          path: GoEngine-java/build/apks/BadukaiJ-referee-CPU-GPU-arm64-debug.apk
+          if-no-files-found: error
+          retention-days: 14
