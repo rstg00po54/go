@@ -16,7 +16,7 @@ import java.util.Set;
 public final class EndgameAdjudicator {
     public enum Verdict { READY_TO_COUNT, CONTINUE_RECOMMENDED, REVIEW_REQUIRED }
     public enum Reason { STABLE, POSSIBLE_SEKI, POSSIBLE_KO, FIRST_MOVE_TACTIC,
-                         POSSIBLE_DAME, UNCERTAIN_DEATH, NO_NN, UNFINISHED_BOARD }
+                         POSSIBLE_DAME, UNCERTAIN_DEATH, LOW_LIBERTY_LARGE_GROUP, NO_NN, UNFINISHED_BOARD }
     public static final class Finding {
         public final Reason reason;
         public final String message;
@@ -166,7 +166,14 @@ public final class EndgameAdjudicator {
             suggestedReview = nn.reviewGroups;
             if (nn.reviewGroups > 0) {
                 add(findings, highlighted, Reason.UNCERTAIN_DEATH,
-                        "有 " + nn.reviewGroups + " 块棋死活不确定，请逐块确认", nn.needsReview, null);
+                        "有 " + nn.reviewGroups + " 块棋需要复核（含气紧棋块），请逐块确认", nn.needsReview, null);
+                needsReview = true;
+            }
+            if (nn.vulnerableGroups > 0) {
+                add(findings, highlighted, Reason.LOW_LIBERTY_LARGE_GROUP,
+                        "发现 " + nn.vulnerableGroups + " 块大棋只剩少量气、没有明显两眼；"
+                                + "NN 即使倾向判活也需复核，不能仅凭气数判死",
+                        nn.vulnerableReview, null);
                 needsReview = true;
             }
             if (nn.suggestedGroups > 0) {
