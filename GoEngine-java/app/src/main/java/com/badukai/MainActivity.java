@@ -1074,15 +1074,15 @@ public class MainActivity extends AppCompatActivity {
                     // real board. Step 2: Continue closes ONLY the dialog; the
                     // next screen tap clears marks and resumes the game.
                     StringBuilder prompt = new StringBuilder(String.format(Locale.CHINA,
-                            "棋盘上已标出争议：红叉 %d 处、黄圈 %d 处、橙圈 %d 处。\\n",
+                            "棋盘上已标出争议：红叉 %d 处、黄圈 %d 处、橙圈 %d 处。\n",
                             refereeDead.size(),refereeReview.size(),alerts.size()));
                     int described = 0;
                     for (EndgameAdjudicator.Finding finding : decision.findings) {
                         if (described++ >= 2) break;
-                        prompt.append("· ").append(finding.message).append("\\n");
+                        prompt.append("· ").append(finding.message).append("\n");
                     }
-                    prompt.append("\\n点「继续下棋」关闭弹窗，争议标记仍保留。");
-                    prompt.append("\\n然后再点屏幕任意位置，清除标记并恢复对局。");
+                    prompt.append("\n点「继续下棋」关闭弹窗，争议标记仍保留。");
+                    prompt.append("\n然后再点屏幕任意位置，清除标记并恢复对局。");
                     new AlertDialog.Builder(this).setTitle("智能裁判 · 存在争议")
                             .setMessage(prompt.toString())
                             .setCancelable(false)
