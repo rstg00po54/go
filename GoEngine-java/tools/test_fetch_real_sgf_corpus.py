@@ -43,6 +43,10 @@ class CorpusDownloaderTests(unittest.TestCase):
     def test_populate_preserves_only_accepted_and_cleans_only_managed_stale(self):
         games, _ = collect_games()
         g9, g19 = games[0], games[-1]
+        self.assertEqual(g19["size"], 19, "Expected last bundled game to be 19x19")
+        self.assertNotEqual(g9["sha256"], g19["sha256"])
+        self.assertEqual(validate_download("b.sgf", 19, "DataSet/2019-1255games/b.sgf",
+                                           g19["sgf"])["size"], 19)
         contents = {"a.sgf": g9["sgf"], "bad.sgf": g9["sgf"].replace(
             "RE[B+2]", "RE[W+Resign]"), "b.sgf": g19["sgf"]}
         fake_paths = {
@@ -57,7 +61,8 @@ class CorpusDownloaderTests(unittest.TestCase):
             (folder / "archived9_999_old.sgf").write_text("stale")
             (folder / "personal.sgf").write_text("never touch")
             manifest = populate(folder, fake_paths, 1, 1, workers=1)
-            self.assertEqual(manifest["unique_games"], 2)
+            self.assertEqual(manifest["unique_games"], 2, msg=json.dumps(
+                manifest["statistics"], ensure_ascii=False, indent=2))
             self.assertEqual(len(list(folder.glob("archived9_*.sgf"))), 1)
             self.assertEqual(len(list(folder.glob("archived19_*.sgf"))), 1)
             self.assertFalse((folder / "archived9_999_old.sgf").exists())
