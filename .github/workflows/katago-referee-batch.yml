@@ -50,19 +50,19 @@ jobs:
             --model GoEngine-java/app/src/main/assets/engine/10b.bin \
             --out "GoEngine-java/build/referee_batch/v$VERSION" --repeats 2
         env:
-          VERSION: \${{ matrix.katago_version }}
+          VERSION: ${{ matrix.katago_version }}
       - name: Publish table in Actions summary
         if: always()
         run: |
           test -f "GoEngine-java/build/referee_batch/v$VERSION/report.md" && \
             cat "GoEngine-java/build/referee_batch/v$VERSION/report.md" >> "$GITHUB_STEP_SUMMARY" || true
         env:
-          VERSION: \${{ matrix.katago_version }}
+          VERSION: ${{ matrix.katago_version }}
       - name: Upload JSON CSV Markdown report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: katago-referee-batch-v\${{ matrix.katago_version }}
+          name: katago-referee-batch-v${{ matrix.katago_version }}
           path: GoEngine-java/build/referee_batch/
           if-no-files-found: warn
           retention-days: 14

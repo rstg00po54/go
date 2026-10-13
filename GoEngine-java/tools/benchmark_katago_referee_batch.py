@@ -21,7 +21,8 @@ def make_cases(folder):
     corpus=json.loads(CORPUS.read_text(encoding="utf-8"))["cases"]
     for item in corpus:
         sgf=item["sgf"]; name=item["name"]
-        size=int(re.search(r"SZ\[(\d+)\]",sgf).group(1))
+        found_size=re.search(r"SZ\[(\d+)\]",sgf)
+        size=int(found_size.group(1)) if found_size else 19  # SGF defaults to 19 if SZ is absent
         recorded=re.search(r"RE\[([^\]]+)\]",sgf)
         path=folder/(name+".sgf"); path.write_text(sgf,encoding="utf-8")
         result.append(dict(name=name,category="recorded",size=size,path=path,
