@@ -1,12 +1,6 @@
 name: Build KataGo Neuron JNI
 
 on:
-  push:
-    paths:
-      - 'GoEngine-java/app/src/main/cpp/**'
-      - 'GoEngine-java/app/src/main/java/com/badukai/engine/NeuronKataGoBackend.java'
-      - 'GoEngine-java/app/build.gradle.kts'
-      - '.github/workflows/build_neuron_jni.yml'
   workflow_dispatch:
 
 jobs:
