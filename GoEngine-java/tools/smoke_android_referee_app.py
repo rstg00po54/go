@@ -99,14 +99,13 @@ def capture_screenshot(adb,serial,target):
 
 
 def validate_review_panel(text,game=STRICT_CASE):
-    required = ("智能裁判 ·","黑","白","恢复建议","确认数子","退出复核")
-    if game != "cgos9_1":
-        required += ("可能没下完","继续下棋")
-    if game == STRICT_CASE:
-        required += ("黄圈 2 块",)
+    # A disputed game must expose ONLY "continue", never a scoring escape hatch.
+    unsettled = game != "cgos9_1"
+    required = ("智能裁判 ·","可能没下完","继续下棋","暂不结算") if unsettled else (
+        "智能裁判 ·","黑","白","恢复建议","确认数子","退出复核")
     missing = [part for part in required if part not in text]
-    if game == "cgos9_1" and "继续下棋" in text:
-        missing.append("stable case unexpectedly offers continue-playing")
+    forbidden = ("恢复建议","确认数子","退出复核") if unsettled else ("继续下棋","暂不结算")
+    missing += ["unexpected button: "+part for part in forbidden if part in text]
     return missing
 
 
