@@ -127,7 +127,8 @@ val configureKataGoNative = tasks.register<Exec>("configureKataGoNative") {
             "-DUSE_BACKEND=EIGEN", "-DEigen3_DIR=${eigenDir.absolutePath}",
             "-DBUILD_DISTRIBUTED=OFF", "-DNO_GIT_REVISION=ON", "-DUSE_AVX2=OFF",
             "-DUSE_TCMALLOC=OFF", "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
-            "-DCMAKE_EXE_LINKER_FLAGS=-pie",
+            "-DCMAKE_EXE_LINKER_FLAGS=-pie -Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384",
+            "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,-z,max-page-size=16384 -Wl,-z,common-page-size=16384",
             "-DCMAKE_CXX_FLAGS=-DLITTLE_ENDIAN=1234 -DBIG_ENDIAN=4321 -DBYTE_ORDER=1234"
         )
     }
