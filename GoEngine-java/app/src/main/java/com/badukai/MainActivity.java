@@ -973,8 +973,79 @@ public class MainActivity extends AppCompatActivity {
                                 ? "\n\n双方已停棋，以上仍是预估，不是确认数子结果。"
                                 : "\n\n当前棋形估算，仅供参考；不代表已经判定死活。"))
                         .setPositiveButton(gameEnded ? "关闭" : "继续下棋",null)
-                        .setNeutralButton("详细死活分析", (dialog,which) -> startSmartReferee())
+                        .setNeutralButton("KataGo 原生裁判", (dialog,which) -> startNativeReferee())
                         .show();
+            });
+        });
+    }
+
+    /**
+     * Opt-in KataGo GTP final-score and dead-stone estimation.
+     * Does not pass, undo, or alter the board. Midgame results are predictions.
+     */
+    private void startNativeReferee() {
+        if (!engineReady || !gameReady || evaluating || thinking || variationBoard != null) return;
+        evaluating = true;
+        final GoBoard snapshot = board;
+        final int moves = board.getMoveCount(), size = boardSize;
+        final boolean endedAtStart = board.isGameOver();
+        final long startedNs = System.nanoTime();
+        render("智能裁判：KataGo 正在检查形势与死子...");
+        engineExecutor.execute(() -> {
+            String nativeScore = null, nativeDead = null;
+            try {
+                nativeScore = engine.getFinalScore();
+                nativeDead = engine.getFinalDeadStones();
+            } catch (RuntimeException ex) {
+                Log.w(TAG,"Native KataGo referee analysis failed",ex);
+            }
+            final String score = nativeScore, deadVertices = nativeDead;
+            mainHandler.post(() -> {
+                if (board != snapshot || board.getMoveCount() != moves || boardSize != size) {
+                    evaluating = false;
+                    return;
+                }
+                evaluating = false;
+                if (score == null && deadVertices == null) {
+                    render("KataGo 原生裁判暂不可用");
+                    new AlertDialog.Builder(this).setTitle("智能裁判")
+                            .setMessage("KataGo 原生计分和死子判断都未返回结果，请稍后重试。")
+                            .setPositiveButton("关闭",null).show();
+                    return;
+                }
+                Set<Point> predictedDead = new HashSet<>();
+                if (deadVertices != null && !deadVertices.trim().isEmpty()) {
+                    for (String vertex : deadVertices.trim().split("\\s+")) {
+                        Point point = Point.fromGtp(vertex,size);
+                        if (point != null && board.get(point) != Intersection.EMPTY) predictedDead.add(point);
+                    }
+                }
+                String estimate = score == null || score.trim().isEmpty()
+                        ? "计分预测暂不可用" : "预测结果：" + score.trim();
+                String deadInfo = deadVertices == null ? "死子预测暂不可用"
+                        : "KataGo 预测死子 " + predictedDead.size() + " 颗";
+                String caution = endedAtStart
+                        ? "双方已停棋；结果仅供复核，正式数子仍需确认。"
+                        : "棋局尚未结束；这是当前局面的预测，不代表对局自动结束。";
+                Log.i(TAG,String.format(Locale.US,
+                        "REFEREE_NATIVE_GTP moves=%d terminal=%s score=%s dead=%d elapsedMs=%d",
+                        moves,endedAtStart,score,predictedDead.size(),
+                        (System.nanoTime()-startedNs)/1000000L));
+                boardView.setRefereeMarks(predictedDead,null);
+                render("KataGo 原生裁判：" + estimate);
+                new AlertDialog.Builder(this).setTitle("智能裁判 · KataGo 原生预测")
+                        .setMessage(estimate + "\n" + deadInfo
+                                + (predictedDead.isEmpty() ? "" : "\n棋盘红叉为 KataGo 预测死子。")
+                                + "\n\n" + caution)
+                        .setPositiveButton(endedAtStart ? "关闭" : "继续下棋",null)
+                        .setOnDismissListener(dialog -> {
+                            if (board == snapshot && board.getMoveCount() == moves && !refereeMode) {
+                                boardView.setRefereeMarks(null,null);
+                                render(endedAtStart
+                                        ? (finalScoreText == null ? "终局预估" : finalScoreText)
+                                        : (currentPlayer == playerColor ? "轮到你了" : "轮到 AI"));
+                            }
+                        }).show();
             });
         });
     }

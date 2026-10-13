@@ -1148,7 +1148,7 @@ public class KataGoEngine {
     public String getFinalDeadStones() {
         responseQueue.clear();
         if (!sendCommandSync("final_status_list dead")) return null;
-        return parseGtpResponse(waitForResponse(30000));
+        return parseGtpMultilineResponse(waitForResponse(30000));
     }
 
     private boolean simpleCommand(String command, int timeoutMs) {
@@ -1212,6 +1212,13 @@ public class KataGoEngine {
             Thread.currentThread().interrupt();
             return "";
         }
+    }
+
+    /** Preserve every line of the GTP dead-stone coordinate list. */
+    private String parseGtpMultilineResponse(String response) {
+        if (response == null) return null;
+        String trimmed = response.trim();
+        return trimmed.startsWith("=") ? trimmed.substring(1).trim() : null;
     }
 
     private String parseGtpResponse(String response) {
