@@ -29,7 +29,7 @@ class RefereeSmokeHostTests(unittest.TestCase):
             self.assertEqual(layout.count('android:id="@+id/'+name+'"'),1)
             self.assertIn("R.id."+name,activity)
         self.assertIn("gameActionPanel.setVisibility(refereeMode ? View.GONE : View.VISIBLE)",activity)
-        self.assertIn("refereePanel.setVisibility(refereeMode ? View.VISIBLE : View.GONE)",activity)
+        self.assertIn("refereePanel.setVisibility(refereeMode && !(mustContinue && evaluating) ? View.VISIBLE : View.GONE)",activity)
         self.assertIn('refereeExitButton.setOnClickListener(v -> leaveRefereeReview())',activity)
         self.assertIn('refereeContinueButton.setOnClickListener(v -> resumeFromReferee())',activity)
         self.assertIn('refereeTapOverlay.setOnClickListener(v -> {',activity)
