@@ -102,6 +102,13 @@ public final class SmartRefereeSmoke {
         ok(hasReason(tactical, EndgameAdjudicator.Reason.FIRST_MOVE_TACTIC),
                 "must explain atari and supply a concrete location");
         ok(urgent.get(1,1) == Intersection.BLACK, "tactical simulation must not mutate actual board");
+        float[] doomedOwnership = new float[81];
+        doomedOwnership[1*9+1] = 0.98f;
+        EndgameAdjudicator.Result doomedAtari = EndgameAdjudicator.analyze(urgent,doomedOwnership);
+        ok(doomedAtari.verdict == EndgameAdjudicator.Verdict.REVIEW_REQUIRED,
+                "a strongly NN-dead atari group needs human confirmation, not forced continuation");
+        ok(!hasReason(doomedAtari,EndgameAdjudicator.Reason.FIRST_MOVE_TACTIC),
+                "extending a proposed dead chain is not proof the game must resume");
         GoBoard shared = new GoBoard(3);
         for (int y=0;y<3;y++) {
             shared.playMove(new Move.Stone(new Point(0,y),StoneColor.BLACK));
