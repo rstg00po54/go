@@ -18,8 +18,9 @@ from uuid import uuid4
 import xml.etree.ElementTree as ET
 
 PROJECT = Path(__file__).resolve().parents[1]
-PACKAGE = "com.badukai.java"
-ACTIVITY = PACKAGE + "/.MainActivity"
+PACKAGE = "com.badukai.java"  # Gradle applicationId, not Java source package.
+MAIN_ACTIVITY_CLASS = "com.badukai.MainActivity"  # Manifest activity in namespace com.badukai.
+ACTIVITY = PACKAGE + "/" + MAIN_ACTIVITY_CLASS
 
 
 def run(argv, timeout=30, check=True):
