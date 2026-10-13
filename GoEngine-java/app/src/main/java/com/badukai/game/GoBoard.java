@@ -377,6 +377,25 @@ public class GoBoard {
         return copy;
     }
 
+    /** Current simple-ko recapture prohibition, not proof of an unresolved ko fight. */
+    public Point getSimpleKoPoint() { return koPoint; }
+
+    /** Exact one-liberty string count, without attempting life/death adjudication. */
+    public int countAtariGroups() {
+        Set<Point> visited = new HashSet<>();
+        int result = 0;
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                Point point = new Point(x,y);
+                if (get(point) == Intersection.EMPTY || visited.contains(point)) continue;
+                Set<Point> group = getGroup(point);
+                visited.addAll(group);
+                if (countLiberties(group) == 1) result++;
+            }
+        }
+        return result;
+    }
+
     public List<Move> getMoveHistorySnapshot() { return new ArrayList<>(moveHistory); }
 
     public int getCapturedBlack() { DebugLog.v(TAG, "getCapturedBlack in, capturedBlack=" + capturedBlack); return capturedBlack; }

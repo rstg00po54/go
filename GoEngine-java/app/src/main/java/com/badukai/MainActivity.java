@@ -977,6 +977,7 @@ public class MainActivity extends AppCompatActivity {
                                 : "\n\n当前棋形估算，仅供参考；不代表已经判定死活。"))
                         .setPositiveButton(gameEnded ? "关闭" : "继续下棋",null)
                         .setNeutralButton("KataGo 原生裁判", (dialog,which) -> startNativeReferee())
+                        .setNegativeButton("局面检查", (dialog,which) -> inspectUnfinishedPosition())
                         .show();
             });
         });
@@ -1089,6 +1090,73 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         return result.toString();
+    }
+
+    /**
+     * Optional unfinished-position evidence. Not a final-score or life/death verdict.
+     * Uses existing exact local rules plus one bounded non-playing KataGo search.
+     */
+    private void inspectUnfinishedPosition() {
+        if (!engineReady || !gameReady || evaluating || thinking || variationBoard != null) return;
+        evaluating = true;
+        final GoBoard snapshot = board;
+        final int moves = board.getMoveCount(), size = boardSize;
+        final boolean ended = board.isGameOver();
+        final StoneColor side = currentPlayer;
+        final int atariGroups = snapshot.countAtariGroups();
+        final Point simpleKo = snapshot.getSimpleKoPoint();
+        final long startedNs = System.nanoTime();
+        render("局面检查：正在查看官子与攻防...");
+        engineExecutor.execute(() -> {
+            List<KataGoEngine.SearchRecommendation> candidates = new ArrayList<>();
+            if (!ended) {
+                try {
+                    candidates = engine.searchRecommendations(side == StoneColor.BLACK ? "black" : "white",48,1.0);
+                } catch (RuntimeException ex) {
+                    Log.w(TAG,"KataGo unfinished-position search failed",ex);
+                }
+            }
+            final List<KataGoEngine.SearchRecommendation> suggestions = candidates;
+            mainHandler.post(() -> {
+                if (board != snapshot || board.getMoveCount() != moves || boardSize != size) {
+                    evaluating = false;
+                    return;
+                }
+                evaluating = false;
+                StringBuilder note = new StringBuilder();
+                if (ended) note.append("双方已停棋，但死子、双活和劫争仍可能需要复核。");
+                else note.append("对局仍在进行。以下是继续落子的线索，而不是终局证明。");
+                if (atariGroups > 0)
+                    note.append("\n发现 ").append(atariGroups).append(" 块单气棋（打吃状态）；须分辨是否已死或能够提救。");
+                else note.append("\n未发现当前单气棋块；这不排除其他攻防。");
+                if (simpleKo != null)
+                    note.append("\n当前有劫禁点 ").append(simpleKo.toGtp(size)).append("，劫争是否结束仍须复核。");
+                else note.append("\n当前无简单劫禁点；这不排除潜在劫或复杂劫争。");
+                if (!ended && !suggestions.isEmpty()) {
+                    KataGoEngine.SearchRecommendation best = suggestions.get(0);
+                    if ("pass".equalsIgnoreCase(best.move))
+                        note.append("\nKataGo 短搜索首选停一手，但不证明所有官子已收完。");
+                    else
+                        note.append("\nKataGo 建议考虑 ").append(best.move)
+                                .append("；可能涉及官子或局部攻防，不等于已确认未收完。");
+                    if (!best.pvMoves.isEmpty()) {
+                        note.append("\n参考变化：");
+                        for (int i=0; i<best.pvMoves.size() && i<5; i++)
+                            note.append(i==0 ? " " : " ").append(best.pvMoves.get(i));
+                    }
+                } else if (!ended) {
+                    note.append("\nKataGo 短搜索未返回有效候选，无法判断是否仍有官子。");
+                }
+                note.append("\n\n要正式确认胜负，应结合双方停棋、原生死子预测和人工复核。");
+                Log.i(TAG,String.format(Locale.US,
+                        "REFEREE_UNFINISHED_CHECK moves=%d terminal=%s atariGroups=%d simpleKo=%s candidates=%d elapsedMs=%d",
+                        moves,ended,atariGroups,simpleKo == null ? "none" : simpleKo.toGtp(size),
+                        suggestions.size(),(System.nanoTime()-startedNs)/1000000L));
+                render("局面检查完成");
+                new AlertDialog.Builder(this).setTitle("局面检查 · KataGo 搜索")
+                        .setMessage(note.toString()).setPositiveButton("继续下棋",null).show();
+            });
+        });
     }
 
     private void startSmartReferee() {

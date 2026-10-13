@@ -125,6 +125,31 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn('sendCommandSync("final_status_list dead")',engine)
         self.assertIn("parseGtpMultilineResponse(waitForResponse(30000))",engine)
 
+    def test_optional_unfinished_check_uses_native_search_and_exact_board_signals(self):
+        root = Path(__file__).resolve().parents[1]
+        activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
+        board = (root/"app/src/main/java/com/badukai/game/GoBoard.java").read_text(encoding="utf-8")
+        quick = activity.split("private void showQuickNnRefereeEstimate()",1)[1].split(
+            "private static String refereeSearchSummary",1)[0]
+        self.assertIn('setNegativeButton("局面检查", (dialog,which) -> inspectUnfinishedPosition())',quick)
+        inspection = activity.split("private void inspectUnfinishedPosition()",1)[1].split(
+            "private void startSmartReferee()",1)[0]
+        self.assertIn("snapshot.countAtariGroups()",inspection)
+        self.assertIn("snapshot.getSimpleKoPoint()",inspection)
+        self.assertIn("engine.searchRecommendations(",inspection)
+        self.assertIn("48,1.0",inspection)
+        self.assertIn('if (!ended)',inspection)
+        self.assertIn("REFEREE_UNFINISHED_CHECK",inspection)
+        self.assertIn("不证明所有官子已收完",inspection)
+        self.assertIn("不等于已确认未收完",inspection)
+        for forbidden in ("engine.getFinalScore(", "engine.getFinalDeadStones(",
+                          "engine.playMove(", "board.playMove(", "engine.undo(",
+                          "SmartReferee.analyze(", "EndgameAdjudicator.analyze("):
+            self.assertNotIn(forbidden,inspection)
+        self.assertIn("public Point getSimpleKoPoint()",board)
+        self.assertIn("public int countAtariGroups()",board)
+        self.assertIn("countLiberties(group) == 1",board)
+
     def test_midgame_referee_is_available_without_passes_or_scoring(self):
         root = Path(__file__).resolve().parents[1]
         activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
