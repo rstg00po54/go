@@ -786,6 +786,24 @@ public class MainActivity extends AppCompatActivity {
                 .setNegativeButton("取消", null).show();
     }
 
+    private static String refereeSearchSummary(String side, List<KataGoEngine.SearchRecommendation> choices) {
+        if (choices.isEmpty()) return side + "先：暂无搜索候选";
+        KataGoEngine.SearchRecommendation best = choices.get(0);
+        String opponent = "黑".equals(side) ? "白" : "黑";
+        String leader = best.scoreLead >= 0 ? side : opponent;
+        StringBuilder result = new StringBuilder(String.format(Locale.CHINA,
+                "%s先：%s（%s方搜索胜率 %.1f%%，预计%s领先 %.1f 目，候选访问 %d）",
+                side,best.move,side,best.winrate*100.0,leader,Math.abs(best.scoreLead),best.visits));
+        if (!best.pvMoves.isEmpty()) {
+            result.append("；变化：");
+            for (int i=0; i<best.pvMoves.size() && i<6; i++) {
+                if (i>0) result.append(' ');
+                result.append(best.pvMoves.get(i));
+            }
+        }
+        return result.toString();
+    }
+
     private void startSmartReferee() {
         if (!engineReady || evaluating || thinking || !board.isGameOver()) return;
         evaluating = true;
@@ -828,11 +846,13 @@ public class MainActivity extends AppCompatActivity {
                     // Search as both sides, but NEVER treat the suggested moves as a solved life/death proof.
                     List<KataGoEngine.SearchRecommendation> black = engine.searchRecommendations("black", 48, 1.0);
                     List<KataGoEngine.SearchRecommendation> white = engine.searchRecommendations("white", 48, 1.0);
-                    String blackMove = black.isEmpty() ? "暂无" : black.get(0).move;
-                    String whiteMove = white.isEmpty() ? "暂无" : white.get(0).move;
-                    searchEvidence = "\n黑先短搜索：" + blackMove + "；白先短搜索：" + whiteMove
-                            + "\n搜索仅提供候选着点，不能直接证明某块棋死活。";
-                    Log.i(TAG, "ENDGAME_TWO_SIDE_SEARCH black=" + blackMove + " white=" + whiteMove);
+                    searchEvidence = "\n" + refereeSearchSummary("黑",black)
+                            + "\n" + refereeSearchSummary("白",white)
+                            + "\n以上仅是48次访问上限、每方1秒的短搜索估计；"
+                            + "候选变化可揭示攻防风险，但不是死活证明，仍需逐块复核。";
+                    Log.i(TAG, "ENDGAME_TWO_SIDE_SEARCH black="
+                            + (black.isEmpty() ? "none" : black.get(0).move)
+                            + " white=" + (white.isEmpty() ? "none" : white.get(0).move));
                 } catch (RuntimeException ex) {
                     Log.w(TAG, "Endgame two-sided search unavailable; keep manual review", ex);
                     searchEvidence = "\n双方先手搜索不可用，请人工确认；不能凭此认定已经结束。";
