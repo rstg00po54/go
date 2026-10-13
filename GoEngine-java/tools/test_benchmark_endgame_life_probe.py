@@ -108,6 +108,38 @@ class LifeProbeTests(unittest.TestCase):
         self.assertEqual(engine.calls.count("play black D4"),1)
         self.assertEqual(engine.calls[-1], "loadsgf /tmp/end.sgf")
 
+    def test_full_pv_replay_records_every_ply(self):
+        engine = FakeGtpEngine()
+        case = {"name":"case", "remote":"/tmp/end.sgf", "size":9,
+                "moves":82, "komi":7.0, "terminal_passes":True}
+        baseline, rows = run_probes(engine,case,["A9"],["B9"],64,3.0,True,3)
+        self.assertEqual(baseline["white_win"],0.5)
+        self.assertEqual([step["ply"] for step in rows[0]["pv_trace"]],[2,3,4])
+        self.assertEqual([(x["color"],x["move"]) for x in rows[0]["pv_trace"]],
+                         [("white","D4"),("black","C7"),("white","B9")])
+        self.assertEqual([x["white_lead"] for x in rows[0]["pv_trace"]],[0.0,2.0,0.0])
+        self.assertEqual([x["white_win"] for x in rows[0]["pv_trace"]],[0.5,0.5,0.5])
+        self.assertEqual([x["delta_white_lead"] for x in rows[1]["pv_trace"]],[1.0,-1.0,1.0])
+        self.assertEqual(engine.calls.count("play white D4"),1)
+        self.assertEqual(engine.calls.count("play black C7"),1)
+        self.assertEqual(engine.calls[-1],"loadsgf /tmp/end.sgf")
+
+    def test_pv_illegal_move_stops_without_affecting_next_branch(self):
+        class RejectingEngine(FakeGtpEngine):
+            def command(self, command):
+                if command == "play black C7":
+                    self.calls.append(command)
+                    raise RuntimeError("illegal move")
+                return super().command(command)
+        engine = RejectingEngine()
+        case = {"name":"case", "remote":"/tmp/end.sgf", "size":9,
+                "moves":82, "komi":7.0, "terminal_passes":True}
+        _, rows = run_probes(engine,case,["A9"],["B9"],64,3.0,True,3)
+        self.assertEqual(len(rows[0]["pv_trace"]),1)
+        self.assertIn("PV stopped",rows[0]["reply_verification_warning"])
+        self.assertEqual(len(rows[1]["pv_trace"]),3)
+        self.assertEqual(engine.calls[-1],"loadsgf /tmp/end.sgf")
+
     def test_probes_reload_original_passes_and_are_independent(self):
         engine = FakeGtpEngine()
         case = {"name":"case", "remote":"/tmp/end.sgf", "size":9,
