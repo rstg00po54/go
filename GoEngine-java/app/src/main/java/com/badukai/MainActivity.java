@@ -596,6 +596,10 @@ public class MainActivity extends AppCompatActivity {
     private void onBoardTap(int x, int y) {
         DebugLog.enter(TAG, "onBoardTap in, x=" + x + ", y=" + y + ", engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer + ", playerColor=" + playerColor);
         if (refereeMode) {
+            // With unresolved fighting there is no manual scoring branch.
+            // Do not let tapping a stone turn an unsettled game into a scored one.
+            if (endgameDecision != null
+                    && endgameDecision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT) return;
             if (board.isInside(x, y) && board.get(x, y) != Intersection.EMPTY) {
                 Point tapped = new Point(x, y);
                 if (refereeReview.contains(tapped)) {
@@ -887,9 +891,20 @@ public class MainActivity extends AppCompatActivity {
 
     /** Explicit, reversible referee review. Keeps original NN outcome untouched until user confirmation. */
     private void showEndgameScoringOptions() {
-        if (!engineReady || !gameReady || !board.isGameOver() || evaluating || thinking
+        if (!engineReady || !gameReady || evaluating || thinking
                 || board.getLastMove() instanceof Move.Resign) return;
+        if (!board.isGameOver()) {
+            new AlertDialog.Builder(this).setTitle("智能裁判 · 对局还没结束")
+                    .setMessage("现在仍在下棋。继续对弈，双方连续停一手后再点智能裁判，检查死活争议并确认数子。")
+                    .setPositiveButton("继续下棋",null).show();
+            return;
+        }
         if (refereeMode) {
+            if (endgameDecision != null
+                    && endgameDecision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT) {
+                resumeFromReferee();
+                return;
+            }
             showRefereeConfirmation();
             return;
         }
@@ -1045,15 +1060,13 @@ public class MainActivity extends AppCompatActivity {
                 reasons.append("\n红叉：AI 建议判死；黄圈：需明确复核；橙圈：需要关注的争议位置。\n"
                         + "以上均为辅助判断，不能代替双方确认。");
                 AlertDialog.Builder dialog = new AlertDialog.Builder(this)
-                        .setTitle("智能裁判 · " + decision.summary()).setMessage(reasons.toString())
-                        .setNegativeButton("稍后复核", null);
-                // REVIEW_REQUIRED may be merely a dead-stone or seki confirmation;
-                // suggest continuing, but never claim play is definitely unfinished.
-                boolean offerResume = decision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT;
-                if (offerResume && board.canResumeAfterPasses()) {
-                    dialog.setPositiveButton("继续下棋", (ignored, which) -> resumeFromReferee())
-                            .setNeutralButton("留在棋盘确认", null);
-                } else dialog.setPositiveButton("开始确认死子", null);
+                        .setTitle("智能裁判 · " + decision.summary()).setMessage(reasons.toString());
+                boolean unsettled = decision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT;
+                if (unsettled && board.canResumeAfterPasses())
+                    dialog.setPositiveButton("继续下棋", (ignored, which) -> resumeFromReferee());
+                else if (unsettled)
+                    dialog.setPositiveButton("返回棋盘", null);
+                else dialog.setPositiveButton("开始确认死子", null).setNegativeButton("稍后确认", null);
                 dialog.show();
                 if (isRefereeSmokeIntent()) {
                     SmartReferee.ScoreWhatIf actualRange = sensitivity;
@@ -1125,21 +1138,27 @@ public class MainActivity extends AppCompatActivity {
         // Avoid wrapping a long score inside the 100dp player-status column.
         String shortStatus = unsettled ? "智能裁判\n建议继续下" : "智能裁判\n确认死子";
         refereePanelTitle.setText(unsettled ? "智能裁判 · 可能没下完" : "智能裁判 · 可以确认数子");
-        refereePanelScore.setText(String.format(Locale.CHINA,
-                "黑 %.1f · 白 %.1f · %s",
-                audit.score.blackPoints,audit.score.whitePoints,
-                Math.abs(lead) < 0.001 ? "平局" :
-                        String.format(Locale.CHINA,"%s领先 %.1f 目",lead > 0 ? "白" : "黑",Math.abs(lead))));
+        refereePanelScore.setText(unsettled ? "仍有死活争议 · 暂不结算"
+                : String.format(Locale.CHINA,"黑 %.1f · 白 %.1f · %s",
+                        audit.score.blackPoints,audit.score.whitePoints,
+                        Math.abs(lead) < 0.001 ? "平局" :
+                                String.format(Locale.CHINA,"%s领先 %.1f 目",lead > 0 ? "白" : "黑",Math.abs(lead))));
         refereePanelHint.setText(unsettled
-                ? (pending > 0 ? "建议继续下几手解决争议；黄圈 " + pending + " 块也可手动确认死活。"
-                        : "可能只是死子或双活没确认。可继续下，也可人工确认后数子。")
-                : "点棋子可整块切换死活；红叉为拟死子，橙圈提示攻防风险。");
+                ? "棋局可能没下完，继续对弈后再停棋；红叉和黄圈仅是提示。"
+                : "点棋子可整块确认死活；红叉为拟死子，橙圈提示攻防风险。");
         render(shortStatus);
     }
 
     private void showRefereeConfirmation() { showRefereeConfirmation(false); }
 
     private void showRefereeConfirmation(boolean ignoreContinueAdvice) {
+        // No scoring or "mark all alive" escape hatch while the verdict is disputed.
+        if (endgameDecision != null
+                && endgameDecision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT) {
+            if (board.canResumeAfterPasses()) resumeFromReferee();
+            else Toast.makeText(this,"当前无法恢复对局，请重新检查棋局",Toast.LENGTH_LONG).show();
+            return;
+        }
         if (!ignoreContinueAdvice && endgameDecision != null
                 && endgameDecision.verdict == EndgameAdjudicator.Verdict.CONTINUE_RECOMMENDED
                 && board.canResumeAfterPasses()) {
@@ -2035,21 +2054,23 @@ public class MainActivity extends AppCompatActivity {
         boolean playerTurn = engineReady && gameReady && !engineStarting && !thinking && !evaluating && currentPlayer == playerColor && !board.isGameOver();
         refereePanel.setVisibility(refereeMode ? View.VISIBLE : View.GONE);
         gameActionPanel.setVisibility(refereeMode ? View.GONE : View.VISIBLE);
-        refereeConfirmButton.setEnabled(refereeMode && !evaluating);
-        refereeResetButton.setEnabled(refereeMode && !evaluating);
-        refereeExitButton.setEnabled(refereeMode && !evaluating);
-        boolean recommendContinue = refereeMode && board.canResumeAfterPasses()
-                && endgameDecision != null
+        boolean unsettled = refereeMode && endgameDecision != null
                 && endgameDecision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT;
-        refereeContinueButton.setVisibility(recommendContinue ? View.VISIBLE : View.GONE);
-        refereeContinueButton.setEnabled(recommendContinue && !evaluating && !thinking);
+        boolean mayResume = unsettled && board.canResumeAfterPasses();
+        refereeContinueButton.setVisibility(unsettled ? View.VISIBLE : View.GONE);
+        refereeContinueButton.setEnabled(mayResume && !evaluating && !thinking);
+        refereeResetButton.setVisibility(refereeMode && !unsettled ? View.VISIBLE : View.GONE);
+        refereeConfirmButton.setVisibility(refereeMode && !unsettled ? View.VISIBLE : View.GONE);
+        refereeExitButton.setVisibility(refereeMode && !unsettled ? View.VISIBLE : View.GONE);
+        refereeConfirmButton.setEnabled(refereeMode && !unsettled && !evaluating);
+        refereeResetButton.setEnabled(refereeMode && !unsettled && !evaluating);
+        refereeExitButton.setEnabled(refereeMode && !unsettled && !evaluating);
         newGameButton.setEnabled(!thinking && !engineStarting && !evaluating);
         newRoundButton.setEnabled(!thinking && !engineStarting && !evaluating);
-        countTerritoryButton.setText(board.isGameOver()
-                ? (refereeMode ? "确认裁判" : refereeConfirmed ? "复核裁判" : "智能裁判")
-                : "数目");
-        countTerritoryButton.setEnabled(engineReady && gameReady && board.isGameOver()
-                && !thinking && !engineStarting && !evaluating && !(board.getLastMove() instanceof Move.Resign));
+        countTerritoryButton.setText("智能裁判");
+        countTerritoryButton.setEnabled(engineReady && gameReady
+                && !thinking && !engineStarting && !evaluating && variationBoard == null
+                && !(board.getLastMove() instanceof Move.Resign));
         situationButton.setEnabled(variationBoard == null && engineReady && gameReady && !engineStarting
                 && !thinking && !evaluating && (board.isGameOver() || currentPlayer == playerColor));
         aiSuggestionButton.setEnabled(playerTurn && variationBoard == null);
