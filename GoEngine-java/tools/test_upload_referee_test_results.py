@@ -17,7 +17,8 @@ class RefereeUploadTests(unittest.TestCase):
             (root/"cgos9_1").mkdir()
             (root/"cgos9_1"/"result.json").write_text('{"status":"PASS"}')
             (root/"cgos9_1"/"logcat.txt").write_text("raw log")
-            (root/"cgos9_1"/"review_panel.txt").write_text("智能裁判 · 待复核 2 块")
+            (root/"cgos9_1"/"review_panel.txt").write_text("智能裁判 · 请确认死子")
+            (root/"cgos9_1"/"confirmation_dialog.txt").write_text("确认中国规则数子")
             (root/"cgos9_1"/"review_screen.png").write_bytes(b"\x89PNG\r\n\x1a\n")
             (root/"secret.txt").write_text("not a test result")
             summary,items = report_items(root,{"status":"FAIL"},"testcase",lambda _:None)
@@ -27,6 +28,7 @@ class RefereeUploadTests(unittest.TestCase):
             self.assertIn("runs/testcase/cgos9_1/logcat.txt",names)
             self.assertIn("runs/testcase/cgos9_1/review_screen.png",names)
             self.assertIn("runs/testcase/cgos9_1/review_panel.txt",names)
+            self.assertIn("runs/testcase/cgos9_1/confirmation_dialog.txt",names)
             self.assertNotIn("runs/testcase/secret.txt",names)
 
     def test_git_plumbing_preserves_worktree_and_old_uploads(self):
