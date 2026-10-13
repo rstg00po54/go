@@ -1,0 +1,116 @@
+package com.badukai.game;
+
+import java.util.ArrayDeque;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+/**
+ * Experimental Chinese-area scoring assistant. A RAW NN ownership map suggests
+ * entire dead chains, but NEVER constitutes an automatic rules decision.
+ * Human confirmation of every marked group is required before publishing
+ * a counted result. The original GoBoard is never mutated.
+ */
+public final class SmartReferee {
+    private static final int[] DX = {-1, 1, 0, 0}, DY = {0, 0, -1, 1};
+
+    private SmartReferee() {}
+
+    public static final class Analysis {
+        public final Set<Point> suggestedDead, needsReview;
+        public final int groups, suggestedGroups, reviewGroups;
+
+        Analysis(Set<Point> dead, Set<Point> review, int groups, int suggested, int uncertain) {
+            suggestedDead = Collections.unmodifiableSet(new HashSet<>(dead));
+            needsReview = Collections.unmodifiableSet(new HashSet<>(review));
+            this.groups = groups;
+            suggestedGroups = suggested;
+            reviewGroups = uncertain;
+        }
+    }
+
+    public static Analysis analyze(GoBoard board, float[] whiteOwnership) {
+        if (board == null) throw new IllegalArgumentException("Missing board");
+        int n = board.getSize();
+        if (whiteOwnership == null || whiteOwnership.length != n * n)
+            throw new IllegalArgumentException("Ownership map size mismatch");
+        boolean[][] seen = new boolean[n][n];
+        Set<Point> dead = new HashSet<>(), review = new HashSet<>();
+        int groups = 0, marked = 0, uncertain = 0;
+        for (int y = 0; y < n; y++) {
+            for (int x = 0; x < n; x++) {
+                Intersection color = board.get(x, y);
+                if (color == Intersection.EMPTY || seen[y][x]) continue;
+                groups++;
+                Set<Point> chain = group(board, new Point(x, y));
+                double total = 0.0, minimum = 1.0;
+                for (Point p : chain) {
+                    seen[p.y][p.x] = true;
+                    float raw = whiteOwnership[p.y * n + p.x];
+                    if (!Float.isFinite(raw)) throw new IllegalArgumentException("Invalid NN ownership");
+                    double enemy = color == Intersection.BLACK ? raw : -raw;
+                    minimum = Math.min(minimum, enemy);
+                    total += enemy;
+                }
+                double mean = total / chain.size();
+                // Deliberately stricter than the previous fast-dead heuristic:
+                // false positives cannot be called an official rules verdict.
+                if (minimum >= 0.80 && mean >= 0.90) {
+                    dead.addAll(chain);
+                    marked++;
+                } else if (mean >= 0.25 || (mean >= -0.10 && minimum <= -0.65)) {
+                    review.addAll(chain);
+                    uncertain++;
+                }
+            }
+        }
+        return new Analysis(dead, review, groups, marked, uncertain);
+    }
+
+    /** Full-chain toggle. Never removes a stone from the actual game board. */
+    public static void toggleGroup(GoBoard board, Set<Point> dead, Point point) {
+        if (board == null || dead == null || point == null || board.get(point) == Intersection.EMPTY) return;
+        Set<Point> chain = group(board, point);
+        if (dead.containsAll(chain)) dead.removeAll(chain);
+        else dead.addAll(chain);
+    }
+
+    public static Set<Point> group(GoBoard board, Point start) {
+        Set<Point> result = new HashSet<>();
+        if (board == null || start == null || board.get(start) == Intersection.EMPTY)
+            return result;
+        int n = board.getSize();
+        Intersection color = board.get(start);
+        ArrayDeque<Point> pending = new ArrayDeque<>();
+        pending.add(start);
+        while (!pending.isEmpty()) {
+            Point p = pending.removeFirst();
+            if (!result.add(p)) continue;
+            for (int i = 0; i < 4; i++) {
+                int x = p.x + DX[i], y = p.y + DY[i];
+                if (x >= 0 && y >= 0 && x < n && y < n && board.get(x, y) == color) {
+                    Point adjacent = new Point(x, y);
+                    if (!result.contains(adjacent)) pending.addLast(adjacent);
+                }
+            }
+        }
+        return result;
+    }
+
+    public static String toGtpVertices(Set<Point> dead, int size) {
+        StringBuilder out = new StringBuilder();
+        for (int y = 0; y < size; y++) for (int x = 0; x < size; x++) {
+            Point p = new Point(x, y);
+            if (!dead.contains(p)) continue;
+            if (out.length() != 0) out.append(' ');
+            out.append(p.toGtp(size));
+        }
+        return out.toString();
+    }
+
+    public static String resultText(GoBoard.FinalScore score) {
+        double lead = score.whitePoints - score.blackPoints;
+        if (Math.abs(lead) < 0.001) return "0";
+        return String.format(java.util.Locale.US, "%s+%.1f", lead > 0 ? "W" : "B", Math.abs(lead));
+    }
+}
