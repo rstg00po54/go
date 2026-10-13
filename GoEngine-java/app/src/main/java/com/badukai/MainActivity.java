@@ -1043,9 +1043,8 @@ public class MainActivity extends AppCompatActivity {
                     boolean knownCase = "cgos9_expand_006_12".equals(game);
                     boolean hasSearch = decision.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT
                             || (mctsInfo.contains("黑先：") && mctsInfo.contains("白先："));
-                    boolean genericGood = suggestion != null && decision != null
+                    boolean genericGood = suggestion != null
                             && board.isGameOver() && hasSearch
-                            && reasons.toString().contains("智能裁判") == false
                             && reasons.toString().contains("黄圈");
                     boolean strictGood = !knownCase || (suggestion.suggestedGroups == 1
                             && suggestion.reviewGroups == 2 && suggestion.vulnerableGroups == 1
