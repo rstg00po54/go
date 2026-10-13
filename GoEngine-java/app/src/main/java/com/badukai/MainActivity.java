@@ -1039,6 +1039,9 @@ public class MainActivity extends AppCompatActivity {
                         else alerts.addAll(finding.points);
                     }
                 }
+                if (decision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT
+                        && alerts.isEmpty() && refereeDead.isEmpty() && refereeReview.isEmpty())
+                    alerts.addAll(decision.highlights);
                 boardView.setEndgameAlerts(alerts);
                 refreshRefereePreview();
                 String info = suggestion == null
@@ -1078,6 +1081,9 @@ public class MainActivity extends AppCompatActivity {
                     // them and resumes the two passes; no blocking alert dialog.
                     Log.i(TAG,"REFEREE_BOARD_DISPUTE dead=" + refereeDead.size()
                             + " review=" + refereeReview.size() + " alerts=" + alerts.size());
+                    if (isRefereeSmokeIntent()) Log.i("RefereeSmoke","OVERLAY id=" + refereeSmokeId()
+                            + " dead=" + refereeDead.size() + " review=" + refereeReview.size()
+                            + " alerts=" + alerts.size());
                 }
                 if (isRefereeSmokeIntent()) {
                     SmartReferee.ScoreWhatIf actualRange = sensitivity;
@@ -2033,7 +2039,8 @@ public class MainActivity extends AppCompatActivity {
                 + (engineReady ? engine.getBackendName() : selectedBackend == KataGoEngine.BackendPreference.GPU ? "GPU 准备中" : "CPU 准备中"));
         boardView.setBoard(board);
         boardView.setLastMove(lastMove);
-        boardView.setInputEnabled(refereeMode || (engineReady && gameReady && !engineStarting && !thinking
+        boardView.setInputEnabled((refereeMode && !evaluating && !thinking)
+                || (engineReady && gameReady && !engineStarting && !thinking
                 && !evaluating && currentPlayer == playerColor && !board.isGameOver()));
         boolean detailedResult = refereeMode || refereeConfirmed || boardView.hasRecommendations();
         statusText.setMaxLines(detailedResult ? 3 : 2);
@@ -2055,9 +2062,9 @@ public class MainActivity extends AppCompatActivity {
     private void updateButtons() {
         DebugLog.enter(TAG, "updateButtons in, engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer + ", playerColor=" + playerColor);
         boolean playerTurn = engineReady && gameReady && !engineStarting && !thinking && !evaluating && currentPlayer == playerColor && !board.isGameOver();
-        refereePanel.setVisibility(refereeMode ? View.VISIBLE : View.GONE);
-        gameActionPanel.setVisibility(refereeMode ? View.GONE : View.VISIBLE);
         boolean mustContinue = refereeMode && refereeRequiresContinuation();
+        refereePanel.setVisibility(refereeMode && !(mustContinue && evaluating) ? View.VISIBLE : View.GONE);
+        gameActionPanel.setVisibility(refereeMode ? View.GONE : View.VISIBLE);
         refereeTapOverlay.setVisibility(mustContinue && !evaluating ? View.VISIBLE : View.GONE);
         // Disputed positions are handled by a tap anywhere on the screen,
         // not a fourth large button at the bottom.
