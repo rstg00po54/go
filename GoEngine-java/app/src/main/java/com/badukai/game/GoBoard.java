@@ -80,6 +80,20 @@ public class GoBoard {
         return consecutivePasses >= 2 || (!moveHistory.isEmpty() && moveHistory.get(moveHistory.size() - 1) instanceof Move.Resign);
     }
 
+    /** Resume a stopped game without modifying its position or changing scoring rules.
+     * Caller must also undo the same two pass moves in KataGo before resuming.
+     */
+    public boolean canResumeAfterPasses() {
+        int count = moveHistory.size();
+        return count >= 2 && moveHistory.get(count - 1) instanceof Move.Pass
+                && moveHistory.get(count - 2) instanceof Move.Pass;
+    }
+
+    public boolean resumeAfterPasses() {
+        if (!canResumeAfterPasses()) return false;
+        return undo() && undo();
+    }
+
     public boolean isInside(int x, int y) {
         DebugLog.v(TAG, "isInside in, x=" + x + ", y=" + y + ", size=" + size);
         return x >= 0 && x < size && y >= 0 && y < size;
