@@ -17,6 +17,9 @@ import com.badukai.game.Point;
 import com.badukai.game.StoneColor;
 import com.badukai.util.DebugLog;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class GoBoardView extends View {
     private static final String TAG = "GoBoardView";
     // Draw tentative influence too, but count estimated territory only above 0.55.
@@ -40,6 +43,7 @@ public class GoBoardView extends View {
     private GoBoard board = new GoBoard(19);
     private Point lastMove;
     private float[] ownershipWhite;
+    private Set<Point> refereeDead, refereeReview;
     private int ownershipMode = OWNERSHIP_OFF;
     private Point[] recommendedPoints;
     private float[] recommendedProbabilities;
@@ -79,6 +83,13 @@ public class GoBoardView extends View {
             ownershipWhite = values.clone();
             ownershipMode = OWNERSHIP_SQUARES;
         }
+        invalidate();
+    }
+
+    /** Red crossed circles = suggested/confirmed dead; amber rings = inspect by hand. */
+    public void setRefereeMarks(Set<Point> dead, Set<Point> review) {
+        refereeDead = dead == null ? null : new HashSet<>(dead);
+        refereeReview = review == null ? null : new HashSet<>(review);
         invalidate();
     }
 
@@ -173,7 +184,31 @@ public class GoBoardView extends View {
         if (previewBoard == null) {
             drawDeadStoneOwnership(canvas, n);
             drawRecommendations(canvas);
+            drawRefereeMarks(canvas);
         } else drawPreviewMoveNumbers(canvas);
+    }
+
+    private void drawRefereeMarks(Canvas canvas) {
+        if (refereeDead == null && refereeReview == null) return;
+        paint.setShader(null);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(Math.max(dp(2f), cellSize * 0.065f));
+        if (refereeReview != null) for (Point p : refereeReview) {
+            if (!board.isInside(p.x, p.y) || board.get(p) == Intersection.EMPTY) continue;
+            if (refereeDead != null && refereeDead.contains(p)) continue;
+            paint.setColor(Color.rgb(235, 166, 38));
+            canvas.drawCircle(padding + p.x * cellSize, padding + p.y * cellSize, cellSize * 0.40f, paint);
+        }
+        if (refereeDead != null) for (Point p : refereeDead) {
+            if (!board.isInside(p.x, p.y) || board.get(p) == Intersection.EMPTY) continue;
+            float cx = padding + p.x * cellSize, cy = padding + p.y * cellSize;
+            float r = cellSize * 0.36f;
+            paint.setColor(Color.rgb(218, 51, 51));
+            canvas.drawCircle(cx, cy, r, paint);
+            canvas.drawLine(cx - r * 0.68f, cy - r * 0.68f, cx + r * 0.68f, cy + r * 0.68f, paint);
+            canvas.drawLine(cx + r * 0.68f, cy - r * 0.68f, cx - r * 0.68f, cy + r * 0.68f, paint);
+        }
+        paint.setStyle(Paint.Style.FILL);
     }
 
     private void drawGrid(Canvas canvas, int n) {
