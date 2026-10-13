@@ -47,12 +47,10 @@ def nn_ownership_at(ownership, vertex, size):
 
 
 def restore_probe_position(engine, case):
+    # Keep the original final passes. They clear the immediate ko prohibition,
+    # so undoing them would incorrectly reject valid recaptures (e.g. A9/B9).
+    # GTP 'play' may append further moves even when the players previously passed.
     engine.command("loadsgf " + case["remote"])
-    # On a two-pass finish, enter the same playable board as before both passes.
-    # Do not replay alternative moves into a finished GTP position.
-    if case["terminal_passes"]:
-        engine.command("undo")
-        engine.command("undo")
 
 
 def run_probes(engine, case, candidates, watched):
