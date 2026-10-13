@@ -189,11 +189,24 @@ def collect_games(sgf_dir=None, limit=100):
         files = sorted(sgf_dir.rglob("*.sgf"))
         if not files:
             raise ValueError("No .sgf files in " + str(sgf_dir))
+        provenance = {}
+        manifest_path = sgf_dir / "manifest.json"
+        if manifest_path.is_file():
+            metadata = json.loads(manifest_path.read_text(encoding="utf-8"))
+            provenance = {item["file"]: item for item in metadata.get("games", [])
+                          if isinstance(item, dict) and "file" in item and "source" in item}
         for path in files:
             if path.stat().st_size > 256 * 1024:
                 continue
-            sources.append((str(path.relative_to(sgf_dir)), path.read_text(
-                encoding="utf-8-sig", errors="replace"), str(path)))
+            relative = str(path.relative_to(sgf_dir))
+            sgf = path.read_text(encoding="utf-8-sig", errors="replace")
+            source = relative
+            if relative in provenance:
+                reference = provenance[relative]
+                if hashlib.sha256(sgf.encode("utf-8")).hexdigest() != reference.get("sha256"):
+                    raise ValueError("SGF checksum changed since public corpus manifest: " + relative)
+                source = reference["source"]
+            sources.append((relative, sgf, source))
     accepted, skipped, seen = [], [], set()
     for name, sgf, source in sources:
         if len(accepted) >= limit:
