@@ -184,6 +184,29 @@ public final class SmartRefereeSmoke {
                 "large risky chain must require review, not assume ready to count");
         ok(hasReason(triage, EndgameAdjudicator.Reason.LOW_LIBERTY_LARGE_GROUP),
                 "referee must provide a human-readable risk reason");
+        // The 006_12 score discrepancy is caused by interacting dead-group
+        // choices: removing B9 alone does little, but removing it together with
+        // the upper-left 11 can convert a large neutral region into black area.
+        Set<Point> knownDead = SmartReferee.group(real, new Point(6,1));
+        Set<Point> koStone = SmartReferee.group(real, new Point(1,0));
+        Set<Point> bottomRight = SmartReferee.group(real, new Point(7,6));
+        Set<Point> unresolved = new HashSet<>(upperLeftWhite);
+        unresolved.addAll(koStone);
+        unresolved.addAll(bottomRight);
+        GoBoard.FinalScore baseCount = real.countChineseScore(knownDead,7.0,0);
+        ok(Math.abs(baseCount.whitePoints - baseCount.blackPoints - 8.0) < 0.001,
+                "fixture starts at tentative W+8 after NN-suggested dead");
+        SmartReferee.ScoreWhatIf whatIf = SmartReferee.scoreWhatIf(real,knownDead,unresolved,7.0,0);
+        ok(whatIf.reviewGroups == 3 && whatIf.exhaustive(), "enumerate all three undecided chains");
+        ok(whatIf.winnerCanChange(), "uncertain groups can reverse the winner");
+        ok(Math.abs(whatIf.maxWhiteLead - 8.0) < 0.001, "base scenario W+8");
+        Set<Point> whiteKoAndUpper = new HashSet<>(knownDead);
+        whiteKoAndUpper.addAll(koStone);
+        whiteKoAndUpper.addAll(upperLeftWhite);
+        GoBoard.FinalScore joint = real.countChineseScore(whiteKoAndUpper,7.0,0);
+        ok(Math.abs(joint.whitePoints - joint.blackPoints + 20.0) < 0.001,
+                "reviewing B9 with upper-left white 11 yields hypothetical B+20");
+
 
         // Two distinct enclosed eye points do NOT trigger the crude low-liberty
         // warning, even for a large chain. This is a heuristic safety regression.
