@@ -1,0 +1,10 @@
+{
+  "game": "cgos9_1",
+  "run_id": "1290a8c5056148be",
+  "status": "PASS",
+  "backend": "cpu",
+  "app_result": {
+    "status": "PASS",
+    "line": "I/RefereeSmoke( 5450): PASS id=1290a8c5056148be game=cgos9_1 stage=dialog verdict=READY_TO_COUNT moves=45 dead=0 review=0 vulnerable=0 minLead=NaN maxLead=NaN hasBlack=false hasWhite=false hasPV=false"
+  }
+}

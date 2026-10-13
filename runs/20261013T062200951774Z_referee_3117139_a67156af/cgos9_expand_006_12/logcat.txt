@@ -1,0 +1,16 @@
+--------- beginning of main
+I/RefereeSmoke( 4960): START id=a2c9f59fdeaa448c game=cgos9_expand_006_12 requested=cpu
+I/RefereeSmoke( 4960): REPLAY id=a2c9f59fdeaa448c game=cgos9_expand_006_12 moves=82 terminal=true backend=PIE/ProcessBuilder lead=+4.77 dead=1 review=2 vulnerable=1
+I/RefereeSmoke( 4960): PASS id=a2c9f59fdeaa448c game=cgos9_expand_006_12 stage=dialog verdict=REVIEW_REQUIRED moves=82 dead=1 review=2 vulnerable=1 minLead=-20.0 maxLead=8.0 hasBlack=true hasWhite=true hasPV=true
+I/RefereeSmoke( 5059): START id=a5fa990a1c504a0e game=cgos9_1 requested=cpu
+I/RefereeSmoke( 5059): REPLAY id=a5fa990a1c504a0e game=cgos9_1 moves=45 terminal=true backend=PIE/ProcessBuilder lead=-0.75 dead=0 review=0 vulnerable=0
+I/RefereeSmoke( 5059): PASS id=a5fa990a1c504a0e game=cgos9_1 stage=dialog verdict=READY_TO_COUNT moves=45 dead=0 review=0 vulnerable=0 minLead=NaN maxLead=NaN hasBlack=false hasWhite=false hasPV=false
+I/RefereeSmoke( 5145): START id=deed0755c2554b35 game=cgos9_2 requested=cpu
+I/RefereeSmoke( 5145): REPLAY id=deed0755c2554b35 game=cgos9_2 moves=60 terminal=true backend=PIE/ProcessBuilder lead=+0.79 dead=0 review=1 vulnerable=1
+I/RefereeSmoke( 5145): PASS id=deed0755c2554b35 game=cgos9_2 stage=dialog verdict=REVIEW_REQUIRED moves=60 dead=0 review=1 vulnerable=1 minLead=-13.0 maxLead=2.0 hasBlack=true hasWhite=true hasPV=true
+I/RefereeSmoke( 5237): START id=2be71fe8c6764934 game=cgos9_5 requested=cpu
+I/RefereeSmoke( 5237): REPLAY id=2be71fe8c6764934 game=cgos9_5 moves=56 terminal=true backend=PIE/ProcessBuilder lead=-22.60 dead=1 review=0 vulnerable=0
+I/RefereeSmoke( 5237): PASS id=2be71fe8c6764934 game=cgos9_5 stage=dialog verdict=REVIEW_REQUIRED moves=56 dead=1 review=0 vulnerable=0 minLead=NaN maxLead=NaN hasBlack=true hasWhite=true hasPV=true
+I/RefereeSmoke( 5352): START id=d100d6a811df4b91 game=cgos9_expand_006_12 requested=cpu
+I/RefereeSmoke( 5352): REPLAY id=d100d6a811df4b91 game=cgos9_expand_006_12 moves=82 terminal=true backend=PIE/ProcessBuilder lead=+4.77 dead=1 review=2 vulnerable=1
+I/RefereeSmoke( 5352): PASS id=d100d6a811df4b91 game=cgos9_expand_006_12 stage=dialog verdict=REVIEW_REQUIRED moves=82 dead=1 review=2 vulnerable=1 minLead=-20.0 maxLead=8.0 hasBlack=true hasWhite=true hasPV=true
