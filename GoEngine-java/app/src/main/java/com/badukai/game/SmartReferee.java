@@ -93,17 +93,26 @@ public final class SmartReferee {
                 liberties.add(new Point(x, y));
         }
         if (liberties.size() > 3) return false;
+        Intersection color = board.get(chain.iterator().next());
+        StoneColor opponent = color == Intersection.BLACK ? StoneColor.WHITE : StoneColor.BLACK;
         int eyeCandidates = 0;
         for (Point p : liberties) {
-            boolean surrounded = true;
+            // An eye may be jointly surrounded by several friendly chains;
+            // requiring every neighbor to belong to THIS chain incorrectly
+            // flagged the three enclosed points F2/G1/J2 of CGOS 006_12.
+            boolean friendlySurround = true;
             for (int i = 0; i < 4; i++) {
                 int x = p.x + DX[i], y = p.y + DY[i];
-                if (board.isInside(x, y) && !chain.contains(new Point(x, y))) {
-                    surrounded = false;
+                if (board.isInside(x, y) && board.get(x, y) != color) {
+                    friendlySurround = false;
                     break;
                 }
             }
-            if (surrounded && ++eyeCandidates >= 2) return false;
+            // Opponent legal capture/invasion disproves a solid enclosed eye.
+            // Even two candidates are only a reason to SKIP this crude warning,
+            // never a formal proof of life (shared and false eyes can occur).
+            if (friendlySurround && !board.isLegalMove(p, opponent) && ++eyeCandidates >= 2)
+                return false;
         }
         return true;
     }
