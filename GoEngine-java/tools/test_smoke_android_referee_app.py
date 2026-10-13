@@ -101,7 +101,8 @@ class RefereeSmokeHostTests(unittest.TestCase):
         activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
         entry = activity.split("private void showEndgameScoringOptions()",1)[1].split("private static String refereeSearchSummary",1)[0]
         self.assertNotIn('if (!board.isGameOver()) {',entry)
-        self.assertIn('startSmartReferee();',entry)
+        self.assertIn('showQuickNnRefereeEstimate();',entry)
+        self.assertIn('setNeutralButton("详细死活分析", (dialog,which) -> startSmartReferee())',entry)
         begin = activity.split("private void startSmartReferee()",1)[1].split("engineExecutor.execute",1)[0]
         self.assertNotIn('!board.isGameOver()',begin)
         self.assertIn('final boolean endedAtStart = board.isGameOver()',begin)
