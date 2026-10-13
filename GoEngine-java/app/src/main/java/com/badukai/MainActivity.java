@@ -215,7 +215,9 @@ public class MainActivity extends AppCompatActivity {
 
     private String refereeSmokeId() {
         String raw = getIntent() == null ? "" : getIntent().getStringExtra("referee_smoke_id");
-        return raw == null ? "" : raw.replaceAll("[^A-Za-z0-9_-]", "").substring(0,Math.min(raw.length(),40));
+        if (raw == null) return "";
+        String cleaned = raw.replaceAll("[^A-Za-z0-9_-]", "");
+        return cleaned.substring(0,Math.min(cleaned.length(),40));
     }
 
     private void startDebugRefereeSmoke() {
