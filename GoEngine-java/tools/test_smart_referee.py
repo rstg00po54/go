@@ -87,6 +87,7 @@ public final class SmartRefereeSmoke {
         EndgameAdjudicator.Result calm = EndgameAdjudicator.analyze(stopped, new float[81]);
         ok(calm.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT,
                 "quiet double-pass game may enter manual scoring");
+        ok(calm.summary().contains("确认数子"), "settled game must not display unfinished warning");
         ok(stopped.resumeAfterPasses() && !stopped.isGameOver(), "resume restores playing state");
         ok(stopped.getMoveCount() == 2, "resume removes exactly the two passes");
         ok(!stopped.canResumeAfterPasses(), "normal game cannot resume after passes");
@@ -100,6 +101,7 @@ public final class SmartRefereeSmoke {
         EndgameAdjudicator.Result tactical = EndgameAdjudicator.analyze(urgent, new float[81]);
         ok(tactical.verdict == EndgameAdjudicator.Verdict.CONTINUE_RECOMMENDED,
                 "first-move tactical capture should recommend continuation");
+        ok(tactical.summary().contains("继续对局"), "forced tactical continuation keeps its stronger warning");
         ok(hasReason(tactical, EndgameAdjudicator.Reason.FIRST_MOVE_TACTIC),
                 "must explain atari and supply a concrete location");
         ok(urgent.get(1,1) == Intersection.BLACK, "tactical simulation must not mutate actual board");
@@ -108,6 +110,8 @@ public final class SmartRefereeSmoke {
         EndgameAdjudicator.Result doomedAtari = EndgameAdjudicator.analyze(urgent,doomedOwnership);
         ok(doomedAtari.verdict == EndgameAdjudicator.Verdict.REVIEW_REQUIRED,
                 "a strongly NN-dead atari group needs human confirmation, not forced continuation");
+        ok(doomedAtari.summary().contains("疑似没下完"),
+                "uncertain terminal result suggests continuation without claiming proof");
         ok(!hasReason(doomedAtari,EndgameAdjudicator.Reason.FIRST_MOVE_TACTIC),
                 "extending a proposed dead chain is not proof the game must resume");
         GoBoard shared = new GoBoard(3);
