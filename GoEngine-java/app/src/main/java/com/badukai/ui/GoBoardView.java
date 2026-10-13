@@ -43,7 +43,7 @@ public class GoBoardView extends View {
     private GoBoard board = new GoBoard(19);
     private Point lastMove;
     private float[] ownershipWhite;
-    private Set<Point> refereeDead, refereeReview;
+    private Set<Point> refereeDead, refereeReview, refereeAlerts;
     private int ownershipMode = OWNERSHIP_OFF;
     private Point[] recommendedPoints;
     private float[] recommendedProbabilities;
@@ -90,6 +90,12 @@ public class GoBoardView extends View {
     public void setRefereeMarks(Set<Point> dead, Set<Point> review) {
         refereeDead = dead == null ? null : new HashSet<>(dead);
         refereeReview = review == null ? null : new HashSet<>(review);
+        invalidate();
+    }
+
+    /** Amber outlined candidate locations for ko or urgent endgame fighting. */
+    public void setEndgameAlerts(Set<Point> alerts) {
+        refereeAlerts = alerts == null ? null : new HashSet<>(alerts);
         invalidate();
     }
 
@@ -185,6 +191,7 @@ public class GoBoardView extends View {
             drawDeadStoneOwnership(canvas, n);
             drawRecommendations(canvas);
             drawRefereeMarks(canvas);
+            drawEndgameAlerts(canvas);
         } else drawPreviewMoveNumbers(canvas);
     }
 
@@ -207,6 +214,21 @@ public class GoBoardView extends View {
             canvas.drawCircle(cx, cy, r, paint);
             canvas.drawLine(cx - r * 0.68f, cy - r * 0.68f, cx + r * 0.68f, cy + r * 0.68f, paint);
             canvas.drawLine(cx + r * 0.68f, cy - r * 0.68f, cx - r * 0.68f, cy + r * 0.68f, paint);
+        }
+        paint.setStyle(Paint.Style.FILL);
+    }
+
+    private void drawEndgameAlerts(Canvas canvas) {
+        if (refereeAlerts == null) return;
+        paint.setShader(null);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setColor(Color.rgb(227, 110, 16));
+        paint.setStrokeWidth(Math.max(dp(2.5f), cellSize * 0.08f));
+        for (Point p : refereeAlerts) {
+            if (!board.isInside(p.x,p.y) || (refereeDead != null && refereeDead.contains(p))) continue;
+            float cx = padding + p.x * cellSize, cy = padding + p.y * cellSize;
+            float radius = cellSize * 0.47f;
+            canvas.drawCircle(cx,cy,radius,paint);
         }
         paint.setStyle(Paint.Style.FILL);
     }
