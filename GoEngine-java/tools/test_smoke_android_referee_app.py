@@ -33,7 +33,12 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn('refereeExitButton.setOnClickListener(v -> leaveRefereeReview())',activity)
         self.assertIn('refereeContinueButton.setOnClickListener(v -> resumeFromReferee())',activity)
         self.assertIn('refereeTapOverlay.setOnClickListener(v -> {',activity)
-        self.assertIn('refereeTapOverlay.setVisibility(mustContinue && !evaluating ? View.VISIBLE : View.GONE)',activity)
+        self.assertIn('refereeTapOverlay.setVisibility(mustContinue && refereeAwaitingTap && !evaluating',activity)
+        self.assertIn('if (refereeMode && refereeRequiresContinuation() && refereeAwaitingTap)',activity)
+        self.assertIn('refereeAwaitingTap = false;',activity)
+        self.assertIn('refereeAwaitingTap = true;',activity)
+        self.assertIn('.setPositiveButton("继续下棋", (dialog, which) -> armRefereeTapToResume())',activity)
+        self.assertIn('.setCancelable(false)',activity)
         self.assertIn('refereeContinueButton.setVisibility(View.GONE)',activity)
         self.assertIn('boardView.setRefereeMarks(null,null);',activity)
         self.assertIn('refereeConfirmButton.setVisibility(refereeMode && !mustContinue ? View.VISIBLE : View.GONE)',activity)
@@ -49,7 +54,7 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn('countTerritoryButton.setText("智能裁判");',activity)
         self.assertIn('new AlertDialog.Builder(this).setTitle("智能裁判 · 对局还没结束")',activity)
         self.assertIn('countTerritoryButton.setEnabled(engineReady && gameReady',activity)
-        self.assertIn('if (refereeRequiresContinuation()) return;',activity)
+        self.assertIn('if (refereeAwaitingTap) resumeFromReferee();',activity)
 
     def test_referee_overlay_is_above_game_page_and_hidden_by_default(self):
         root = Path(__file__).resolve().parents[1]
@@ -97,11 +102,17 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertEqual(smoke_event(log, "123")["status"], "FAIL")
 
     def test_dialog_requirements(self):
-        text = "智能裁判 · 可以进入确认数子 黄圈 确认数子"
-        self.assertEqual(validate_dialog(text,"cgos9_1"),[])
-        self.assertIn("黄圈",validate_dialog(text.replace("黄圈",""),"cgos9_1"))
+        ready = "智能裁判 · 可以进入确认数子 黄圈 确认数子"
+        self.assertEqual(validate_dialog(ready,"cgos9_1"),[])
+        self.assertIn("黄圈",validate_dialog(ready.replace("黄圈",""),"cgos9_1"))
+        disputed = ("智能裁判 · 存在争议 棋盘上已标出争议：红叉 5 处、黄圈 2 处、橙圈 1 处。"
+                    "点「继续下棋」关闭弹窗，争议标记仍保留。"
+                    "然后再点屏幕任意位置，清除标记并恢复对局。")
+        for case in ("cgos9_expand_006_12","cgos9_2","cgos9_5"):
+            self.assertEqual(validate_dialog(disputed,case),[],case)
+            self.assertIn("争议标记仍保留",validate_dialog(disputed.replace("争议标记仍保留",""),case))
 
-    def test_disputed_referee_uses_single_full_screen_touch_overlay(self):
+    def test_two_stage_dispute_dialog_then_full_screen_touch_overlay(self):
         xml = ET.fromstring('<hierarchy><node text="智能裁判 · 存在争议" clickable="false" />'
                             '<node content-desc="点击屏幕继续下棋" clickable="true" '
                             'bounds="[0,0][960,1500]" /></hierarchy>')
@@ -133,6 +144,13 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertEqual(smoke.overlay_marks(log,"active"),{"dead":0,"review":4,"alerts":2})
         self.assertIsNone(smoke.overlay_marks(log,"missing"))
         self.assertIsNone(smoke.overlay_marks("I/Other: OVERLAY id=active dead=1 review=2 alerts=3","active"))
+
+    def test_first_dialog_continue_only_arms_without_undoing_moves(self):
+        log = ("I/RefereeSmoke: ARMED id=other moves=70 terminal=true marked=5\n"
+               "I/RefereeSmoke: ARMED id=active moves=82 terminal=true marked=4")
+        self.assertEqual(smoke.armed_event(log,"active"),log.splitlines()[-1])
+        self.assertIsNone(smoke.resume_event(log,"active"))
+        self.assertIsNone(smoke.armed_event(log,"missing"))
 
     def test_resume_event_from_live_android_app(self):
         records = ("I/RefereeSmoke: RESUME id=prior moves=99 terminal=false refereeMode=false gameReady=true\n"
