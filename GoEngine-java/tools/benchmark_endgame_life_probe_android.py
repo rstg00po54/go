@@ -92,17 +92,56 @@ def parse_search_candidates(response):
     return candidates[:3]
 
 
+def verify_pv(engine, case, initial_lead, watched, reply, candidate, depth):
+    """Play MCTS PV one step at a time on this disposable branch; no new search.
+
+    scoreLead and winrate in the candidate refer to the search before the
+    first PV move. Subsequent whiteLead/whiteWin are raw NN, not MCTS estimates.
+    """
+    pv = candidate["pv"]
+    if not pv or pv[0].upper() != candidate["move"].upper():
+        pv = [candidate["move"]]
+    steps, error = [], None
+    color = reply
+    for index, move in enumerate(pv[:depth]):
+        v = move.upper()
+        if v not in ("PASS",) and (not re.fullmatch(r"[A-HJ-Z][1-9][0-9]*",v)
+                                  or GTP_COLUMNS.index(v[0]) >= case["size"]
+                                  or int(v[1:]) > case["size"]):
+            error = "Invalid PV move %s at offset %d" % (move,index)
+            break
+        try:
+            engine.command("play %s %s" % (color,move))
+            raw, nn_ms = engine.command("kata-raw-nn 0")
+            lead, white_win, white_loss = parse_nn_metrics(raw)
+            ownership = ownership_from_raw(raw,case["size"])
+        except (RuntimeError,TimeoutError,ValueError) as exc:
+            error = "PV stopped at move %d (%s %s): %s" % (index+1,color,move,str(exc)[:180])
+            break
+        steps.append({"ply":index+2,"color":color,"move":move,
+                      "white_lead":round(lead,3),
+                      "delta_white_lead":round(lead-initial_lead,3),
+                      "white_win":round(white_win,5),
+                      "white_loss":round(white_loss,5),
+                      "nn_ms":round(nn_ms,3),
+                      "watch_white_ownership":{
+                          v:nn_ownership_at(ownership,v,case["size"]) for v in watched}})
+        color = "black" if color == "white" else "white"
+    return steps,error
+
+
 def run_probes(engine, case, candidates, watched, search_visits=0,
-               search_seconds=3.0, verify_replies=False):
+               search_seconds=3.0, verify_replies=False, pv_depth=1):
     check_engine_position(engine, case)
     if search_visits:
         engine.command("kata-set-param maxVisits %d" % search_visits)
         engine.command("kata-set-param maxTime %.3f" % search_seconds)
     restore_probe_position(engine, case)
     raw, baseline_ms = engine.command("kata-raw-nn 0")
-    initial_lead, _, _ = parse_nn_metrics(raw)
+    initial_lead, initial_win, initial_loss = parse_nn_metrics(raw)
     initial_ownership = ownership_from_raw(raw, case["size"])
-    baseline = {"white_lead": round(initial_lead, 3), "nn_ms": round(baseline_ms, 3),
+    baseline = {"white_lead": round(initial_lead, 3), "white_win": round(initial_win,5),
+                "white_loss": round(initial_loss,5), "nn_ms": round(baseline_ms, 3),
                 "watch_white_ownership": {
                     v: nn_ownership_at(initial_ownership, v, case["size"]) for v in watched}}
     rows = []
@@ -142,24 +181,21 @@ def run_probes(engine, case, candidates, watched, search_visits=0,
                             "No structured candidate info parsed; response starts: "
                             + repr(text[:350]))
                     elif verify_replies:
-                        # GTP kata-search_analyze does not play its suggested move.
-                        # Apply exactly the highest-visit opponent reply to this
-                        # isolated probe and independently evaluate the 2-ply board.
+                        # GTP analysis does not play moves. Replay up to pv_depth
+                        # of the best variation with alternating colors.
                         best = row["reply_candidates"][0]
                         row["verified_reply_move"] = best["move"]
                         row["verified_reply_color"] = reply
-                        try:
-                            engine.command("play %s %s" % (reply,best["move"]))
-                            raw2, ms2 = engine.command("kata-raw-nn 0")
-                            two_ply_lead, _, _ = parse_nn_metrics(raw2)
-                            own2 = ownership_from_raw(raw2,case["size"])
-                            row["two_ply_white_lead"] = round(two_ply_lead,3)
-                            row["two_ply_delta_white_lead"] = round(two_ply_lead-initial_lead,3)
-                            row["two_ply_nn_ms"] = round(ms2,3)
-                            row["two_ply_watch_white_ownership"] = {
-                                v:nn_ownership_at(own2,v,case["size"]) for v in watched}
-                        except (RuntimeError,TimeoutError,ValueError) as exc:
-                            row["reply_verification_warning"] = str(exc)[:240]
+                        trace, error = verify_pv(engine,case,initial_lead,watched,reply,best,pv_depth)
+                        row["pv_trace"] = trace
+                        if trace:
+                            first = trace[0]
+                            row["two_ply_white_lead"] = first["white_lead"]
+                            row["two_ply_delta_white_lead"] = first["delta_white_lead"]
+                            row["two_ply_nn_ms"] = first["nn_ms"]
+                            row["two_ply_watch_white_ownership"] = first["watch_white_ownership"]
+                        if error:
+                            row["reply_verification_warning"] = error
                 except (RuntimeError,TimeoutError,ValueError) as exc:
                     row["reply_search_warning"] = str(exc)[:240]
             rows.append(row)
@@ -181,7 +217,9 @@ def main():
     p.add_argument("--search-seconds", type=float, default=3.0,
                    help="KataGo MCTS time cap in seconds per tested reply")
     p.add_argument("--verify-replies", action="store_true",
-                   help="Replay best MCTS opponent response and run a second raw NN evaluation")
+                   help="Replay best MCTS reply and evaluate the resulting NN position")
+    p.add_argument("--pv-depth", type=int, default=1,
+                   help="Maximum MCTS PV moves to replay after the first probe (1..10, default 1)")
     p.add_argument("--timeout", type=float, default=160.0)
     p.add_argument("--adb", default=os.getenv("ADB") or shutil.which("adb"))
     p.add_argument("--sgf-dir", type=Path)
@@ -192,6 +230,10 @@ def main():
         p.error("Invalid --limit, --threads, --search-visits or --search-seconds")
     if args.verify_replies and args.search_visits == 0:
         p.error("--verify-replies requires --search-visits > 0")
+    if not 1 <= args.pv_depth <= 10:
+        p.error("--pv-depth must be between 1 and 10")
+    if args.pv_depth > 1 and not args.verify_replies:
+        p.error("--pv-depth > 1 requires --verify-replies")
     names = {name.strip() for name in args.games.split(",") if name.strip()}
     if not names:
         p.error("--games cannot be empty")
@@ -224,7 +266,8 @@ def main():
             candidates = parse_vertices(args.probe_vertices, size)
             watched = parse_vertices(args.watch_vertices, size)
             baseline, probes = run_probes(engine, case, candidates, watched,
-                                          args.search_visits,args.search_seconds,args.verify_replies)
+                                          args.search_visits,args.search_seconds,
+                                          args.verify_replies,args.pv_depth)
             print("%s: baseline NN white lead %+6.2f; target white ownership %s" %
                   (case["name"], baseline["white_lead"], baseline["watch_white_ownership"]), flush=True)
             for probe in probes:
@@ -249,15 +292,21 @@ def main():
                           (probe["verified_reply_color"],probe["verified_reply_move"],
                            probe["two_ply_white_lead"],probe["two_ply_delta_white_lead"],
                            probe["two_ply_watch_white_ownership"]),flush=True)
+                for step in probe.get("pv_trace",[])[1:]:
+                    print("    PV ply %-2d %-5s %-5s NN white lead=%+7.2f delta=%+7.2f "
+                          "whiteWin=%.3f targets=%s" %
+                          (step["ply"],step["color"],step["move"],step["white_lead"],
+                           step["delta_white_lead"],step["white_win"],
+                           step["watch_white_ownership"]),flush=True)
                 if "reply_verification_warning" in probe:
-                    print("    2-ply verification warning:",probe["reply_verification_warning"],flush=True)
+                    print("    PV verification warning:",probe["reply_verification_warning"],flush=True)
                 if "reply_search_warning" in probe:
                     print("    MCTS warning:",probe["reply_search_warning"],flush=True)
             rows.append({"game": case["name"], "size": size, "official_re": case["official_re"],
                          "baseline": baseline, "probes": probes})
         report = output / "life_probe.json"
         report.write_text(json.dumps({"type": "endgame_one_move_nn_probes",
-            "warning": "Single- and two-ply NN/MCTS differences cannot prove that a group lives or dies.",
+            "warning": "Raw NN after each MCTS-PV move and root MCTS searches cannot prove life or death; no deeper search occurs during PV replay.",
             "device": serial, "mode": args.mode, "cases": rows}, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8")
         print("Local report:", report, flush=True)
