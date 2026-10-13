@@ -230,10 +230,16 @@ class RefereeSmokeHostTests(unittest.TestCase):
             self.assertEqual([vertex for _,vertex in nodes[-2:]],["",""],game)
 
     def test_generic_case_does_not_require_mcts_or_whatif(self):
-        text = "智能裁判 · 已可数子 待复核 0 块 黄圈 确认数子"
-        self.assertEqual(validate_dialog(text,"cgos9_1"),[])
-        with self.assertRaises(ValueError):
-            validate_dialog(text,"cgos9_expand_006_12")
+        ready = "智能裁判 · 已可数子 待复核 0 块 黄圈 确认数子"
+        self.assertEqual(validate_dialog(ready,"cgos9_1"),[])
+        # A disputed game now intentionally OPENS a dialogue with board markers:
+        # missing dispute text is a validation result, not an exception.
+        self.assertIn("智能裁判 · 存在争议",
+                      validate_dialog(ready,"cgos9_expand_006_12"))
+        disputed = ("智能裁判 · 存在争议 棋盘上已标出争议：红叉 1 处、黄圈 2 处、橙圈 3 处。"
+                    "点「继续下棋」关闭弹窗，争议标记仍保留。"
+                    "然后再点屏幕任意位置，清除标记并恢复对局。")
+        self.assertEqual(validate_dialog(disputed,"cgos9_expand_006_12"),[])
 
     def test_upload_on_success_fail_and_ctrl_c(self):
         with tempfile.TemporaryDirectory() as directory:
