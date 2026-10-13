@@ -1,7 +1,9 @@
 package com.badukai.game;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -134,6 +136,70 @@ public final class SmartReferee {
             count++;
         }
         return count;
+    }
+
+    /** 
+     * Counterfactual score bounds when some review groups are declared dead.
+     * These are NOT live/dead probabilities, official scores, or recommended actions.
+     * In particular, combining groups can change large neutral regions' ownership.
+     */
+    public static final class ScoreWhatIf {
+        public final double baselineWhiteLead, minWhiteLead, maxWhiteLead;
+        public final int reviewGroups, enumeratedGroups;
+        public final Set<Point> minAdditionalDead, maxAdditionalDead;
+
+        private ScoreWhatIf(double baseline, double min, double max, int total, int enumerated,
+                            Set<Point> minDead, Set<Point> maxDead) {
+            baselineWhiteLead = baseline;
+            minWhiteLead = min;
+            maxWhiteLead = max;
+            reviewGroups = total;
+            enumeratedGroups = enumerated;
+            minAdditionalDead = Collections.unmodifiableSet(new HashSet<>(minDead));
+            maxAdditionalDead = Collections.unmodifiableSet(new HashSet<>(maxDead));
+        }
+        public boolean winnerCanChange() { return minWhiteLead < -0.001 && maxWhiteLead > 0.001; }
+        public boolean exhaustive() { return reviewGroups == enumeratedGroups; }
+    }
+
+    /** Enumerate up to eight independent review chains; no SGF result or NN score is used. */
+    public static ScoreWhatIf scoreWhatIf(GoBoard board, Set<Point> suggestedDead, Set<Point> review,
+                                         double komi, int handicap) {
+        if (board == null) throw new IllegalArgumentException("Missing board");
+        Set<Point> baseline = suggestedDead == null ? new HashSet<>() : new HashSet<>(suggestedDead);
+        Set<Point> selected = review == null ? Collections.emptySet() : review;
+        Set<Point> visited = new HashSet<>();
+        List<Set<Point>> candidates = new ArrayList<>();
+        int total = 0, n = board.getSize();
+        for (int y=0; y<n; y++) for (int x=0; x<n; x++) {
+            Point point = new Point(x,y);
+            if (!selected.contains(point) || baseline.contains(point) || visited.contains(point)
+                    || board.get(point) == Intersection.EMPTY) continue;
+            Set<Point> chain = group(board,point);
+            visited.addAll(chain);
+            // Never double-count a chain already marked dead.
+            if (!Collections.disjoint(chain,baseline)) continue;
+            total++;
+            if (candidates.size() < 8) candidates.add(chain);
+        }
+        double baseLead = whiteLead(board.countChineseScore(baseline,komi,handicap));
+        double min = baseLead, max = baseLead;
+        Set<Point> minExtra = new HashSet<>(), maxExtra = new HashSet<>();
+        for (int mask=1; mask<(1 << candidates.size()); mask++) {
+            Set<Point> extra = new HashSet<>();
+            for (int i=0; i<candidates.size(); i++)
+                if ((mask & (1 << i)) != 0) extra.addAll(candidates.get(i));
+            Set<Point> dead = new HashSet<>(baseline);
+            dead.addAll(extra);
+            double lead = whiteLead(board.countChineseScore(dead,komi,handicap));
+            if (lead < min) { min = lead; minExtra = extra; }
+            if (lead > max) { max = lead; maxExtra = extra; }
+        }
+        return new ScoreWhatIf(baseLead,min,max,total,candidates.size(),minExtra,maxExtra);
+    }
+
+    private static double whiteLead(GoBoard.FinalScore score) {
+        return score.whitePoints - score.blackPoints;
     }
 
     /** Compare the confirmed-stone count against the NN estimate to detect disputed endings. */
