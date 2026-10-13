@@ -1,0 +1,24 @@
+name: KataGo forced pass comparison
+on:
+  push:
+    branches: [rk3588-engine]
+    paths: [.github/workflows/katago-pass-compare.yml, GoEngine-java/tools/test_native_katago_pass_compare.py]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  run:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download official CPU engine
+        run: |
+          curl -fL --retry 3 -o /tmp/k.zip https://github.com/lightvector/KataGo/releases/download/v1.18.1/katago-v1.18.1-eigenavx2-linux-x64.zip
+          mkdir -p /tmp/k
+          unzip -q /tmp/k.zip -d /tmp/k
+          chmod +x /tmp/k/katago
+      - name: Verify native forced-pass GTP on 19 cases
+        run: |
+          python3 -m py_compile GoEngine-java/tools/test_native_katago_pass_compare.py
+          timeout 480 python3 GoEngine-java/tools/test_native_katago_pass_compare.py --katago /tmp/k/katago --config GoEngine-java/app/src/main/assets/engine/default_gtp.cfg --model GoEngine-java/app/src/main/assets/engine/10b.bin
