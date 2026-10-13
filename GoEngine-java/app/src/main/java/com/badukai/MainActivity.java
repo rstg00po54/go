@@ -998,12 +998,26 @@ public class MainActivity extends AppCompatActivity {
         render("智能裁判：KataGo 正在检查形势与死子...");
         engineExecutor.execute(() -> {
             String nativeScore = null, nativeDead = null;
+            final long scoreStartNs = System.nanoTime();
             try {
                 nativeScore = engine.getFinalScore();
+            } catch (RuntimeException ex) {
+                Log.w(TAG,"Native KataGo final_score failed",ex);
+            }
+            final long scoreMs = (System.nanoTime()-scoreStartNs)/1000000L;
+            final String preliminaryScore = nativeScore;
+            mainHandler.post(() -> {
+                if (board == snapshot && board.getMoveCount() == moves && boardSize == size && evaluating)
+                    render(preliminaryScore == null ? "KataGo 正在判断死子..."
+                            : "KataGo 已估分 " + preliminaryScore.trim() + "，正在判断死子...");
+            });
+            final long deadStartNs = System.nanoTime();
+            try {
                 nativeDead = engine.getFinalDeadStones();
             } catch (RuntimeException ex) {
-                Log.w(TAG,"Native KataGo referee analysis failed",ex);
+                Log.w(TAG,"Native KataGo final_status_list dead failed",ex);
             }
+            final long deadMs = (System.nanoTime()-deadStartNs)/1000000L;
             final String score = nativeScore, deadVertices = nativeDead;
             mainHandler.post(() -> {
                 if (board != snapshot || board.getMoveCount() != moves || boardSize != size) {
@@ -1033,8 +1047,8 @@ public class MainActivity extends AppCompatActivity {
                         ? "双方已停棋；结果仅供复核，正式数子仍需确认。"
                         : "棋局尚未结束；这是当前局面的预测，不代表对局自动结束。";
                 Log.i(TAG,String.format(Locale.US,
-                        "REFEREE_NATIVE_GTP moves=%d terminal=%s score=%s dead=%d elapsedMs=%d",
-                        moves,endedAtStart,score,predictedDead.size(),
+                        "REFEREE_NATIVE_GTP moves=%d terminal=%s score=%s dead=%d scoreMs=%d deadMs=%d elapsedMs=%d",
+                        moves,endedAtStart,score,predictedDead.size(),scoreMs,deadMs,
                         (System.nanoTime()-startedNs)/1000000L));
                 nativeRefereeMarkedBoard = snapshot;
                 nativeRefereeMarkedMoves = moves;
