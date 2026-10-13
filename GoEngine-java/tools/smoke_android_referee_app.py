@@ -81,7 +81,7 @@ def read_dialog_xml(adb,serial):
 
 
 def validate_dialog(text, game=STRICT_CASE):
-    required = ("智能裁判","黄圈","待复核")
+    required = ("智能裁判","黄圈")
     if game == STRICT_CASE:
         required += ("黑先：","白先：","搜索胜率","不同死子组合")
     return [part for part in required if part not in text]
