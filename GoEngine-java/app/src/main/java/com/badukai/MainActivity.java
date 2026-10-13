@@ -880,8 +880,10 @@ public class MainActivity extends AppCompatActivity {
                 AlertDialog.Builder dialog = new AlertDialog.Builder(this)
                         .setTitle("智能裁判 · " + decision.summary()).setMessage(reasons.toString())
                         .setNegativeButton("稍后复核", null);
-                if (decision.verdict == EndgameAdjudicator.Verdict.CONTINUE_RECOMMENDED
-                        && board.canResumeAfterPasses()) {
+                boolean offerResume = decision.verdict == EndgameAdjudicator.Verdict.CONTINUE_RECOMMENDED;
+                for (EndgameAdjudicator.Finding finding : decision.findings)
+                    if (finding.reason == EndgameAdjudicator.Reason.POSSIBLE_KO) offerResume = true;
+                if (offerResume && board.canResumeAfterPasses()) {
                     dialog.setPositiveButton("继续对局", (ignored, which) -> resumeFromReferee())
                             .setNeutralButton("先复核死子", null);
                 } else dialog.setPositiveButton("开始复核", null);
