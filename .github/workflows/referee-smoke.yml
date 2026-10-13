@@ -12,7 +12,8 @@ on:
       - "GoEngine-java/tools/test_benchmark_endgame_life_probe.py"
       - "GoEngine-java/tools/smoke_android_referee_app.py"
       - "GoEngine-java/tools/test_smoke_android_referee_app.py"
-      - "GoEngine-java/app/src/debug/assets/referee_smoke_006_12.sgf"
+      - "GoEngine-java/app/src/debug/assets/referee_smoke_*.sgf"
+      - "GoEngine-java/app/src/main/java/com/badukai/MainActivity.java"
       - "GoEngine-java/tools/benchmark_endgame_referee_android.py"
   pull_request:
     paths:
@@ -24,7 +25,8 @@ on:
       - "GoEngine-java/tools/test_benchmark_endgame_life_probe.py"
       - "GoEngine-java/tools/smoke_android_referee_app.py"
       - "GoEngine-java/tools/test_smoke_android_referee_app.py"
-      - "GoEngine-java/app/src/debug/assets/referee_smoke_006_12.sgf"
+      - "GoEngine-java/app/src/debug/assets/referee_smoke_*.sgf"
+      - "GoEngine-java/app/src/main/java/com/badukai/MainActivity.java"
       - "GoEngine-java/tools/benchmark_endgame_referee_android.py"
   workflow_dispatch:
 
