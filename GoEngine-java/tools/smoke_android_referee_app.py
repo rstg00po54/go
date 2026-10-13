@@ -139,7 +139,10 @@ def validate_confirmation_dialog(text,game):
         required = ("疑似双活或劫争尚未证明","人工确认并数子")
     else:
         required = ("死子需要确认","返回棋盘确认","黄圈全部判活")
-    return [part for part in required if part not in text]
+    missing = [part for part in required if part not in text]
+    if game != "cgos9_1":
+        missing += ["unexpected forced continuation" for word in ("继续下棋","继续对局") if word in text]
+    return missing
 
 
 def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir):
