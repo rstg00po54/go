@@ -8,6 +8,8 @@
 - GTP 的 final_status_list dead 可含多行坐标，已修复原来只解析首行的问题。
 - 旧的 startSmartReferee() 仍仅由旧版自动化烟雾测试入口使用，以便保留历史回归。普通 UI 已不走这套双边搜索和 Java 启发式算法。
 
+KataGo v1.15.0 原生源码中，final_score 采用至少 50 次访问、final_status_list 至少 100 次访问（实际下限还与线程数相关）。GTP 响应等待上限 60 秒/30 秒不等于通常耗时。详细裁判增加了先显示计分结果的进度提示，logcat 的 REFEREE_NATIVE_GTP 行包含 scoreMs、deadMs 与总耗时，便于分别比较手机和 RK3588、CPU 和 GPU。无需改 native so。
+
 需重新编译和安装 APK。手机/RK3588 均应验证 9/13/19 路，中盘/终局，以及 CPU/GPU 的响应、标记清除和历史棋步不变。final_score 可能需要较长时间，并非单次 NN。
 
 ---
