@@ -45,6 +45,9 @@ if [[ ! -s "$APK" ]]; then
 fi
 
 echo
+echo "Checking final APK for 16 KB ELF page alignment..."
+python3 "$PROJECT_DIR/tools/check_android_16kb.py" "$APK"
+
 echo "Build successful"
 echo "APK: $APK"
 ls -lh "$APK"
