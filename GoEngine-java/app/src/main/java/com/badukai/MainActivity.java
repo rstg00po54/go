@@ -1042,6 +1042,22 @@ public class MainActivity extends AppCompatActivity {
                         && alerts.isEmpty() && refereeDead.isEmpty() && refereeReview.isEmpty())
                     alerts.addAll(decision.highlights);
                 boardView.setEndgameAlerts(alerts);
+                // No marked dispute in an ongoing game is not an endgame
+                // controversy. Show a single, short informational dialog and
+                // immediately return to normal play, without a second tap.
+                if (!endedAtStart && refereeDead.isEmpty() && refereeReview.isEmpty() && alerts.isEmpty()) {
+                    refereeMode = false;
+                    endgameDecision = null;
+                    boardView.setRefereeMarks(null,null);
+                    boardView.setEndgameAlerts(null);
+                    render("棋局还没下完");
+                    new AlertDialog.Builder(this).setTitle("智能裁判")
+                            .setMessage("棋局还没下完")
+                            .setPositiveButton("继续下棋",null).show();
+                    if (isRefereeSmokeIntent()) Log.i("RefereeSmoke","NO_DISPUTE id=" + refereeSmokeId()
+                            + " moves=" + board.getMoveCount() + " terminal=" + board.isGameOver());
+                    return;
+                }
                 refreshRefereePreview();
                 String info = suggestion == null
                         ? "AI 建议不可用。可手动点击整块棋标记死子。"
