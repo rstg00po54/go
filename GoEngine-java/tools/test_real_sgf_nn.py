@@ -30,7 +30,7 @@ class FakeEngine:
 
 class RealSgfTests(unittest.TestCase):
     def test_bundled_games_are_real_scored_sgfs_with_provenance(self):
-        games, rejected = collect_games()
+        games, rejected = collect_games(limit=6)
         self.assertEqual(len(games), 6)
         self.assertEqual(rejected, [])
         self.assertEqual(sorted(set(g["size"] for g in games)), [9, 19])
@@ -44,6 +44,14 @@ class RealSgfTests(unittest.TestCase):
         self.assertTrue(games[0]["terminal_passes"])
         self.assertEqual(games[-1]["official_re"], "W+0.5")
         self.assertFalse(games[-1]["terminal_passes"])
+
+    def test_expanded_real_sgf_collection_is_large_and_deduplicated(self):
+        games, skipped = collect_games(limit=150)
+        self.assertGreaterEqual(len(games), 100)
+        self.assertEqual(len(games), len({g["sha256"] for g in games}))
+        self.assertTrue(all(g["official_winner"] in ("B", "W") for g in games))
+        self.assertTrue(all(g["rules"] == "Chinese" for g in games))
+        self.assertTrue(all(g["size"] in (9, 13, 19) for g in games))
 
     def test_sgf_properties_escaped_bracket_do_not_fake_result_or_moves(self):
         game = "(;GM[1]SZ[9]KM[7]RU[Chinese]RE[B+2]C[Fake RE\\[W+3\\] " \
