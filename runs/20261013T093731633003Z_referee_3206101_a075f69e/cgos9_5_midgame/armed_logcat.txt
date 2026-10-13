@@ -1,0 +1,12 @@
+--------- beginning of main
+I/RefereeSmoke( 9273): START id=0a777b2382624797 game=cgos9_5 requested=cpu midgame=true
+I/RefereeSmoke( 9273): REPLAY id=0a777b2382624797 game=cgos9_5 moves=54 terminal=false backend=PIE/ProcessBuilder lead=-23.46 dead=1 review=0 vulnerable=0
+I/RefereeSmoke( 9273): OVERLAY id=0a777b2382624797 dead=10 review=0 alerts=15
+I/RefereeSmoke( 9273): PASS id=0a777b2382624797 game=cgos9_5 stage=midgame_dialog verdict=REVIEW_REQUIRED moves=54 dead=1 review=0 vulnerable=0 minLead=NaN maxLead=NaN hasBlack=true hasWhite=true hasPV=true
+I/RefereeSmoke( 9273): ARMED id=0a777b2382624797 moves=54 terminal=false marked=10
+I/RefereeSmoke( 9273): INSPECT_RESUME id=0a777b2382624797 moves=54 after=54 terminal=false refereeMode=false gameReady=true
+I/RefereeSmoke( 9578): START id=eae7a8133c4b47a0 game=cgos9_5 requested=cpu midgame=true
+I/RefereeSmoke( 9578): REPLAY id=eae7a8133c4b47a0 game=cgos9_5 moves=54 terminal=false backend=PIE/ProcessBuilder lead=-23.46 dead=1 review=0 vulnerable=0
+I/RefereeSmoke( 9578): OVERLAY id=eae7a8133c4b47a0 dead=10 review=0 alerts=15
+I/RefereeSmoke( 9578): PASS id=eae7a8133c4b47a0 game=cgos9_5 stage=midgame_dialog verdict=REVIEW_REQUIRED moves=54 dead=1 review=0 vulnerable=0 minLead=NaN maxLead=NaN hasBlack=true hasWhite=true hasPV=true
+I/RefereeSmoke( 9578): ARMED id=eae7a8133c4b47a0 moves=54 terminal=false marked=10

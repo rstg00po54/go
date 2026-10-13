@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "backend_requested": "cpu",
+  "inspection": "midgame",
+  "cases": [
+    {
+      "game": "cgos9_5",
+      "run_id": "eae7a8133c4b47a0",
+      "status": "PASS",
+      "backend": "cpu",
+      "inspection": "midgame",
+      "app_result": {
+        "status": "PASS",
+        "line": "I/RefereeSmoke( 9578): PASS id=eae7a8133c4b47a0 game=cgos9_5 stage=midgame_dialog verdict=REVIEW_REQUIRED moves=54 dead=1 review=0 vulnerable=0 minLead=NaN maxLead=NaN hasBlack=true hasWhite=true hasPV=true"
+      },
+      "marks": {
+        "dead": 10,
+        "review": 0,
+        "alerts": 15
+      },
+      "resumed": {
+        "status": "PASS",
+        "line": "I/RefereeSmoke( 9578): INSPECT_RESUME id=eae7a8133c4b47a0 moves=54 after=54 terminal=false refereeMode=false gameReady=true"
+      }
+    }
+  ],
+  "outputs": "/mnt/hgfs/D/code/go/GoEngine-java/build/android_referee_smoke/20261013T093655942531Z",
+  "serial": "8719e18a71a2a66c"
+}
