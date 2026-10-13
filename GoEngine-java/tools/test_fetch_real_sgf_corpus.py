@@ -41,9 +41,11 @@ class CorpusDownloaderTests(unittest.TestCase):
             validate_download("resign", 9, "x.sgf", c["sgf"].replace("RE[B+2]", "RE[B+R]"))
 
     def test_populate_preserves_only_accepted_and_cleans_only_managed_stale(self):
-        games, _ = collect_games()
-        g9, g19 = games[0], games[-1]
-        self.assertEqual(g19["size"], 19, "Expected last bundled game to be 19x19")
+        # The expanded bundled corpus contains more than 100 entries, mostly
+        # 9x9. Never assume games[-1] is 19x19: the default limit is a slice.
+        games, _ = collect_games(limit=1000)
+        g9 = next(g for g in games if g["size"] == 9)
+        g19 = next(g for g in games if g["size"] == 19)
         self.assertNotEqual(g9["sha256"], g19["sha256"])
         self.assertEqual(validate_download("b.sgf", 19, "DataSet/2019-1255games/b.sgf",
                                            g19["sgf"])["size"], 19)
