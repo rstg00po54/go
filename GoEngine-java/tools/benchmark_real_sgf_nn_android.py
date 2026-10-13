@@ -174,7 +174,7 @@ def read_recorded_game(sgf_text, filename):
     }
 
 
-def collect_games(sgf_dir=None, limit=100):
+def collect_games(sgf_dir=None, limit=200):
     sources = []
     if sgf_dir is None:
         # All SGFs are bundled in version control: no runtime download needed.
@@ -335,7 +335,7 @@ def main(argv=None):
     p.add_argument("--serial", default=os.getenv("ANDROID_SERIAL"))
     p.add_argument("--mode", choices=("gpu", "cpu", "both"), default="gpu")
     p.add_argument("--sgf-dir", type=Path, help="Your own real scored SGFs, supports 9/13/19; private by default")
-    p.add_argument("--limit", type=int, default=150)
+    p.add_argument("--limit", type=int, default=200)
     p.add_argument("--repeats", type=int, default=2)
     p.add_argument("--threads", type=int, default=1)
     p.add_argument("--adb", default=os.getenv("ADB") or shutil.which("adb"))
