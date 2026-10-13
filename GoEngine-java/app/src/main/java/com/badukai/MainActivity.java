@@ -146,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
     private Button countTerritoryButton;
     private View refereePanel, gameActionPanel;
     private TextView refereePanelTitle, refereePanelScore, refereePanelHint;
-    private Button refereeResetButton, refereeConfirmButton, refereeExitButton;
+    private Button refereeResetButton, refereeConfirmButton, refereeExitButton, refereeContinueButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -425,9 +425,11 @@ public class MainActivity extends AppCompatActivity {
         refereeResetButton = findViewById(R.id.refereeResetButton);
         refereeConfirmButton = findViewById(R.id.refereeConfirmButton);
         refereeExitButton = findViewById(R.id.refereeExitButton);
+        refereeContinueButton = findViewById(R.id.refereeContinueButton);
         refereeResetButton.setOnClickListener(v -> resetRefereeSuggestions());
         refereeConfirmButton.setOnClickListener(v -> showRefereeConfirmation());
         refereeExitButton.setOnClickListener(v -> leaveRefereeReview());
+        refereeContinueButton.setOnClickListener(v -> resumeFromReferee());
     }
 
     private void startEngine() {
@@ -1045,13 +1047,13 @@ public class MainActivity extends AppCompatActivity {
                 AlertDialog.Builder dialog = new AlertDialog.Builder(this)
                         .setTitle("智能裁判 · " + decision.summary()).setMessage(reasons.toString())
                         .setNegativeButton("稍后复核", null);
-                boolean offerResume = decision.verdict == EndgameAdjudicator.Verdict.CONTINUE_RECOMMENDED;
-                for (EndgameAdjudicator.Finding finding : decision.findings)
-                    if (finding.reason == EndgameAdjudicator.Reason.POSSIBLE_KO) offerResume = true;
+                // REVIEW_REQUIRED may be merely a dead-stone or seki confirmation;
+                // suggest continuing, but never claim play is definitely unfinished.
+                boolean offerResume = decision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT;
                 if (offerResume && board.canResumeAfterPasses()) {
-                    dialog.setPositiveButton("继续对局", (ignored, which) -> resumeFromReferee())
-                            .setNeutralButton("先复核死子", null);
-                } else dialog.setPositiveButton("开始复核", null);
+                    dialog.setPositiveButton("继续下棋", (ignored, which) -> resumeFromReferee())
+                            .setNeutralButton("留在棋盘确认", null);
+                } else dialog.setPositiveButton("开始确认死子", null);
                 dialog.show();
                 if (isRefereeSmokeIntent()) {
                     SmartReferee.ScoreWhatIf actualRange = sensitivity;
@@ -1117,25 +1119,26 @@ public class MainActivity extends AppCompatActivity {
         double lead = audit.whiteLead;
         int pending = SmartReferee.countGroups(board, refereeReview);
         boardView.setRefereeMarks(refereeDead, refereeReview);
+        boolean unsettled = endgameDecision != null
+                && endgameDecision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT;
         String summary = String.format(Locale.CHINA,
-                "裁判预览：黑 %.1f · 白 %.1f（%s）\n红叉为拟死子，待复核 %d 块",
-                audit.score.blackPoints, audit.score.whitePoints,
+                "裁判预览：黑 %.1f · 白 %.1f（%s）\n%s",
+                audit.score.blackPoints,audit.score.whitePoints,
                 Math.abs(lead) < 0.001 ? "平局" :
-                        String.format(Locale.CHINA, "%s领先 %.1f 目", lead > 0 ? "白" : "黑", Math.abs(lead)), pending);
+                        String.format(Locale.CHINA,"%s领先 %.1f 目",lead > 0 ? "白" : "黑",Math.abs(lead)),
+                unsettled ? "可能没下完，建议继续下" : "棋局基本结束，可以确认数子");
         if (audit.needsVerification) summary += String.format(Locale.CHINA,
-                "\n注意：与 NN 估分相差 %.1f 目，请仔细检查", audit.difference);
-        refereePanelTitle.setText(String.format(Locale.CHINA,
-                "智能裁判 · %s", pending > 0 ? "待复核 " + pending + " 块" : "可以确认数子"));
+                "\n注意：与 NN 估分相差 %.1f 目，请仔细检查",audit.difference);
+        refereePanelTitle.setText(unsettled ? "智能裁判 · 可能没下完" : "智能裁判 · 可以确认数子");
         refereePanelScore.setText(String.format(Locale.CHINA,
                 "黑 %.1f · 白 %.1f · %s",
                 audit.score.blackPoints,audit.score.whitePoints,
                 Math.abs(lead) < 0.001 ? "平局" :
                         String.format(Locale.CHINA,"%s领先 %.1f 目",lead > 0 ? "白" : "黑",Math.abs(lead))));
-        refereePanelHint.setText(pending > 0
-                ? "黄圈：" + pending + " 块待复核，点棋块选判活/判死；红叉可撤销；橙圈为争议点。"
-                : audit.needsVerification
-                        ? String.format(Locale.CHINA,"复核已完成，但与 NN 估分相差 %.1f 目，确认前再看一眼。",audit.difference)
-                        : "点棋子可整块切换死活；红叉为拟死子，橙圈提示攻防风险。");
+        refereePanelHint.setText(unsettled
+                ? (pending > 0 ? "建议继续下几手解决争议；黄圈 " + pending + " 块也可手动确认死活。"
+                        : "可能只是死子或双活没确认。可继续下，也可人工确认后数子。")
+                : "点棋子可整块切换死活；红叉为拟死子，橙圈提示攻防风险。");
         render(summary);
     }
 
@@ -1155,15 +1158,19 @@ public class MainActivity extends AppCompatActivity {
         }
         if (!refereeReview.isEmpty()) {
             int pending = SmartReferee.countGroups(board, refereeReview);
-            new AlertDialog.Builder(this).setTitle("还有 " + pending + " 块棋未复核")
-                    .setMessage("黄色棋块的死活尚未确认。建议逐块核对；也可以明确选择将其全部判活（保留）。")
-                    .setPositiveButton("返回棋盘复核", null)
-                    .setNeutralButton("未复核的全部判活", (dialog, which) -> {
+            AlertDialog.Builder reviewPrompt = new AlertDialog.Builder(this)
+                    .setTitle("可能还没下完 · " + pending + " 块棋生死未定")
+                    .setMessage("建议继续下几手，解决这些棋块的死活争议。若双方已确定终局，也可以在棋盘逐块确认，或明确将黄圈棋块全部判活。")
+                    .setNegativeButton("返回棋盘确认", null)
+                    .setNeutralButton("黄圈全部判活", (dialog, which) -> {
                         refereeDead.removeAll(refereeReview);
                         refereeReview.clear();
                         refreshRefereePreview();
                         showRefereeConfirmation();
-                    }).show();
+                    });
+            if (board.canResumeAfterPasses()) reviewPrompt.setPositiveButton("继续下棋",
+                    (dialog, which) -> resumeFromReferee());
+            reviewPrompt.show();
             return;
         }
         if (!ignoreContinueAdvice && endgameDecision != null
@@ -2036,6 +2043,11 @@ public class MainActivity extends AppCompatActivity {
         refereeConfirmButton.setEnabled(refereeMode && !evaluating);
         refereeResetButton.setEnabled(refereeMode && !evaluating);
         refereeExitButton.setEnabled(refereeMode && !evaluating);
+        boolean recommendContinue = refereeMode && board.canResumeAfterPasses()
+                && endgameDecision != null
+                && endgameDecision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT;
+        refereeContinueButton.setVisibility(recommendContinue ? View.VISIBLE : View.GONE);
+        refereeContinueButton.setEnabled(recommendContinue && !evaluating && !thinking);
         newGameButton.setEnabled(!thinking && !engineStarting && !evaluating);
         newRoundButton.setEnabled(!thinking && !engineStarting && !evaluating);
         countTerritoryButton.setText(board.isGameOver()
