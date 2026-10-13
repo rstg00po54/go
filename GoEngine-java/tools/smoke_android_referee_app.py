@@ -17,6 +17,8 @@ from pathlib import Path
 from uuid import uuid4
 import xml.etree.ElementTree as ET
 
+from upload_referee_test_results import UploadError, upload_referee_results
+
 PROJECT = Path(__file__).resolve().parents[1]
 PACKAGE = "com.badukai.java"
 MAIN_ACTIVITY_CLASS = "com.badukai.MainActivity"
@@ -155,7 +157,28 @@ def main():
     parser.add_argument("--skip-install",action="store_true",help="Use already installed Debug APK")
     parser.add_argument("--skip-ui",action="store_true",help="Skip uiautomator hierarchy check")
     parser.add_argument("--timeout",type=float,default=240,help="Seconds allowed PER game")
+    parser.add_argument("--no-upload",action="store_true",
+                        help="Opt out of the existing ui-test-results GitHub uploader")
+    parser.add_argument("--upload-remote",default="auto",
+                        help="Git remote to publish using existing credentials (auto: origin/github)")
+    parser.add_argument("--upload-branch",default="ui-test-results",
+                        help="Separate GitHub results branch (unchanged source branch)")
+    parser.add_argument("--upload-existing",type=Path,
+                        help="Upload an earlier local report directory (no ADB/build required)")
     args = parser.parse_args()
+    if args.upload_existing:
+        report_dir = args.upload_existing.resolve()
+        if not (report_dir/"report.json").is_file():
+            parser.error("--upload-existing requires a directory containing report.json")
+        if args.no_upload:
+            parser.error("--no-upload cannot be used with --upload-existing")
+        try:
+            report = json.loads((report_dir/"report.json").read_text(encoding="utf-8"))
+            upload_referee_results(report_dir,report,args.upload_remote,args.upload_branch)
+            return 0
+        except (UploadError,OSError,ValueError,RuntimeError) as exc:
+            print("Existing report upload failed:",exc,file=sys.stderr,flush=True)
+            return 1
     if not args.adb:
         parser.error("adb not found; set --adb")
     if args.timeout<15:
@@ -167,6 +190,8 @@ def main():
     out_dir = PROJECT/"build/android_referee_smoke"/datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     out_dir.mkdir(parents=True,exist_ok=True)
     report = {"status":"ERROR","backend_requested":args.backend,"cases":[],"outputs":str(out_dir)}
+    code = 1
+    upload_error = None
     try:
         serial = connected_serial(args.adb,args.serial)
         report["serial"] = serial
@@ -189,15 +214,49 @@ def main():
         good = sum(case["status"]=="PASS" for case in report["cases"])
         report["status"] = "PASS" if good==len(games) else "FAIL"
         print("\nSummary: %d/%d PASS; %s" % (good,len(games),report["status"]),flush=True)
-        return 0 if report["status"]=="PASS" else 1
+        code = 0 if report["status"]=="PASS" else 1
+    except KeyboardInterrupt:
+        report["status"] = "INTERRUPTED"
+        report["error"] = "Ctrl+C during automatic referee test"
+        code = 130
+        print("\nInterrupted; preserving local data and attempting GitHub upload...",flush=True)
     except (OSError,RuntimeError,subprocess.TimeoutExpired) as exc:
         report["status"] = "FAIL"
         report["error"] = str(exc)
         print("FAIL:",exc,file=sys.stderr,flush=True)
-        return 1
+        code = 1
+    except Exception as exc:
+        report["status"] = "ERROR"
+        report["error"] = type(exc).__name__+": "+str(exc)
+        print("ERROR:",exc,file=sys.stderr,flush=True)
+        code = 1
     finally:
-        (out_dir/"report.json").write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
-        print("Report:",out_dir/"report.json",flush=True)
+        try:
+            (out_dir/"report.json").write_text(
+                json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+            print("Report:",out_dir/"report.json",flush=True)
+        except OSError as exc:
+            print("Cannot write final local report:",exc,file=sys.stderr,flush=True)
+            upload_error = str(exc)
+        if not args.no_upload:
+            try:
+                link = upload_referee_results(out_dir,report,args.upload_remote,args.upload_branch)
+                report["upload_url"] = link
+                report["upload_status"] = "PASS"
+            except (UploadError,OSError,RuntimeError,KeyboardInterrupt) as exc:
+                upload_error = str(exc)
+                report["upload_status"] = "FAIL"
+                report["upload_error"] = upload_error
+                print("GitHub auto-upload failed; local reports remain:",exc,
+                      file=sys.stderr,flush=True)
+        else:
+            report["upload_status"] = "SKIPPED"
+        try:
+            (out_dir/"report.json").write_text(
+                json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+        except OSError:
+            pass
+    return code if not upload_error else (code if code==130 else 1)
 
 
 if __name__=="__main__":
