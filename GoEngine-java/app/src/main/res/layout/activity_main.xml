@@ -771,4 +771,16 @@
                 android:textSize="14sp" />
         </GridLayout>
     </LinearLayout>
+    <!-- Tap anywhere to dismiss the dispute overlay and resume the game.
+         The board stays visible underneath; this touch cannot place a stone. -->
+    <FrameLayout
+        android:id="@+id/refereeTapOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent"
+        android:clickable="true"
+        android:contentDescription="点击屏幕继续下棋"
+        android:focusable="true"
+        android:visibility="gone" />
+
 </FrameLayout>
