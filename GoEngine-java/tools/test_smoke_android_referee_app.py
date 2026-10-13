@@ -75,19 +75,38 @@ class RefereeSmokeHostTests(unittest.TestCase):
 
     def test_review_toolbar_has_real_actions_and_pending_count(self):
         panel = ("智能裁判 · 可能没下完 黑 34.0 · 白 41.0 "
-                 "黄圈 2 块需要确认；红叉可撤销 继续下棋，解决争议 "
-                 "恢复 AI 建议 确认数子 退出复核")
+                 "黄圈 2 块需要确认；红叉可撤销 继续下棋 "
+                 "恢复建议 确认数子 退出复核")
         self.assertEqual(validate_review_panel(panel),[])
         self.assertIn("退出复核",validate_review_panel(panel.replace("退出复核","")))
         self.assertIn("可能没下完",validate_review_panel(panel.replace("可能没下完","")))
-        self.assertIn("继续下棋，解决争议",
-                      validate_review_panel(panel.replace("继续下棋，解决争议","")))
+        self.assertIn("继续下棋",validate_review_panel(panel.replace("继续下棋","")))
+        self.assertIn("恢复建议",validate_review_panel(panel.replace("恢复建议","")))
         self.assertIn("黄圈 2 块",validate_review_panel(panel.replace("黄圈 2 块","")))
         ready = ("智能裁判 · 可以确认数子 黑 34.0 · 白 41.0 "
-                 "恢复 AI 建议 确认数子 退出复核")
+                 "恢复建议 确认数子 退出复核")
         self.assertEqual(validate_review_panel(ready,"cgos9_1"),[])
         self.assertIn("stable case unexpectedly offers continue-playing",
-                      validate_review_panel(ready+" 继续下棋，解决争议","cgos9_1"))
+                      validate_review_panel(ready+" 继续下棋","cgos9_1"))
+
+    def test_referee_buttons_share_one_compact_row(self):
+        root = Path(__file__).resolve().parents[1]
+        layout = ET.parse(str(root/"app/src/main/res/layout/activity_main.xml")).getroot()
+        tag = "{http://schemas.android.com/apk/res/android}"
+        ids = {"refereeContinueButton","refereeResetButton","refereeConfirmButton","refereeExitButton"}
+        rows = []
+        for row in layout.iter("LinearLayout"):
+            buttons = [child for child in row if child.tag=="Button"
+                       and child.get(tag+"id","").replace("@+id/","") in ids]
+            if buttons:
+                rows.append(buttons)
+        self.assertEqual(len(rows),1,"All referee actions should live in one horizontal row")
+        self.assertEqual({child.get(tag+"id").replace("@+id/","") for child in rows[0]},ids)
+        self.assertEqual(rows[0][0].get(tag+"visibility"),"gone")
+        for button in rows[0]:
+            self.assertEqual(button.get(tag+"layout_height"),"36dp")
+            self.assertEqual(button.get(tag+"minHeight"),"0dp")
+            self.assertLessEqual(float(button.get(tag+"textSize").replace("sp","")),12.0)
 
     def test_curated_case_selection_and_input_validation(self):
         self.assertEqual(len(CASES), 4)
