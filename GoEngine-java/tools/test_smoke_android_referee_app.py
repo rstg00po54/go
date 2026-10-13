@@ -86,6 +86,8 @@ class RefereeSmokeHostTests(unittest.TestCase):
         ready = ("智能裁判 · 可以确认数子 黑 34.0 · 白 41.0 "
                  "恢复 AI 建议 确认数子 退出复核")
         self.assertEqual(validate_review_panel(ready,"cgos9_1"),[])
+        self.assertIn("stable case unexpectedly offers continue-playing",
+                      validate_review_panel(ready+" 继续下棋，解决争议","cgos9_1"))
 
     def test_curated_case_selection_and_input_validation(self):
         self.assertEqual(len(CASES), 4)
