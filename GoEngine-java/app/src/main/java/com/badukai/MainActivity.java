@@ -1069,7 +1069,9 @@ public class MainActivity extends AppCompatActivity {
                 }
                 reasons.append("\n红叉：AI 建议判死；黄圈：需明确复核；橙圈：需要关注的争议位置。\n"
                         + "以上均为辅助判断，不能代替双方确认。");
-                if (decision.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT) {
+                // Ongoing games can NEVER enter formal scoring, regardless of
+                // how confident a future adjudicator version may become.
+                if (endedAtStart && decision.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT) {
                     new AlertDialog.Builder(this).setTitle("智能裁判 · " + decision.summary())
                             .setMessage(reasons.toString())
                             .setPositiveButton("确认数子", null)
