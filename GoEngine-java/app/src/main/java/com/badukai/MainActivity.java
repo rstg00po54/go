@@ -1266,6 +1266,8 @@ public class MainActivity extends AppCompatActivity {
                 evaluating = false;
                 if (!restored || !board.resumeAfterPasses()) {
                     gameReady = false;
+                    refereeMode = false;
+                    endgameDecision = null;
                     render("恢复对局失败：棋盘与 AI 可能不同步，请重新开局");
                     if (isRefereeSmokeIntent()) Log.e("RefereeSmoke","RESUME_FAIL id=" + refereeSmokeId()
                             + " moves=" + moves + " undo=" + restored);
