@@ -150,6 +150,50 @@ public final class SmartRefereeSmoke {
                 "unfilled dame alone should not force continuation");
         ok(EndgameAdjudicator.analyze(dame,null).verdict == EndgameAdjudicator.Verdict.REVIEW_REQUIRED,
                 "missing NN should ask for review rather than invent life/death");
+        // Regression: real 9x9 SGF previously missed a large upper-left white chain.
+        // Synthetic NN confidently labels every existing group as friendly-owned,
+        // so this verifies the independent tactical risk check, NOT model accuracy.
+        String sgfMoves = "ee eg cf fc gd dc gc cd gg cg ce bg fb gh ae eb fd bd ec dd ef fg cb db bb ad be ab hh hg gf hi ca ea ac bc aa ba dg dh aa df de ba ih ig aa ac fa ba ed ii fh fi hf eh if ff fe ag aa hh dg ba df bf aa ch af ba -- hb aa hc hd gb ic ib id ba -- --";
+        GoBoard real = new GoBoard(9);
+        StoneColor turn = StoneColor.BLACK;
+        for (String token : sgfMoves.split(" ")) {
+            if ("--".equals(token)) real.playMove(new Move.Pass(turn));
+            else {
+                Point p = new Point(token.charAt(0)-'a', token.charAt(1)-'a');
+                ok(real.isLegalMove(p, turn), "fixture SGF must be legal at " + token);
+                real.playMove(new Move.Stone(p, turn));
+            }
+            turn = turn.opposite();
+        }
+        ok(real.isGameOver(), "real fixture must end with both sides passing");
+        Set<Point> upperLeftWhite = SmartReferee.group(real, new Point(0,3));
+        ok(upperLeftWhite.size() == 11, "fixture has expected connected white chain of 11");
+        float[] friendlyOwner = new float[81];
+        for (int y=0;y<9;y++) for (int x=0;x<9;x++) {
+            Intersection stone = real.get(x,y);
+            friendlyOwner[y*9+x] = stone == Intersection.BLACK ? -0.99f
+                    : stone == Intersection.WHITE ? 0.99f : 0.0f;
+        }
+        SmartReferee.Analysis risk = SmartReferee.analyze(real, friendlyOwner);
+        ok(risk.suggestedGroups == 0, "friendly NN cannot silently declare any group dead");
+        ok(risk.vulnerableGroups >= 1, "tight, large chain must be flagged for independent review");
+        ok(risk.vulnerableReview.containsAll(upperLeftWhite), "risk scanner must flag all 11 white stones");
+        ok(risk.needsReview.containsAll(upperLeftWhite), "Android referee should highlight entire chain");
+        EndgameAdjudicator.Result triage = EndgameAdjudicator.analyze(real, friendlyOwner);
+        ok(triage.verdict == EndgameAdjudicator.Verdict.REVIEW_REQUIRED,
+                "large risky chain must require review, not assume ready to count");
+        ok(hasReason(triage, EndgameAdjudicator.Reason.LOW_LIBERTY_LARGE_GROUP),
+                "referee must provide a human-readable risk reason");
+
+        // Two distinct enclosed eye points do NOT trigger the crude low-liberty
+        // warning, even for a large chain. This is a heuristic safety regression.
+        GoBoard withEyes = new GoBoard(9);
+        for (int y=0;y<9;y++) for (int x=0;x<9;x++) {
+            if ((x == 2 && y == 2) || (x == 6 && y == 6)) continue;
+            withEyes.playMove(new Move.Stone(new Point(x,y), StoneColor.BLACK));
+        }
+        SmartReferee.Analysis twoEyes = SmartReferee.analyze(withEyes, new float[81]);
+        ok(twoEyes.vulnerableGroups == 0, "two-enclosed-eye group should not be called low-liberty risk");
         System.out.println("SmartReferee + EndgameAdjudicator smoke PASS");
     }
 }
