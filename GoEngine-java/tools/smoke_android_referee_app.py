@@ -71,6 +71,19 @@ def smoke_event(log, run_id):
     return final
 
 
+def resume_event(log,run_id):
+    """Last matching RESUME / RESUME_FAIL event after tapping Continue."""
+    result = None
+    for line in log.splitlines():
+        if "RefereeSmoke" not in line:
+            continue
+        if re.search(r"\bRESUME_FAIL id="+re.escape(run_id)+r"\b",line):
+            result = {"status":"FAIL","line":line.strip()}
+        elif re.search(r"\bRESUME id="+re.escape(run_id)+r"\b",line):
+            result = {"status":"PASS","line":line.strip()}
+    return result
+
+
 def read_dialog_root(adb,serial):
     target = "/sdcard/referee_smoke_window.xml"
     run([adb,"-s",serial,"shell","uiautomator","dump",target],timeout=35)
@@ -120,29 +133,20 @@ def capture_screenshot(adb,serial,target):
 
 
 def validate_review_panel(text,game=STRICT_CASE):
-    # Both players passed in every fixture. REVIEW_REQUIRED needs a dead-stone
-    # confirmation, not a forced return to playing.
-    needs_review = game != "cgos9_1"
-    required = ("智能裁判 ·","请确认死子","试算：","确认死子") if needs_review else (
+    disputed = game != "cgos9_1"
+    required = ("智能裁判 ·","存在争议","继续下棋","暂不结算") if disputed else (
         "智能裁判 ·","黑","白","恢复建议","确认数子","退出复核")
     missing = [part for part in required if part not in text]
-    forbidden = ("继续下棋","确认数子","恢复建议","退出复核") if needs_review else (
-        "继续下棋","确认死子")
+    forbidden = ("确认数子","恢复建议","退出复核","确认死子") if disputed else ("继续下棋",)
     missing += ["unexpected button: "+part for part in forbidden if part in text]
     return missing
 
 
 def validate_confirmation_dialog(text,game):
-    if game == "cgos9_1":
-        required = ("确认中国规则数子","已复核并确认")
-    elif game == "cgos9_5":
-        required = ("疑似双活或劫争尚未证明","人工确认并数子")
-    else:
-        required = ("死子需要确认","返回棋盘确认","黄圈全部判活")
-    missing = [part for part in required if part not in text]
     if game != "cgos9_1":
-        missing += ["unexpected forced continuation" for word in ("继续下棋","继续对局") if word in text]
-    return missing
+        raise ValueError("Only READY_TO_COUNT games open a scoring confirmation dialog")
+    required = ("确认中国规则数子","已复核并确认")
+    return [part for part in required if part not in text]
 
 
 def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir):
@@ -196,18 +200,40 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir):
             missing_panel = validate_review_panel(panel,game)
             if missing_panel:
                 raise RuntimeError("Referee review toolbar missing %s; see review_panel.txt" % missing_panel)
-            print("Review toolbar UI PASS: correct scoring/review action for terminal verdict.",flush=True)
+            print("Review toolbar UI PASS: correct action for referee verdict.",flush=True)
             capture_screenshot(adb,serial,case_dir/"review_screen.png")
-            # Regression for the user-reported bug: a REVIEW_REQUIRED game that
-            # ended with two passes must open scoring review, not resume the game.
-            click_ui_text(adb,serial,"确认数子" if game=="cgos9_1" else "确认死子")
-            confirmation = read_dialog_xml(adb,serial)
-            (case_dir/"confirmation_dialog.txt").write_text(confirmation+"\n",encoding="utf-8")
-            missing_confirmation = validate_confirmation_dialog(confirmation,game)
-            if missing_confirmation:
-                raise RuntimeError("Dead-stone confirmation did not open: %s" % missing_confirmation)
-            capture_screenshot(adb,serial,case_dir/"confirmation_dialog.png")
-            print("Confirm action UI PASS: two-pass game opens dead-stone/score dialog.",flush=True)
+            if game=="cgos9_1":
+                click_ui_text(adb,serial,"确认数子")
+                confirmation = read_dialog_xml(adb,serial)
+                (case_dir/"confirmation_dialog.txt").write_text(confirmation+"\n",encoding="utf-8")
+                missing_confirmation = validate_confirmation_dialog(confirmation,game)
+                if missing_confirmation:
+                    raise RuntimeError("Final scoring confirmation did not open: %s" % missing_confirmation)
+                capture_screenshot(adb,serial,case_dir/"confirmation_dialog.png")
+                print("Confirm score UI PASS.",flush=True)
+            else:
+                # Click Continue and verify the TWO actual pass moves are undone
+                # in the real KataGo session and Java GoBoard.
+                click_ui_text(adb,serial,"继续下棋")
+                expected_moves = int(re.search(r"\bmoves=(\d+)\b",terminal["line"]).group(1))-2
+                resume = None
+                deadline = time.monotonic()+40
+                while time.monotonic()<deadline:
+                    logs = run([adb,"-s",serial,"logcat","-d","-v","brief",
+                                "-s","RefereeSmoke:I","AndroidRuntime:E","*:S"],timeout=20)
+                    resume = resume_event(logs,run_id)
+                    if resume:
+                        break
+                    time.sleep(2)
+                (case_dir/"resume_logcat.txt").write_text(logs,encoding="utf-8")
+                if not resume or resume["status"]!="PASS":
+                    raise RuntimeError("Continue-playing failed: "+str(resume))
+                line = resume["line"]
+                if ("moves="+str(expected_moves)) not in line or ("terminal=false") not in line or (
+                        "refereeMode=false") not in line or ("gameReady=true") not in line:
+                    raise RuntimeError("Continuation left unexpected game state: "+line)
+                result["resumed"] = resume
+                print("Continue playing UI PASS: terminal passes undone, board and engine resumed.",flush=True)
         else:
             print("Dialog UI skipped (engine + referee assertions still checked).",flush=True)
         result["status"] = "PASS"
