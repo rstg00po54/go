@@ -1,0 +1,1568 @@
+{
+  "date": "2026-10-13",
+  "source_url": "https://github.com/rstg00po54/go/actions/runs/38401658477",
+  "versions": {
+    "1.15.0": {
+      "raw_ms": 6.27,
+      "search_ms": 69.45,
+      "successful": 38,
+      "errors": 0
+    },
+    "1.18.1": {
+      "raw_ms": 10.16,
+      "search_ms": 124.43,
+      "successful": 38,
+      "errors": 0
+    }
+  },
+  "cases": [
+    {
+      "fixture": "ko_shape9",
+      "category": "复杂",
+      "size": 9,
+      "1.15.0": {
+        "raw_ms": 6.34,
+        "white_lead": [
+          1.232,
+          1.232
+        ],
+        "search_ms": 69.45,
+        "suggestions": [
+          "C4",
+          "C4"
+        ],
+        "full_score_dead_ms": 2929.9,
+        "full_score": [
+          "W+0.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      },
+      "1.18.1": {
+        "raw_ms": 10.55,
+        "white_lead": [
+          1.232,
+          1.232
+        ],
+        "search_ms": 114.54,
+        "suggestions": [
+          "C4",
+          "C4"
+        ],
+        "full_score_dead_ms": 2865.2,
+        "full_score": [
+          "W+1.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      }
+    },
+    {
+      "fixture": "false_eye9",
+      "category": "复杂",
+      "size": 9,
+      "1.15.0": {
+        "raw_ms": 6.25,
+        "white_lead": [
+          -11.987,
+          -11.987
+        ],
+        "search_ms": 68.34,
+        "suggestions": [
+          "H5",
+          "H5"
+        ],
+        "full_score_dead_ms": 3538.1,
+        "full_score": [
+          "B+11.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      },
+      "1.18.1": {
+        "raw_ms": 9.99,
+        "white_lead": [
+          -11.987,
+          -11.987
+        ],
+        "search_ms": 107.21,
+        "suggestions": [
+          "H5",
+          "H5"
+        ],
+        "full_score_dead_ms": 3396.4,
+        "full_score": [
+          "B+11.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      }
+    },
+    {
+      "fixture": "mutual_liberties9",
+      "category": "复杂",
+      "size": 9,
+      "1.15.0": {
+        "raw_ms": 6.15,
+        "white_lead": [
+          -0.851,
+          -0.851
+        ],
+        "search_ms": 67.3,
+        "suggestions": [
+          "G7",
+          "G7"
+        ],
+        "full_score_dead_ms": 3235.3,
+        "full_score": [
+          "B+2.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      },
+      "1.18.1": {
+        "raw_ms": 10.06,
+        "white_lead": [
+          -0.851,
+          -0.851
+        ],
+        "search_ms": 110.41,
+        "suggestions": [
+          "G7",
+          "G7"
+        ],
+        "full_score_dead_ms": 3160.3,
+        "full_score": [
+          "B+3.5",
+          "B+2.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      }
+    },
+    {
+      "fixture": "ladder_pressure9",
+      "category": "复杂",
+      "size": 9,
+      "1.15.0": {
+        "raw_ms": 6.24,
+        "white_lead": [
+          1.727,
+          1.727
+        ],
+        "search_ms": 67.48,
+        "suggestions": [
+          "G6",
+          "D4"
+        ],
+        "full_score_dead_ms": 3356.6,
+        "full_score": [
+          "W+2.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      },
+      "1.18.1": {
+        "raw_ms": 9.98,
+        "white_lead": [
+          1.727,
+          1.727
+        ],
+        "search_ms": 108.56,
+        "suggestions": [
+          "D4",
+          "H6"
+        ],
+        "full_score_dead_ms": 3208.9,
+        "full_score": [
+          "W+2.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      }
+    },
+    {
+      "fixture": "multi_atari9",
+      "category": "复杂",
+      "size": 9,
+      "1.15.0": {
+        "raw_ms": 6.19,
+        "white_lead": [
+          9.903,
+          9.903
+        ],
+        "search_ms": 67.57,
+        "suggestions": [
+          "C2",
+          "C2"
+        ],
+        "full_score_dead_ms": 3310.3,
+        "full_score": [
+          "W+10.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      },
+      "1.18.1": {
+        "raw_ms": 10.2,
+        "white_lead": [
+          9.903,
+          9.903
+        ],
+        "search_ms": 127.16,
+        "suggestions": [
+          "C2",
+          "C2"
+        ],
+        "full_score_dead_ms": 3182.2,
+        "full_score": [
+          "W+10.5",
+          "W+11.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      }
+    },
+    {
+      "fixture": "double_ko_shape13",
+      "category": "复杂",
+      "size": 13,
+      "1.15.0": {
+        "raw_ms": 8.54,
+        "white_lead": [
+          6.147,
+          6.147
+        ],
+        "search_ms": 92.11,
+        "suggestions": [
+          "H7",
+          "H7"
+        ],
+        "full_score_dead_ms": 4128.3,
+        "full_score": [
+          "W+4.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      },
+      "1.18.1": {
+        "raw_ms": 14.41,
+        "white_lead": [
+          6.147,
+          6.147
+        ],
+        "search_ms": 158.11,
+        "suggestions": [
+          "H7",
+          "H7"
+        ],
+        "full_score_dead_ms": 4134.6,
+        "full_score": [
+          "W+4.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      }
+    },
+    {
+      "fixture": "mutual_liberties13",
+      "category": "复杂",
+      "size": 13,
+      "1.15.0": {
+        "raw_ms": 8.37,
+        "white_lead": [
+          -10.066,
+          -10.066
+        ],
+        "search_ms": 91.29,
+        "suggestions": [
+          "D2",
+          "D2"
+        ],
+        "full_score_dead_ms": 4568.7,
+        "full_score": [
+          "B+8.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      },
+      "1.18.1": {
+        "raw_ms": 14.59,
+        "white_lead": [
+          -10.066,
+          -10.066
+        ],
+        "search_ms": 161.28,
+        "suggestions": [
+          "D2",
+          "D2"
+        ],
+        "full_score_dead_ms": 4375.5,
+        "full_score": [
+          "B+8.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      }
+    },
+    {
+      "fixture": "false_eye13",
+      "category": "复杂",
+      "size": 13,
+      "1.15.0": {
+        "raw_ms": 9.14,
+        "white_lead": [
+          -12.09,
+          -12.09
+        ],
+        "search_ms": 89.09,
+        "suggestions": [
+          "J8",
+          "J8"
+        ],
+        "full_score_dead_ms": 5218.1,
+        "full_score": [
+          "B+12.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      },
+      "1.18.1": {
+        "raw_ms": 14.81,
+        "white_lead": [
+          -12.09,
+          -12.09
+        ],
+        "search_ms": 155.37,
+        "suggestions": [
+          "J8",
+          "J8"
+        ],
+        "full_score_dead_ms": 4341.9,
+        "full_score": [
+          "B+11.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      }
+    },
+    {
+      "fixture": "mixed_fight19",
+      "category": "复杂",
+      "size": 19,
+      "1.15.0": {
+        "raw_ms": 12.25,
+        "white_lead": [
+          -33.698,
+          -33.698
+        ],
+        "search_ms": 130.77,
+        "suggestions": [
+          "Q11",
+          "H11"
+        ],
+        "full_score_dead_ms": 7870.5,
+        "full_score": [
+          "B+34.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      },
+      "1.18.1": {
+        "raw_ms": 23.04,
+        "white_lead": [
+          -33.698,
+          -33.698
+        ],
+        "search_ms": 248.75,
+        "suggestions": [
+          "Q11",
+          "H11"
+        ],
+        "full_score_dead_ms": 7338.5,
+        "full_score": [
+          "B+34.5",
+          "B+35.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      }
+    },
+    {
+      "fixture": "simple",
+      "category": "基础",
+      "size": 9,
+      "1.15.0": {
+        "raw_ms": 6.31,
+        "white_lead": [
+          1.282,
+          1.282
+        ],
+        "search_ms": 66.01,
+        "suggestions": [
+          "C3",
+          "C3"
+        ],
+        "full_score_dead_ms": 3456.2,
+        "full_score": [
+          "W+2.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      },
+      "1.18.1": {
+        "raw_ms": 10.16,
+        "white_lead": [
+          1.282,
+          1.282
+        ],
+        "search_ms": 109.28,
+        "suggestions": [
+          "C3",
+          "C3"
+        ],
+        "full_score_dead_ms": 3488.7,
+        "full_score": [
+          "W+2.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      }
+    },
+    {
+      "fixture": "territory",
+      "category": "基础",
+      "size": 9,
+      "1.15.0": {
+        "raw_ms": 6.03,
+        "white_lead": [
+          6.279,
+          6.279
+        ],
+        "search_ms": 65.59,
+        "suggestions": [
+          "C2",
+          "C2"
+        ],
+        "full_score_dead_ms": 3268.2,
+        "full_score": [
+          "W+6.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      },
+      "1.18.1": {
+        "raw_ms": 10.11,
+        "white_lead": [
+          6.279,
+          6.279
+        ],
+        "search_ms": 107.82,
+        "suggestions": [
+          "C2",
+          "C2"
+        ],
+        "full_score_dead_ms": 3158.9,
+        "full_score": [
+          "W+6.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      }
+    },
+    {
+      "fixture": "tactical",
+      "category": "基础",
+      "size": 9,
+      "1.15.0": {
+        "raw_ms": 6.1,
+        "white_lead": [
+          9.649,
+          9.649
+        ],
+        "search_ms": 66.03,
+        "suggestions": [
+          "C2",
+          "C2"
+        ],
+        "full_score_dead_ms": 3293.6,
+        "full_score": [
+          "W+10.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      },
+      "1.18.1": {
+        "raw_ms": 10,
+        "white_lead": [
+          9.649,
+          9.649
+        ],
+        "search_ms": 109.09,
+        "suggestions": [
+          "C2",
+          "C2"
+        ],
+        "full_score_dead_ms": 3185.5,
+        "full_score": [
+          "W+10.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      }
+    },
+    {
+      "fixture": "cgos9_1",
+      "category": "真实完局",
+      "size": 9,
+      "1.15.0": {
+        "raw_ms": 6.16,
+        "white_lead": [
+          -0.745,
+          -0.745
+        ],
+        "search_ms": 58.25,
+        "suggestions": [
+          "pass",
+          "pass"
+        ],
+        "full_score_dead_ms": 1710.7,
+        "full_score": [
+          "B+2.0"
+        ],
+        "raw_stable": true,
+        "errors": []
+      },
+      "1.18.1": {
+        "raw_ms": 9.9,
+        "white_lead": [
+          -0.745,
+          -0.745
+        ],
+        "search_ms": 97.34,
+        "suggestions": [
+          "pass",
+          "pass"
+        ],
+        "full_score_dead_ms": 1728.3,
+        "full_score": [
+          "B+2.0"
+        ],
+        "raw_stable": true,
+        "errors": []
+      }
+    },
+    {
+      "fixture": "cgos9_2",
+      "category": "真实完局",
+      "size": 9,
+      "1.15.0": {
+        "raw_ms": 6.22,
+        "white_lead": [
+          0.786,
+          0.786
+        ],
+        "search_ms": 91.8,
+        "suggestions": [
+          "G5",
+          "pass"
+        ],
+        "full_score_dead_ms": 2616.6,
+        "full_score": [
+          "W+2.0"
+        ],
+        "raw_stable": true,
+        "errors": []
+      },
+      "1.18.1": {
+        "raw_ms": 9.87,
+        "white_lead": [
+          0.786,
+          0.786
+        ],
+        "search_ms": 256.26,
+        "suggestions": [
+          "G5",
+          "G5"
+        ],
+        "full_score_dead_ms": 2573.8,
+        "full_score": [
+          "W+2.0"
+        ],
+        "raw_stable": true,
+        "errors": []
+      }
+    },
+    {
+      "fixture": "cgos9_3",
+      "category": "真实完局",
+      "size": 9,
+      "1.15.0": {
+        "raw_ms": 7.72,
+        "white_lead": [
+          8.269,
+          8.269
+        ],
+        "search_ms": 149.39,
+        "suggestions": [
+          "pass",
+          "C9"
+        ],
+        "full_score_dead_ms": 2102,
+        "full_score": [
+          "W+8.0"
+        ],
+        "raw_stable": true,
+        "errors": []
+      },
+      "1.18.1": {
+        "raw_ms": 9.96,
+        "white_lead": [
+          8.269,
+          8.269
+        ],
+        "search_ms": 236.62,
+        "suggestions": [
+          "D8",
+          "C9"
+        ],
+        "full_score_dead_ms": 2090.6,
+        "full_score": [
+          "W+8.0"
+        ],
+        "raw_stable": true,
+        "errors": []
+      }
+    },
+    {
+      "fixture": "cgos9_4",
+      "category": "真实完局",
+      "size": 9,
+      "1.15.0": {
+        "raw_ms": 7,
+        "white_lead": [
+          1.249,
+          1.249
+        ],
+        "search_ms": 77.78,
+        "suggestions": [
+          "pass",
+          "pass"
+        ],
+        "full_score_dead_ms": 2554.7,
+        "full_score": [
+          "W+2.0"
+        ],
+        "raw_stable": true,
+        "errors": []
+      },
+      "1.18.1": {
+        "raw_ms": 10.54,
+        "white_lead": [
+          1.249,
+          1.249
+        ],
+        "search_ms": 127.32,
+        "suggestions": [
+          "pass",
+          "pass"
+        ],
+        "full_score_dead_ms": 2773.5,
+        "full_score": [
+          "W+2.0"
+        ],
+        "raw_stable": true,
+        "errors": []
+      }
+    },
+    {
+      "fixture": "cgos9_5",
+      "category": "真实完局",
+      "size": 9,
+      "1.15.0": {
+        "raw_ms": 6.82,
+        "white_lead": [
+          -22.6,
+          -22.6
+        ],
+        "search_ms": 178.38,
+        "suggestions": [
+          "B5",
+          "G8"
+        ],
+        "full_score_dead_ms": 3272,
+        "full_score": [
+          "B+22.0"
+        ],
+        "raw_stable": true,
+        "errors": []
+      },
+      "1.18.1": {
+        "raw_ms": 9.9,
+        "white_lead": [
+          -22.6,
+          -22.6
+        ],
+        "search_ms": 302.06,
+        "suggestions": [
+          "B5",
+          "G8"
+        ],
+        "full_score_dead_ms": 3679.8,
+        "full_score": [
+          "B+22.0"
+        ],
+        "raw_stable": true,
+        "errors": []
+      }
+    },
+    {
+      "fixture": "alphago_kejie19_20170523",
+      "category": "真实完局",
+      "size": 19,
+      "1.15.0": {
+        "raw_ms": 12.73,
+        "white_lead": [
+          1.301,
+          1.301
+        ],
+        "search_ms": 147.45,
+        "suggestions": [
+          "O16",
+          "O16"
+        ],
+        "full_score_dead_ms": 4665.5,
+        "full_score": [
+          "W+0.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      },
+      "1.18.1": {
+        "raw_ms": 22.79,
+        "white_lead": [
+          1.301,
+          1.301
+        ],
+        "search_ms": 265.49,
+        "suggestions": [
+          "P14",
+          "D13"
+        ],
+        "full_score_dead_ms": 5045.7,
+        "full_score": [
+          "W+0.5"
+        ],
+        "raw_stable": true,
+        "errors": []
+      }
+    },
+    {
+      "fixture": "cgos9_3_move64",
+      "category": "真实中盘",
+      "size": 9,
+      "1.15.0": {
+        "raw_ms": 6.45,
+        "white_lead": [
+          6.807,
+          6.807
+        ],
+        "search_ms": 66.96,
+        "suggestions": [
+          "A3",
+          "A3"
+        ],
+        "full_score_dead_ms": 3456.2,
+        "full_score": [
+          "W+8.0"
+        ],
+        "raw_stable": true,
+        "errors": []
+      },
+      "1.18.1": {
+        "raw_ms": 10.34,
+        "white_lead": [
+          6.807,
+          6.807
+        ],
+        "search_ms": 107.74,
+        "suggestions": [
+          "A3",
+          "A3"
+        ],
+        "full_score_dead_ms": 3514.8,
+        "full_score": [
+          "W+8.0"
+        ],
+        "raw_stable": true,
+        "errors": []
+      }
+    }
+  ],
+  "individual_runs": {
+    "1.18.1": [
+      {
+        "index": 1,
+        "repeat": 1,
+        "fixture": "ko_shape9",
+        "raw_ms": 11.13,
+        "raw_white_lead": 1.232,
+        "search_ms": 121.79,
+        "best_move": "C4",
+        "search_error": "-"
+      },
+      {
+        "index": 2,
+        "repeat": 1,
+        "fixture": "false_eye9",
+        "raw_ms": 10.15,
+        "raw_white_lead": -11.987,
+        "search_ms": 108.78,
+        "best_move": "H5",
+        "search_error": "-"
+      },
+      {
+        "index": 3,
+        "repeat": 1,
+        "fixture": "mutual_liberties9",
+        "raw_ms": 10.15,
+        "raw_white_lead": -0.851,
+        "search_ms": 113.43,
+        "best_move": "G7",
+        "search_error": "-"
+      },
+      {
+        "index": 4,
+        "repeat": 1,
+        "fixture": "ladder_pressure9",
+        "raw_ms": 10.08,
+        "raw_white_lead": 1.727,
+        "search_ms": 110.22,
+        "best_move": "D4",
+        "search_error": "-"
+      },
+      {
+        "index": 5,
+        "repeat": 1,
+        "fixture": "multi_atari9",
+        "raw_ms": 10.6,
+        "raw_white_lead": 9.903,
+        "search_ms": 147,
+        "best_move": "C2",
+        "search_error": "-"
+      },
+      {
+        "index": 6,
+        "repeat": 1,
+        "fixture": "double_ko_shape13",
+        "raw_ms": 14.17,
+        "raw_white_lead": 6.147,
+        "search_ms": 156.5,
+        "best_move": "H7",
+        "search_error": "-"
+      },
+      {
+        "index": 7,
+        "repeat": 1,
+        "fixture": "mutual_liberties13",
+        "raw_ms": 15.01,
+        "raw_white_lead": -10.066,
+        "search_ms": 169.85,
+        "best_move": "D2",
+        "search_error": "-"
+      },
+      {
+        "index": 8,
+        "repeat": 1,
+        "fixture": "false_eye13",
+        "raw_ms": 15.41,
+        "raw_white_lead": -12.09,
+        "search_ms": 154.81,
+        "best_move": "J8",
+        "search_error": "-"
+      },
+      {
+        "index": 9,
+        "repeat": 1,
+        "fixture": "mixed_fight19",
+        "raw_ms": 22.42,
+        "raw_white_lead": -33.698,
+        "search_ms": 241.16,
+        "best_move": "Q11",
+        "search_error": "-"
+      },
+      {
+        "index": 10,
+        "repeat": 1,
+        "fixture": "simple",
+        "raw_ms": 10.16,
+        "raw_white_lead": 1.282,
+        "search_ms": 106.58,
+        "best_move": "C3",
+        "search_error": "-"
+      },
+      {
+        "index": 11,
+        "repeat": 1,
+        "fixture": "territory",
+        "raw_ms": 10,
+        "raw_white_lead": 6.279,
+        "search_ms": 107.06,
+        "best_move": "C2",
+        "search_error": "-"
+      },
+      {
+        "index": 12,
+        "repeat": 1,
+        "fixture": "tactical",
+        "raw_ms": 9.9,
+        "raw_white_lead": 9.649,
+        "search_ms": 110.37,
+        "best_move": "C2",
+        "search_error": "-"
+      },
+      {
+        "index": 13,
+        "repeat": 1,
+        "fixture": "cgos9_1",
+        "raw_ms": 9.79,
+        "raw_white_lead": -0.745,
+        "search_ms": 97.42,
+        "best_move": "pass",
+        "search_error": "-"
+      },
+      {
+        "index": 14,
+        "repeat": 1,
+        "fixture": "cgos9_2",
+        "raw_ms": 9.85,
+        "raw_white_lead": 0.786,
+        "search_ms": 244.05,
+        "best_move": "G5",
+        "search_error": "-"
+      },
+      {
+        "index": 15,
+        "repeat": 1,
+        "fixture": "cgos9_3",
+        "raw_ms": 9.99,
+        "raw_white_lead": 8.269,
+        "search_ms": 246.35,
+        "best_move": "D8",
+        "search_error": "-"
+      },
+      {
+        "index": 16,
+        "repeat": 1,
+        "fixture": "cgos9_4",
+        "raw_ms": 10.6,
+        "raw_white_lead": 1.249,
+        "search_ms": 127.07,
+        "best_move": "pass",
+        "search_error": "-"
+      },
+      {
+        "index": 17,
+        "repeat": 1,
+        "fixture": "cgos9_5",
+        "raw_ms": 9.85,
+        "raw_white_lead": -22.6,
+        "search_ms": 300.73,
+        "best_move": "B5",
+        "search_error": "-"
+      },
+      {
+        "index": 18,
+        "repeat": 1,
+        "fixture": "alphago_kejie19_20170523",
+        "raw_ms": 22.77,
+        "raw_white_lead": 1.301,
+        "search_ms": 265.86,
+        "best_move": "P14",
+        "search_error": "-"
+      },
+      {
+        "index": 19,
+        "repeat": 1,
+        "fixture": "cgos9_3_move64",
+        "raw_ms": 10.34,
+        "raw_white_lead": 6.807,
+        "search_ms": 107.39,
+        "best_move": "A3",
+        "search_error": "-"
+      },
+      {
+        "index": 1,
+        "repeat": 2,
+        "fixture": "ko_shape9",
+        "raw_ms": 9.96,
+        "raw_white_lead": 1.232,
+        "search_ms": 107.29,
+        "best_move": "C4",
+        "search_error": "-"
+      },
+      {
+        "index": 2,
+        "repeat": 2,
+        "fixture": "false_eye9",
+        "raw_ms": 9.83,
+        "raw_white_lead": -11.987,
+        "search_ms": 105.64,
+        "best_move": "H5",
+        "search_error": "-"
+      },
+      {
+        "index": 3,
+        "repeat": 2,
+        "fixture": "mutual_liberties9",
+        "raw_ms": 9.97,
+        "raw_white_lead": -0.851,
+        "search_ms": 107.38,
+        "best_move": "G7",
+        "search_error": "-"
+      },
+      {
+        "index": 4,
+        "repeat": 2,
+        "fixture": "ladder_pressure9",
+        "raw_ms": 9.89,
+        "raw_white_lead": 1.727,
+        "search_ms": 106.9,
+        "best_move": "H6",
+        "search_error": "-"
+      },
+      {
+        "index": 5,
+        "repeat": 2,
+        "fixture": "multi_atari9",
+        "raw_ms": 9.79,
+        "raw_white_lead": 9.903,
+        "search_ms": 107.33,
+        "best_move": "C2",
+        "search_error": "-"
+      },
+      {
+        "index": 6,
+        "repeat": 2,
+        "fixture": "double_ko_shape13",
+        "raw_ms": 14.66,
+        "raw_white_lead": 6.147,
+        "search_ms": 159.71,
+        "best_move": "H7",
+        "search_error": "-"
+      },
+      {
+        "index": 7,
+        "repeat": 2,
+        "fixture": "mutual_liberties13",
+        "raw_ms": 14.16,
+        "raw_white_lead": -10.066,
+        "search_ms": 152.72,
+        "best_move": "D2",
+        "search_error": "-"
+      },
+      {
+        "index": 8,
+        "repeat": 2,
+        "fixture": "false_eye13",
+        "raw_ms": 14.21,
+        "raw_white_lead": -12.09,
+        "search_ms": 155.93,
+        "best_move": "J8",
+        "search_error": "-"
+      },
+      {
+        "index": 9,
+        "repeat": 2,
+        "fixture": "mixed_fight19",
+        "raw_ms": 23.66,
+        "raw_white_lead": -33.698,
+        "search_ms": 256.33,
+        "best_move": "H11",
+        "search_error": "-"
+      },
+      {
+        "index": 10,
+        "repeat": 2,
+        "fixture": "simple",
+        "raw_ms": 10.17,
+        "raw_white_lead": 1.282,
+        "search_ms": 111.97,
+        "best_move": "C3",
+        "search_error": "-"
+      },
+      {
+        "index": 11,
+        "repeat": 2,
+        "fixture": "territory",
+        "raw_ms": 10.21,
+        "raw_white_lead": 6.279,
+        "search_ms": 108.58,
+        "best_move": "C2",
+        "search_error": "-"
+      },
+      {
+        "index": 12,
+        "repeat": 2,
+        "fixture": "tactical",
+        "raw_ms": 10.09,
+        "raw_white_lead": 9.649,
+        "search_ms": 107.81,
+        "best_move": "C2",
+        "search_error": "-"
+      },
+      {
+        "index": 13,
+        "repeat": 2,
+        "fixture": "cgos9_1",
+        "raw_ms": 10.02,
+        "raw_white_lead": -0.745,
+        "search_ms": 97.26,
+        "best_move": "pass",
+        "search_error": "-"
+      },
+      {
+        "index": 14,
+        "repeat": 2,
+        "fixture": "cgos9_2",
+        "raw_ms": 9.89,
+        "raw_white_lead": 0.786,
+        "search_ms": 268.48,
+        "best_move": "G5",
+        "search_error": "-"
+      },
+      {
+        "index": 15,
+        "repeat": 2,
+        "fixture": "cgos9_3",
+        "raw_ms": 9.93,
+        "raw_white_lead": 8.269,
+        "search_ms": 226.88,
+        "best_move": "C9",
+        "search_error": "-"
+      },
+      {
+        "index": 16,
+        "repeat": 2,
+        "fixture": "cgos9_4",
+        "raw_ms": 10.48,
+        "raw_white_lead": 1.249,
+        "search_ms": 127.57,
+        "best_move": "pass",
+        "search_error": "-"
+      },
+      {
+        "index": 17,
+        "repeat": 2,
+        "fixture": "cgos9_5",
+        "raw_ms": 9.95,
+        "raw_white_lead": -22.6,
+        "search_ms": 303.4,
+        "best_move": "G8",
+        "search_error": "-"
+      },
+      {
+        "index": 18,
+        "repeat": 2,
+        "fixture": "alphago_kejie19_20170523",
+        "raw_ms": 22.8,
+        "raw_white_lead": 1.301,
+        "search_ms": 265.12,
+        "best_move": "D13",
+        "search_error": "-"
+      },
+      {
+        "index": 19,
+        "repeat": 2,
+        "fixture": "cgos9_3_move64",
+        "raw_ms": 10.33,
+        "raw_white_lead": 6.807,
+        "search_ms": 108.09,
+        "best_move": "A3",
+        "search_error": "-"
+      }
+    ],
+    "1.15.0": [
+      {
+        "index": 1,
+        "repeat": 1,
+        "fixture": "ko_shape9",
+        "raw_ms": 6.41,
+        "raw_white_lead": 1.232,
+        "search_ms": 69.23,
+        "best_move": "C4",
+        "search_error": "-"
+      },
+      {
+        "index": 2,
+        "repeat": 1,
+        "fixture": "false_eye9",
+        "raw_ms": 6.13,
+        "raw_white_lead": -11.987,
+        "search_ms": 66.82,
+        "best_move": "H5",
+        "search_error": "-"
+      },
+      {
+        "index": 3,
+        "repeat": 1,
+        "fixture": "mutual_liberties9",
+        "raw_ms": 6.09,
+        "raw_white_lead": -0.851,
+        "search_ms": 67.41,
+        "best_move": "G7",
+        "search_error": "-"
+      },
+      {
+        "index": 4,
+        "repeat": 1,
+        "fixture": "ladder_pressure9",
+        "raw_ms": 6.21,
+        "raw_white_lead": 1.727,
+        "search_ms": 67.12,
+        "best_move": "G6",
+        "search_error": "-"
+      },
+      {
+        "index": 5,
+        "repeat": 1,
+        "fixture": "multi_atari9",
+        "raw_ms": 6.17,
+        "raw_white_lead": 9.903,
+        "search_ms": 67.57,
+        "best_move": "C2",
+        "search_error": "-"
+      },
+      {
+        "index": 6,
+        "repeat": 1,
+        "fixture": "double_ko_shape13",
+        "raw_ms": 8.45,
+        "raw_white_lead": 6.147,
+        "search_ms": 90.38,
+        "best_move": "H7",
+        "search_error": "-"
+      },
+      {
+        "index": 7,
+        "repeat": 1,
+        "fixture": "mutual_liberties13",
+        "raw_ms": 8.24,
+        "raw_white_lead": -10.066,
+        "search_ms": 91.12,
+        "best_move": "D2",
+        "search_error": "-"
+      },
+      {
+        "index": 8,
+        "repeat": 1,
+        "fixture": "false_eye13",
+        "raw_ms": 9.99,
+        "raw_white_lead": -12.09,
+        "search_ms": 88.02,
+        "best_move": "J8",
+        "search_error": "-"
+      },
+      {
+        "index": 9,
+        "repeat": 1,
+        "fixture": "mixed_fight19",
+        "raw_ms": 12.32,
+        "raw_white_lead": -33.698,
+        "search_ms": 132.66,
+        "best_move": "Q11",
+        "search_error": "-"
+      },
+      {
+        "index": 10,
+        "repeat": 1,
+        "fixture": "simple",
+        "raw_ms": 6.39,
+        "raw_white_lead": 1.282,
+        "search_ms": 66.45,
+        "best_move": "C3",
+        "search_error": "-"
+      },
+      {
+        "index": 11,
+        "repeat": 1,
+        "fixture": "territory",
+        "raw_ms": 6.14,
+        "raw_white_lead": 6.279,
+        "search_ms": 66.74,
+        "best_move": "C2",
+        "search_error": "-"
+      },
+      {
+        "index": 12,
+        "repeat": 1,
+        "fixture": "tactical",
+        "raw_ms": 6.2,
+        "raw_white_lead": 9.649,
+        "search_ms": 66.69,
+        "best_move": "C2",
+        "search_error": "-"
+      },
+      {
+        "index": 13,
+        "repeat": 1,
+        "fixture": "cgos9_1",
+        "raw_ms": 6.18,
+        "raw_white_lead": -0.745,
+        "search_ms": 55.2,
+        "best_move": "pass",
+        "search_error": "-"
+      },
+      {
+        "index": 14,
+        "repeat": 1,
+        "fixture": "cgos9_2",
+        "raw_ms": 6.21,
+        "raw_white_lead": 0.786,
+        "search_ms": 152.24,
+        "best_move": "G5",
+        "search_error": "-"
+      },
+      {
+        "index": 15,
+        "repeat": 1,
+        "fixture": "cgos9_3",
+        "raw_ms": 6.13,
+        "raw_white_lead": 8.269,
+        "search_ms": 151.65,
+        "best_move": "pass",
+        "search_error": "-"
+      },
+      {
+        "index": 16,
+        "repeat": 1,
+        "fixture": "cgos9_4",
+        "raw_ms": 6.11,
+        "raw_white_lead": 1.249,
+        "search_ms": 76.08,
+        "best_move": "pass",
+        "search_error": "-"
+      },
+      {
+        "index": 17,
+        "repeat": 1,
+        "fixture": "cgos9_5",
+        "raw_ms": 7.44,
+        "raw_white_lead": -22.6,
+        "search_ms": 191.88,
+        "best_move": "B5",
+        "search_error": "-"
+      },
+      {
+        "index": 18,
+        "repeat": 1,
+        "fixture": "alphago_kejie19_20170523",
+        "raw_ms": 12.58,
+        "raw_white_lead": 1.301,
+        "search_ms": 147.44,
+        "best_move": "O16",
+        "search_error": "-"
+      },
+      {
+        "index": 19,
+        "repeat": 1,
+        "fixture": "cgos9_3_move64",
+        "raw_ms": 6.48,
+        "raw_white_lead": 6.807,
+        "search_ms": 67.9,
+        "best_move": "A3",
+        "search_error": "-"
+      },
+      {
+        "index": 1,
+        "repeat": 2,
+        "fixture": "ko_shape9",
+        "raw_ms": 6.27,
+        "raw_white_lead": 1.232,
+        "search_ms": 69.67,
+        "best_move": "C4",
+        "search_error": "-"
+      },
+      {
+        "index": 2,
+        "repeat": 2,
+        "fixture": "false_eye9",
+        "raw_ms": 6.37,
+        "raw_white_lead": -11.987,
+        "search_ms": 69.87,
+        "best_move": "H5",
+        "search_error": "-"
+      },
+      {
+        "index": 3,
+        "repeat": 2,
+        "fixture": "mutual_liberties9",
+        "raw_ms": 6.22,
+        "raw_white_lead": -0.851,
+        "search_ms": 67.19,
+        "best_move": "G7",
+        "search_error": "-"
+      },
+      {
+        "index": 4,
+        "repeat": 2,
+        "fixture": "ladder_pressure9",
+        "raw_ms": 6.27,
+        "raw_white_lead": 1.727,
+        "search_ms": 67.84,
+        "best_move": "D4",
+        "search_error": "-"
+      },
+      {
+        "index": 5,
+        "repeat": 2,
+        "fixture": "multi_atari9",
+        "raw_ms": 6.21,
+        "raw_white_lead": 9.903,
+        "search_ms": 67.57,
+        "best_move": "C2",
+        "search_error": "-"
+      },
+      {
+        "index": 6,
+        "repeat": 2,
+        "fixture": "double_ko_shape13",
+        "raw_ms": 8.62,
+        "raw_white_lead": 6.147,
+        "search_ms": 93.84,
+        "best_move": "H7",
+        "search_error": "-"
+      },
+      {
+        "index": 7,
+        "repeat": 2,
+        "fixture": "mutual_liberties13",
+        "raw_ms": 8.5,
+        "raw_white_lead": -10.066,
+        "search_ms": 91.46,
+        "best_move": "D2",
+        "search_error": "-"
+      },
+      {
+        "index": 8,
+        "repeat": 2,
+        "fixture": "false_eye13",
+        "raw_ms": 8.3,
+        "raw_white_lead": -12.09,
+        "search_ms": 90.17,
+        "best_move": "J8",
+        "search_error": "-"
+      },
+      {
+        "index": 9,
+        "repeat": 2,
+        "fixture": "mixed_fight19",
+        "raw_ms": 12.18,
+        "raw_white_lead": -33.698,
+        "search_ms": 128.88,
+        "best_move": "H11",
+        "search_error": "-"
+      },
+      {
+        "index": 10,
+        "repeat": 2,
+        "fixture": "simple",
+        "raw_ms": 6.24,
+        "raw_white_lead": 1.282,
+        "search_ms": 65.57,
+        "best_move": "C3",
+        "search_error": "-"
+      },
+      {
+        "index": 11,
+        "repeat": 2,
+        "fixture": "territory",
+        "raw_ms": 5.92,
+        "raw_white_lead": 6.279,
+        "search_ms": 64.44,
+        "best_move": "C2",
+        "search_error": "-"
+      },
+      {
+        "index": 12,
+        "repeat": 2,
+        "fixture": "tactical",
+        "raw_ms": 6,
+        "raw_white_lead": 9.649,
+        "search_ms": 65.38,
+        "best_move": "C2",
+        "search_error": "-"
+      },
+      {
+        "index": 13,
+        "repeat": 2,
+        "fixture": "cgos9_1",
+        "raw_ms": 6.14,
+        "raw_white_lead": -0.745,
+        "search_ms": 61.29,
+        "best_move": "pass",
+        "search_error": "-"
+      },
+      {
+        "index": 14,
+        "repeat": 2,
+        "fixture": "cgos9_2",
+        "raw_ms": 6.23,
+        "raw_white_lead": 0.786,
+        "search_ms": 31.36,
+        "best_move": "pass",
+        "search_error": "-"
+      },
+      {
+        "index": 15,
+        "repeat": 2,
+        "fixture": "cgos9_3",
+        "raw_ms": 9.31,
+        "raw_white_lead": 8.269,
+        "search_ms": 147.14,
+        "best_move": "C9",
+        "search_error": "-"
+      },
+      {
+        "index": 16,
+        "repeat": 2,
+        "fixture": "cgos9_4",
+        "raw_ms": 7.89,
+        "raw_white_lead": 1.249,
+        "search_ms": 79.48,
+        "best_move": "pass",
+        "search_error": "-"
+      },
+      {
+        "index": 17,
+        "repeat": 2,
+        "fixture": "cgos9_5",
+        "raw_ms": 6.19,
+        "raw_white_lead": -22.6,
+        "search_ms": 164.87,
+        "best_move": "G8",
+        "search_error": "-"
+      },
+      {
+        "index": 18,
+        "repeat": 2,
+        "fixture": "alphago_kejie19_20170523",
+        "raw_ms": 12.89,
+        "raw_white_lead": 1.301,
+        "search_ms": 147.46,
+        "best_move": "O16",
+        "search_error": "-"
+      },
+      {
+        "index": 19,
+        "repeat": 2,
+        "fixture": "cgos9_3_move64",
+        "raw_ms": 6.42,
+        "raw_white_lead": 6.807,
+        "search_ms": 66.02,
+        "best_move": "A3",
+        "search_error": "-"
+      }
+    ]
+  }
+}
