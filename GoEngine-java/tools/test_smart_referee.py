@@ -25,6 +25,10 @@ public final class SmartRefereeSmoke {
         board.playMove(new Move.Stone(new Point(1,0), StoneColor.BLACK));
         return board;
     }
+    private static boolean hasReason(EndgameAdjudicator.Result r, EndgameAdjudicator.Reason reason) {
+        for (EndgameAdjudicator.Finding item : r.findings) if (item.reason == reason) return true;
+        return false;
+    }
     public static void main(String[] args) {
         GoBoard board = twoBlackChain();
         float[] owner = new float[81];
@@ -73,7 +77,69 @@ public final class SmartRefereeSmoke {
             SmartReferee.Analysis result = SmartReferee.analyze(empty, new float[size*size]);
             ok(result.groups == 0, "empty board should have zero groups");
         }
-        System.out.println("SmartReferee smoke PASS");
+        GoBoard stopped = twoBlackChain();
+        EndgameAdjudicator.Result unfinished = EndgameAdjudicator.analyze(stopped, new float[81]);
+        ok(unfinished.verdict == EndgameAdjudicator.Verdict.REVIEW_REQUIRED, "ongoing game cannot be finished");
+        stopped.playMove(new Move.Pass(StoneColor.BLACK));
+        stopped.playMove(new Move.Pass(StoneColor.WHITE));
+        ok(stopped.canResumeAfterPasses(), "two consecutive passes can be resumed");
+        EndgameAdjudicator.Result calm = EndgameAdjudicator.analyze(stopped, new float[81]);
+        ok(calm.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT,
+                "quiet double-pass game may enter manual scoring");
+        ok(stopped.resumeAfterPasses() && !stopped.isGameOver(), "resume restores playing state");
+        ok(stopped.getMoveCount() == 2, "resume removes exactly the two passes");
+        ok(!stopped.canResumeAfterPasses(), "normal game cannot resume after passes");
+        GoBoard urgent = new GoBoard(9);
+        urgent.playMove(new Move.Stone(new Point(1,1), StoneColor.BLACK));
+        urgent.playMove(new Move.Stone(new Point(0,1), StoneColor.WHITE));
+        urgent.playMove(new Move.Stone(new Point(1,0), StoneColor.WHITE));
+        urgent.playMove(new Move.Stone(new Point(2,1), StoneColor.WHITE));
+        urgent.playMove(new Move.Pass(StoneColor.BLACK));
+        urgent.playMove(new Move.Pass(StoneColor.WHITE));
+        EndgameAdjudicator.Result tactical = EndgameAdjudicator.analyze(urgent, new float[81]);
+        ok(tactical.verdict == EndgameAdjudicator.Verdict.CONTINUE_RECOMMENDED,
+                "first-move tactical capture should recommend continuation");
+        ok(hasReason(tactical, EndgameAdjudicator.Reason.FIRST_MOVE_TACTIC),
+                "must explain atari and supply a concrete location");
+        ok(urgent.get(1,1) == Intersection.BLACK, "tactical simulation must not mutate actual board");
+        GoBoard shared = new GoBoard(3);
+        for (int y=0;y<3;y++) {
+            shared.playMove(new Move.Stone(new Point(0,y),StoneColor.BLACK));
+            shared.playMove(new Move.Stone(new Point(2,y),StoneColor.WHITE));
+        }
+        shared.playMove(new Move.Stone(new Point(1,2),StoneColor.BLACK));
+        shared.playMove(new Move.Pass(StoneColor.BLACK));
+        shared.playMove(new Move.Pass(StoneColor.WHITE));
+        float[] sekiOwner = new float[9];
+        for (int y=0;y<3;y++) { sekiOwner[y*3] = -1; sekiOwner[y*3+2] = 1; }
+        sekiOwner[7] = -1;
+        EndgameAdjudicator.Result seki = EndgameAdjudicator.analyze(shared,sekiOwner);
+        ok(hasReason(seki, EndgameAdjudicator.Reason.POSSIBLE_SEKI), "shared two-liberty seki-like shape flagged");
+        ok(seki.verdict == EndgameAdjudicator.Verdict.REVIEW_REQUIRED, "suspected seki requires confirmation");
+        GoBoard ko = new GoBoard(9);
+        ko.playMove(new Move.Stone(new Point(1,1), StoneColor.BLACK));
+        for (Point p : new Point[]{new Point(0,2),new Point(2,2),new Point(1,3)})
+            ko.playMove(new Move.Stone(p,StoneColor.BLACK));
+        for (Point p : new Point[]{new Point(0,1),new Point(2,1),new Point(1,0)})
+            ko.playMove(new Move.Stone(p,StoneColor.WHITE));
+        ko.playMove(new Move.Pass(StoneColor.BLACK));
+        ko.playMove(new Move.Pass(StoneColor.WHITE));
+        EndgameAdjudicator.Result koResult = EndgameAdjudicator.analyze(ko,new float[81]);
+        ok(hasReason(koResult, EndgameAdjudicator.Reason.POSSIBLE_KO),
+                "single-stone recapture ko pattern should be detected");
+        GoBoard dame = new GoBoard(9);
+        dame.playMove(new Move.Stone(new Point(0,0), StoneColor.BLACK));
+        dame.playMove(new Move.Stone(new Point(2,0), StoneColor.WHITE));
+        dame.playMove(new Move.Pass(StoneColor.BLACK));
+        dame.playMove(new Move.Pass(StoneColor.WHITE));
+        EndgameAdjudicator.Result neutral = EndgameAdjudicator.analyze(dame,new float[81]);
+        ok(hasReason(neutral, EndgameAdjudicator.Reason.POSSIBLE_DAME),
+                "unfilled neutral point must be identified");
+        ok(neutral.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT,
+                "unfilled dame alone should not force continuation");
+        ok(EndgameAdjudicator.analyze(dame,null).verdict == EndgameAdjudicator.Verdict.REVIEW_REQUIRED,
+                "missing NN should ask for review rather than invent life/death");
+        System.out.println("SmartReferee + EndgameAdjudicator smoke PASS");
     }
 }
 """
@@ -99,7 +165,7 @@ def main():
         dest.mkdir()
         paths = [GAME / name for name in (
             "GoBoard.java", "Intersection.java", "Move.java", "Point.java",
-            "StoneColor.java", "SmartReferee.java",
+            "StoneColor.java", "SmartReferee.java", "EndgameAdjudicator.java",
         )]
         subprocess.run(["javac", "-encoding", "UTF-8", "-d", str(dest),
                         str(source), str(stub)] + [str(x) for x in paths], check=True)
