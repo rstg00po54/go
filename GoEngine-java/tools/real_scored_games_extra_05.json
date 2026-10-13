@@ -1,0 +1,76 @@
+{
+  "cases": [
+    {
+      "name": "cgos9_expand_005_01",
+      "url": "https://raw.githubusercontent.com/LatinScribe/BetaGoZero/main/DataSet/2015-Go9-small/2015-12-04T11_20_49.952Z_obb7ks4kdy4m.sgf",
+      "origin": "BetaGoZero 2015-Go9-small online scored",
+      "sgf": "(;GM[1]SZ[9]RE[B+10]KM[7]RU[Chinese]\nPB[moezo (2211)]\nPW[Lux (2420)]\n;B[df];W[fd];B[dc];W[fg];B[gd];W[ge];B[gc];W[cf];B[cg];W[ce];B[de];W[cd];B[dd];W[cc];B[gf];W[ff];B[he];W[fe];B[gg];W[fc];B[gb];W[fb];B[cb];W[bb];B[eb];W[gh];B[ba];W[ga];B[hc];W[bg];B[dh];W[ch];B[dg];W[bh];B[bc];W[ad];B[hh];W[eh];B[gi];W[di];B[fh];W[eg];B[ab];W[hb];B[ib];W[ha];B[bd];W[be];B[ea];W[fa];B[ei];W[fi];B[af];W[gh];B[bf];W[hi];B[hg];W[ag];B[ae];W[ih];B[if];W[cf];B[ce];W[id];B[ic];W[ec];B[hd];W[db];B[da];W[gi];B[ig];W[ef];B[ii];W[ee];B[ih];W[ed];B[ia];W[ci];B[ac];W[cd];B[cc];W[ai];B[ie];W[ei];B[];W[fh];B[];W[])"
+    },
+    {
+      "name": "cgos9_expand_005_02",
+      "url": "https://raw.githubusercontent.com/LatinScribe/BetaGoZero/main/DataSet/2015-Go9-small/2015-12-05T01_02_37.018Z_fjej7cexdppk.sgf",
+      "origin": "BetaGoZero 2015-Go9-small online scored",
+      "sgf": "(;GM[1]SZ[9]RE[W+6]KM[7]RU[Chinese]\nPB[201BK (2021)]\nPW[miura18 (2407)]\n;B[ef];W[ed];B[cf];W[ge];B[gg];W[ce];B[bf];W[hg];B[hh];W[fg];B[ff];W[gf];B[gh];W[df];B[dg];W[de];B[eb];W[cg];B[dh];W[cb];B[gc];W[bg];B[bh];W[hc];B[hb];W[fc];B[hd];W[fb];B[be];W[bd];B[ag];W[gb];B[gd];W[fe];B[eg];W[ha];B[ic];W[fd];B[he];W[hf];B[ie];W[ih];B[ib];W[ae];B[ch];W[ee];B[af];W[ad];B[fh];W[ga];B[hi];W[ia];B[ii];W[ig];B[if];W[cd];B[];W[])"
+    },
+    {
+      "name": "cgos9_expand_005_03",
+      "url": "https://raw.githubusercontent.com/LatinScribe/BetaGoZero/main/DataSet/2015-Go9-small/2015-12-11T03_23_02.344Z_5vg0use6fh43.sgf",
+      "origin": "BetaGoZero 2015-Go9-small online scored",
+      "sgf": "(;GM[1]SZ[9]RE[B+2]KM[7]RU[Chinese]\nPB[miura18 (2423)]\nPW[Hoonyoo (2225)]\n;B[fe];W[de];B[eg];W[ec];B[fc];W[dg];B[dh];W[fb];B[ed];W[ef];B[cg];W[ff];B[eb];W[dc];B[gb];W[cf];B[bf];W[df];B[bh];W[db];B[fa];W[ge];B[gd];W[be];B[fg];W[gg];B[gh];W[hh];B[he];W[gf];B[ae];W[ad];B[af];W[cd];B[fh];W[hf];B[da];W[ca];B[ea];W[cb];B[hd];W[gi];B[fi];W[hi];B[if];W[ig];B[ie];W[dd];B[fd];W[ee];B[];W[])"
+    },
+    {
+      "name": "cgos9_expand_005_04",
+      "url": "https://raw.githubusercontent.com/LatinScribe/BetaGoZero/main/DataSet/2015-Go9-small/2015-12-13T00_12_30.438Z_9yana99o2u1l.sgf",
+      "origin": "BetaGoZero 2015-Go9-small online scored",
+      "sgf": "(;GM[1]SZ[9]RE[B+2]KM[7]RU[Chinese]\nPB[:AyaXBot (2309)]\nPW[ne1365 (2410)]\n;B[fd];W[fg];B[ef];W[cc];B[eg];W[ce];B[gf];W[hd];B[gc];W[hf];B[gg];W[hg];B[hh];W[ge];B[ff];W[ih];B[hi];W[hc];B[hb];W[gd];B[fc];W[ie];B[bf];W[cf];B[cg];W[be];B[bg];W[eb];B[fb];W[ec];B[ed];W[dd];B[ea];W[da];B[fa];W[cb];B[ae];W[ad];B[af];W[bd];B[ic];W[ig];B[df];W[id];B[ib];W[fe];B[ee];W[de];B[fh];W[ii];B[gh];W[];B[])"
+    },
+    {
+      "name": "cgos9_expand_005_05",
+      "url": "https://raw.githubusercontent.com/LatinScribe/BetaGoZero/main/DataSet/2015-Go9-small/2015-12-14T23_39_36.645Z_ncd1qm12oakr.sgf",
+      "origin": "BetaGoZero 2015-Go9-small online scored",
+      "sgf": "(;GM[1]SZ[9]RE[B+4]KM[7]RU[Chinese]\nPB[:AyaXBot (2299)]\nPW[ne1365 (2416)]\n;B[fd];W[df];B[ff];W[ge];B[dd];W[fe];B[ee];W[ef];B[fg];W[gd];B[gc];W[hc];B[fc];W[hg];B[cg];W[cf];B[dg];W[cd];B[cc];W[bc];B[bd];W[ce];B[be];W[dc];B[hb];W[hd];B[cb];W[bb];B[db];W[bf];B[hh];W[gb];B[fb];W[ib];B[ga];W[hf];B[gh];W[ie];B[bg];W[ba];B[ag];W[ae];B[eg];W[da];B[ea];W[ca];B[ec];W[ig];B[ih];W[ad];B[ha];W[de];B[ed];W[gf];B[gg];W[ic];B[af];W[ia];B[ac];W[ab];B[bd];W[be];B[bi];W[];B[])"
+    },
+    {
+      "name": "cgos9_expand_005_06",
+      "url": "https://raw.githubusercontent.com/LatinScribe/BetaGoZero/main/DataSet/2015-Go9-small/2015-12-15T12_02_23.976Z_73us1vq1fwmn.sgf",
+      "origin": "BetaGoZero 2015-Go9-small online scored",
+      "sgf": "(;GM[1]SZ[9]RE[B+8]KM[7]RU[Chinese]\nPB[miura18 (2440)]\nPW[s0819819 (1956)]\n;B[fe];W[df];B[de];W[ce];B[cd];W[cf];B[dd];W[fg];B[gg];W[ff];B[gf];W[ge];B[gd];W[he];B[hd];W[ee];B[fd];W[ed];B[ec];W[ef];B[bd];W[gh];B[hf];W[hg];B[ie];W[be];B[hh];W[ad];B[ac];W[ae];B[bc];W[hi];B[ih];W[fh];B[ig];W[gi];B[ii];W[];B[])"
+    },
+    {
+      "name": "cgos9_expand_005_07",
+      "url": "https://raw.githubusercontent.com/LatinScribe/BetaGoZero/main/DataSet/2015-Go9-small/2015-12-19T13_29_43.037Z_bfdvjqtjm9eu.sgf",
+      "origin": "BetaGoZero 2015-Go9-small online scored",
+      "sgf": "(;GM[1]SZ[9]RE[B+2]KM[7]RU[Chinese]\nPB[miura18 (2438)]\nPW[okarin1001 (2250)]\n;B[fe];W[de];B[eg];W[ec];B[fc];W[fb];B[ed];W[dd];B[eb];W[dc];B[gb];W[ef];B[ff];W[dg];B[eh];W[db];B[fa];W[dh];B[di];W[fg];B[fh];W[ei];B[fi];W[ch];B[ee];W[df];B[da];W[ca];B[ea];W[cb];B[gg];W[ci];B[ei];W[];B[])"
+    },
+    {
+      "name": "cgos9_expand_005_08",
+      "url": "https://raw.githubusercontent.com/LatinScribe/BetaGoZero/main/DataSet/2015-Go9-small/2015-12-22T09_16_54.972Z_h92k12w46by0.sgf",
+      "origin": "BetaGoZero 2015-Go9-small online scored",
+      "sgf": "(;GM[1]SZ[9]RE[B+6]KM[7]RU[Chinese]\nPB[chastity (2546)]\nPW[noahs (2311)]\n;B[fd];W[ce];B[dc];W[ff];B[dg];W[df];B[eg];W[fe];B[gd];W[fg];B[bf];W[cc];B[dd];W[cd];B[cf];W[de];B[hf];W[hg];B[gf];W[gg];B[cb];W[bb];B[db];W[if];B[he];W[be];B[bh];W[fh];B[eh];W[cg];B[bg];W[ba];B[ie];W[ei];B[di];W[fi];B[ig];W[ih];B[if];W[ed];B[ec];W[fb];B[gb];W[fc];B[gc];W[da];B[fa];W[ca];B[ee];W[ef];B[ch];W[ed];B[eb];W[ge];B[hd];W[ae];B[hh];W[hi];B[ii];W[ci];B[bi];W[ih];B[af];W[gh];B[ee];W[ea];B[ed];W[];B[])"
+    },
+    {
+      "name": "cgos9_expand_005_09",
+      "url": "https://raw.githubusercontent.com/LatinScribe/BetaGoZero/main/DataSet/2015-Go9-small/2015-12-28T14_56_54.019Z_67yhr6f3wspy.sgf",
+      "origin": "BetaGoZero 2015-Go9-small online scored",
+      "sgf": "(;GM[1]SZ[9]RE[W+12]KM[7]RU[Chinese]\nPB[sakurachiru (1894)]\nPW[handiwin (2592)]\n;B[ee];W[dc];B[ge];W[ce];B[dg];W[fc];B[bf];W[he];B[hf];W[hd];B[cd];W[de];B[gd];W[gc];B[cc];W[dd];B[be];W[gf];B[ff];W[gg];B[fg];W[gh];B[fh];W[cb];B[bb];W[bc];B[bd];W[ba];B[ac];W[eb];B[gi];W[hg];B[ed];W[hi];B[fi];W[df];B[cf];W[eg];B[ef];W[fd];B[ec];W[db];B[dh];W[fe];B[ca];W[da];B[ab];W[fb];B[aa];W[ca];B[];W[])"
+    },
+    {
+      "name": "cgos9_expand_005_10",
+      "url": "https://raw.githubusercontent.com/LatinScribe/BetaGoZero/main/DataSet/2015-Go9-small/2015-12-30T13_32_16.070Z_t98atj0zczcp.sgf",
+      "origin": "BetaGoZero 2015-Go9-small online scored",
+      "sgf": "(;GM[1]SZ[9]RE[W+4]KM[7]RU[Chinese]\nPB[makkuro0920 (2048)]\nPW[handiwin (2606)]\n;B[ee];W[dc];B[cd];W[fc];B[cc];W[eg];B[cg];W[gg];B[ge];W[hc];B[eb];W[fd];B[fe];W[db];B[hf];W[dh];B[hh];W[ch];B[bg];W[gh];B[bh];W[hg];B[ig];W[fh];B[hd];W[cb];B[hb];W[gc];B[ic];W[bc];B[bd];W[bb];B[gb];W[fb];B[ga];W[fa];B[ci];W[ff];B[ef];W[gf];B[ac];W[ab];B[ad];W[di];B[bi];W[dg];B[df];W[dd];B[de];W[ed];B[ih];W[hi];B[if];W[gi];B[gd];W[ii];B[];W[])"
+    },
+    {
+      "name": "cgos9_expand_005_11",
+      "url": "https://raw.githubusercontent.com/LatinScribe/BetaGoZero/main/DataSet/2015-Go9-small/2016-01-08T13_52_11.234Z_wof3wdj6kmur.sgf",
+      "origin": "BetaGoZero 2015-Go9-small online scored",
+      "sgf": "(;GM[1]SZ[9]RE[W+8]KM[7]RU[Chinese]\nPB[oprush (2103)]\nPW[Easons (2445)]\n;B[fd];W[df];B[ef];W[eg];B[fg];W[ee];B[ff];W[ed];B[gc];W[dg];B[cc];W[eb];B[ce];W[de];B[bf];W[bg];B[bb];W[fe];B[ge];W[gb];B[fh];W[hd];B[gd];W[hc];B[he];W[db];B[fb];W[fa];B[fc];W[hb];B[hg];W[cb];B[ba];W[cf];B[bd];W[af];B[be];W[eh];B[ae];W[fi];B[gi];W[ei];B[hh];W[ag];B[dc];W[ec];B[dd];W[ie];B[if];W[id];B[ca];W[da];B[];W[])"
+    },
+    {
+      "name": "cgos9_expand_005_12",
+      "url": "https://raw.githubusercontent.com/LatinScribe/BetaGoZero/main/DataSet/2015-Go9-small/2016-01-09T14_41_37.899Z_dlvzja13hm1i.sgf",
+      "origin": "BetaGoZero 2015-Go9-small online scored",
+      "sgf": "(;GM[1]SZ[9]RE[W+4]KM[7]RU[Chinese]\nPB[ria3 (2189)]\nPW[keana (2460)]\n;B[fd];W[dd];B[ef];W[cf];B[cg];W[gf];B[gg];W[bg];B[dg];W[fg];B[ff];W[hg];B[gh];W[he];B[ce];W[de];B[bf];W[gd];B[fe];W[cd];B[be];W[bd];B[hh];W[ih];B[fh];W[gc];B[fc];W[ae];B[df];W[af];B[gb];W[hb];B[fb];W[ha];B[cf];W[db];B[bh];W[bb];B[ag];W[ad];B[ge];W[hf];B[eb];W[da];B[ig];W[if];B[hi];W[hc];B[dc];W[cc];B[ec];W[ea];B[ii];W[ig];B[fa];W[ed];B[ee];W[ga];B[];W[ba];B[];W[])"
+    }
+  ]
+}
