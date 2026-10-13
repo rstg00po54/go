@@ -98,6 +98,8 @@ public class MainActivity extends AppCompatActivity {
     private double fastEndgameLead = Double.NaN;
     // Experimental referee is a local, explicitly confirmed dead-chain overlay.
     private boolean refereeMode;
+    private boolean refereeConfirmed;
+    private final Set<Point> refereeAccepted = new HashSet<>();
     private final Set<Point> refereeDead = new HashSet<>();
     private final Set<Point> refereeSuggested = new HashSet<>();
     private final Set<Point> refereeReview = new HashSet<>();
@@ -737,13 +739,25 @@ public class MainActivity extends AppCompatActivity {
     /** Explicit, reversible referee review. Keeps original NN outcome untouched until user confirmation. */
     private void showEndgameScoringOptions() {
         if (!engineReady || !gameReady || !board.isGameOver() || evaluating || thinking
-                || finalDeadStones == null || preciseScoreReady) return;
+                || finalDeadStones == null) return;
         if (refereeMode) {
             showRefereeConfirmation();
             return;
         }
+        if (refereeConfirmed) {
+            refereeDead.clear();
+            refereeDead.addAll(refereeAccepted);
+            refereeMode = true;
+            refereeReview.clear();
+            boardView.setOwnership(null);
+            refreshRefereePreview();
+            return;
+        }
+        String[] choices = preciseScoreReady
+                ? new String[]{"智能裁判（人工确认死子）"}
+                : new String[]{"智能裁判（人工确认死子）", "深度对照（KataGo 搜索）"};
         new AlertDialog.Builder(this).setTitle("终局结算方式")
-                .setItems(new String[]{"智能裁判（手动复核死子）", "深度对照（KataGo 搜索）"}, (dialog, index) -> {
+                .setItems(choices, (dialog, index) -> {
                     if (index == 0) startSmartReferee();
                     else requestPreciseEndgame();
                 })
@@ -751,7 +765,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startSmartReferee() {
-        if (!engineReady || evaluating || thinking || !board.isGameOver() || preciseScoreReady) return;
+        if (!engineReady || evaluating || thinking || !board.isGameOver()) return;
         evaluating = true;
         final GoBoard snapshot = board;
         final int moves = board.getMoveCount(), size = boardSize;
@@ -822,6 +836,9 @@ public class MainActivity extends AppCompatActivity {
                             "中国规则（确认死子后）\n黑 %.1f · 白 %.1f\n%s",
                             totals.blackPoints, totals.whitePoints, gameResultText);
                     preciseScoreReady = true;
+                    refereeConfirmed = true;
+                    refereeAccepted.clear();
+                    refereeAccepted.addAll(refereeDead);
                     fastEndgameLead = Double.NaN;
                     refereeMode = false;
                     refereeReview.clear();
@@ -839,7 +856,10 @@ public class MainActivity extends AppCompatActivity {
                     refereeMode = false;
                     refereeDead.clear();
                     refereeReview.clear();
-                    boardView.setRefereeMarks(null, null);
+                    if (refereeConfirmed) {
+                        refereeDead.addAll(refereeAccepted);
+                        boardView.setRefereeMarks(refereeAccepted, null);
+                    } else boardView.setRefereeMarks(null, null);
                     render(finalScoreText == null ? "快速 AI 预估" : finalScoreText);
                 }).show();
     }
@@ -1349,6 +1369,8 @@ public class MainActivity extends AppCompatActivity {
         preciseScoreReady = false;
         fastEndgameLead = Double.NaN;
         refereeMode = false;
+        refereeConfirmed = false;
+        refereeAccepted.clear();
         refereeDead.clear();
         refereeSuggested.clear();
         refereeReview.clear();
@@ -1558,10 +1580,10 @@ public class MainActivity extends AppCompatActivity {
         newGameButton.setEnabled(!thinking && !engineStarting && !evaluating);
         newRoundButton.setEnabled(!thinking && !engineStarting && !evaluating);
         countTerritoryButton.setText(board.isGameOver()
-                ? (preciseScoreReady ? "已结算" : refereeMode ? "确认裁判" : "裁判/对照")
+                ? (refereeMode ? "确认裁判" : refereeConfirmed ? "复核裁判" : "裁判/对照")
                 : "数目");
         countTerritoryButton.setEnabled(engineReady && gameReady && board.isGameOver()
-                && !thinking && !engineStarting && !evaluating && finalDeadStones != null && !preciseScoreReady);
+                && !thinking && !engineStarting && !evaluating && finalDeadStones != null);
         situationButton.setEnabled(variationBoard == null && engineReady && gameReady && !engineStarting
                 && !thinking && !evaluating && (board.isGameOver() || currentPlayer == playerColor));
         aiSuggestionButton.setEnabled(playerTurn && variationBoard == null);
