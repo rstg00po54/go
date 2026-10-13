@@ -25,7 +25,7 @@ git pull origin rk3588-engine
 python3 tools/test_real_sgf_nn.py
 python3 tools/test_smart_referee.py
 python3 tools/test_fetch_real_sgf_corpus.py
-python3 tools/fetch_real_sgf_corpus.py --nine 80 --nineteen 40
+python3 tools/fetch_real_sgf_corpus.py --nine 80 --nineteen 20
 python3 tools/benchmark_real_sgf_nn_android.py --preflight --sgf-dir build/real_sgf_corpus --limit 1000
 python3 tools/benchmark_real_sgf_nn_android.py --serial 8719e18a71a2a66c --mode gpu --sgf-dir build/real_sgf_corpus --limit 1000 --repeats 1 --upload
 ```
