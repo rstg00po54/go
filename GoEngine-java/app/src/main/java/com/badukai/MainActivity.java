@@ -30,6 +30,7 @@ import com.badukai.game.GoBoard;
 import com.badukai.game.FastEndgameScorer;
 import com.badukai.game.SmartReferee;
 import com.badukai.game.EndgameAdjudicator;
+import com.badukai.game.MidgameTacticalReview;
 import com.badukai.game.Intersection;
 import com.badukai.game.Move;
 import com.badukai.game.Point;
@@ -992,11 +993,14 @@ public class MainActivity extends AppCompatActivity {
             }
             final EndgameAdjudicator.Result decision = verdict;
             String searchEvidence = "";
+            List<List<String>> blackVariations = new ArrayList<>(), whiteVariations = new ArrayList<>();
             if ((!endedAtStart || decision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT) && nn != null) {
                 try {
                     // Search as both sides, but NEVER treat the suggested moves as a solved life/death proof.
                     List<KataGoEngine.SearchRecommendation> black = engine.searchRecommendations("black", 48, 1.0);
                     List<KataGoEngine.SearchRecommendation> white = engine.searchRecommendations("white", 48, 1.0);
+                    for (KataGoEngine.SearchRecommendation move : black) blackVariations.add(move.pvMoves);
+                    for (KataGoEngine.SearchRecommendation move : white) whiteVariations.add(move.pvMoves);
                     searchEvidence = "\n" + refereeSearchSummary("黑",black)
                             + "\n" + refereeSearchSummary("白",white)
                             + "\n以上仅是48次访问上限、每方1秒的短搜索估计；"
@@ -1009,6 +1013,10 @@ public class MainActivity extends AppCompatActivity {
                     searchEvidence = "\n双方先手搜索不可用，请人工确认；不能凭此认定已经结束。";
                 }
             }
+            final MidgameTacticalReview.Result tactical = endedAtStart ? null
+                    : MidgameTacticalReview.analyze(snapshot,decision,blackVariations,whiteVariations);
+            if (tactical != null) Log.i(TAG,"MIDGAME_LOCAL_SEARCH candidates=" + tactical.candidates
+                    + " corroborated=" + tactical.searchSupported + " points=" + tactical.tacticalMoves.size());
             final String mctsInfo = searchEvidence;
             mainHandler.post(() -> {
                 evaluating = false;
@@ -1021,26 +1029,38 @@ public class MainActivity extends AppCompatActivity {
                 refereeSuggested.clear();
                 refereeReview.clear();
                 refereeInitialReview.clear();
-                if (suggestion != null) {
+                if (endedAtStart && suggestion != null) {
+                    // NN ownership is acceptable as a tentative ENDGAME scoring
+                    // suggestion, but never declare a midgame string dead.
                     refereeDead.addAll(suggestion.suggestedDead);
                     refereeSuggested.addAll(suggestion.suggestedDead);
                     refereeReview.addAll(suggestion.needsReview);
                     refereeInitialReview.addAll(suggestion.needsReview);
+                } else if (!endedAtStart && tactical != null) {
+                    refereeReview.addAll(tactical.threatenedStones);
+                    refereeInitialReview.addAll(tactical.threatenedStones);
                 }
                 boardView.setOwnership(null);
                 boardView.setRefereeMarks(refereeDead, refereeReview);
                 Set<Point> alerts = new HashSet<>();
-                for (EndgameAdjudicator.Finding finding : decision.findings) {
-                    if (finding.reason == EndgameAdjudicator.Reason.FIRST_MOVE_TACTIC
-                            || finding.reason == EndgameAdjudicator.Reason.POSSIBLE_KO
-                            || finding.reason == EndgameAdjudicator.Reason.POSSIBLE_SEKI) {
-                        if (finding.suggestedMove != null) alerts.add(finding.suggestedMove);
-                        else alerts.addAll(finding.points);
+                if (!endedAtStart) {
+                    // Orange: tactical liberty corroborated by a local two-order
+                    // simulation and a short KataGo PV. Yellow: threatened stones.
+                    // No midgame red crosses, generic ownership or seki guesses.
+                    if (tactical != null) alerts.addAll(tactical.tacticalMoves);
+                } else {
+                    for (EndgameAdjudicator.Finding finding : decision.findings) {
+                        if (finding.reason == EndgameAdjudicator.Reason.FIRST_MOVE_TACTIC
+                                || finding.reason == EndgameAdjudicator.Reason.POSSIBLE_KO
+                                || finding.reason == EndgameAdjudicator.Reason.POSSIBLE_SEKI) {
+                            if (finding.suggestedMove != null) alerts.add(finding.suggestedMove);
+                            else alerts.addAll(finding.points);
+                        }
                     }
+                    if (decision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT
+                            && alerts.isEmpty() && refereeDead.isEmpty() && refereeReview.isEmpty())
+                        alerts.addAll(decision.highlights);
                 }
-                if (decision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT
-                        && alerts.isEmpty() && refereeDead.isEmpty() && refereeReview.isEmpty())
-                    alerts.addAll(decision.highlights);
                 boardView.setEndgameAlerts(alerts);
                 // No marked dispute in an ongoing game is not an endgame
                 // controversy. Show a single, short informational dialog and
@@ -1097,13 +1117,19 @@ public class MainActivity extends AppCompatActivity {
                     // Continue only dismisses the modal; the following screen
                     // tap clears the annotations and resumes the game.
                     StringBuilder prompt = new StringBuilder(String.format(Locale.CHINA,
-                            "%s：红叉 %d 处、黄圈 %d 处、橙圈 %d 处。\n",
-                            endedAtStart ? "棋盘上已标出争议" : "正在对局，当前棋形仅供参考，棋盘标记",
-                            refereeDead.size(),refereeReview.size(),alerts.size()));
-                    int described = 0;
-                    for (EndgameAdjudicator.Finding finding : decision.findings) {
-                        if (described++ >= 2) break;
-                        prompt.append("· ").append(finding.message).append("\n");
+                            endedAtStart ? "棋盘上已标出争议：红叉 %d 处、黄圈 %d 处、橙圈 %d 处。\n"
+                                    : "正在对局：黄圈 %d 颗棋子、橙圈 %d 个攻防点；中盘不判死（红叉 0 处）。\n",
+                            endedAtStart ? refereeDead.size() : refereeReview.size(),
+                            endedAtStart ? refereeReview.size() : alerts.size(),
+                            endedAtStart ? alerts.size() : 0));
+                    if (endedAtStart) {
+                        int described = 0;
+                        for (EndgameAdjudicator.Finding finding : decision.findings) {
+                            if (described++ >= 2) break;
+                            prompt.append("· ").append(finding.message).append("\n");
+                        }
+                    } else {
+                        prompt.append("已经模拟双方在关键点先落一手，并参考短搜索变化；只是攻防提醒，不是死活结论。\n");
                     }
                     prompt.append("\n点「继续下棋」关闭弹窗，争议标记仍保留。");
                     prompt.append(endedAtStart
@@ -1205,7 +1231,9 @@ public class MainActivity extends AppCompatActivity {
         String shortStatus = mustContinue ? "智能裁判\n建议继续下" : "智能裁判\n确认数子";
         refereePanelTitle.setText(!board.isGameOver() ? "智能裁判 · 当前棋形"
                 : mustContinue ? "智能裁判 · 存在争议" : "智能裁判 · 可以确认数子");
-        refereePanelScore.setText(mustContinue ? "红叉：疑似死棋  ·  黄圈：待确认  ·  橙圈：争议点"
+        refereePanelScore.setText(!board.isGameOver()
+                ? "黄圈：局部有危险的棋块  ·  橙圈：关键攻防点"
+                : mustContinue ? "红叉：疑似死棋  ·  黄圈：待确认  ·  橙圈：争议点"
                 : String.format(Locale.CHINA,"黑 %.1f · 白 %.1f · %s",
                         audit.score.blackPoints,audit.score.whitePoints,
                         Math.abs(lead) < 0.001 ? "平局" :
