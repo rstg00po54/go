@@ -116,6 +116,22 @@ def click_ui_text(adb,serial,label):
     raise RuntimeError("Cannot find clickable visible UI label: "+label)
 
 
+def click_ui_description(adb,serial,description):
+    # This is a full-screen transparent tap target, not a Go intersection.
+    root = read_dialog_root(adb,serial)
+    for node in root.iter():
+        if node.attrib.get("content-desc") != description:
+            continue
+        bounds = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",node.attrib.get("bounds",""))
+        if bounds and node.attrib.get("clickable") == "true":
+            x1,y1,x2,y2 = map(int,bounds.groups())
+            if x2>x1 and y2>y1:
+                run([adb,"-s",serial,"shell","input","tap",
+                     str((x1+x2)//2),str((y1+y2)//2)],timeout=12)
+                return
+    raise RuntimeError("Missing clickable full-screen referee overlay: "+description)
+
+
 def validate_dialog(text, game=STRICT_CASE):
     required = ("智能裁判","黄圈")
     if game == STRICT_CASE:
@@ -137,13 +153,22 @@ def capture_screenshot(adb,serial,target):
 
 
 def validate_review_panel(text,game=STRICT_CASE):
-    disputed = game != "cgos9_1"
-    required = ("智能裁判 ·","存在争议","继续下棋","暂不结算") if disputed else (
-        "智能裁判 ·","黑","白","恢复建议","确认数子","退出复核")
+    if game != "cgos9_1":
+        raise ValueError("Disputed endgames use the board overlay, not a scoring toolbar")
+    required = ("智能裁判 ·","黑","白","恢复建议","确认数子","退出复核")
     missing = [part for part in required if part not in text]
-    forbidden = ("确认数子","恢复建议","退出复核","确认死子") if disputed else ("继续下棋",)
-    missing += ["unexpected button: "+part for part in forbidden if part in text]
+    if "继续下棋" in text:
+        missing.append("unexpected continue-playing action")
     return missing
+
+
+def validate_dispute_overlay(root):
+    # A full-screen hit target must sit above the board. No dialog should
+    # prevent the player from seeing the marked stones.
+    buttons = [node for node in root.iter()
+               if node.attrib.get("content-desc") == "点击屏幕继续下棋"
+               and node.attrib.get("clickable") == "true"]
+    return [] if buttons else ["transparent full-screen tap overlay missing"]
 
 
 def validate_confirmation_dialog(text,game):
@@ -189,38 +214,45 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir):
         if "game="+game not in terminal["line"]:
             raise RuntimeError("Incorrect SGF in terminal event")
         if not skip_ui:
-            dialog = read_dialog_xml(adb,serial)
-            (case_dir/"dialog.txt").write_text(dialog+"\n",encoding="utf-8")
-            missing = validate_dialog(dialog,game)
-            if missing:
-                raise RuntimeError("Dialog missing %s. If UI is locked/headless, use --skip-ui." % missing)
-            print("Dialog UI PASS: %s" % game,flush=True)
-            capture_screenshot(adb,serial,case_dir/"analysis_dialog.png")
-            # Close only the information dialog. The board remains in review mode;
-            # verify the actual controls the user will use to confirm dead stones.
-            run([adb,"-s",serial,"shell","input","keyevent","4"],timeout=10)
-            panel = read_dialog_xml(adb,serial)
-            (case_dir/"review_panel.txt").write_text(panel+"\n",encoding="utf-8")
-            missing_panel = validate_review_panel(panel,game)
-            if missing_panel:
-                raise RuntimeError("Referee review toolbar missing %s; see review_panel.txt" % missing_panel)
-            print("Review toolbar UI PASS: correct action for referee verdict.",flush=True)
-            capture_screenshot(adb,serial,case_dir/"review_screen.png")
             if game=="cgos9_1":
+                dialog = read_dialog_xml(adb,serial)
+                (case_dir/"dialog.txt").write_text(dialog+"\n",encoding="utf-8")
+                missing = validate_dialog(dialog,game)
+                if missing:
+                    raise RuntimeError("Ready-to-count dialog missing: %s" % missing)
+                capture_screenshot(adb,serial,case_dir/"analysis_dialog.png")
+                run([adb,"-s",serial,"shell","input","keyevent","4"],timeout=10)
+                panel = read_dialog_xml(adb,serial)
+                (case_dir/"review_panel.txt").write_text(panel+"\n",encoding="utf-8")
+                missing_panel = validate_review_panel(panel,game)
+                if missing_panel:
+                    raise RuntimeError("Ready-to-count toolbar missing: %s" % missing_panel)
+                capture_screenshot(adb,serial,case_dir/"review_screen.png")
                 click_ui_text(adb,serial,"确认数子")
                 confirmation = read_dialog_xml(adb,serial)
                 (case_dir/"confirmation_dialog.txt").write_text(confirmation+"\n",encoding="utf-8")
                 missing_confirmation = validate_confirmation_dialog(confirmation,game)
                 if missing_confirmation:
-                    raise RuntimeError("Final scoring confirmation did not open: %s" % missing_confirmation)
+                    raise RuntimeError("Final scoring confirmation missing: %s" % missing_confirmation)
                 capture_screenshot(adb,serial,case_dir/"confirmation_dialog.png")
-                print("Confirm score UI PASS.",flush=True)
+                print("Ready-to-count UI PASS: scoring dialog opens.",flush=True)
             else:
-                # Click Continue and verify the TWO actual pass moves are undone
-                # in the real KataGo session and Java GoBoard.
-                click_ui_text(adb,serial,"继续下棋")
+                if "stage=overlay" not in terminal["line"]:
+                    raise RuntimeError("Disputed game unexpectedly opened a referee dialog")
+                root = read_dialog_root(adb,serial)
+                missing = validate_dispute_overlay(root)
+                if missing:
+                    raise RuntimeError("Disputed board overlay not shown: %s" % missing)
+                screen = " ".join(node.attrib.get("text","") for node in root.iter())
+                (case_dir/"review_panel.txt").write_text(screen+"\n",encoding="utf-8")
+                capture_screenshot(adb,serial,case_dir/"review_screen.png")
+                # The dismissing tap is at the CENTER of the entire screen:
+                # not necessarily on a valid Go intersection. It must be
+                # consumed and must never place a stone.
+                click_ui_description(adb,serial,"点击屏幕继续下棋")
                 expected_moves = int(re.search(r"\bmoves=(\d+)\b",terminal["line"]).group(1))-2
                 resume = None
+                logs = ""
                 deadline = time.monotonic()+40
                 while time.monotonic()<deadline:
                     logs = run([adb,"-s",serial,"logcat","-d","-v","brief",
@@ -231,15 +263,16 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir):
                     time.sleep(2)
                 (case_dir/"resume_logcat.txt").write_text(logs,encoding="utf-8")
                 if not resume or resume["status"]!="PASS":
-                    raise RuntimeError("Continue-playing failed: "+str(resume))
+                    raise RuntimeError("Tap-to-resume failed: "+str(resume))
                 line = resume["line"]
                 if ("moves="+str(expected_moves)) not in line or ("terminal=false") not in line or (
                         "refereeMode=false") not in line or ("gameReady=true") not in line:
-                    raise RuntimeError("Continuation left unexpected game state: "+line)
+                    raise RuntimeError("Resume incorrectly advanced or desynced the board: "+line)
                 result["resumed"] = resume
-                print("Continue playing UI PASS: terminal passes undone, board and engine resumed.",flush=True)
+                capture_screenshot(adb,serial,case_dir/"resumed_screen.png")
+                print("Tap-anywhere overlay PASS: dispute marks dismissed, two passes undone; no accidental move.",flush=True)
         else:
-            print("Dialog UI skipped (engine + referee assertions still checked).",flush=True)
+            print("UI check skipped (engine + referee assertions still checked).",flush=True)
         result["status"] = "PASS"
     except (OSError,RuntimeError,subprocess.TimeoutExpired,ET.ParseError) as exc:
         result["status"] = "FAIL"
