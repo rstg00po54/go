@@ -1,0 +1,7 @@
+Starting: Intent { cmp=com.badukai.java/com.badukai.MainActivity (has extras) }
+Status: ok
+LaunchState: COLD
+Activity: com.badukai.java/com.badukai.MainActivity
+TotalTime: 549
+WaitTime: 551
+Complete

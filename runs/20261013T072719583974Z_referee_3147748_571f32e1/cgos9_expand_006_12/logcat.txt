@@ -1,0 +1,7 @@
+--------- beginning of main
+I/RefereeSmoke( 7043): START id=4dbfe73f71024354 game=cgos9_5 requested=cpu
+I/RefereeSmoke( 7043): REPLAY id=4dbfe73f71024354 game=cgos9_5 moves=56 terminal=true backend=PIE/ProcessBuilder lead=-22.60 dead=1 review=0 vulnerable=0
+I/RefereeSmoke( 7043): PASS id=4dbfe73f71024354 game=cgos9_5 stage=dialog verdict=REVIEW_REQUIRED moves=56 dead=1 review=0 vulnerable=0 minLead=NaN maxLead=NaN hasBlack=true hasWhite=true hasPV=true
+I/RefereeSmoke( 7278): START id=b26093fc65ba43e3 game=cgos9_expand_006_12 requested=cpu
+I/RefereeSmoke( 7278): REPLAY id=b26093fc65ba43e3 game=cgos9_expand_006_12 moves=82 terminal=true backend=PIE/ProcessBuilder lead=+4.77 dead=1 review=2 vulnerable=1
+I/RefereeSmoke( 7278): PASS id=b26093fc65ba43e3 game=cgos9_expand_006_12 stage=dialog verdict=REVIEW_REQUIRED moves=82 dead=1 review=2 vulnerable=1 minLead=-20.0 maxLead=8.0 hasBlack=true hasWhite=true hasPV=true
