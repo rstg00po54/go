@@ -17,15 +17,18 @@ public final class SmartReferee {
     private SmartReferee() {}
 
     public static final class Analysis {
-        public final Set<Point> suggestedDead, needsReview;
-        public final int groups, suggestedGroups, reviewGroups;
+        public final Set<Point> suggestedDead, needsReview, vulnerableReview;
+        public final int groups, suggestedGroups, reviewGroups, vulnerableGroups;
 
-        Analysis(Set<Point> dead, Set<Point> review, int groups, int suggested, int uncertain) {
+        Analysis(Set<Point> dead, Set<Point> review, Set<Point> vulnerable,
+                 int groups, int suggested, int uncertain, int vulnerableCount) {
             suggestedDead = Collections.unmodifiableSet(new HashSet<>(dead));
             needsReview = Collections.unmodifiableSet(new HashSet<>(review));
+            vulnerableReview = Collections.unmodifiableSet(new HashSet<>(vulnerable));
             this.groups = groups;
             suggestedGroups = suggested;
             reviewGroups = uncertain;
+            vulnerableGroups = vulnerableCount;
         }
     }
 
@@ -35,8 +38,8 @@ public final class SmartReferee {
         if (whiteOwnership == null || whiteOwnership.length != n * n)
             throw new IllegalArgumentException("Ownership map size mismatch");
         boolean[][] seen = new boolean[n][n];
-        Set<Point> dead = new HashSet<>(), review = new HashSet<>();
-        int groups = 0, marked = 0, uncertain = 0;
+        Set<Point> dead = new HashSet<>(), review = new HashSet<>(), vulnerable = new HashSet<>();
+        int groups = 0, marked = 0, uncertain = 0, vulnerableCount = 0;
         for (int y = 0; y < n; y++) {
             for (int x = 0; x < n; x++) {
                 Intersection color = board.get(x, y);
@@ -58,13 +61,49 @@ public final class SmartReferee {
                 if (minimum >= 0.80 && mean >= 0.90) {
                     dead.addAll(chain);
                     marked++;
-                } else if (mean >= 0.25 || (mean >= -0.10 && minimum <= -0.65)) {
-                    review.addAll(chain);
-                    uncertain++;
+                } else {
+                    boolean nnUncertain = mean >= 0.25 || (mean >= -0.10 && minimum <= -0.65);
+                    // Tactical warning: a large chain with only a few liberties can
+                    // be dead despite confident *friendly* NN ownership. Two enclosed
+                    // eye candidates suppress this heuristic, but are not a proof
+                    // of life (false eyes/seki still need deeper verification).
+                    boolean tightLargeGroup = chain.size() >= 6 && isLowLibertyWithoutTwoEyes(board, chain);
+                    if (nnUncertain || tightLargeGroup) {
+                        review.addAll(chain);
+                        uncertain++;
+                    }
+                    if (tightLargeGroup) {
+                        vulnerable.addAll(chain);
+                        vulnerableCount++;
+                    }
                 }
             }
         }
-        return new Analysis(dead, review, groups, marked, uncertain);
+        return new Analysis(dead, review, vulnerable, groups, marked, uncertain, vulnerableCount);
+    }
+
+    /** Heuristic ONLY: do not adjudicate death from group size or liberty count. */
+    private static boolean isLowLibertyWithoutTwoEyes(GoBoard board, Set<Point> chain) {
+        Set<Point> liberties = new HashSet<>();
+        for (Point p : chain) for (int i = 0; i < 4; i++) {
+            int x = p.x + DX[i], y = p.y + DY[i];
+            if (board.isInside(x, y) && board.get(x, y) == Intersection.EMPTY)
+                liberties.add(new Point(x, y));
+        }
+        if (liberties.size() > 3) return false;
+        int eyeCandidates = 0;
+        for (Point p : liberties) {
+            boolean surrounded = true;
+            for (int i = 0; i < 4; i++) {
+                int x = p.x + DX[i], y = p.y + DY[i];
+                if (board.isInside(x, y) && !chain.contains(new Point(x, y))) {
+                    surrounded = false;
+                    break;
+                }
+            }
+            if (surrounded && ++eyeCandidates >= 2) return false;
+        }
+        return true;
     }
 
     /** Full-chain toggle. Never removes a stone from the actual game board. */
