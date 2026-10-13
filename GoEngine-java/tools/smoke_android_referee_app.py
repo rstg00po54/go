@@ -84,6 +84,20 @@ def resume_event(log,run_id):
     return result
 
 
+def overlay_marks(log,run_id):
+    # Ground highlighted positions in the real Java board, not only UI labels.
+    result = None
+    for line in log.splitlines():
+        if "RefereeSmoke" not in line:
+            continue
+        match = re.search(r"\bOVERLAY id="+re.escape(run_id)
+                          +r"\b dead=(\d+) review=(\d+) alerts=(\d+)\b",line)
+        if match:
+            result = {"dead":int(match.group(1)),"review":int(match.group(2)),
+                      "alerts":int(match.group(3))}
+    return result
+
+
 def read_dialog_root(adb,serial):
     target = "/sdcard/referee_smoke_window.xml"
     run([adb,"-s",serial,"shell","uiautomator","dump",target],timeout=35)
@@ -239,6 +253,10 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir):
             else:
                 if "stage=overlay" not in terminal["line"]:
                     raise RuntimeError("Disputed game unexpectedly opened a referee dialog")
+                marked = overlay_marks(log,run_id)
+                if marked is None or sum(marked.values())==0:
+                    raise RuntimeError("No dispute stones or positions were highlighted on the board")
+                result["marks"] = marked
                 root = read_dialog_root(adb,serial)
                 missing = validate_dispute_overlay(root)
                 if missing:
