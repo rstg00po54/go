@@ -6,3 +6,6 @@ project(katago_android_probe LANGUAGES CXX)
 add_library(katago_probe SHARED katago_probe.cpp)
 target_compile_features(katago_probe PRIVATE cxx_std_17)
 target_link_libraries(katago_probe PRIVATE dl)
+target_link_options(katago_probe PRIVATE
+    "-Wl,-z,max-page-size=16384"
+    "-Wl,-z,common-page-size=16384")
