@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Focused one-move KataGo NN probes on recorded SGFs (not life/death proof).
 
-For each candidate point, reload the original SGF, optionally undo its final
-two passes, play either color at that point, and compare KataGo raw NN output.
+For each candidate point, reload the original SGF retaining its final
+passes, play either color at that point, and compare KataGo raw NN output.
 Each probe is independent. No original SGF, game app or board is modified.
 """
 import argparse
@@ -57,13 +57,13 @@ def restore_probe_position(engine, case):
 def parse_search_candidates(response):
     """KataGo kata-search_analyze info entries; scoreLead is REPLY side's lead."""
     candidates = []
-    segments = re.split(r"\\binfo\\s+move\\s+", response)
+    segments = re.split(r"\binfo\s+move\s+", response)
     for segment in segments[1:]:
         move = segment.split(None,1)[0] if segment.split() else None
         if not move:
             continue
         def metric(key):
-            match = re.search(r"\\b"+re.escape(key)+r"\\s+([^\\s]+)",segment)
+            match = re.search(r"\b"+re.escape(key)+r"\s+([^\s]+)",segment)
             return match.group(1) if match else None
         score, winrate, visits = metric("scoreLead"), metric("winrate"), metric("visits")
         if score is None or winrate is None or visits is None:
@@ -72,7 +72,7 @@ def parse_search_candidates(response):
             score, winrate, visits = float(score),float(winrate),int(visits)
         except ValueError:
             continue
-        pv_match = re.search(r"\\bpv\\s+(.+)",segment,re.S)
+        pv_match = re.search(r"\bpv\s+(.+)",segment,re.S)
         variation = []
         if pv_match:
             for item in pv_match.group(1).split():
@@ -126,9 +126,15 @@ def run_probes(engine, case, candidates, watched, search_visits=0, search_second
                     text, elapsed = engine.command(
                         "kata-search_analyze %s 50 minmoves 3 maxmoves 3" % reply)
                     row["reply_search_ms"] = round(elapsed,3)
+                    # Retain the actual GTP response for unexpected future formats.
+                    # A single test can legitimately return a terminal 'play pass'.
+                    row["reply_search_raw"] = text[:16000]
+                    row["reply_search_raw_length"] = len(text)
                     row["reply_candidates"] = parse_search_candidates(text)
                     if not row["reply_candidates"]:
-                        row["reply_search_warning"] = "No structured candidate info returned"
+                        row["reply_search_warning"] = (
+                            "No structured candidate info parsed; response starts: "
+                            + repr(text[:350]))
                 except (RuntimeError,TimeoutError,ValueError) as exc:
                     row["reply_search_warning"] = str(exc)[:240]
             rows.append(row)
