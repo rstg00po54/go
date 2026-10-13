@@ -801,7 +801,7 @@ public class MainActivity extends AppCompatActivity {
                 new AlertDialog.Builder(this).setTitle("智能裁判（试验）")
                         .setMessage(info + "\n红叉：待确认死子；黄圈：建议复核。\n"
                                 + "点击棋盘上任意一颗棋子，即切换整块棋的死活标记。"
-                                + "\n完成后点「确认裁判」，必须双方同意才能记为正式结果。")
+                                + "\n完成后点「确认裁判」，请逐块检查；人机对局由玩家确认，双人对局需双方同意。")
                         .setPositiveButton("开始复核", null).show();
             });
         });
@@ -826,11 +826,11 @@ public class MainActivity extends AppCompatActivity {
                 .setMessage(String.format(Locale.CHINA,
                         "黑棋 %.1f，白棋 %.1f\n结果：%s\n"
                         + "红叉为准备移除的死子。AI 判断不是裁判证明，请逐块确认。"
-                        + "\n只有双方同意死子名单和终局后才能正式记分。",
+                        + "\n这是用户复核的中国规则数子；若为双人对局应双方确认。",
                         totals.blackPoints, totals.whitePoints, verdict))
-                .setPositiveButton("双方已确认", (dialog, which) -> {
+                .setPositiveButton("已复核并确认", (dialog, which) -> {
                     finalDeadStones = SmartReferee.toGtpVertices(refereeDead, boardSize);
-                    gameResultText = "双方确认数子 · " + ("0".equals(verdict) ? "平局" :
+                    gameResultText = "确认数子 · " + ("0".equals(verdict) ? "平局" :
                             (verdict.startsWith("W") ? "白胜 " : "黑胜 ") + verdict.substring(2) + " 目");
                     finalScoreText = String.format(Locale.CHINA,
                             "中国规则（确认死子后）\n黑 %.1f · 白 %.1f\n%s",
