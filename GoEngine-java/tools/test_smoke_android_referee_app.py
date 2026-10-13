@@ -31,10 +31,18 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn("refereePanel.setVisibility(refereeMode ? View.VISIBLE : View.GONE)",activity)
         self.assertIn('refereeExitButton.setOnClickListener(v -> leaveRefereeReview())',activity)
         self.assertIn('refereeContinueButton.setOnClickListener(v -> resumeFromReferee())',activity)
-        self.assertIn('refereeContinueButton.setVisibility(recommendContinue ? View.VISIBLE : View.GONE)',activity)
-        self.assertIn('boolean recommendContinue = refereeMode && board.canResumeAfterPasses()',activity)
+        self.assertIn('refereeContinueButton.setVisibility(unsettled ? View.VISIBLE : View.GONE)',activity)
+        self.assertIn('refereeConfirmButton.setVisibility(refereeMode && !unsettled ? View.VISIBLE : View.GONE)',activity)
         self.assertIn("render(shortStatus);",activity)
         self.assertIn("refereePanelScore.setText(",activity)
+
+    def test_smart_referee_entry_stays_labeled_after_new_game(self):
+        root = Path(__file__).resolve().parents[1]
+        activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
+        self.assertIn('countTerritoryButton.setText("智能裁判");',activity)
+        self.assertIn('new AlertDialog.Builder(this).setTitle("智能裁判 · 对局还没结束")',activity)
+        self.assertIn('refereeContinueButton.setVisibility(unsettled ? View.VISIBLE : View.GONE)',activity)
+        self.assertIn('endgameDecision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT) return;',activity)
 
     def test_screenshot_accepts_only_png_bytes(self):
         class Result:
@@ -75,21 +83,19 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertEqual(validate_dialog(text), [])
         self.assertIn("白先：", validate_dialog(text.replace("白先：","")))
 
-    def test_review_toolbar_has_real_actions_and_pending_count(self):
-        panel = ("智能裁判 · 可能没下完 黑 34.0 · 白 41.0 "
-                 "黄圈 2 块需要确认；红叉可撤销 继续下棋 "
-                 "恢复建议 确认数子 退出复核")
+    def test_disputed_referee_has_only_continue_and_no_scoring_buttons(self):
+        panel = "智能裁判 · 可能没下完 仍有死活争议 · 暂不结算 继续下棋"
         self.assertEqual(validate_review_panel(panel),[])
-        self.assertIn("退出复核",validate_review_panel(panel.replace("退出复核","")))
-        self.assertIn("可能没下完",validate_review_panel(panel.replace("可能没下完","")))
         self.assertIn("继续下棋",validate_review_panel(panel.replace("继续下棋","")))
-        self.assertIn("恢复建议",validate_review_panel(panel.replace("恢复建议","")))
-        self.assertIn("黄圈 2 块",validate_review_panel(panel.replace("黄圈 2 块","")))
-        ready = ("智能裁判 · 可以确认数子 黑 34.0 · 白 41.0 "
-                 "恢复建议 确认数子 退出复核")
-        self.assertEqual(validate_review_panel(ready,"cgos9_1"),[])
-        self.assertIn("stable case unexpectedly offers continue-playing",
-                      validate_review_panel(ready+" 继续下棋","cgos9_1"))
+        for label in ("恢复建议","确认数子","退出复核"):
+            self.assertIn("unexpected button: "+label,validate_review_panel(panel+" "+label))
+
+    def test_settled_referee_can_confirm_score_without_continue_button(self):
+        panel = "智能裁判 · 可以确认数子 黑 34.0 · 白 41.0 恢复建议 确认数子 退出复核"
+        self.assertEqual(validate_review_panel(panel,"cgos9_1"),[])
+        self.assertIn("unexpected button: 继续下棋",
+                      validate_review_panel(panel+" 继续下棋","cgos9_1"))
+        self.assertIn("确认数子",validate_review_panel(panel.replace("确认数子",""),"cgos9_1"))
 
     def test_referee_buttons_share_one_compact_row(self):
         root = Path(__file__).resolve().parents[1]
@@ -105,6 +111,8 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertEqual(len(rows),1,"All referee actions should live in one horizontal row")
         self.assertEqual({child.get(tag+"id").replace("@+id/","") for child in rows[0]},ids)
         self.assertEqual(rows[0][0].get(tag+"visibility"),"gone")
+        self.assertEqual(rows[0][0].get(tag+"layout_width"),"150dp")
+        self.assertIsNone(rows[0][0].get(tag+"layout_weight"))
         for button in rows[0]:
             self.assertEqual(button.get(tag+"layout_height"),"36dp")
             self.assertEqual(button.get(tag+"minHeight"),"0dp")
