@@ -562,15 +562,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="3dp"
-                android:gravity="center_vertical"
+                android:gravity="center"
                 android:orientation="horizontal">
 
                 <Button
                     android:id="@+id/refereeContinueButton"
-                    android:layout_width="0dp"
+                    android:layout_width="150dp"
                     android:layout_height="36dp"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="3dp"
                     android:background="@drawable/txwq_green_button"
                     android:minHeight="0dp"
                     android:minWidth="0dp"
