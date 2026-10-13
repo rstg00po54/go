@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "backend_requested": "cpu",
+  "cases": [
+    {
+      "game": "cgos9_5",
+      "run_id": "4dbfe73f71024354",
+      "status": "PASS",
+      "backend": "cpu",
+      "app_result": {
+        "status": "PASS",
+        "line": "I/RefereeSmoke( 7043): PASS id=4dbfe73f71024354 game=cgos9_5 stage=dialog verdict=REVIEW_REQUIRED moves=56 dead=1 review=0 vulnerable=0 minLead=NaN maxLead=NaN hasBlack=true hasWhite=true hasPV=true"
+      }
+    }
+  ],
+  "outputs": "/mnt/hgfs/D/code/go/GoEngine-java/build/android_referee_smoke/20261013T065834753004Z",
+  "serial": "8719e18a71a2a66c"
+}
