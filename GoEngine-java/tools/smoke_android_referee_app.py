@@ -93,7 +93,7 @@ def capture_screenshot(adb,serial,target):
     """Grab original Android framebuffer bytes; no cropping or conversion."""
     proc = subprocess.run([adb,"-s",serial,"exec-out","screencap","-p"],
                           stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=25)
-    if proc.returncode or not proc.stdout.startswith(b"\\x89PNG\\r\\n\\x1a\\n"):
+    if proc.returncode or not proc.stdout.startswith(b"\x89PNG\r\n\x1a\n"):
         raise RuntimeError("ADB screenshot failed: " + proc.stderr.decode("utf-8","replace")[-300:])
     target.write_bytes(proc.stdout)
 
