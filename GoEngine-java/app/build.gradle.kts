@@ -185,7 +185,9 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
             }
         }
         stageFile(inputExe, "libkatago_exec.so")
-        if (sharedCpp.isFile) stageFile(sharedCpp, "libc++_shared.so")
+        // Only stage C++ shared runtime if the linked ELF really depends on it.
+        // Our native builds use c++_static: shipping the old prebuilt here was
+        // the cause of an unnecessary 4 KB LOAD alignment warning.
         if (enableKataGoJniCore) {
             if (!katagoJniCoreFile.isFile) throw GradleException(
                 "JNI core missing: $katagoJniCoreFile. Run bash tools/build_katago_from_source.sh eigenjni first.")
@@ -202,6 +204,40 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
             stageFile(katagoGpuJniFile, "libkatago_gpu.so")
         } else {
             File(abiDir, "libkatago_gpu.so").delete()
+        }
+        val stagedBinaries = mutableListOf(File(abiDir, "libkatago_exec.so"))
+        if (enableKataGoJniCore) stagedBinaries.add(File(abiDir, "libkatago.so"))
+        if (enableKataGoGpuJni) stagedBinaries.add(File(abiDir, "libkatago_gpu.so"))
+        fun readElf(file: File, option: String): String {
+            val process = ProcessBuilder("readelf", "-W", option, file.absolutePath).redirectErrorStream(true).start()
+            val output = process.inputStream.bufferedReader().use { it.readText() }
+            if (process.waitFor() != 0) throw GradleException("readelf $option failed on ${file.name}: $output")
+            return output
+        }
+        val needsCppShared = stagedBinaries.any { file ->
+            readElf(file, "-d").lineSequence().any { it.contains("(NEEDED)") && it.contains("[libc++_shared.so]") }
+        }
+        val stagedCpp = File(abiDir, "libc++_shared.so")
+        if (needsCppShared) {
+            if (!sharedCpp.isFile) throw GradleException(
+                "KataGo requires libc++_shared.so but it is missing. Rebuild KataGo with ANDROID_STL=c++_static " +
+                "or supply a 16 KB-aligned runtime from NDK r28+.")
+            stageFile(sharedCpp, "libc++_shared.so")
+            stagedBinaries.add(stagedCpp)
+        } else {
+            // Remove stale copies from earlier incremental Gradle builds.
+            stagedCpp.delete()
+        }
+        for (file in stagedBinaries) {
+            val loads = readElf(file, "-l").lineSequence()
+                .filter { it.trimStart().startsWith("LOAD ") }
+                .map { it.trim().split(Regex("\\s+")).last().removePrefix("0x").toLongOrNull(16) }
+                .toList()
+            if (loads.isEmpty() || loads.any { it == null || it < 16384L || it % 16384L != 0L })
+                throw GradleException("16 KB ELF LOAD alignment failed: ${file.absolutePath}. " +
+                    "p_align=${loads.joinToString()}. Rebuild with 16 KB linker flags; " +
+                    "for old prebuilts use a matching 16 KB-aligned replacement.")
+            println("16 KB ELF LOAD alignment OK: ${file.name} p_align=${loads.joinToString()}")
         }
         println("KataGo native binary ready: ${File(abiDir, "libkatago_exec.so")}")
     }
