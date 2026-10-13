@@ -238,8 +238,9 @@ public class MainActivity extends AppCompatActivity {
                 ? "referee_smoke_006_12.sgf" : "referee_smoke_" + game + ".sgf";
         final String backend = getIntent().getStringExtra("referee_smoke_backend");
         final boolean gpu = "gpu".equalsIgnoreCase(backend);
+        final boolean midgame = getIntent().getBooleanExtra("referee_smoke_midgame",false);
         Log.i("RefereeSmoke","START id=" + id + " game=" + game
-                + " requested=" + (gpu ? "gpu" : "cpu"));
+                + " requested=" + (gpu ? "gpu" : "cpu") + " midgame=" + midgame);
         render("自动测试：准备重放真实终局棋谱...");
         engineExecutor.execute(() -> {
             try {
@@ -286,13 +287,21 @@ public class MainActivity extends AppCompatActivity {
                 }
                 if (played < 4 || !replay.isGameOver())
                     throw new IllegalStateException("Fixture must end with two passes; moves=" + played);
+                if (midgame) {
+                    // Replay the same real SGF but strip its TWO terminal passes
+                    // from both the KataGo process and Java board. The referee
+                    // must preserve this still-active position on dismissal.
+                    boolean first = engine.undo();
+                    if (!first || !engine.undo() || !replay.resumeAfterPasses())
+                        throw new IllegalStateException("Cannot prepare ongoing midgame SGF");
+                }
                 KataGoEngine.PositionEvaluation nn = engine.evaluatePosition(9);
                 if (nn == null || nn.whiteOwnership == null || nn.whiteOwnership.length != 81)
                     throw new IllegalStateException("10b raw NN ownership unavailable");
                 SmartReferee.Analysis analysis = SmartReferee.analyze(replay,nn.whiteOwnership);
                 Log.i("RefereeSmoke",String.format(Locale.US,
                         "REPLAY id=%s game=%s moves=%d terminal=%s backend=%s lead=%+.2f dead=%d review=%d vulnerable=%d",
-                        id,game,played,replay.isGameOver(),engine.getBackendName(),nn.whiteLead,
+                        id,game,replay.getMoveCount(),replay.isGameOver(),engine.getBackendName(),nn.whiteLead,
                         analysis.suggestedGroups,analysis.reviewGroups,analysis.vulnerableGroups));
                 mainHandler.post(() -> {
                     board = replay;
@@ -305,7 +314,7 @@ public class MainActivity extends AppCompatActivity {
                     gameReady = true;
                     thinking = false;
                     evaluating = false;
-                    endgameEvaluation = nn;
+                    endgameEvaluation = midgame ? null : nn;
                     preciseScoreReady = false;
                     refereeMode = false;
                     finalDeadStones = null;
@@ -983,7 +992,7 @@ public class MainActivity extends AppCompatActivity {
             }
             final EndgameAdjudicator.Result decision = verdict;
             String searchEvidence = "";
-            if (decision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT && nn != null) {
+            if ((!endedAtStart || decision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT) && nn != null) {
                 try {
                     // Search as both sides, but NEVER treat the suggested moves as a solved life/death proof.
                     List<KataGoEngine.SearchRecommendation> black = engine.searchRecommendations("black", 48, 1.0);
@@ -1097,7 +1106,7 @@ public class MainActivity extends AppCompatActivity {
                     SmartReferee.ScoreWhatIf actualRange = sensitivity;
                     String game = getIntent().getStringExtra("referee_smoke_game");
                     if (game == null) game = "cgos9_expand_006_12";
-                    boolean knownCase = "cgos9_expand_006_12".equals(game);
+                    boolean knownCase = endedAtStart && "cgos9_expand_006_12".equals(game);
                     boolean hasSearch = decision.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT
                             || (mctsInfo.contains("黑先：") && mctsInfo.contains("白先："));
                     boolean genericGood = suggestion != null
