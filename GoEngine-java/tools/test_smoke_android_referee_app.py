@@ -7,6 +7,7 @@ from contextlib import ExitStack
 from pathlib import Path
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from unittest import mock
 import smoke_android_referee_app as smoke
 from smoke_android_referee_app import (ACTIVITY, CASES, MAIN_ACTIVITY_CLASS, PACKAGE,
@@ -16,7 +17,9 @@ from smoke_android_referee_app import (ACTIVITY, CASES, MAIN_ACTIVITY_CLASS, PAC
 class RefereeSmokeHostTests(unittest.TestCase):
     def test_review_ui_layout_and_java_bindings(self):
         root = Path(__file__).resolve().parents[1]
-        layout = (root/"app/src/main/res/layout/activity_main.xml").read_text(encoding="utf-8")
+        layout_path = root/"app/src/main/res/layout/activity_main.xml"
+        ET.parse(str(layout_path))  # Reject broken Android layout XML before device builds.
+        layout = layout_path.read_text(encoding="utf-8")
         activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
         ids = ("refereePanel","refereePanelTitle","refereePanelScore","refereePanelHint",
                "refereeResetButton","refereeConfirmButton","refereeExitButton","gameActionPanel")
