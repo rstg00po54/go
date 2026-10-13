@@ -82,8 +82,8 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertEqual(smoke_event(log, "123")["status"], "FAIL")
 
     def test_dialog_requirements(self):
-        text = ("智能裁判 · 需要人工复核 待复核 2 块 黑先：F7 搜索胜率 "
-                "白先：H5 不同死子组合可能改变胜负 黄圈")
+        text = ("智能裁判 · 有争议 待复核 2 块 黑先：F7 搜索胜率 "
+                "白先：H5 不同死子组合可能改变胜负 黄圈 继续下棋")
         self.assertEqual(validate_dialog(text), [])
         self.assertIn("白先：", validate_dialog(text.replace("白先：","")))
 
@@ -177,7 +177,7 @@ class RefereeSmokeHostTests(unittest.TestCase):
             self.assertEqual([vertex for _,vertex in nodes[-2:]],["",""],game)
 
     def test_generic_case_does_not_require_mcts_or_whatif(self):
-        text = "智能裁判 · 已可数子 待复核 0 块 黄圈"
+        text = "智能裁判 · 已可数子 待复核 0 块 黄圈 确认数子"
         self.assertEqual(validate_dialog(text,"cgos9_1"),[])
         self.assertIn("黑先：",validate_dialog(text,"cgos9_expand_006_12"))
 
