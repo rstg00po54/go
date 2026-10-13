@@ -1150,7 +1150,9 @@ public class MainActivity extends AppCompatActivity {
                         Math.abs(lead) < 0.001 ? "平局" :
                                 String.format(Locale.CHINA,"%s领先 %.1f 目",lead > 0 ? "白" : "黑",Math.abs(lead))));
         refereePanelHint.setText(mustContinue ? "有可立即提子的攻防，建议恢复对局。"
-                : needsReview ? "双方已停棋；请点黄圈逐块判活或判死，红叉可撤销。待确认 " + pending + " 块。"
+                : needsReview ? (pending > 0
+                        ? "双方已停棋；点黄圈逐块判活或判死。待确认 " + pending + " 块。"
+                        : "双方已停棋；检查红叉建议死子，确认后即可数子。")
                 : "点棋子可整块确认死活；红叉为拟死子，橙圈提示攻防风险。");
         render(shortStatus);
     }
@@ -1170,15 +1172,13 @@ public class MainActivity extends AppCompatActivity {
             AlertDialog.Builder reviewPrompt = new AlertDialog.Builder(this)
                     .setTitle("还有 " + pending + " 块死子需要确认")
                     .setMessage("双方已经停棋。请点棋盘上的黄圈逐块确认判活或判死；也可以明确将所有黄圈判活。")
-                    .setNegativeButton("返回棋盘确认", null)
+                    .setPositiveButton("返回棋盘确认", null)
                     .setNeutralButton("黄圈全部判活", (dialog, which) -> {
                         refereeDead.removeAll(refereeReview);
                         refereeReview.clear();
                         refreshRefereePreview();
                         showRefereeConfirmation();
                     });
-            if (board.canResumeAfterPasses()) reviewPrompt.setPositiveButton("继续下棋",
-                    (dialog, which) -> resumeFromReferee());
             reviewPrompt.show();
             return;
         }
@@ -1191,11 +1191,9 @@ public class MainActivity extends AppCompatActivity {
             if (sekiOrKo) {
                 AlertDialog.Builder warning = new AlertDialog.Builder(this).setTitle("疑似双活或劫争尚未证明")
                         .setMessage("AI 只发现了类似双活或劫形的结构，无法保证争议已经解决。"
-                                + "若双方同意可按双活/死子复核后计分；否则应继续下。")
-                        .setNeutralButton("人工确认并数子", (dialog, which) -> showRefereeConfirmation(true))
+                                + "双方既已停棋，请核对棋形后再确认数子。")
+                        .setPositiveButton("人工确认并数子", (dialog, which) -> showRefereeConfirmation(true))
                         .setNegativeButton("返回棋盘检查", null);
-                if (board.canResumeAfterPasses()) warning.setPositiveButton("继续对局",
-                        (dialog, which) -> resumeFromReferee());
                 warning.show();
                 return;
             }
