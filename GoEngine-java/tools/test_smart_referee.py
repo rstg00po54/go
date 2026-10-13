@@ -197,6 +197,36 @@ public final class SmartRefereeSmoke {
                 "large risky chain must require review, not assume ready to count");
         ok(hasReason(triage, EndgameAdjudicator.Reason.LOW_LIBERTY_LARGE_GROUP),
                 "referee must provide a human-readable risk reason");
+        // CGOS 006_12 deterministic liberty/capture evidence. It is the ORDER
+        // of the moves that changes the result, not NN ownership thresholds.
+        GoBoard whiteFirst = real.copyForPreview();
+        Point c7 = new Point(2,2), a9 = new Point(0,0),
+              d9 = new Point(3,0), h5 = new Point(7,4);
+        ok(whiteFirst.isLegalMove(c7,StoneColor.WHITE), "white can first fill C7");
+        whiteFirst.playMove(new Move.Stone(c7,StoneColor.WHITE));
+        ok(whiteFirst.isLegalMove(a9,StoneColor.BLACK), "black can capture B9 at A9");
+        List<Point> whiteLossAtA9 = whiteFirst.playMove(new Move.Stone(a9,StoneColor.BLACK));
+        ok(whiteLossAtA9.size() == 1 && whiteLossAtA9.contains(new Point(1,0)),
+                "black A9 captures the single B9 stone, creating a new black liberty");
+        ok(!whiteFirst.isLegalMove(d9,StoneColor.WHITE),
+                "white D9 becomes suicide after black captures B9");
+        ok(whiteFirst.isLegalMove(h5,StoneColor.WHITE), "white H5 is legal but cannot rescue upper left");
+        whiteFirst.playMove(new Move.Stone(h5,StoneColor.WHITE));
+        ok(whiteFirst.isLegalMove(d9,StoneColor.BLACK), "black can finish capture at D9");
+        List<Point> capturedTwelve = whiteFirst.playMove(new Move.Stone(d9,StoneColor.BLACK));
+        ok(capturedTwelve.size() == 12 && capturedTwelve.contains(new Point(4,0))
+                && capturedTwelve.contains(c7),
+                "black D9 must capture all 12 upper-left white stones after white C7");
+
+        GoBoard blackFirst = real.copyForPreview();
+        ok(blackFirst.isLegalMove(c7,StoneColor.BLACK), "black C7 is legal on the recorded final board");
+        blackFirst.playMove(new Move.Stone(c7,StoneColor.BLACK));
+        ok(blackFirst.isLegalMove(d9,StoneColor.WHITE), "white D9 is the saving capture after black C7");
+        List<Point> capturedFour = blackFirst.playMove(new Move.Stone(d9,StoneColor.WHITE));
+        ok(capturedFour.size() == 4 && capturedFour.contains(c7)
+                && capturedFour.contains(new Point(2,1)),
+                "white D9 must capture the four black stones after black C7");
+
         // The 006_12 score discrepancy is caused by interacting dead-group
         // choices: removing B9 alone does little, but removing it together with
         // the upper-left 11 can convert a large neutral region into black area.
