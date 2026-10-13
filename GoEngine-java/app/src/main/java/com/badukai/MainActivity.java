@@ -1558,8 +1558,9 @@ public class MainActivity extends AppCompatActivity {
         boardView.setLastMove(lastMove);
         boardView.setInputEnabled(refereeMode || (engineReady && gameReady && !engineStarting && !thinking
                 && !evaluating && currentPlayer == playerColor && !board.isGameOver()));
-        statusText.setMaxLines(boardView.hasRecommendations() ? 3 : 2);
-        statusText.setTextSize(boardView.hasRecommendations() ? 10f : 13f);
+        boolean detailedResult = refereeMode || refereeConfirmed || boardView.hasRecommendations();
+        statusText.setMaxLines(detailedResult ? 3 : 2);
+        statusText.setTextSize(detailedResult ? 10f : 13f);
         boolean playerBlack = playerColor == StoneColor.BLACK;
         playerStoneView.setBackgroundResource(playerBlack ? R.drawable.txwq_black_stone : R.drawable.txwq_white_stone);
         aiStoneView.setBackgroundResource(playerBlack ? R.drawable.txwq_white_stone : R.drawable.txwq_black_stone);
