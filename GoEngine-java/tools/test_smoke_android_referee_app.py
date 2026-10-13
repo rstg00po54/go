@@ -58,6 +58,28 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn('countTerritoryButton.setEnabled(engineReady && gameReady',activity)
         self.assertIn('if (refereeAwaitingTap) resumeFromReferee();',activity)
 
+    def test_smart_referee_uses_one_raw_nn_estimate_before_optional_dead_stone_review(self):
+        root = Path(__file__).resolve().parents[1]
+        activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
+        entry = activity.split("private void showEndgameScoringOptions()",1)[1].split(
+            "private void showQuickNnRefereeEstimate()",1)[0]
+        self.assertIn("showQuickNnRefereeEstimate();",entry)
+        self.assertNotIn("startSmartReferee();",entry)
+        self.assertNotIn("if (!board.isGameOver())",entry)
+        quick = activity.split("private void showQuickNnRefereeEstimate()",1)[1].split(
+            "private static String refereeSearchSummary",1)[0]
+        self.assertIn('engine.evaluatePosition(size)',quick)
+        self.assertIn('final KataGoEngine.PositionEvaluation cached = gameEnded ? endgameEvaluation : null;',quick)
+        self.assertIn('result.whiteLead',quick)
+        self.assertIn('result.blackWin * 100.0,result.whiteWin * 100.0',quick)
+        self.assertIn('setTitle("智能裁判 · 快速 NN 估分")',quick)
+        self.assertIn('setNeutralButton("详细死活分析", (dialog,which) -> startSmartReferee())',quick)
+        self.assertIn('setPositiveButton(gameEnded ? "关闭" : "继续下棋",null)',quick)
+        self.assertNotIn('searchRecommendations(',quick)
+        self.assertNotIn('engine.undo()',quick)
+        self.assertNotIn('engine.playMove(',quick)
+        self.assertNotIn('render("棋局还没下完")',quick)
+
     def test_unmarked_midgame_shows_only_unfinished_message(self):
         root = Path(__file__).resolve().parents[1]
         activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
