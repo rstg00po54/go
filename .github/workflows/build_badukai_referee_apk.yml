@@ -98,7 +98,8 @@ jobs:
               required={"lib/arm64-v8a/libkatago.so","lib/arm64-v8a/libkatago_gpu.so","lib/arm64-v8a/libkatago_exec.so"}
               assert required <= names, f"Missing JNI backends: {required-names}"
               assert "lib/arm64-v8a/libOpenCL.so" not in names, "Never package link-only OpenCL stub"
-              assert any(x.endswith("b18c384nbt-humanv0.bin.gz") for x in names), "Human SL model missing"
+              assert "assets/engine/b18c384nbt-humanv0.bin" in names, "Decompressed Human SL model missing"
+              assert z.getinfo("assets/engine/b18c384nbt-humanv0.bin").file_size == 107185997, "Human SL size mismatch"
               print("CPU JNI, GPU JNI and offline Human SL verified")
           PY
           cp app/build/outputs/apk/debug/app-debug.apk build/apks/BadukaiJ-referee-CPU-GPU-arm64-debug.apk
