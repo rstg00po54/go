@@ -138,6 +138,7 @@ public final class EndgameAdjudicator {
         List<Finding> findings = new ArrayList<>();
         Set<Point> highlighted = new LinkedHashSet<>();
         int suggestedDead = 0, suggestedReview = 0;
+        Set<Point> confidentlyDead = Collections.emptySet();
         boolean needsContinue = false, needsReview = false;
 
         if (whiteOwnership == null) {
@@ -146,6 +147,7 @@ public final class EndgameAdjudicator {
             needsReview = true;
         } else {
             SmartReferee.Analysis nn = SmartReferee.analyze(board,whiteOwnership);
+            confidentlyDead = nn.suggestedDead;
             suggestedDead = nn.suggestedGroups;
             suggestedReview = nn.reviewGroups;
             if (nn.reviewGroups > 0) {
@@ -168,6 +170,10 @@ public final class EndgameAdjudicator {
                 continue;
             }
             if (chain.liberties.size() != 1) continue;
+            // An already NN-marked dead chain can often be extended or captured
+            // in one move. That does NOT force resumption: confirm its removal.
+            // Only tactical threats on chains not strongly marked dead recommend play.
+            if (confidentlyDead.containsAll(chain.stones)) continue;
             Point liberty = chain.liberties.iterator().next();
             if (canSaveAtari(board,chain,liberty) && canCaptureAtari(board,chain,liberty)) {
                 Set<Point> marked = new LinkedHashSet<>(chain.stones);
