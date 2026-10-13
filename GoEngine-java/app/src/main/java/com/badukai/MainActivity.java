@@ -1121,14 +1121,9 @@ public class MainActivity extends AppCompatActivity {
         boardView.setRefereeMarks(refereeDead, refereeReview);
         boolean unsettled = endgameDecision != null
                 && endgameDecision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT;
-        String summary = String.format(Locale.CHINA,
-                "裁判预览：黑 %.1f · 白 %.1f（%s）\n%s",
-                audit.score.blackPoints,audit.score.whitePoints,
-                Math.abs(lead) < 0.001 ? "平局" :
-                        String.format(Locale.CHINA,"%s领先 %.1f 目",lead > 0 ? "白" : "黑",Math.abs(lead)),
-                unsettled ? "可能没下完，建议继续下" : "棋局基本结束，可以确认数子");
-        if (audit.needsVerification) summary += String.format(Locale.CHINA,
-                "\n注意：与 NN 估分相差 %.1f 目，请仔细检查",audit.difference);
+        // The score already appears in the full-width panel below the board.
+        // Avoid wrapping a long score inside the 100dp player-status column.
+        String shortStatus = unsettled ? "智能裁判\n建议继续下" : "智能裁判\n确认死子";
         refereePanelTitle.setText(unsettled ? "智能裁判 · 可能没下完" : "智能裁判 · 可以确认数子");
         refereePanelScore.setText(String.format(Locale.CHINA,
                 "黑 %.1f · 白 %.1f · %s",
@@ -1139,7 +1134,7 @@ public class MainActivity extends AppCompatActivity {
                 ? (pending > 0 ? "建议继续下几手解决争议；黄圈 " + pending + " 块也可手动确认死活。"
                         : "可能只是死子或双活没确认。可继续下，也可人工确认后数子。")
                 : "点棋子可整块切换死活；红叉为拟死子，橙圈提示攻防风险。");
-        render(summary);
+        render(shortStatus);
     }
 
     private void showRefereeConfirmation() { showRefereeConfirmation(false); }
