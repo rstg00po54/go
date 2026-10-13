@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exercise REAL KataGo on archived move-64 board and a constructed unambiguous simple ko."""
+"""Exercise REAL KataGo on archived game and a forced simple-ko capture.\n\nGTP play uses tolerant legality and explicitly IGNORES ko prohibitions; its response\nMUST NOT be mistaken for a strict-rule legal-move verdict.\n"""
 import argparse
 import json
 import re
@@ -89,12 +89,13 @@ def main():
             true_score=gtp.ask("final_score")
             true_dead=gtp.ask("final_status_list dead")
             true_recap=gtp.ask("play w E5")
-            print("CONTROLLED: score_returned=%s dead_returned=%s immediate_recapture_illegal=%s" %
-                  (true_score.startswith("="),true_dead.startswith("="),true_recap.startswith("?")),flush=True)
+            print("CONTROLLED: score_returned=%s dead_returned=%s GTP_tolerant_recapture_accepted=%s" %
+                  (true_score.startswith("="),true_dead.startswith("="),true_recap.startswith("=")),flush=True)
             assert true_score.startswith("="), "Expected scoring estimate even during active ko"
             assert true_dead.startswith("="), "Expected dead-stone estimate during active ko"
-            assert true_recap.startswith("?"), "Expected simple ko to forbid immediate white E5"
-            print("PASS: In actual KataGo, final_score and final_status_list can return during a confirmed ko.",flush=True)
+            assert true_recap.startswith("="), "Expected GTP play to tolerate ko recapture by design"
+            print("PASS: Actual KataGo returns final score and dead-status predictions even with a ko-shaped capture.",flush=True)
+            print("NOTE: GTP play ignores ko checks; external GoBoard must enforce strict ko legality.",flush=True)
         finally:
             gtp.close()
 
