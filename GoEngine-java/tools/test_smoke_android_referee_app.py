@@ -104,6 +104,10 @@ class RefereeSmokeHostTests(unittest.TestCase):
             "private static String refereeSearchSummary",1)[0]
         self.assertIn("engine.getFinalScore()",native)
         self.assertIn("engine.getFinalDeadStones()",native)
+        self.assertIn("final long scoreMs =",native)
+        self.assertIn("final long deadMs =",native)
+        self.assertIn("scoreMs=%d deadMs=%d",native)
+        self.assertIn("正在判断死子",native)
         self.assertIn("Point.fromGtp(vertex,size)",native)
         self.assertIn("boardView.setRefereeMarks(predictedDead,null)",native)
         self.assertIn("boardView.setRefereeMarks(null,null)",native)
