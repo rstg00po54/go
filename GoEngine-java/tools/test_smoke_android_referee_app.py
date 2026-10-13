@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """Host-side unit tests for Android referee smoke log and UI validation."""
 import re
+import sys
 from pathlib import Path
+import tempfile
 import unittest
+from unittest import mock
+import smoke_android_referee_app as smoke
 from smoke_android_referee_app import (ACTIVITY, CASES, MAIN_ACTIVITY_CLASS, PACKAGE,
                                       selected_cases, smoke_event, validate_dialog)
 
@@ -62,6 +66,46 @@ class RefereeSmokeHostTests(unittest.TestCase):
         text = "智能裁判 · 已可数子 待复核 0 块 黄圈"
         self.assertEqual(validate_dialog(text,"cgos9_1"),[])
         self.assertIn("黑先：",validate_dialog(text,"cgos9_expand_006_12"))
+
+    def test_upload_on_success_fail_and_ctrl_c(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for outcome in ("PASS","FAIL","INTERRUPTED"):
+                def execute_case(*args,**kwargs):
+                    if outcome=="INTERRUPTED":
+                        raise KeyboardInterrupt
+                    return {"status":outcome,"game":"cgos9_1","run_id":"testcase"}
+                with (mock.patch.object(smoke,"PROJECT",root),
+                      mock.patch.object(smoke,"connected_serial",return_value="device"),
+                      mock.patch.object(smoke,"run_one_case",side_effect=execute_case),
+                      mock.patch.object(smoke,"upload_referee_results",
+                                        return_value="https://github.com/rstg00po54/go/blob/ui-test-results/runs/fixture.json") as uploader,
+                      mock.patch.object(sys,"argv",["test","--game","cgos9_1",
+                                                     "--skip-install","--skip-ui"])):
+                    exit_code = smoke.main()
+                self.assertEqual(exit_code,0 if outcome=="PASS" else
+                                 130 if outcome=="INTERRUPTED" else 1)
+                self.assertEqual(uploader.call_count,1)
+                report = uploader.call_args.args[1]
+                self.assertEqual(report["status"],outcome)
+
+    def test_upload_failure_does_not_erase_local_report(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with (mock.patch.object(smoke,"PROJECT",root),
+                  mock.patch.object(smoke,"connected_serial",return_value="device"),
+                  mock.patch.object(smoke,"run_one_case",
+                                    return_value={"status":"PASS","game":"cgos9_1"}),
+                  mock.patch.object(smoke,"upload_referee_results",
+                                    side_effect=smoke.UploadError("bad Git credentials")),
+                  mock.patch.object(sys,"argv",["test","--game","cgos9_1","--skip-install"])):
+                code = smoke.main()
+            self.assertEqual(code,1)
+            reports = list((root/"build/android_referee_smoke").glob("*/report.json"))
+            self.assertEqual(len(reports),1)
+            data = __import__("json").loads(reports[0].read_text(encoding="utf-8"))
+            self.assertEqual(data["status"],"PASS")
+            self.assertEqual(data["upload_status"],"FAIL")
 
     def test_no_false_pass_from_other_tag(self):
         self.assertIsNone(smoke_event("I/OtherTag: PASS id=xyz", "xyz"))
