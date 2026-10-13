@@ -80,7 +80,7 @@ def populate(output, paths, target9, target19, workers=6):
     for label, size, _ in SOURCES:
         target = target9 if size == 9 else target19
         candidates = paths.get(label, [])
-        selected, counts, skipped = [], {}, {}
+        selected, counts, skipped, examples = [], {}, {}, []
         if target == 0:
             manifest["statistics"][label] = {"requested": 0, "downloaded": 0,
                                              "examined": 0, "candidates": len(candidates)}
@@ -105,6 +105,8 @@ def populate(output, paths, target9, target19, workers=6):
                     if error:
                         reason = error.split(":", 1)[0][:110]
                         skipped[reason] = skipped.get(reason, 0) + 1
+                        if len(examples) < 8:
+                            examples.append({"file": Path(item).name, "reason": error})
                         continue
                     if record["sha256"] in all_kept:
                         skipped["duplicate"] = skipped.get("duplicate", 0) + 1
@@ -132,10 +134,13 @@ def populate(output, paths, target9, target19, workers=6):
         manifest["statistics"][label] = {
             "requested": target, "downloaded": len(selected),
             "examined": counts.get("examined", 0), "candidates": len(candidates),
-            "rejections": skipped,
+            "rejections": skipped, "rejection_examples": examples,
         }
         print("%s %dx%d: %d/%d accepted from %d examined" % (
             label, size, size, len(selected), target, counts.get("examined", 0)), flush=True)
+        if len(selected) < target:
+            print("  source exhausted: %s" % json.dumps({
+                "rejections": skipped, "examples": examples}, ensure_ascii=False), flush=True)
 
     # Remove stale SGFs from an earlier run; delete *only* downloader-managed files.
     keep = {x["file"] for x in manifest["games"]}
