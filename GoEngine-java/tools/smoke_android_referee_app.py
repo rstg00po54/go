@@ -71,15 +71,36 @@ def smoke_event(log, run_id):
     return final
 
 
-def read_dialog_xml(adb,serial):
+def read_dialog_root(adb,serial):
     target = "/sdcard/referee_smoke_window.xml"
     run([adb,"-s",serial,"shell","uiautomator","dump",target],timeout=35)
     content = run([adb,"-s",serial,"shell","cat",target],timeout=15)
     start = content.find("<?xml")
     if start < 0:
         raise RuntimeError("UI Automator did not return an XML hierarchy")
-    root = ET.fromstring(content[start:])
-    return " ".join(node.attrib.get("text","") for node in root.iter())
+    return ET.fromstring(content[start:])
+
+
+def read_dialog_xml(adb,serial):
+    return " ".join(node.attrib.get("text","") for node in read_dialog_root(adb,serial).iter())
+
+
+def click_ui_text(adb,serial,label):
+    # Click the exact visible action rather than relying on screen resolution.
+    root = read_dialog_root(adb,serial)
+    for node in root.iter():
+        if node.attrib.get("text") != label:
+            continue
+        bounds = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",node.attrib.get("bounds",""))
+        if not bounds:
+            break
+        x1,y1,x2,y2 = map(int,bounds.groups())
+        if x1>=x2 or y1>=y2:
+            break
+        run([adb,"-s",serial,"shell","input","tap",
+             str((x1+x2)//2),str((y1+y2)//2)],timeout=12)
+        return
+    raise RuntimeError("Cannot find clickable visible UI label: "+label)
 
 
 def validate_dialog(text, game=STRICT_CASE):
@@ -99,14 +120,26 @@ def capture_screenshot(adb,serial,target):
 
 
 def validate_review_panel(text,game=STRICT_CASE):
-    # A disputed game must expose ONLY "continue", never a scoring escape hatch.
-    unsettled = game != "cgos9_1"
-    required = ("智能裁判 ·","可能没下完","继续下棋","暂不结算") if unsettled else (
+    # Both players passed in every fixture. REVIEW_REQUIRED needs a dead-stone
+    # confirmation, not a forced return to playing.
+    needs_review = game != "cgos9_1"
+    required = ("智能裁判 ·","请确认死子","试算：","确认死子") if needs_review else (
         "智能裁判 ·","黑","白","恢复建议","确认数子","退出复核")
     missing = [part for part in required if part not in text]
-    forbidden = ("恢复建议","确认数子","退出复核") if unsettled else ("继续下棋","暂不结算")
+    forbidden = ("继续下棋","确认数子","恢复建议","退出复核") if needs_review else (
+        "继续下棋","确认死子")
     missing += ["unexpected button: "+part for part in forbidden if part in text]
     return missing
+
+
+def validate_confirmation_dialog(text,game):
+    if game == "cgos9_1":
+        required = ("确认中国规则数子","已复核并确认")
+    elif game == "cgos9_5":
+        required = ("疑似双活或劫争尚未证明","人工确认并数子")
+    else:
+        required = ("死子需要确认","返回棋盘确认","黄圈全部判活")
+    return [part for part in required if part not in text]
 
 
 def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir):
@@ -160,8 +193,18 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir):
             missing_panel = validate_review_panel(panel,game)
             if missing_panel:
                 raise RuntimeError("Referee review toolbar missing %s; see review_panel.txt" % missing_panel)
-            print("Review toolbar UI PASS: live score, pending groups and three referee actions.",flush=True)
+            print("Review toolbar UI PASS: correct scoring/review action for terminal verdict.",flush=True)
             capture_screenshot(adb,serial,case_dir/"review_screen.png")
+            # Regression for the user-reported bug: a REVIEW_REQUIRED game that
+            # ended with two passes must open scoring review, not resume the game.
+            click_ui_text(adb,serial,"确认数子" if game=="cgos9_1" else "确认死子")
+            confirmation = read_dialog_xml(adb,serial)
+            (case_dir/"confirmation_dialog.txt").write_text(confirmation+"\n",encoding="utf-8")
+            missing_confirmation = validate_confirmation_dialog(confirmation,game)
+            if missing_confirmation:
+                raise RuntimeError("Dead-stone confirmation did not open: %s" % missing_confirmation)
+            capture_screenshot(adb,serial,case_dir/"confirmation_dialog.png")
+            print("Confirm action UI PASS: two-pass game opens dead-stone/score dialog.",flush=True)
         else:
             print("Dialog UI skipped (engine + referee assertions still checked).",flush=True)
         result["status"] = "PASS"
