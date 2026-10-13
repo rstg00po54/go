@@ -107,6 +107,10 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn("Point.fromGtp(vertex,size)",native)
         self.assertIn("boardView.setRefereeMarks(predictedDead,null)",native)
         self.assertIn("boardView.setRefereeMarks(null,null)",native)
+        self.assertIn("nativeRefereeMarkedBoard = snapshot",native)
+        self.assertIn('setPositiveButton("查看棋盘",null)',native)
+        self.assertIn('setNeutralButton("清除标记"',native)
+        self.assertIn("board.getMoveCount() != nativeRefereeMarkedMoves",activity)
         self.assertIn("board != snapshot || board.getMoveCount() != moves",native)
         self.assertIn("棋局尚未结束",native)
         for forbidden in ("board.playMove(", "engine.playMove(", "engine.undo(",
