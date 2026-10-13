@@ -12,7 +12,7 @@ from unittest import mock
 import smoke_android_referee_app as smoke
 from smoke_android_referee_app import (ACTIVITY, CASES, MAIN_ACTIVITY_CLASS, PACKAGE,
                                       selected_cases, smoke_event, validate_dialog, validate_review_panel,
-                                      validate_confirmation_dialog)
+                                      validate_confirmation_dialog, validate_dispute_overlay)
 
 
 class RefereeSmokeHostTests(unittest.TestCase):
@@ -32,7 +32,10 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn("refereePanel.setVisibility(refereeMode ? View.VISIBLE : View.GONE)",activity)
         self.assertIn('refereeExitButton.setOnClickListener(v -> leaveRefereeReview())',activity)
         self.assertIn('refereeContinueButton.setOnClickListener(v -> resumeFromReferee())',activity)
-        self.assertIn('refereeContinueButton.setVisibility(mustContinue ? View.VISIBLE : View.GONE)',activity)
+        self.assertIn('refereeTapOverlay.setOnClickListener(v -> {',activity)
+        self.assertIn('refereeTapOverlay.setVisibility(mustContinue && !evaluating ? View.VISIBLE : View.GONE)',activity)
+        self.assertIn('refereeContinueButton.setVisibility(View.GONE)',activity)
+        self.assertIn('boardView.setRefereeMarks(null,null);',activity)
         self.assertIn('refereeConfirmButton.setVisibility(refereeMode && !mustContinue ? View.VISIBLE : View.GONE)',activity)
         self.assertIn('refereeConfirmButton.setText("确认数子")',activity)
         self.assertIn('endgameDecision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT;',activity)
@@ -47,6 +50,18 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn('new AlertDialog.Builder(this).setTitle("智能裁判 · 对局还没结束")',activity)
         self.assertIn('countTerritoryButton.setEnabled(engineReady && gameReady',activity)
         self.assertIn('if (refereeRequiresContinuation()) return;',activity)
+
+    def test_referee_overlay_is_above_game_page_and_hidden_by_default(self):
+        root = Path(__file__).resolve().parents[1]
+        layout = ET.parse(str(root/"app/src/main/res/layout/activity_main.xml")).getroot()
+        android = "{http://schemas.android.com/apk/res/android}"
+        ids = [element.get(android+"id") for element in layout]
+        self.assertLess(ids.index("@+id/gamePageContainer"),ids.index("@+id/refereeTapOverlay"))
+        overlay = list(layout)[ids.index("@+id/refereeTapOverlay")]
+        self.assertEqual(overlay.get(android+"visibility"),"gone")
+        self.assertEqual(overlay.get(android+"clickable"),"true")
+        self.assertEqual(overlay.get(android+"background"),"@android:color/transparent")
+        self.assertEqual(overlay.get(android+"contentDescription"),"点击屏幕继续下棋")
 
     def test_screenshot_accepts_only_png_bytes(self):
         class Result:
@@ -82,23 +97,25 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertEqual(smoke_event(log, "123")["status"], "FAIL")
 
     def test_dialog_requirements(self):
-        text = ("智能裁判 · 有争议 待复核 2 块 黑先：F7 搜索胜率 "
-                "白先：H5 不同死子组合可能改变胜负 黄圈 继续下棋")
-        self.assertEqual(validate_dialog(text), [])
-        self.assertIn("白先：", validate_dialog(text.replace("白先：","")))
+        text = "智能裁判 · 可以进入确认数子 黄圈 确认数子"
+        self.assertEqual(validate_dialog(text,"cgos9_1"),[])
+        self.assertIn("黄圈",validate_dialog(text.replace("黄圈",""),"cgos9_1"))
 
-    def test_disputed_referee_only_offers_continue(self):
-        panel = "智能裁判 · 存在争议 死活或劫争不确定 · 暂不结算 继续下棋"
+    def test_disputed_referee_uses_single_full_screen_touch_overlay(self):
+        xml = ET.fromstring('<hierarchy><node text="智能裁判 · 存在争议" clickable="false" />'
+                            '<node content-desc="点击屏幕继续下棋" clickable="true" '
+                            'bounds="[0,0][960,1500]" /></hierarchy>')
         for case in ("cgos9_expand_006_12","cgos9_2","cgos9_5"):
-            self.assertEqual(validate_review_panel(panel,case),[],case)
-            self.assertIn("继续下棋",validate_review_panel(panel.replace("继续下棋",""),case))
-            for label in ("确认死子","确认数子","恢复建议","退出复核"):
-                self.assertIn("unexpected button: "+label,validate_review_panel(panel+" "+label,case))
+            self.assertEqual(validate_dispute_overlay(xml),[],case)
+            with self.assertRaises(ValueError):
+                validate_review_panel("继续下棋",case)
+        xml[1].set("clickable","false")
+        self.assertIn("transparent full-screen tap overlay missing",validate_dispute_overlay(xml))
 
     def test_settled_referee_can_confirm_score_without_continue_button(self):
         panel = "智能裁判 · 可以确认数子 黑 34.0 · 白 41.0 恢复建议 确认数子 退出复核"
         self.assertEqual(validate_review_panel(panel,"cgos9_1"),[])
-        self.assertIn("unexpected button: 继续下棋",
+        self.assertIn("unexpected continue-playing action",
                       validate_review_panel(panel+" 继续下棋","cgos9_1"))
         self.assertIn("确认数子",validate_review_panel(panel.replace("确认数子",""),"cgos9_1"))
 
@@ -127,6 +144,16 @@ class RefereeSmokeHostTests(unittest.TestCase):
             self.assertEqual(adb_run.call_args.args[0][-2:],["150","118"])
             with self.assertRaises(RuntimeError):
                 smoke.click_ui_text("adb","serial","确认死子")
+
+    def test_tap_overlay_intercepts_any_screen_position(self):
+        xml = ET.fromstring('<hierarchy><node content-desc="点击屏幕继续下棋" '
+                            'clickable="true" bounds="[0,0][1000,1600]" /></hierarchy>')
+        with mock.patch.object(smoke,"read_dialog_root",return_value=xml), \
+             mock.patch.object(smoke,"run",return_value="") as cmd:
+            smoke.click_ui_description("adb","serial","点击屏幕继续下棋")
+            self.assertEqual(cmd.call_args.args[0][-2:],["500","800"])
+            with self.assertRaises(RuntimeError):
+                smoke.click_ui_description("adb","serial","不存在的提示")
 
     def test_referee_buttons_share_one_compact_row(self):
         root = Path(__file__).resolve().parents[1]
