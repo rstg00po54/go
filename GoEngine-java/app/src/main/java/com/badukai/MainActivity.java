@@ -1244,6 +1244,8 @@ public class MainActivity extends AppCompatActivity {
                 if (!restored || !board.resumeAfterPasses()) {
                     gameReady = false;
                     render("恢复对局失败：棋盘与 AI 可能不同步，请重新开局");
+                    if (isRefereeSmokeIntent()) Log.e("RefereeSmoke","RESUME_FAIL id=" + refereeSmokeId()
+                            + " moves=" + moves + " undo=" + restored);
                     return;
                 }
                 refereeMode = false;
@@ -1274,6 +1276,9 @@ public class MainActivity extends AppCompatActivity {
                 }
                 resyncWinRateAfterReferee();
                 render(currentPlayer == playerColor ? "继续对局：轮到你了" : "继续对局：轮到 AI");
+                if (isRefereeSmokeIntent()) Log.i("RefereeSmoke","RESUME id=" + refereeSmokeId()
+                        + " moves=" + board.getMoveCount() + " terminal=" + board.isGameOver()
+                        + " refereeMode=" + refereeMode + " gameReady=" + gameReady);
                 if (currentPlayer != playerColor) requestAiMove();
             });
         });
