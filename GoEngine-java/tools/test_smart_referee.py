@@ -179,6 +179,19 @@ public final class SmartRefereeSmoke {
         ok(risk.vulnerableGroups >= 1, "tight, large chain must be flagged for independent review");
         ok(risk.vulnerableReview.containsAll(upperLeftWhite), "risk scanner must flag all 11 white stones");
         ok(risk.needsReview.containsAll(upperLeftWhite), "Android referee should highlight entire chain");
+        // F2/G1/J2 are enclosed by several *white* chains. Black cannot
+        // legally invade them, so the nearby six-stone white chain must not
+        // be called risky solely because its three liberties are shared eyes.
+        Set<Point> lowerRightWhite = SmartReferee.group(real, new Point(6,7));
+        ok(lowerRightWhite.size() == 6, "fixture contains right-side white six-stone group");
+        ok(!risk.vulnerableReview.contains(new Point(6,7)),
+                "do not flag shared friendly eyes as a low-liberty group");
+        ok(risk.vulnerableGroups == 1,
+                "with friendly NN only the upper-left white 11 should be low-liberty review");
+        for (Point eye : new Point[]{new Point(5,7),new Point(6,8),new Point(8,7)})
+            ok(!real.isLegalMove(eye,StoneColor.BLACK),
+                    "the lower right contains non-invadable white eye candidates");
+
         EndgameAdjudicator.Result triage = EndgameAdjudicator.analyze(real, friendlyOwner);
         ok(triage.verdict == EndgameAdjudicator.Verdict.REVIEW_REQUIRED,
                 "large risky chain must require review, not assume ready to count");
