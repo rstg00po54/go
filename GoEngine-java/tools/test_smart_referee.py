@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 GAME = ROOT / "app/src/main/java/com/badukai/game"
 JAVA = """package com.badukai.game;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public final class SmartRefereeSmoke {
