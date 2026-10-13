@@ -228,7 +228,8 @@ class RefereeSmokeHostTests(unittest.TestCase):
     def test_generic_case_does_not_require_mcts_or_whatif(self):
         text = "智能裁判 · 已可数子 待复核 0 块 黄圈 确认数子"
         self.assertEqual(validate_dialog(text,"cgos9_1"),[])
-        self.assertIn("黑先：",validate_dialog(text,"cgos9_expand_006_12"))
+        with self.assertRaises(ValueError):
+            validate_dialog(text,"cgos9_expand_006_12")
 
     def test_upload_on_success_fail_and_ctrl_c(self):
         with tempfile.TemporaryDirectory() as directory:
