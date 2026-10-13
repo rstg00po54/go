@@ -750,7 +750,7 @@
                 android:padding="0dp"
                 android:singleLine="true"
                 android:background="@drawable/txwq_green_button"
-                android:text="数目"
+                android:text="智能裁判"
                 android:textAllCaps="false"
                 android:textColor="#FFF4CB"
                 android:textSize="14sp" />
