@@ -78,13 +78,14 @@ public final class RealRefereeRunner {
                         moves.append(finding.suggestedMove.toGtp(size));
                     }
                 }
-                System.out.printf(Locale.US,"RESULT\t%s\t%s\t%d\t%d\t%d\t%.3f\t%s\t%s\t%d\t%s\t%s\t%s%n",
+                System.out.printf(Locale.US,"RESULT\t%s\t%s\t%d\t%d\t%d\t%.3f\t%s\t%s\t%d\t%s\t%s\t%s\t%d\t%s%n",
                         name,result.verdict,dead.suggestedGroups,dead.reviewGroups,
                         result.groups,count.whitePoints-count.blackPoints,reasons,moves,
                         board.isGameOver()?1:0,
                         SmartReferee.toGtpVertices(dead.suggestedDead,size).replace(' ',','),
                         SmartReferee.toGtpVertices(dead.needsReview,size).replace(' ',','),
-                        locations);
+                        locations,dead.vulnerableGroups,
+                        SmartReferee.toGtpVertices(dead.vulnerableReview,size).replace(' ',','));
                 System.out.flush();
                 name = null; board = null;
             } else throw new IllegalArgumentException("Unknown input: " + fields[0]);
@@ -155,7 +156,7 @@ def java_case(proc, case, ownership):
     proc.stdin.flush()
     response = proc.stdout.readline().strip()
     parts = response.split("\t")
-    if len(parts) != 13 or parts[0] != "RESULT" or parts[1] != case["name"]:
+    if len(parts) != 15 or parts[0] != "RESULT" or parts[1] != case["name"]:
         raise ValueError("Unexpected Java referee result: " + repr(response))
     return dict(game=parts[1], verdict=parts[2], dead_groups=int(parts[3]),
                 review_groups=int(parts[4]), total_groups=int(parts[5]),
@@ -166,7 +167,9 @@ def java_case(proc, case, ownership):
                 needs_review_vertices=parts[11].split(",") if parts[11] else [],
                 finding_locations={entry.split(":",1)[0]+"#"+str(i): entry.split(":",1)[1].split(",")
                                    if entry.split(":",1)[1] else []
-                                   for i,entry in enumerate(parts[12].split("|")) if ":" in entry})
+                                   for i,entry in enumerate(parts[12].split("|")) if ":" in entry},
+                vulnerable_groups=int(parts[13]),
+                vulnerable_vertices=parts[14].split(",") if parts[14] else [])
 
 
 def main():
@@ -246,6 +249,7 @@ def main():
             if args.games:
                 print("  Dead:",",".join(row["suggested_dead_vertices"]),
                       "Review:",",".join(row["needs_review_vertices"]),
+                      "Low-liberty:",",".join(row["vulnerable_vertices"]),
                       "Finding locations:",row["finding_locations"],flush=True)
             print("%-27s %-22s dead=%d review=%d raw=%+6.2f area=%+6.2f RE=%s %s%s" %
                   (case["name"],row["verdict"],row["dead_groups"],row["review_groups"],
