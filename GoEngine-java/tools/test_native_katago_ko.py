@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exercise REAL KataGo on archived game and a forced simple-ko capture.\n\nGTP play uses tolerant legality and explicitly IGNORES ko prohibitions; its response\nMUST NOT be mistaken for a strict-rule legal-move verdict.\n"""
+"""Exercise REAL KataGo on archived game and a forced simple-ko capture.\n\nKataGo v1.15.0 GTP checks simple ko; v1.18.1 GTP tolerant play ignores ko.\nDo not infer game termination from GTP play acceptance or rejection.\n"""
 import argparse
 import json
 import re
@@ -55,7 +55,10 @@ def main():
                        "".join(";"+side+"["+v+"]" for side,v in moves)+")",encoding="utf-8")
         gtp=Gtp(args)
         try:
-            for cmd in ("name","version","boardsize 9","clear_board","kata-set-rules chinese","komi 7"):
+            version_response = gtp.ask("version")
+            expect_ko_rejected = "1.15.0+" in version_response
+            assert expect_ko_rejected or "1.18.1+" in version_response
+            for cmd in ("name","boardsize 9","clear_board","kata-set-rules chinese","komi 7"):
                 assert gtp.ask(cmd).startswith("=")
             print("\nCASE A: archived real 9x9 game after move 64, loaded by loadsgf",flush=True)
             assert gtp.ask("loadsgf "+str(sgf)).startswith("=")
@@ -66,6 +69,7 @@ def main():
             print("ARCHIVED: score_returned=%s dead_returned=%s H4_illegal=%s" %
                   (score.startswith("="),dead.startswith("="),recap.startswith("?")),flush=True)
             assert score.startswith("=") and dead.startswith("=")
+            assert recap.startswith("?") == expect_ko_rejected, "Archive ko difference was unexpected"
 
             print("\nCASE B: exact same archived game, replay each GTP move for full history",flush=True)
             assert gtp.ask("clear_board").startswith("=")
@@ -76,6 +80,7 @@ def main():
                     raise AssertionError(f"Replay failed at turn {turn}: {cmd} {answer}")
             replay_recap=gtp.ask("play b H4")
             print("REPLAY: H4_illegal=%s" % replay_recap.startswith("?"),flush=True)
+            assert replay_recap.startswith("?") == expect_ko_rejected, "Replay ko difference was unexpected"
 
             print("\nCASE C: controlled classic 9x9 simple ko, with full alternating GTP moves",flush=True)
             assert gtp.ask("clear_board").startswith("=")
@@ -93,9 +98,10 @@ def main():
                   (true_score.startswith("="),true_dead.startswith("="),true_recap.startswith("=")),flush=True)
             assert true_score.startswith("="), "Expected scoring estimate even during active ko"
             assert true_dead.startswith("="), "Expected dead-stone estimate during active ko"
-            assert true_recap.startswith("="), "Expected GTP play to tolerate ko recapture by design"
+            assert true_recap.startswith("?") == expect_ko_rejected, "Controlled simple ko version behaviour differs"
             print("PASS: Actual KataGo returns final score and dead-status predictions even with a ko-shaped capture.",flush=True)
-            print("NOTE: GTP play ignores ko checks; external GoBoard must enforce strict ko legality.",flush=True)
+            print("NOTE: v1.15.0 checks simple ko on GTP play; v1.18.1 tolerant GTP play ignores ko.",flush=True)
+            print("RULE: Neither final_score nor final_status_list reports the game as unfinished.",flush=True)
         finally:
             gtp.close()
 
