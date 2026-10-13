@@ -160,7 +160,8 @@ def java_case(proc, case, ownership):
     lines.append("END\t" + str(case["komi"]))
     proc.stdin.write("\n".join(lines) + "\n")
     proc.stdin.flush()
-    response = proc.stdout.readline().strip()
+    # Preserve a final empty TSV field (e.g. no max-score additional dead stones).
+    response = proc.stdout.readline().rstrip("\r\n")
     parts = response.split("\t")
     if len(parts) != 21 or parts[0] != "RESULT" or parts[1] != case["name"]:
         raise ValueError("Unexpected Java referee result: " + repr(response))
