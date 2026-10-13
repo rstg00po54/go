@@ -2,7 +2,10 @@ name: Build BadukaiJ downloadable referee APK
 on:
   push:
     branches: [rk3588-engine]
-    paths: [.github/workflows/build_badukai_referee_apk.yml]
+    paths:
+      - .github/workflows/build_badukai_referee_apk.yml
+      - GoEngine-java/app/src/main/java/com/badukai/MainActivity.java
+      - GoEngine-java/app/src/main/java/com/badukai/engine/KataGoEngine.java
   workflow_dispatch:
 permissions:
   contents: read
