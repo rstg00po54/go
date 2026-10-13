@@ -108,6 +108,9 @@ class RefereeSmokeHostTests(unittest.TestCase):
         for case,text in samples.items():
             self.assertEqual(validate_confirmation_dialog(text,case),[],case)
             self.assertNotEqual(validate_confirmation_dialog("",case),[],case)
+            if case != "cgos9_1":
+                self.assertIn("unexpected forced continuation",
+                              validate_confirmation_dialog(text+" 继续下棋",case))
 
     def test_tap_ui_text_uses_exact_accessibility_bounds(self):
         xml = ET.fromstring('<hierarchy><node text="确认死子" bounds="[50,100][250,136]" />'
