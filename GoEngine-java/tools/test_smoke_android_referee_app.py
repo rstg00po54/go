@@ -127,6 +127,13 @@ class RefereeSmokeHostTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 validate_confirmation_dialog(text,case)
 
+    def test_overlay_marker_counts_require_unique_run_and_real_coordinates(self):
+        log = ("I/RefereeSmoke: OVERLAY id=old dead=1 review=0 alerts=3\n"
+               "I/RefereeSmoke: OVERLAY id=active dead=0 review=4 alerts=2")
+        self.assertEqual(smoke.overlay_marks(log,"active"),{"dead":0,"review":4,"alerts":2})
+        self.assertIsNone(smoke.overlay_marks(log,"missing"))
+        self.assertIsNone(smoke.overlay_marks("I/Other: OVERLAY id=active dead=1 review=2 alerts=3","active"))
+
     def test_resume_event_from_live_android_app(self):
         records = ("I/RefereeSmoke: RESUME id=prior moves=99 terminal=false refereeMode=false gameReady=true\n"
                    "I/RefereeSmoke: RESUME_FAIL id=active moves=82 undo=false\n"
