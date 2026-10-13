@@ -45,7 +45,7 @@ public final class EndgameAdjudicator {
         }
         public String summary() {
             if (verdict == Verdict.CONTINUE_RECOMMENDED) return "建议继续对局";
-            if (verdict == Verdict.REVIEW_REQUIRED) return "疑似没下完，建议继续下";
+            if (verdict == Verdict.REVIEW_REQUIRED) return "死活有疑问，请确认死子";
             return "可以进入确认数子";
         }
     }
