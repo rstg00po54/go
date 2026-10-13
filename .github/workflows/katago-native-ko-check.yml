@@ -21,7 +21,19 @@ jobs:
         katago_version: ["1.15.0", "1.18.1"]
     steps:
       - uses: actions/checkout@v4
+      - name: Build KataGo v1.15.0 CPU Eigen AVX2 from source (avoids obsolete libzip.so.5)
+        if: matrix.katago_version == '1.15.0'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libeigen3-dev zlib1g-dev libzip-dev
+          git clone --branch v1.15.0 --depth 1 https://github.com/lightvector/KataGo.git /tmp/katago-src
+          cmake -S /tmp/katago-src/cpp -B /tmp/katago-build \
+            -DUSE_BACKEND=EIGEN -DUSE_AVX2=1 -DNO_LIBZIP=1 -DCMAKE_BUILD_TYPE=Release
+          cmake --build /tmp/katago-build --parallel 4
+          test -x /tmp/katago-build/katago
+          echo "KATAGO_BIN=/tmp/katago-build/katago" >> "$GITHUB_ENV"
       - name: Download official KataGo CPU Eigen AVX2
+        if: matrix.katago_version == '1.18.1'
         env:
           KATAGO_VERSION: ${{ matrix.katago_version }}
         run: |
