@@ -1,0 +1,38 @@
+name: KataGo native ko GTP check
+
+on:
+  push:
+    branches: [rk3588-engine]
+    paths:
+      - .github/workflows/katago-native-ko-check.yml
+      - GoEngine-java/tools/test_native_katago_ko.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-katago-ko:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download official KataGo CPU Eigen AVX2 v1.18.1
+        run: |
+          curl --fail --location --retry 3 --connect-timeout 20 --output /tmp/katago.zip \
+            https://github.com/lightvector/KataGo/releases/download/v1.18.1/katago-v1.18.1-eigenavx2-linux-x64.zip
+          mkdir -p /tmp/katago
+          unzip -q /tmp/katago.zip -d /tmp/katago
+          find /tmp/katago -maxdepth 3 -type f | head -40
+          KATAGO="$(find /tmp/katago -type f \( -name katago -o -name katago.AppImage -o -name katago.x86_64 \) | head -1)"
+          test -n "$KATAGO" || { echo "KataGo binary not found in archive"; exit 1; }
+          chmod +x "$KATAGO"
+          echo "KATAGO_BIN=$KATAGO" >> "$GITHUB_ENV"
+      - name: Test unresolved ko against the real KataGo GTP engine
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+        run: |
+          timeout 480 python3 GoEngine-java/tools/test_native_katago_ko.py \
+            --katago "$KATAGO_BIN" \
+            --config GoEngine-java/app/src/main/assets/engine/default_gtp.cfg \
+            --model GoEngine-java/app/src/main/assets/engine/10b.bin
