@@ -219,7 +219,8 @@ public final class EndgameAdjudicator {
             Set<Point> dame = new LinkedHashSet<>();
             for (int y = 0; y < n; y++) for (int x = 0; x < n; x++) {
                 Point p = new Point(x,y);
-                if (board.get(p) != Intersection.EMPTY || Math.abs(whiteOwnership[y*n+x]) > 0.35f) continue;
+                if (board.get(p) != Intersection.EMPTY || !Float.isFinite(whiteOwnership[y*n+x])
+                        || Math.abs(whiteOwnership[y*n+x]) > 0.35f) continue;
                 boolean black = false, white = false;
                 for (Point around : neighbors(board,p)) {
                     black |= board.get(around) == Intersection.BLACK;
@@ -230,6 +231,11 @@ public final class EndgameAdjudicator {
             if (!dame.isEmpty()) add(findings, highlighted, Reason.POSSIBLE_DAME,
                     "有 " + dame.size() + " 个疑似单官/中立点；只凭空点未填不能要求继续下",
                     dame, null);
+        }
+        if (!board.isGameOver()) {
+            add(findings, highlighted, Reason.UNFINISHED_BOARD,
+                    "棋局尚未停棋，不能认定为已经结束", Collections.emptySet(), null);
+            needsReview = true;
         }
         if (groups.isEmpty()) {
             add(findings, highlighted, Reason.UNFINISHED_BOARD,
