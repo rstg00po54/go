@@ -53,8 +53,8 @@ class RefereeSmokeHostTests(unittest.TestCase):
             text = (root / filename).read_text(encoding="utf-8")
             self.assertIn("SZ[9]",text,game)
             self.assertIn("KM[7]",text,game)
-            self.assertRegex(text,r"RE\\[[BW]\\+\\d+\\]")
-            nodes = re.findall(r";([BW])\\[([a-i]{0,2})\\]",text)
+            self.assertRegex(text,r"RE\[[BW]\+\d+\]")
+            nodes = re.findall(r";([BW])\[([a-i]{0,2})\]",text)
             self.assertEqual(len(nodes),expected,game)
             self.assertEqual([vertex for _,vertex in nodes[-2:]],["",""],game)
 
