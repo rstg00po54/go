@@ -1,0 +1,57 @@
+name: KataGo native fast referee comparison
+on:
+  push:
+    branches: [rk3588-engine]
+    paths:
+      - .github/workflows/katago-referee-fastpaths.yml
+      - GoEngine-java/tools/benchmark_katago_referee_fastpaths.py
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-fastpaths:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ["1.15.0", "1.18.1"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build official KataGo v1.15 CPU for same-version comparison
+        if: matrix.version == '1.15.0'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libeigen3-dev zlib1g-dev libzip-dev
+          git clone -b v1.15.0 --depth 1 https://github.com/lightvector/KataGo.git /tmp/k-src
+          cmake -S /tmp/k-src/cpp -B /tmp/k-build -DUSE_BACKEND=EIGEN -DUSE_AVX2=1 -DNO_LIBZIP=1 -DCMAKE_BUILD_TYPE=Release
+          cmake --build /tmp/k-build --parallel 4
+          echo "KATAGO_BIN=/tmp/k-build/katago" >> "$GITHUB_ENV"
+      - name: Download official KataGo v1.18 binary
+        if: matrix.version == '1.18.1'
+        run: |
+          curl --fail --location --retry 3 --output /tmp/katago.zip https://github.com/lightvector/KataGo/releases/download/v1.18.1/katago-v1.18.1-eigenavx2-linux-x64.zip
+          mkdir -p /tmp/k-bin
+          unzip -q /tmp/katago.zip -d /tmp/k-bin
+          chmod +x /tmp/k-bin/katago
+          echo "KATAGO_BIN=/tmp/k-bin/katago" >> "$GITHUB_ENV"
+      - name: Test native raw NN and 12-visit nonplaying search on 19 positions
+        env:
+          VERSION: ${{ matrix.version }}
+        run: |
+          python3 -m py_compile GoEngine-java/tools/benchmark_katago_referee_fastpaths.py
+          timeout 660 python3 GoEngine-java/tools/benchmark_katago_referee_fastpaths.py --katago "$KATAGO_BIN" --config GoEngine-java/app/src/main/assets/engine/default_gtp.cfg --model GoEngine-java/app/src/main/assets/engine/10b.bin --out "GoEngine-java/build/referee_fastpaths/v$VERSION" --repeats 2
+      - name: Publish result as Actions step summary
+        if: always()
+        env:
+          VERSION: ${{ matrix.version }}
+        run: |
+          test -f "GoEngine-java/build/referee_fastpaths/v$VERSION/report.md" && cat "GoEngine-java/build/referee_fastpaths/v$VERSION/report.md" >> "$GITHUB_STEP_SUMMARY" || true
+      - name: Save raw JSON CSV and Markdown reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: katago-fastpaths-v${{ matrix.version }}
+          path: GoEngine-java/build/referee_fastpaths/
+          if-no-files-found: warn
+          retention-days: 14
