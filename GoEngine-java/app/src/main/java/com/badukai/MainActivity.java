@@ -144,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
     private Button situationButton;
     private Button aiSuggestionButton;
     private Button countTerritoryButton;
-    private View refereePanel, gameActionPanel;
+    private View refereePanel, gameActionPanel, refereeTapOverlay;
     private TextView refereePanelTitle, refereePanelScore, refereePanelHint;
     private Button refereeResetButton, refereeConfirmButton, refereeExitButton, refereeContinueButton;
 
@@ -419,6 +419,10 @@ public class MainActivity extends AppCompatActivity {
         countTerritoryButton = findViewById(R.id.countTerritoryButton);
         refereePanel = findViewById(R.id.refereePanel);
         gameActionPanel = findViewById(R.id.gameActionPanel);
+        refereeTapOverlay = findViewById(R.id.refereeTapOverlay);
+        refereeTapOverlay.setOnClickListener(v -> {
+            if (refereeMode && refereeRequiresContinuation()) resumeFromReferee();
+        });
         refereePanelTitle = findViewById(R.id.refereePanelTitle);
         refereePanelScore = findViewById(R.id.refereePanelScore);
         refereePanelHint = findViewById(R.id.refereePanelHint);
@@ -602,8 +606,12 @@ public class MainActivity extends AppCompatActivity {
     private void onBoardTap(int x, int y) {
         DebugLog.enter(TAG, "onBoardTap in, x=" + x + ", y=" + y + ", engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer + ", playerColor=" + playerColor);
         if (refereeMode) {
-            // Unresolved dead-stone / ko / seki disputes cannot be manually scored.
-            if (refereeRequiresContinuation()) return;
+            // Fallback if a board touch bypasses the transparent full-screen overlay:
+            // consume the entire gesture to continue, NEVER also place a stone.
+            if (refereeRequiresContinuation()) {
+                resumeFromReferee();
+                return;
+            }
             if (board.isInside(x, y) && board.get(x, y) != Intersection.EMPTY) {
                 Point tapped = new Point(x, y);
                 if (refereeReview.contains(tapped)) {
@@ -1059,15 +1067,18 @@ public class MainActivity extends AppCompatActivity {
                 }
                 reasons.append("\n红叉：AI 建议判死；黄圈：需明确复核；橙圈：需要关注的争议位置。\n"
                         + "以上均为辅助判断，不能代替双方确认。");
-                AlertDialog.Builder dialog = new AlertDialog.Builder(this)
-                        .setTitle("智能裁判 · " + decision.summary()).setMessage(reasons.toString());
-                if (decision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT
-                        && board.canResumeAfterPasses())
-                    dialog.setPositiveButton("继续下棋", (ignored, which) -> resumeFromReferee());
-                else if (decision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT)
-                    dialog.setPositiveButton("返回棋盘", null);
-                else dialog.setPositiveButton("确认数子", null).setNegativeButton("稍后确认", null);
-                dialog.show();
+                if (decision.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT) {
+                    new AlertDialog.Builder(this).setTitle("智能裁判 · " + decision.summary())
+                            .setMessage(reasons.toString())
+                            .setPositiveButton("确认数子", null)
+                            .setNegativeButton("稍后确认", null).show();
+                } else {
+                    // Leave existing red crosses, amber rings and tactical points
+                    // visible on the BOARD. A single touch anywhere dismisses
+                    // them and resumes the two passes; no blocking alert dialog.
+                    Log.i(TAG,"REFEREE_BOARD_DISPUTE dead=" + refereeDead.size()
+                            + " review=" + refereeReview.size() + " alerts=" + alerts.size());
+                }
                 if (isRefereeSmokeIntent()) {
                     SmartReferee.ScoreWhatIf actualRange = sensitivity;
                     String game = getIntent().getStringExtra("referee_smoke_game");
@@ -1088,9 +1099,11 @@ public class MainActivity extends AppCompatActivity {
                             && reasons.toString().contains("不同死子组合可能改变胜负"));
                     boolean good = genericGood && strictGood;
                     Log.i("RefereeSmoke",String.format(Locale.US,
-                            "%s id=%s game=%s stage=dialog verdict=%s moves=%d dead=%d review=%d vulnerable=%d "
+                            "%s id=%s game=%s stage=%s verdict=%s moves=%d dead=%d review=%d vulnerable=%d "
                             + "minLead=%.1f maxLead=%.1f hasBlack=%s hasWhite=%s hasPV=%s",
-                            good ? "PASS" : "FAIL",refereeSmokeId(),game,decision.verdict,moves,
+                            good ? "PASS" : "FAIL",refereeSmokeId(),game,
+                            decision.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT ? "dialog" : "overlay",
+                            decision.verdict,moves,
                             suggestion == null ? -1 : suggestion.suggestedGroups,
                             suggestion == null ? -1 : suggestion.reviewGroups,
                             suggestion == null ? -1 : suggestion.vulnerableGroups,
@@ -1135,13 +1148,13 @@ public class MainActivity extends AppCompatActivity {
         boolean mustContinue = refereeRequiresContinuation();
         String shortStatus = mustContinue ? "智能裁判\n建议继续下" : "智能裁判\n确认数子";
         refereePanelTitle.setText(mustContinue ? "智能裁判 · 存在争议" : "智能裁判 · 可以确认数子");
-        refereePanelScore.setText(mustContinue ? "死活或劫争不确定 · 暂不结算"
+        refereePanelScore.setText(mustContinue ? "红叉：疑似死棋  ·  黄圈：待确认  ·  橙圈：争议点"
                 : String.format(Locale.CHINA,"黑 %.1f · 白 %.1f · %s",
                         audit.score.blackPoints,audit.score.whitePoints,
                         Math.abs(lead) < 0.001 ? "平局" :
                                 String.format(Locale.CHINA,"%s领先 %.1f 目",lead > 0 ? "白" : "黑",Math.abs(lead))));
         refereePanelHint.setText(mustContinue
-                ? "双方虽已停棋，但 AI 发现争议，建议继续下几手再停棋。"
+                ? "轻触屏幕任意位置：清除标记，继续下棋"
                 : "双方已停棋且无明显争议；确认死子后即可数子。");
         render(shortStatus);
     }
@@ -1234,6 +1247,10 @@ public class MainActivity extends AppCompatActivity {
         final Move lastPass = board.getLastMove();
         final StoneColor next = lastPass.color.opposite();
         evaluating = true;
+        // Hide dispute markings instantly on the dismissing tap. The touch
+        // overlay consumes the gesture so it cannot also place a new stone.
+        boardView.setRefereeMarks(null,null);
+        boardView.setEndgameAlerts(null);
         render("正在恢复对局并同步引擎...");
         engineExecutor.execute(() -> {
             boolean first = engine.undo();
@@ -2041,9 +2058,11 @@ public class MainActivity extends AppCompatActivity {
         refereePanel.setVisibility(refereeMode ? View.VISIBLE : View.GONE);
         gameActionPanel.setVisibility(refereeMode ? View.GONE : View.VISIBLE);
         boolean mustContinue = refereeMode && refereeRequiresContinuation();
-        boolean mayResume = mustContinue && board.canResumeAfterPasses();
-        refereeContinueButton.setVisibility(mustContinue ? View.VISIBLE : View.GONE);
-        refereeContinueButton.setEnabled(mayResume && !evaluating && !thinking);
+        refereeTapOverlay.setVisibility(mustContinue && !evaluating ? View.VISIBLE : View.GONE);
+        // Disputed positions are handled by a tap anywhere on the screen,
+        // not a fourth large button at the bottom.
+        refereeContinueButton.setVisibility(View.GONE);
+        refereeContinueButton.setEnabled(false);
         // One action for any disagreement; scoring actions only if READY_TO_COUNT.
         refereeResetButton.setVisibility(refereeMode && !mustContinue ? View.VISIBLE : View.GONE);
         refereeConfirmButton.setVisibility(refereeMode && !mustContinue ? View.VISIBLE : View.GONE);
@@ -2072,6 +2091,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         DebugLog.enter(TAG, "onBackPressed in, gameVisible=" + (gamePageContainer.getVisibility() == View.VISIBLE));
+        if (refereeMode && refereeRequiresContinuation()) {
+            resumeFromReferee();
+            return;
+        }
         if (variationBoard != null) exitVariationPreview();
         else if (gamePageContainer.getVisibility() == View.VISIBLE) showMainPage();
         else super.onBackPressed();
