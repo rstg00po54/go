@@ -1,10 +1,6 @@
 name: Promote KataGo 1.15 Android ARM64 binary
 
 on:
-  push:
-    branches: [rk3588-engine]
-    paths:
-      - '.github/workflows/promote_katago_1_15.yml'
   workflow_dispatch:
 
 permissions:
