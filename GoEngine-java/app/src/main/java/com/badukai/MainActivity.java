@@ -96,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
     private String finalDeadStones;
     private boolean preciseScoreReady;
     private double fastEndgameLead = Double.NaN;
+    private KataGoEngine.PositionEvaluation endgameEvaluation;
     // Experimental referee is a local, explicitly confirmed dead-chain overlay.
     private boolean refereeMode;
     private boolean refereeConfirmed;
@@ -103,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
     private final Set<Point> refereeDead = new HashSet<>();
     private final Set<Point> refereeSuggested = new HashSet<>();
     private final Set<Point> refereeReview = new HashSet<>();
+    private final Set<Point> refereeInitialReview = new HashSet<>();
     private Point lastMove;
     private final List<KataGoEngine.SearchRecommendation> recommendationChoices = new ArrayList<>();
     private Point[] recommendationPoints;
@@ -466,8 +468,23 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "onBoardTap in, x=" + x + ", y=" + y + ", engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer + ", playerColor=" + playerColor);
         if (refereeMode) {
             if (board.isInside(x, y) && board.get(x, y) != Intersection.EMPTY) {
-                SmartReferee.toggleGroup(board, refereeDead, new Point(x, y));
-                refreshRefereePreview();
+                Point tapped = new Point(x, y);
+                if (refereeReview.contains(tapped)) {
+                    new AlertDialog.Builder(this).setTitle("复核这块棋")
+                            .setMessage("AI 对整块棋的死活判断不确定。请选择最终处理方式。")
+                            .setPositiveButton("判活（保留）", (dialog, which) -> {
+                                SmartReferee.decideGroup(board, refereeDead, refereeReview, tapped, false);
+                                refreshRefereePreview();
+                            })
+                            .setNeutralButton("判死（移除）", (dialog, which) -> {
+                                SmartReferee.decideGroup(board, refereeDead, refereeReview, tapped, true);
+                                refreshRefereePreview();
+                            })
+                            .setNegativeButton("暂不处理", null).show();
+                } else {
+                    SmartReferee.toggleGroup(board, refereeDead, tapped);
+                    refreshRefereePreview();
+                }
             }
             return;
         }
@@ -640,6 +657,7 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "finishByScore in, pendingPassColor=" + pendingPassColor);
         if (evaluating) return;
         evaluating = true;
+        endgameEvaluation = null;
         winRateEpoch++;
         winRateSession++;
         final GoBoard snapshot = board;
@@ -675,6 +693,7 @@ public class MainActivity extends AppCompatActivity {
                             if (board != snapshot || board.getMoveCount() != moves || winRateEpoch != epoch) return;
                             evaluating = false;
                             preciseScoreReady = false;
+                            endgameEvaluation = quick;
                             finalDeadStones = estimatedDead;
                             fastEndgameLead = lead;
                             gameResultText = formatFastEndgameResult(lead);
@@ -739,7 +758,7 @@ public class MainActivity extends AppCompatActivity {
     /** Explicit, reversible referee review. Keeps original NN outcome untouched until user confirmation. */
     private void showEndgameScoringOptions() {
         if (!engineReady || !gameReady || !board.isGameOver() || evaluating || thinking
-                || finalDeadStones == null) return;
+                || board.getLastMove() instanceof Move.Resign) return;
         if (refereeMode) {
             showRefereeConfirmation();
             return;
@@ -753,7 +772,7 @@ public class MainActivity extends AppCompatActivity {
             refreshRefereePreview();
             return;
         }
-        String[] choices = preciseScoreReady
+        String[] choices = preciseScoreReady || finalDeadStones == null
                 ? new String[]{"智能裁判（人工确认死子）"}
                 : new String[]{"智能裁判（人工确认死子）", "深度对照（KataGo 搜索）"};
         new AlertDialog.Builder(this).setTitle("终局结算方式")
@@ -769,27 +788,33 @@ public class MainActivity extends AppCompatActivity {
         evaluating = true;
         final GoBoard snapshot = board;
         final int moves = board.getMoveCount(), size = boardSize;
+        final KataGoEngine.PositionEvaluation cached = endgameEvaluation;
         render("智能裁判：正在分析可能的死棋...");
         engineExecutor.execute(() -> {
             SmartReferee.Analysis analysis = null;
+            KataGoEngine.PositionEvaluation nn = cached;
             try {
-                KataGoEngine.PositionEvaluation nn = engine.evaluatePosition(size);
+                if (nn == null || nn.size != size) nn = engine.evaluatePosition(size);
                 if (nn != null) analysis = SmartReferee.analyze(snapshot, nn.whiteOwnership);
             } catch (RuntimeException ex) {
                 Log.w(TAG, "Smart referee NN dead-chain suggestion unavailable", ex);
             }
             final SmartReferee.Analysis suggestion = analysis;
+            final KataGoEngine.PositionEvaluation evaluated = nn;
             mainHandler.post(() -> {
                 evaluating = false;
                 if (board != snapshot || board.getMoveCount() != moves || boardSize != size) return;
+                if (evaluated != null && evaluated.size == size) endgameEvaluation = evaluated;
                 refereeMode = true;
                 refereeDead.clear();
                 refereeSuggested.clear();
                 refereeReview.clear();
+                refereeInitialReview.clear();
                 if (suggestion != null) {
                     refereeDead.addAll(suggestion.suggestedDead);
                     refereeSuggested.addAll(suggestion.suggestedDead);
                     refereeReview.addAll(suggestion.needsReview);
+                    refereeInitialReview.addAll(suggestion.needsReview);
                 }
                 boardView.setOwnership(null);
                 boardView.setRefereeMarks(refereeDead, refereeReview);
@@ -798,36 +823,59 @@ public class MainActivity extends AppCompatActivity {
                         ? "AI 建议不可用。可手动点击整块棋标记死子。"
                         : String.format(Locale.CHINA, "AI 建议死子 %d 块，需关注 %d 块；仅供参考。",
                                 suggestion.suggestedGroups, suggestion.reviewGroups);
-                new AlertDialog.Builder(this).setTitle("智能裁判（试验）")
-                        .setMessage(info + "\n红叉：待确认死子；黄圈：建议复核。\n"
-                                + "点击棋盘上任意一颗棋子，即切换整块棋的死活标记。"
-                                + "\n完成后点「确认裁判」，请逐块检查；人机对局由玩家确认，双人对局需双方同意。")
+                new AlertDialog.Builder(this).setTitle("智能裁判（需人工确认）")
+                        .setMessage(info + "\n红叉：AI 建议判死，可点击整块棋恢复。\n"
+                                + "黄圈：尚未确认，请点击并明确选择判活或判死。"
+                                + "\n所有黄圈处理完后点「确认裁判」。人机对局由玩家确认，双人对局需双方同意。")
                         .setPositiveButton("开始复核", null).show();
             });
         });
     }
 
     private void refreshRefereePreview() {
-        GoBoard.FinalScore score = board.countChineseScore(refereeDead, komiFor(boardSize),
+        double nnLead = endgameEvaluation == null ? fastEndgameLead : endgameEvaluation.whiteLead;
+        SmartReferee.ScoreAudit audit = SmartReferee.audit(board, refereeDead, nnLead, komiFor(boardSize),
                 gameCondition >= 2 ? gameCondition : 0);
-        double lead = score.whitePoints - score.blackPoints;
+        double lead = audit.whiteLead;
+        int pending = SmartReferee.countGroups(board, refereeReview);
         boardView.setRefereeMarks(refereeDead, refereeReview);
-        render(String.format(Locale.CHINA, "裁判预览：黑 %.1f · 白 %.1f（%s）\n红叉为拟死子，点击整块棋修改",
-                score.blackPoints, score.whitePoints,
+        String summary = String.format(Locale.CHINA,
+                "裁判预览：黑 %.1f · 白 %.1f（%s）\n红叉为拟死子，待复核 %d 块",
+                audit.score.blackPoints, audit.score.whitePoints,
                 Math.abs(lead) < 0.001 ? "平局" :
-                        String.format(Locale.CHINA, "%s领先 %.1f 目", lead > 0 ? "白" : "黑", Math.abs(lead))));
+                        String.format(Locale.CHINA, "%s领先 %.1f 目", lead > 0 ? "白" : "黑", Math.abs(lead)), pending);
+        if (audit.needsVerification) summary += String.format(Locale.CHINA,
+                "\n注意：与 NN 估分相差 %.1f 目，请仔细检查", audit.difference);
+        render(summary);
     }
 
     private void showRefereeConfirmation() {
-        GoBoard.FinalScore totals = board.countChineseScore(refereeDead, komiFor(boardSize),
+        if (!refereeReview.isEmpty()) {
+            int pending = SmartReferee.countGroups(board, refereeReview);
+            new AlertDialog.Builder(this).setTitle("还有 " + pending + " 块棋未复核")
+                    .setMessage("黄色棋块的死活尚未确认。建议逐块核对；也可以明确选择将其全部判活（保留）。")
+                    .setPositiveButton("返回棋盘复核", null)
+                    .setNeutralButton("未复核的全部判活", (dialog, which) -> {
+                        refereeDead.removeAll(refereeReview);
+                        refereeReview.clear();
+                        refreshRefereePreview();
+                        showRefereeConfirmation();
+                    }).show();
+            return;
+        }
+        double nnLead = endgameEvaluation == null ? fastEndgameLead : endgameEvaluation.whiteLead;
+        SmartReferee.ScoreAudit audit = SmartReferee.audit(board, refereeDead, nnLead, komiFor(boardSize),
                 gameCondition >= 2 ? gameCondition : 0);
+        GoBoard.FinalScore totals = audit.score;
         String verdict = SmartReferee.resultText(totals);
+        String warning = audit.needsVerification ? String.format(Locale.CHINA,
+                "\n注意：AI 估分与数子相差 %.1f 目，可能有死活争议，请再次核对。\n", audit.difference) : "";
         new AlertDialog.Builder(this).setTitle("确认中国规则数子")
                 .setMessage(String.format(Locale.CHINA,
                         "黑棋 %.1f，白棋 %.1f\n结果：%s\n"
                         + "红叉为准备移除的死子。AI 判断不是裁判证明，请逐块确认。"
-                        + "\n这是用户复核的中国规则数子；若为双人对局应双方确认。",
-                        totals.blackPoints, totals.whitePoints, verdict))
+                        + "%s\n这是用户复核的中国规则数子；若为双人对局应双方确认。",
+                        totals.blackPoints, totals.whitePoints, verdict, warning))
                 .setPositiveButton("已复核并确认", (dialog, which) -> {
                     finalDeadStones = SmartReferee.toGtpVertices(refereeDead, boardSize);
                     gameResultText = "确认数子 · " + ("0".equals(verdict) ? "平局" :
@@ -850,6 +898,8 @@ public class MainActivity extends AppCompatActivity {
                 .setNeutralButton("恢复 AI 建议", (dialog, which) -> {
                     refereeDead.clear();
                     refereeDead.addAll(refereeSuggested);
+                    refereeReview.clear();
+                    refereeReview.addAll(refereeInitialReview);
                     refreshRefereePreview();
                 })
                 .setNegativeButton("退出裁判", (dialog, which) -> {
@@ -1368,12 +1418,14 @@ public class MainActivity extends AppCompatActivity {
         finalDeadStones = null;
         preciseScoreReady = false;
         fastEndgameLead = Double.NaN;
+        endgameEvaluation = null;
         refereeMode = false;
         refereeConfirmed = false;
         refereeAccepted.clear();
         refereeDead.clear();
         refereeSuggested.clear();
         refereeReview.clear();
+        refereeInitialReview.clear();
         boardView.setRefereeMarks(null, null);
         winRateEpoch++;
         winRateSession++;
@@ -1584,7 +1636,7 @@ public class MainActivity extends AppCompatActivity {
                 ? (refereeMode ? "确认裁判" : refereeConfirmed ? "复核裁判" : "裁判/对照")
                 : "数目");
         countTerritoryButton.setEnabled(engineReady && gameReady && board.isGameOver()
-                && !thinking && !engineStarting && !evaluating && finalDeadStones != null);
+                && !thinking && !engineStarting && !evaluating && !(board.getLastMove() instanceof Move.Resign));
         situationButton.setEnabled(variationBoard == null && engineReady && gameReady && !engineStarting
                 && !thinking && !evaluating && (board.isGameOver() || currentPlayer == playerColor));
         aiSuggestionButton.setEnabled(playerTurn && variationBoard == null);
