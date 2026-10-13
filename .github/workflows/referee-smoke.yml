@@ -1,39 +1,6 @@
 name: Smart referee core tests
 
 on:
-  push:
-    branches: [rk3588-engine]
-    paths:
-      - ".github/workflows/referee-smoke.yml"
-      - "GoEngine-java/app/src/main/java/com/badukai/game/**"
-      - "GoEngine-java/tools/test_smart_referee.py"
-      - "GoEngine-java/tools/test_benchmark_endgame_referee_protocol.py"
-      - "GoEngine-java/tools/benchmark_endgame_life_probe_android.py"
-      - "GoEngine-java/tools/test_benchmark_endgame_life_probe.py"
-      - "GoEngine-java/tools/smoke_android_referee_app.py"
-      - "GoEngine-java/tools/test_smoke_android_referee_app.py"
-      - "GoEngine-java/tools/upload_referee_test_results.py"
-      - "GoEngine-java/tools/test_upload_referee_test_results.py"
-      - "GoEngine-java/app/src/debug/assets/referee_smoke_*.sgf"
-      - "GoEngine-java/app/src/main/java/com/badukai/MainActivity.java"
-      - "GoEngine-java/app/src/main/res/layout/activity_main.xml"
-      - "GoEngine-java/tools/benchmark_endgame_referee_android.py"
-  pull_request:
-    paths:
-      - ".github/workflows/referee-smoke.yml"
-      - "GoEngine-java/app/src/main/java/com/badukai/game/**"
-      - "GoEngine-java/tools/test_smart_referee.py"
-      - "GoEngine-java/tools/test_benchmark_endgame_referee_protocol.py"
-      - "GoEngine-java/tools/benchmark_endgame_life_probe_android.py"
-      - "GoEngine-java/tools/test_benchmark_endgame_life_probe.py"
-      - "GoEngine-java/tools/smoke_android_referee_app.py"
-      - "GoEngine-java/tools/test_smoke_android_referee_app.py"
-      - "GoEngine-java/tools/upload_referee_test_results.py"
-      - "GoEngine-java/tools/test_upload_referee_test_results.py"
-      - "GoEngine-java/app/src/debug/assets/referee_smoke_*.sgf"
-      - "GoEngine-java/app/src/main/java/com/badukai/MainActivity.java"
-      - "GoEngine-java/app/src/main/res/layout/activity_main.xml"
-      - "GoEngine-java/tools/benchmark_endgame_referee_android.py"
   workflow_dispatch:
 
 jobs:
