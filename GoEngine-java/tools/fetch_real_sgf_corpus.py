@@ -155,7 +155,7 @@ def populate(output, paths, target9, target19, workers=6):
 def main(argv=None):
     p = argparse.ArgumentParser(description="Build larger public real-scored SGF corpus, no ADB needed")
     p.add_argument("--nine", type=int, default=80, help="Target valid 9x9 games")
-    p.add_argument("--nineteen", type=int, default=40, help="Target valid 19x19 games")
+    p.add_argument("--nineteen", type=int, default=20, help="Target valid 19x19 games")
     p.add_argument("--workers", type=int, default=6)
     p.add_argument("--output", type=Path, default=Path("build/real_sgf_corpus"))
     args = p.parse_args(argv)
