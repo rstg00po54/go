@@ -985,7 +985,9 @@ public class KataGoEngine {
             NativePassComparison black = null, white = null;
             List<SearchRecommendation> suggestions = Collections.emptyList();
             String ownershipReport = null;
-            for (String color : new String[]{"black","white"}) {
+            // Analyze the actual next player last to preserve the GTP search root side.
+            String[] colors = "black".equals(player) ? new String[]{"white","black"} : new String[]{"black","white"};
+            for (String color : colors) {
                 String normal = runNativeEndgameAnalysis(color,false,color.equals(player));
                 String forced = runNativeEndgameAnalysis(color,true,false);
                 if (normal == null || forced == null) return null;
