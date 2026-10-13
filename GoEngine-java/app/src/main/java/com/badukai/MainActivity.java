@@ -1633,7 +1633,7 @@ public class MainActivity extends AppCompatActivity {
         newGameButton.setEnabled(!thinking && !engineStarting && !evaluating);
         newRoundButton.setEnabled(!thinking && !engineStarting && !evaluating);
         countTerritoryButton.setText(board.isGameOver()
-                ? (refereeMode ? "确认裁判" : refereeConfirmed ? "复核裁判" : "裁判/对照")
+                ? (refereeMode ? "确认裁判" : refereeConfirmed ? "复核裁判" : "智能裁判")
                 : "数目");
         countTerritoryButton.setEnabled(engineReady && gameReady && board.isGameOver()
                 && !thinking && !engineStarting && !evaluating && !(board.getLastMove() instanceof Move.Resign));
