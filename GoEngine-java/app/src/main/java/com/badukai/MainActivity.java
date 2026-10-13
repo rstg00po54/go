@@ -1110,7 +1110,7 @@ public class MainActivity extends AppCompatActivity {
                     boolean hasSearch = decision.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT
                             || (mctsInfo.contains("黑先：") && mctsInfo.contains("白先："));
                     boolean genericGood = suggestion != null
-                            && (endedAtStart == board.isGameOver()) && hasSearch
+                            && (endedAtStart == board.isGameOver()) && (!endedAtStart || hasSearch)
                             && reasons.toString().contains("黄圈");
                     boolean strictGood = !knownCase || (suggestion.suggestedGroups == 1
                             && suggestion.reviewGroups == 2 && suggestion.vulnerableGroups == 1
@@ -1293,7 +1293,7 @@ public class MainActivity extends AppCompatActivity {
             boardView.setRefereeMarks(null,null);
             boardView.setEndgameAlerts(null);
             endgameDecision = null;
-            // Do not touch engine.undo(), currentPlayer or move history.
+            // Preserve the engine move history and side to move exactly as they were.
             render(currentPlayer == playerColor ? "棋形检查完成，轮到你了" : "棋形检查完成，轮到 AI");
             if (isRefereeSmokeIntent()) Log.i("RefereeSmoke","INSPECT_RESUME id=" + refereeSmokeId()
                     + " moves=" + moves + " after=" + board.getMoveCount() + " terminal="
