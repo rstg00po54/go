@@ -214,24 +214,33 @@ def main():
                        sha256=case["sha256"])
             if not row["terminal_passes_java"] and case["terminal_passes"]:
                 raise ValueError("Java double-pass end differs from SGF for " + case["name"])
+            lead_gap = row["local_white_lead"] - case["official_white_lead"]
+            opposite_winner = row["local_white_lead"] * case["official_white_lead"] < 0
+            row["recorded_score_gap"] = round(lead_gap,3)
+            row["recorded_winner_conflict"] = opposite_winner
+            row["needs_recorded_score_review"] = opposite_winner or abs(lead_gap) >= 5.0
             results.append(row)
-            print("%-27s %-22s dead=%d review=%d raw=%+6.2f area=%+6.2f RE=%s %s" %
+            print("%-27s %-22s dead=%d review=%d raw=%+6.2f area=%+6.2f RE=%s %s%s" %
                   (case["name"],row["verdict"],row["dead_groups"],row["review_groups"],
                    nn_lead,row["local_white_lead"],case["official_re"],
-                   ",".join(row["reasons"])),flush=True)
+                   ",".join(row["reasons"]),
+                   " *** RE/AREA CONFLICT ***" if row["needs_recorded_score_review"] else ""),flush=True)
         counts = collections.Counter(row["verdict"] for row in results)
         reasons = collections.Counter(reason for row in results for reason in row["reasons"])
+        conflicts = [row["game"] for row in results if row["needs_recorded_score_review"]]
         report = {"type":"real_sgf_nn_java_smart_referee_triage",
                   "reference":"SGF RE is an external score label, not a certified dead-stone map",
                   "caveats":["Classifications are conservative heuristics, not proofs of ko, seki or solved life/death.",
                              "Area count uses unconfirmed AI-marked dead groups; do not call it official scoring.",
                              "Triage may say REVIEW for 19x19 records without terminal passes.",
                              "No SGF or engine data was publicly uploaded."],
-                  "device":serial,"mode":args.mode,"summary":dict(verdict_counts=counts,reason_counts=reasons),
+                  "device":serial,"mode":args.mode,"summary":dict(verdict_counts=counts,reason_counts=reasons,
+                      recorded_score_review_games=conflicts),
                   "skipped":skipped,"cases":results}
         filename=output / "referee.json"
         filename.write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
-        print("Verdicts:",dict(counts),"\nReasons:",dict(reasons),"\nLocal report:",filename,flush=True)
+        print("Verdicts:",dict(counts),"\nReasons:",dict(reasons),
+              "\nSGF result conflicts:",conflicts,"\nLocal report:",filename,flush=True)
         return 0
     except (OSError,ValueError,RuntimeError,subprocess.CalledProcessError,TimeoutError) as err:
         print("ERROR:",err,"partial rows:",len(results),"report directory:",output,file=sys.stderr)
