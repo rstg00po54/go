@@ -105,6 +105,38 @@ public final class SmartRefereeSmoke {
         ok(hasReason(tactical, EndgameAdjudicator.Reason.FIRST_MOVE_TACTIC),
                 "must explain atari and supply a concrete location");
         ok(urgent.get(1,1) == Intersection.BLACK, "tactical simulation must not mutate actual board");
+        // Reopen the same tactical position without touching the live game:
+        // only a locally simulated capture/escape corroborated by KataGo's
+        // candidate move is highlighted; NN ownership never yields red marks.
+        GoBoard midgame = urgent.copyForPreview();
+        ok(midgame.resumeAfterPasses(), "test position must reopen for midgame referee");
+        EndgameAdjudicator.Result midRules = EndgameAdjudicator.analyze(midgame,new float[81]);
+        ok(hasReason(midRules,EndgameAdjudicator.Reason.FIRST_MOVE_TACTIC),
+                "midgame first-move capture/escape must be considered");
+        MidgameTacticalReview.Result missingSearch = MidgameTacticalReview.analyze(midgame,midRules,
+                java.util.Collections.emptyList(),java.util.Collections.emptyList());
+        ok(missingSearch.tacticalMoves.isEmpty() && missingSearch.threatenedStones.isEmpty(),
+                "NN and uncorroborated local danger cannot create midgame markings");
+        List<List<String>> unrelated = java.util.Collections.singletonList(
+                java.util.Collections.singletonList("J1"));
+        MidgameTacticalReview.Result unrelatedSearch = MidgameTacticalReview.analyze(midgame,midRules,
+                unrelated,unrelated);
+        ok(unrelatedSearch.tacticalMoves.isEmpty(),"unrelated global MCTS moves are not proof of danger");
+        List<List<String>> localSearch = java.util.Collections.singletonList(
+                java.util.Arrays.asList("B7","B6"));
+        MidgameTacticalReview.Result corroborated = MidgameTacticalReview.analyze(midgame,midRules,
+                localSearch,java.util.Collections.emptyList());
+        ok(corroborated.candidates >= 1 && corroborated.searchSupported >= 1,
+                "both first-move trials and MCTS must corroborate the atari liberty");
+        ok(corroborated.tacticalMoves.contains(new Point(1,2)),
+                "B7 local atari must be the highlighted tactical move");
+        ok(corroborated.threatenedStones.contains(new Point(1,1)),
+                "at-risk black group gets a yellow ring but is not declared dead");
+        ok(midgame.get(1,1) == Intersection.BLACK && midgame.getMoveCount() == 4,
+                "local verification must never mutate real midgame moves");
+        MidgameTacticalReview.Result finished = MidgameTacticalReview.analyze(urgent,tactical,
+                localSearch,localSearch);
+        ok(finished.tacticalMoves.isEmpty(),"terminal scoring uses its existing separate verifier");
         float[] doomedOwnership = new float[81];
         doomedOwnership[1*9+1] = 0.98f;
         EndgameAdjudicator.Result doomedAtari = EndgameAdjudicator.analyze(urgent,doomedOwnership);
@@ -294,6 +326,7 @@ def main():
         paths = [GAME / name for name in (
             "GoBoard.java", "Intersection.java", "Move.java", "Point.java",
             "StoneColor.java", "SmartReferee.java", "EndgameAdjudicator.java",
+            "MidgameTacticalReview.java",
         )]
         subprocess.run(["javac", "-encoding", "UTF-8", "-d", str(dest),
                         str(source), str(stub)] + [str(x) for x in paths], check=True)
