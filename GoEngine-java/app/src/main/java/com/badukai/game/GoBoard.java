@@ -377,6 +377,8 @@ public class GoBoard {
         return copy;
     }
 
+    public List<Move> getMoveHistorySnapshot() { return new ArrayList<>(moveHistory); }
+
     public int getCapturedBlack() { DebugLog.v(TAG, "getCapturedBlack in, capturedBlack=" + capturedBlack); return capturedBlack; }
     public int getCapturedWhite() { DebugLog.v(TAG, "getCapturedWhite in, capturedWhite=" + capturedWhite); return capturedWhite; }
     public int getMoveCount() { DebugLog.v(TAG, "getMoveCount in, moveCount=" + moveHistory.size()); return moveHistory.size(); }
