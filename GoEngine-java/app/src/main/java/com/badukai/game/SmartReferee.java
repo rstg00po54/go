@@ -75,6 +75,55 @@ public final class SmartReferee {
         else dead.addAll(chain);
     }
 
+    /** Resolve an ENTIRE chain after explicit review. Neither action edits the game board. */
+    public static void decideGroup(GoBoard board, Set<Point> dead, Set<Point> review, Point point, boolean markDead) {
+        if (board == null || dead == null || review == null || point == null || board.get(point) == Intersection.EMPTY) return;
+        Set<Point> chain = group(board, point);
+        review.removeAll(chain);
+        dead.removeAll(chain);
+        if (markDead) dead.addAll(chain);
+    }
+
+    /** A review count is per connected chain, never per stone. */
+    public static int countGroups(GoBoard board, Set<Point> stones) {
+        if (board == null || stones == null || stones.isEmpty()) return 0;
+        Set<Point> visited = new HashSet<>();
+        int count = 0;
+        for (Point point : stones) {
+            if (point == null || visited.contains(point) || board.get(point) == Intersection.EMPTY) continue;
+            visited.addAll(group(board, point));
+            count++;
+        }
+        return count;
+    }
+
+    /** Compare the confirmed-stone count against the NN estimate to detect disputed endings. */
+    public static final class ScoreAudit {
+        public final GoBoard.FinalScore score;
+        public final double whiteLead, nnWhiteLead, difference;
+        public final boolean needsVerification;
+
+        private ScoreAudit(GoBoard.FinalScore score, double nnWhiteLead, boolean needsVerification) {
+            this.score = score;
+            whiteLead = score.whitePoints - score.blackPoints;
+            this.nnWhiteLead = nnWhiteLead;
+            difference = Double.isFinite(nnWhiteLead) ? Math.abs(whiteLead - nnWhiteLead) : Double.NaN;
+            this.needsVerification = needsVerification;
+        }
+    }
+
+    public static ScoreAudit audit(GoBoard board, Set<Point> dead, double nnWhiteLead, double komi, int handicap) {
+        if (board == null) throw new IllegalArgumentException("Missing board");
+        GoBoard.FinalScore score = board.countChineseScore(dead, komi, handicap);
+        double localLead = score.whitePoints - score.blackPoints;
+        double delta = Math.abs(localLead - nnWhiteLead);
+        boolean oppositeWinner = (localLead >= 0.5 && nnWhiteLead <= -0.5)
+                || (localLead <= -0.5 && nnWhiteLead >= 0.5);
+        double threshold = Math.max(5.0, board.getSize() * board.getSize() * 0.03);
+        boolean verify = Double.isFinite(nnWhiteLead) && (oppositeWinner || delta >= threshold);
+        return new ScoreAudit(score, nnWhiteLead, verify);
+    }
+
     public static Set<Point> group(GoBoard board, Point start) {
         Set<Point> result = new HashSet<>();
         if (board == null || start == null || board.get(start) == Intersection.EMPTY)
