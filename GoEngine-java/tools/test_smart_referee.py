@@ -54,6 +54,20 @@ public final class SmartRefereeSmoke {
             SmartReferee.analyze(board, new float[2]);
             throw new AssertionError("wrong ownership dimensions must fail");
         } catch (IllegalArgumentException expected) {}
+        Set<Point> pending = new HashSet<>(uncertain.needsReview);
+        ok(SmartReferee.countGroups(board, pending) == 1, "pending review counted by groups");
+        SmartReferee.decideGroup(board, marked, pending, new Point(0,0), false);
+        ok(marked.isEmpty() && pending.isEmpty(), "live decision clears dead and review marks");
+        pending.addAll(uncertain.needsReview);
+        SmartReferee.decideGroup(board, marked, pending, new Point(1,0), true);
+        ok(marked.size() == 2 && pending.isEmpty(), "dead decision marks full group and resolves review");
+        SmartReferee.ScoreAudit agrees = SmartReferee.audit(board, marked, 5.5, 5.5, 0);
+        ok(!agrees.needsVerification && agrees.difference < 0.001, "same NN and confirmed score needs no warning");
+        SmartReferee.ScoreAudit conflicts = SmartReferee.audit(board, new HashSet<Point>(), 5.5, 5.5, 0);
+        ok(conflicts.needsVerification && conflicts.difference > 5.0, "opposite NN and final score must warn");
+        SmartReferee.ScoreAudit noNn = SmartReferee.audit(board, marked, Double.NaN, 5.5, 0);
+        ok(!noNn.needsVerification, "manual fallback must work without NN estimates");
+        ok(board.get(0,0) == Intersection.BLACK, "review decisions never mutate real board");
         for (int size : new int[]{13,19}) {
             GoBoard empty = new GoBoard(size);
             SmartReferee.Analysis result = SmartReferee.analyze(empty, new float[size*size]);
