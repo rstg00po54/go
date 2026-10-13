@@ -64,8 +64,10 @@ public final class RealRefereeRunner {
                 if (board == null || ownership == null) throw new IllegalArgumentException("Incomplete case");
                 SmartReferee.Analysis dead = SmartReferee.analyze(board,ownership);
                 EndgameAdjudicator.Result result = EndgameAdjudicator.analyze(board,ownership);
-                GoBoard.FinalScore count = board.countChineseScore(dead.suggestedDead,
-                        Double.parseDouble(fields[1]),0);
+                double komi = Double.parseDouble(fields[1]);
+                GoBoard.FinalScore count = board.countChineseScore(dead.suggestedDead,komi,0);
+                SmartReferee.ScoreWhatIf sensitivity = SmartReferee.scoreWhatIf(
+                        board,dead.suggestedDead,dead.needsReview,komi,0);
                 StringBuilder reasons = new StringBuilder(), moves = new StringBuilder(), locations = new StringBuilder();
                 for (EndgameAdjudicator.Finding finding : result.findings) {
                     if (reasons.length()>0) reasons.append(",");
@@ -78,14 +80,18 @@ public final class RealRefereeRunner {
                         moves.append(finding.suggestedMove.toGtp(size));
                     }
                 }
-                System.out.printf(Locale.US,"RESULT\t%s\t%s\t%d\t%d\t%d\t%.3f\t%s\t%s\t%d\t%s\t%s\t%s\t%d\t%s%n",
+                System.out.printf(Locale.US,"RESULT\t%s\t%s\t%d\t%d\t%d\t%.3f\t%s\t%s\t%d\t%s\t%s\t%s\t%d\t%s\t%.3f\t%.3f\t%d\t%d\t%s\t%s%n",
                         name,result.verdict,dead.suggestedGroups,dead.reviewGroups,
                         result.groups,count.whitePoints-count.blackPoints,reasons,moves,
                         board.isGameOver()?1:0,
                         SmartReferee.toGtpVertices(dead.suggestedDead,size).replace(' ',','),
                         SmartReferee.toGtpVertices(dead.needsReview,size).replace(' ',','),
                         locations,dead.vulnerableGroups,
-                        SmartReferee.toGtpVertices(dead.vulnerableReview,size).replace(' ',','));
+                        SmartReferee.toGtpVertices(dead.vulnerableReview,size).replace(' ',','), 
+                        sensitivity.minWhiteLead,sensitivity.maxWhiteLead,
+                        sensitivity.reviewGroups,sensitivity.enumeratedGroups,
+                        SmartReferee.toGtpVertices(sensitivity.minAdditionalDead,size).replace(' ',','), 
+                        SmartReferee.toGtpVertices(sensitivity.maxAdditionalDead,size).replace(' ',','));
                 System.out.flush();
                 name = null; board = null;
             } else throw new IllegalArgumentException("Unknown input: " + fields[0]);
@@ -156,7 +162,7 @@ def java_case(proc, case, ownership):
     proc.stdin.flush()
     response = proc.stdout.readline().strip()
     parts = response.split("\t")
-    if len(parts) != 15 or parts[0] != "RESULT" or parts[1] != case["name"]:
+    if len(parts) != 21 or parts[0] != "RESULT" or parts[1] != case["name"]:
         raise ValueError("Unexpected Java referee result: " + repr(response))
     return dict(game=parts[1], verdict=parts[2], dead_groups=int(parts[3]),
                 review_groups=int(parts[4]), total_groups=int(parts[5]),
@@ -169,7 +175,13 @@ def java_case(proc, case, ownership):
                                    if entry.split(":",1)[1] else []
                                    for i,entry in enumerate(parts[12].split("|")) if ":" in entry},
                 vulnerable_groups=int(parts[13]),
-                vulnerable_vertices=parts[14].split(",") if parts[14] else [])
+                vulnerable_vertices=parts[14].split(",") if parts[14] else [],
+                what_if_min_white_lead=float(parts[15]),
+                what_if_max_white_lead=float(parts[16]),
+                what_if_review_groups=int(parts[17]),
+                what_if_enumerated_groups=int(parts[18]),
+                what_if_min_additional_dead=parts[19].split(",") if parts[19] else [],
+                what_if_max_additional_dead=parts[20].split(",") if parts[20] else [])
 
 
 def main():
@@ -251,6 +263,12 @@ def main():
                       "Review:",",".join(row["needs_review_vertices"]),
                       "Low-liberty:",",".join(row["vulnerable_vertices"]),
                       "Finding locations:",row["finding_locations"],flush=True)
+                print("  Hypothetical score range (white lead): %+5.1f .. %+5.1f; review groups: %d/%d; "
+                      "min extra dead: %s" % (
+                          row["what_if_min_white_lead"],row["what_if_max_white_lead"],
+                          row["what_if_enumerated_groups"],row["what_if_review_groups"],
+                          ",".join(row["what_if_min_additional_dead"])),
+                      "(NOT life/death proof)",flush=True)
             print("%-27s %-22s dead=%d review=%d raw=%+6.2f area=%+6.2f RE=%s %s%s" %
                   (case["name"],row["verdict"],row["dead_groups"],row["review_groups"],
                    nn_lead,row["local_white_lead"],case["official_re"],
