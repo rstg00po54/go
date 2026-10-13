@@ -142,8 +142,11 @@ class RefereeSmokeHostTests(unittest.TestCase):
             "private void startSmartReferee()",1)[0]
         self.assertIn("snapshot.countAtariGroups()",inspection)
         self.assertIn("snapshot.getSimpleKoPoint()",inspection)
-        self.assertIn("engine.searchRecommendations(",inspection)
-        self.assertIn("12,0.5",inspection)
+        self.assertIn("engine.inspectPositionNative(",inspection)
+        self.assertIn("size,12,0.5",inspection)
+        self.assertIn("nativeInfo.highVariationPoints",inspection)
+        self.assertIn("resumeFromReferee()",inspection)
+        self.assertIn("KataGo 原生地盘归属波动",inspection)
         self.assertIn('if (!ended)',inspection)
         self.assertIn("REFEREE_UNFINISHED_CHECK",inspection)
         self.assertIn("不证明所有官子已收完",inspection)
@@ -155,6 +158,12 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn("public Point getSimpleKoPoint()",board)
         self.assertIn("public int countAtariGroups()",board)
         self.assertIn("countLiberties(group) == 1",board)
+        engine = (root/"app/src/main/java/com/badukai/engine/KataGoEngine.java").read_text(encoding="utf-8")
+        self.assertIn("public NativePositionInspection inspectPositionNative(",engine)
+        self.assertIn("ownershipStdev true",engine)
+        self.assertIn("parseSearchRecommendations(response)",engine)
+        self.assertNotIn("EndgameAdjudicator.analyze(",inspection)
+        self.assertNotIn("SmartReferee.analyze(",inspection)
 
     def test_midgame_referee_is_available_without_passes_or_scoring(self):
         root = Path(__file__).resolve().parents[1]

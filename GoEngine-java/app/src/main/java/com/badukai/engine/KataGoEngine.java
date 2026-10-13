@@ -935,6 +935,66 @@ public class KataGoEngine {
         }
     }
 
+    /** KataGo-native uncertainty, not a Java life/death/seki/ko classifier. */
+    public static final class NativePositionInspection {
+        public final List<SearchRecommendation> recommendations;
+        public final double maximumOwnershipStdev;
+        public final int highVariationPoints;
+
+        private NativePositionInspection(List<SearchRecommendation> recommendations,
+                                         double maximumOwnershipStdev, int highVariationPoints) {
+            this.recommendations = Collections.unmodifiableList(new ArrayList<>(recommendations));
+            this.maximumOwnershipStdev = maximumOwnershipStdev;
+            this.highVariationPoints = highVariationPoints;
+        }
+    }
+
+    /**
+     * Read the original KataGo ownershipStdev output from a short non-playing search.
+     * This is uncertainty evidence, NEVER a proof of seki, death, or a completed game.
+     */
+    public NativePositionInspection inspectPositionNative(String player, int size, int visits, double seconds) {
+        if (!isReady() || (!"black".equals(player) && !"white".equals(player))
+                || size < 2 || size > 19 || visits < 1 || !Double.isFinite(seconds) || seconds <= 0.0) return null;
+        String oldVisits = getSearchParam("maxVisits");
+        String oldTime = getSearchParam("maxTime");
+        if (oldVisits == null || oldTime == null) return null;
+        try {
+            if (!simpleCommand("kata-set-param maxVisits " + visits, 10000)) return null;
+            if (!simpleCommand("kata-set-param maxTime " + String.format(Locale.US,"%.3f",seconds), 10000)) return null;
+            responseQueue.clear();
+            if (!sendCommandSync("kata-search_analyze " + player
+                    + " 50 minmoves 3 maxmoves 3 rootInfo true ownershipStdev true")) return null;
+            String response = waitForResponse(45000);
+            if (response == null || !response.startsWith("=")) return null;
+            List<SearchRecommendation> recommendations = parseSearchRecommendations(response);
+            int start = response.lastIndexOf("ownershipStdev ");
+            if (start < 0) return null;
+            String[] tokens = response.substring(start + "ownershipStdev ".length()).trim().split("\\s+");
+            if (tokens.length < size*size) return null;
+            double maximum = 0.0;
+            int highVariationPoints = 0;
+            for (int i = 0; i < size*size; i++) {
+                double value = Double.parseDouble(tokens[i]);
+                if (!Double.isFinite(value) || value < 0.0 || value > 1.01) return null;
+                maximum = Math.max(maximum,value);
+                if (value > 0.25) highVariationPoints++;
+            }
+            Log.i(TAG,String.format(Locale.US,
+                    "KATAGO_NATIVE_UNCERTAINTY size=%d visits=%d maxOwnershipStdev=%.4f highVariationPoints=%d",
+                    size,visits,maximum,highVariationPoints));
+            return new NativePositionInspection(recommendations,maximum,highVariationPoints);
+        } catch (RuntimeException ex) {
+            Log.w(TAG,"Could not read KataGo native ownership uncertainty",ex);
+            return null;
+        } finally {
+            boolean visitsRestored = simpleCommand("kata-set-param maxVisits " + oldVisits,10000);
+            boolean timeRestored = simpleCommand("kata-set-param maxTime " + oldTime,10000);
+            if (!visitsRestored || !timeRestored)
+                Log.e(TAG,"KataGo original search limits could not be restored after native inspection");
+        }
+    }
+
     private List<SearchRecommendation> parseSearchRecommendations(String response) {
         // Intermediate analyses can repeat the same move. Keep the latest snapshot.
         Map<String, SearchRecommendation> latest = new LinkedHashMap<>();

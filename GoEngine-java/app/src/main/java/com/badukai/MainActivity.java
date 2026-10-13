@@ -1116,15 +1116,17 @@ public class MainActivity extends AppCompatActivity {
         final long startedNs = System.nanoTime();
         render("局面检查：正在查看官子与攻防...");
         engineExecutor.execute(() -> {
-            List<KataGoEngine.SearchRecommendation> candidates = new ArrayList<>();
+            KataGoEngine.NativePositionInspection inspection = null;
             if (!ended) {
                 try {
-                    candidates = engine.searchRecommendations(side == StoneColor.BLACK ? "black" : "white",12,0.5);
+                    inspection = engine.inspectPositionNative(side == StoneColor.BLACK ? "black" : "white",size,12,0.5);
                 } catch (RuntimeException ex) {
-                    Log.w(TAG,"KataGo unfinished-position search failed",ex);
+                    Log.w(TAG,"KataGo native position uncertainty unavailable",ex);
                 }
             }
-            final List<KataGoEngine.SearchRecommendation> suggestions = candidates;
+            final KataGoEngine.NativePositionInspection nativeInfo = inspection;
+            final List<KataGoEngine.SearchRecommendation> suggestions = nativeInfo == null
+                    ? new ArrayList<>() : nativeInfo.recommendations;
             mainHandler.post(() -> {
                 if (board != snapshot || board.getMoveCount() != moves || boardSize != size) {
                     evaluating = false;
@@ -1140,6 +1142,17 @@ public class MainActivity extends AppCompatActivity {
                 if (simpleKo != null)
                     note.append("\n当前有劫禁点 ").append(simpleKo.toGtp(size)).append("，劫争是否结束仍须复核。");
                 else note.append("\n当前无简单劫禁点；这不排除潜在劫或复杂劫争。");
+                if (!ended && nativeInfo != null) {
+                    note.append(String.format(Locale.CHINA,
+                            "\nKataGo 原生地盘归属波动：最大 %.3f，波动超过 0.25 的点 %d 个。",
+                            nativeInfo.maximumOwnershipStdev,nativeInfo.highVariationPoints));
+                    if (nativeInfo.highVariationPoints > 0)
+                        note.append("\nKataGo 预测存在不稳定区域，可能仍有死活、攻防或收官争议，建议继续下棋。");
+                    else
+                        note.append("\n未发现较大归属波动，但 KataGo 不能据此证明双活、复杂劫争或死活已解决。");
+                } else if (!ended) {
+                    note.append("\nKataGo 未返回归属稳定性数据；无法确认局面是否已解决，请继续下棋。");
+                }
                 if (!ended && !suggestions.isEmpty()) {
                     KataGoEngine.SearchRecommendation best = suggestions.get(0);
                     if ("pass".equalsIgnoreCase(best.move))
@@ -1157,12 +1170,16 @@ public class MainActivity extends AppCompatActivity {
                 }
                 note.append("\n\n要正式确认胜负，应结合双方停棋、原生死子预测和人工复核。");
                 Log.i(TAG,String.format(Locale.US,
-                        "REFEREE_UNFINISHED_CHECK moves=%d terminal=%s atariGroups=%d simpleKo=%s candidates=%d elapsedMs=%d",
+                        "REFEREE_UNFINISHED_CHECK moves=%d terminal=%s atariGroups=%d simpleKo=%s candidates=%d nativeHighVariation=%d elapsedMs=%d",
                         moves,ended,atariGroups,simpleKo == null ? "none" : simpleKo.toGtp(size),
-                        suggestions.size(),(System.nanoTime()-startedNs)/1000000L));
+                        suggestions.size(),nativeInfo == null ? -1 : nativeInfo.highVariationPoints,
+                        (System.nanoTime()-startedNs)/1000000L));
                 render("局面检查完成");
-                new AlertDialog.Builder(this).setTitle("局面检查 · KataGo 搜索")
-                        .setMessage(note.toString()).setPositiveButton(ended ? "关闭" : "继续下棋",null).show();
+                new AlertDialog.Builder(this).setTitle("局面检查 · KataGo 原生分析")
+                        .setMessage(note.toString())
+                        .setPositiveButton("继续下棋", (dialog,which) -> {
+                            if (ended && board == snapshot && board.canResumeAfterPasses()) resumeFromReferee();
+                        }).show();
             });
         });
     }
