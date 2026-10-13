@@ -30,13 +30,13 @@ class RefereeSmokeHostTests(unittest.TestCase):
     def test_screenshot_accepts_only_png_bytes(self):
         class Result:
             returncode = 0
-            stdout = b"\\x89PNG\\r\\n\\x1a\\n"+b"test"
+            stdout = b"\x89PNG\r\n\x1a\n"+b"test"
             stderr = b""
         with tempfile.TemporaryDirectory() as folder:
             dest = Path(folder)/"screen.png"
             with mock.patch.object(smoke.subprocess,"run",return_value=Result()):
                 smoke.capture_screenshot("adb","device",dest)
-            self.assertTrue(dest.read_bytes().startswith(b"\\x89PNG"))
+            self.assertTrue(dest.read_bytes().startswith(b"\x89PNG"))
             Result.stdout = b"not a png"
             with mock.patch.object(smoke.subprocess,"run",return_value=Result()):
                 with self.assertRaises(RuntimeError):
