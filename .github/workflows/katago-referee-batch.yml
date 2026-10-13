@@ -1,0 +1,68 @@
+name: KataGo referee batch benchmarks
+on:
+  push:
+    branches: [rk3588-engine]
+    paths:
+      - .github/workflows/katago-referee-batch.yml
+      - GoEngine-java/tools/benchmark_katago_referee_batch.py
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  referee-batch:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 22
+    strategy:
+      fail-fast: false
+      matrix:
+        katago_version: ["1.15.0", "1.18.1"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build KataGo v1.15.0 Eigen AVX2 from source
+        if: matrix.katago_version == '1.15.0'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libeigen3-dev zlib1g-dev libzip-dev
+          git clone --branch v1.15.0 --depth 1 https://github.com/lightvector/KataGo.git /tmp/katago-src
+          cmake -S /tmp/katago-src/cpp -B /tmp/katago-build \
+            -DUSE_BACKEND=EIGEN -DUSE_AVX2=1 -DNO_LIBZIP=1 -DCMAKE_BUILD_TYPE=Release
+          cmake --build /tmp/katago-build --parallel 4
+          echo "KATAGO_BIN=/tmp/katago-build/katago" >> "$GITHUB_ENV"
+      - name: Download KataGo v1.18.1 Eigen AVX2 binary
+        if: matrix.katago_version == '1.18.1'
+        run: |
+          curl --fail --location --retry 3 --output /tmp/katago.zip \
+            https://github.com/lightvector/KataGo/releases/download/v1.18.1/katago-v1.18.1-eigenavx2-linux-x64.zip
+          mkdir -p /tmp/katago
+          unzip -q /tmp/katago.zip -d /tmp/katago
+          chmod +x /tmp/katago/katago
+          echo "KATAGO_BIN=/tmp/katago/katago" >> "$GITHUB_ENV"
+      - name: Precheck source and fixture inventory
+        run: |
+          python3 -m py_compile GoEngine-java/tools/benchmark_katago_referee_batch.py
+          python3 GoEngine-java/tools/benchmark_katago_referee_batch.py \
+            --katago "$KATAGO_BIN" --config GoEngine-java/app/src/main/assets/engine/default_gtp.cfg \
+            --model GoEngine-java/app/src/main/assets/engine/10b.bin --out /tmp/precheck --list
+      - name: Test 19 positions twice with actual GTP
+        run: |
+          timeout 900 python3 GoEngine-java/tools/benchmark_katago_referee_batch.py \
+            --katago "$KATAGO_BIN" --config GoEngine-java/app/src/main/assets/engine/default_gtp.cfg \
+            --model GoEngine-java/app/src/main/assets/engine/10b.bin \
+            --out "GoEngine-java/build/referee_batch/v$VERSION" --repeats 2
+        env:
+          VERSION: \${{ matrix.katago_version }}
+      - name: Publish table in Actions summary
+        if: always()
+        run: |
+          test -f "GoEngine-java/build/referee_batch/v$VERSION/report.md" && \
+            cat "GoEngine-java/build/referee_batch/v$VERSION/report.md" >> "$GITHUB_STEP_SUMMARY" || true
+        env:
+          VERSION: \${{ matrix.katago_version }}
+      - name: Upload JSON CSV Markdown report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: katago-referee-batch-v\${{ matrix.katago_version }}
+          path: GoEngine-java/build/referee_batch/
+          if-no-files-found: warn
+          retention-days: 14
