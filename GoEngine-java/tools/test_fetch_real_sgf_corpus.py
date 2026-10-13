@@ -63,6 +63,12 @@ class CorpusDownloaderTests(unittest.TestCase):
             self.assertFalse((folder / "archived9_999_old.sgf").exists())
             self.assertTrue((folder / "personal.sgf").exists())
             self.assertEqual(len(json.loads((folder / "manifest.json").read_text())["games"]), 2)
+            cases, skipped = collect_games(folder, limit=1000)
+            self.assertEqual(len(cases), 2)
+            self.assertEqual(len(skipped), 0)
+            self.assertTrue(all(c["source"].startswith("https://raw.githubusercontent.com/")
+                                for c in cases))
+            self.assertTrue(all(c["sha256"] for c in cases))
 
 
 if __name__ == "__main__":
