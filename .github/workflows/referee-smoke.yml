@@ -10,6 +10,9 @@ on:
       - "GoEngine-java/tools/test_benchmark_endgame_referee_protocol.py"
       - "GoEngine-java/tools/benchmark_endgame_life_probe_android.py"
       - "GoEngine-java/tools/test_benchmark_endgame_life_probe.py"
+      - "GoEngine-java/tools/smoke_android_referee_app.py"
+      - "GoEngine-java/tools/test_smoke_android_referee_app.py"
+      - "GoEngine-java/app/src/debug/assets/referee_smoke_006_12.sgf"
       - "GoEngine-java/tools/benchmark_endgame_referee_android.py"
   pull_request:
     paths:
@@ -19,6 +22,9 @@ on:
       - "GoEngine-java/tools/test_benchmark_endgame_referee_protocol.py"
       - "GoEngine-java/tools/benchmark_endgame_life_probe_android.py"
       - "GoEngine-java/tools/test_benchmark_endgame_life_probe.py"
+      - "GoEngine-java/tools/smoke_android_referee_app.py"
+      - "GoEngine-java/tools/test_smoke_android_referee_app.py"
+      - "GoEngine-java/app/src/debug/assets/referee_smoke_006_12.sgf"
       - "GoEngine-java/tools/benchmark_endgame_referee_android.py"
   workflow_dispatch:
 
@@ -44,3 +50,7 @@ jobs:
         run: python3 tools/test_benchmark_endgame_life_probe.py
       - name: Syntax-check local probe
         run: python3 -m py_compile tools/benchmark_endgame_life_probe_android.py
+      - name: Smoke harness parser tests (ADB not required)
+        run: python3 tools/test_smoke_android_referee_app.py
+      - name: Syntax-check Android ADB smoke harness
+        run: python3 -m py_compile tools/smoke_android_referee_app.py
