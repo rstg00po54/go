@@ -3,7 +3,7 @@
 import unittest
 
 from benchmark_endgame_life_probe_android import (
-    nn_ownership_at, parse_vertices, parse_search_candidates, run_probes,
+    nn_ownership_at, parse_vertices, parse_search_candidates, run_probes, run_root_searches,
 )
 
 
@@ -138,6 +138,41 @@ class LifeProbeTests(unittest.TestCase):
         self.assertEqual(len(rows[0]["pv_trace"]),1)
         self.assertIn("PV stopped",rows[0]["reply_verification_warning"])
         self.assertEqual(len(rows[1]["pv_trace"]),3)
+        self.assertEqual(engine.calls[-1],"loadsgf /tmp/end.sgf")
+
+    def test_search_root_both_sides_with_independent_pv_replays(self):
+        engine = FakeGtpEngine()
+        case = {"name":"case", "remote":"/tmp/end.sgf", "size":9,
+                "moves":82, "komi":7.0, "terminal_passes":True}
+        base = {"white_lead":1.0}
+        results = run_root_searches(engine,case,base,["B9"],64,3.0,3)
+        self.assertEqual([r["player"] for r in results], ["black","white"])
+        self.assertEqual([r["best_move"] for r in results], ["D4","D4"])
+        self.assertEqual([[step["ply"] for step in r["pv_trace"]] for r in results],
+                         [[1,2,3],[1,2,3]])
+        self.assertEqual([(step["color"],step["move"]) for step in results[0]["pv_trace"]],
+                         [("black","D4"),("white","C7"),("black","B9")])
+        self.assertEqual([(step["color"],step["move"]) for step in results[1]["pv_trace"]],
+                         [("white","D4"),("black","C7"),("white","B9")])
+        self.assertEqual(engine.calls.count("kata-search_analyze black 50 minmoves 3 maxmoves 3"),1)
+        self.assertEqual(engine.calls.count("kata-search_analyze white 50 minmoves 3 maxmoves 3"),1)
+        self.assertEqual(engine.calls.count("loadsgf /tmp/end.sgf"),5)
+        self.assertNotIn("undo",engine.calls)
+        self.assertEqual(engine.calls[-1],"loadsgf /tmp/end.sgf")
+
+    def test_root_search_failure_does_not_prevent_other_side(self):
+        class RejectBlack(FakeGtpEngine):
+            def command(self, cmd):
+                if cmd == "kata-search_analyze black 50 minmoves 3 maxmoves 3":
+                    self.calls.append(cmd)
+                    raise RuntimeError("search not available")
+                return super().command(cmd)
+        engine = RejectBlack()
+        case = {"name":"case", "remote":"/tmp/end.sgf", "size":9,
+                "moves":82, "komi":7.0, "terminal_passes":True}
+        result = run_root_searches(engine,case,{"white_lead":1.0},["B9"],64,3.0,3)
+        self.assertIn("search not available",result[0]["warning"])
+        self.assertEqual(len(result[1]["pv_trace"]),3)
         self.assertEqual(engine.calls[-1],"loadsgf /tmp/end.sgf")
 
     def test_probes_reload_original_passes_and_are_independent(self):
