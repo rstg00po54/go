@@ -61,6 +61,17 @@ class LifeProbeTests(unittest.TestCase):
         self.assertEqual([r["move"] for r in rows], ["D4","A9"])
         self.assertEqual(rows[0]["pv"], ["D4","C7","B9"])
         self.assertEqual(rows[0]["reply_score_lead"], 3.25)
+        # KataGo's documented format may include rootInfo, an initial timestamp,
+        # or a finishing 'play' line; the parser should ignore those.
+        documented = ("info move E4 visits 487 utility -0.04 winrate 0.480018 "
+                      "scoreLead -0.611848 order 0 pv E4 E3 F3 D3 "
+                      "info move P16 visits 470 winrate 0.479712 "
+                      "scoreLead -0.63075 order 1 pv P16 P17 "
+                      "rootInfo visits 1101 winrate 0.48 play E4")
+        found = parse_search_candidates(documented)
+        self.assertEqual([item["move"] for item in found], ["E4","P16"])
+        self.assertEqual(found[0]["visits"], 487)
+        self.assertEqual(found[0]["pv"], ["E4","E3","F3","D3"])
 
     def test_mcts_reply_probe_is_nonplaying(self):
         engine = FakeGtpEngine()
@@ -69,6 +80,8 @@ class LifeProbeTests(unittest.TestCase):
         baseline, rows = run_probes(engine, case, ["A9"], ["B9"],64,3.0)
         self.assertEqual([r["reply_player"] for r in rows], ["white","black"])
         self.assertEqual(rows[0]["reply_candidates"][0]["move"], "D4")
+        self.assertIn("info move D4", rows[0]["reply_search_raw"])
+        self.assertGreater(rows[0]["reply_search_raw_length"], 20)
         self.assertEqual(engine.calls.count("kata-search_analyze white 50 minmoves 3 maxmoves 3"),1)
         self.assertEqual(engine.calls.count("kata-search_analyze black 50 minmoves 3 maxmoves 3"),1)
         self.assertEqual(engine.calls[-1], "loadsgf /tmp/end.sgf")
