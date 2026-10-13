@@ -935,23 +935,42 @@ public class KataGoEngine {
         }
     }
 
-    /** KataGo-native uncertainty, not a Java life/death/seki/ko classifier. */
+    /** Raw KataGo expected-score comparison of a normal search versus a forced PASS. */
+    public static final class NativePassComparison {
+        public final String player, bestMove;
+        public final double bestScoreLead, passScoreLead, estimatedMoveBenefit;
+
+        private NativePassComparison(String player, SearchRecommendation best, SearchRecommendation pass) {
+            this.player = player;
+            this.bestMove = best.move;
+            this.bestScoreLead = best.scoreLead;
+            this.passScoreLead = pass.scoreLead;
+            this.estimatedMoveBenefit = best.scoreLead - pass.scoreLead;
+        }
+    }
+
+    /** Non-playing KataGo results. Neither score delta nor ownership variance proves life/death. */
     public static final class NativePositionInspection {
         public final List<SearchRecommendation> recommendations;
         public final double maximumOwnershipStdev;
         public final int highVariationPoints;
+        public final NativePassComparison black, white;
 
         private NativePositionInspection(List<SearchRecommendation> recommendations,
-                                         double maximumOwnershipStdev, int highVariationPoints) {
+                                         double maximumOwnershipStdev, int highVariationPoints,
+                                         NativePassComparison black, NativePassComparison white) {
             this.recommendations = Collections.unmodifiableList(new ArrayList<>(recommendations));
             this.maximumOwnershipStdev = maximumOwnershipStdev;
             this.highVariationPoints = highVariationPoints;
+            this.black = black;
+            this.white = white;
         }
     }
 
     /**
-     * Read the original KataGo ownershipStdev output from a short non-playing search.
-     * This is uncertainty evidence, NEVER a proof of seki, death, or a completed game.
+     * Compare native KataGo normal search and "allow PLAYER pass 1" for both players.
+     * Every command is non-playing, and the original Human SL search limits are restored.
+     * A low PASS penalty is only endgame evidence: it is NOT a certified terminal verdict.
      */
     public NativePositionInspection inspectPositionNative(String player, int size, int visits, double seconds) {
         if (!isReady() || (!"black".equals(player) && !"white".equals(player))
@@ -960,17 +979,39 @@ public class KataGoEngine {
         String oldTime = getSearchParam("maxTime");
         if (oldVisits == null || oldTime == null) return null;
         try {
-            if (!simpleCommand("kata-set-param maxVisits " + visits, 10000)) return null;
-            if (!simpleCommand("kata-set-param maxTime " + String.format(Locale.US,"%.3f",seconds), 10000)) return null;
-            responseQueue.clear();
-            if (!sendCommandSync("kata-search_analyze " + player
-                    + " 50 minmoves 3 maxmoves 3 rootInfo true ownershipStdev true")) return null;
-            String response = waitForResponse(45000);
-            if (response == null || !response.startsWith("=")) return null;
-            List<SearchRecommendation> recommendations = parseSearchRecommendations(response);
-            int start = response.lastIndexOf("ownershipStdev ");
+            if (!simpleCommand("kata-set-param maxVisits " + visits,10000)) return null;
+            if (!simpleCommand("kata-set-param maxTime " + String.format(Locale.US,"%.3f",seconds),10000)) return null;
+
+            NativePassComparison black = null, white = null;
+            List<SearchRecommendation> suggestions = Collections.emptyList();
+            String ownershipReport = null;
+            for (String color : new String[]{"black","white"}) {
+                String normal = runNativeEndgameAnalysis(color,false,color.equals(player));
+                String forced = runNativeEndgameAnalysis(color,true,false);
+                if (normal == null || forced == null) return null;
+                List<SearchRecommendation> normalMoves = parseSearchRecommendations(normal);
+                List<SearchRecommendation> forcedMoves = parseSearchRecommendations(forced);
+                if (normalMoves.isEmpty()) return null;
+                SearchRecommendation passMove = null;
+                for (SearchRecommendation candidate : forcedMoves) {
+                    if ("pass".equalsIgnoreCase(candidate.move)) {
+                        passMove = candidate;
+                        break;
+                    }
+                }
+                if (passMove == null) return null;
+                NativePassComparison comparison = new NativePassComparison(color,normalMoves.get(0),passMove);
+                if ("black".equals(color)) black = comparison;
+                else white = comparison;
+                if (color.equals(player)) {
+                    suggestions = normalMoves;
+                    ownershipReport = normal;
+                }
+            }
+            if (black == null || white == null || ownershipReport == null) return null;
+            int start = ownershipReport.lastIndexOf("ownershipStdev ");
             if (start < 0) return null;
-            String[] tokens = response.substring(start + "ownershipStdev ".length()).trim().split("\\s+");
+            String[] tokens = ownershipReport.substring(start + "ownershipStdev ".length()).trim().split("\\s+");
             if (tokens.length < size*size) return null;
             double maximum = 0.0;
             int highVariationPoints = 0;
@@ -981,18 +1022,29 @@ public class KataGoEngine {
                 if (value > 0.25) highVariationPoints++;
             }
             Log.i(TAG,String.format(Locale.US,
-                    "KATAGO_NATIVE_UNCERTAINTY size=%d visits=%d maxOwnershipStdev=%.4f highVariationPoints=%d",
-                    size,visits,maximum,highVariationPoints));
-            return new NativePositionInspection(recommendations,maximum,highVariationPoints);
+                    "KATAGO_NATIVE_ENDGAME size=%d visits=%d blackMove=%s blackGain=%.3f whiteMove=%s whiteGain=%.3f ownershipMax=%.3f ownershipHigh=%d",
+                    size,visits,black.bestMove,black.estimatedMoveBenefit,
+                    white.bestMove,white.estimatedMoveBenefit,maximum,highVariationPoints));
+            return new NativePositionInspection(suggestions,maximum,highVariationPoints,black,white);
         } catch (RuntimeException ex) {
-            Log.w(TAG,"Could not read KataGo native ownership uncertainty",ex);
+            Log.w(TAG,"Could not read KataGo native endgame search comparison",ex);
             return null;
         } finally {
             boolean visitsRestored = simpleCommand("kata-set-param maxVisits " + oldVisits,10000);
             boolean timeRestored = simpleCommand("kata-set-param maxTime " + oldTime,10000);
             if (!visitsRestored || !timeRestored)
-                Log.e(TAG,"KataGo original search limits could not be restored after native inspection");
+                Log.e(TAG,"KataGo original search limits could not be restored after endgame inspection");
         }
+    }
+
+    private String runNativeEndgameAnalysis(String color, boolean forcedPass, boolean withOwnership) {
+        responseQueue.clear();
+        String command = "kata-search_analyze " + color + " 50 minmoves 1 maxmoves 3";
+        if (forcedPass) command += " allow " + color + " pass 1";
+        if (withOwnership) command += " rootInfo true ownershipStdev true";
+        if (!sendCommandSync(command)) return null;
+        String response = waitForResponse(45000);
+        return response != null && response.startsWith("=") ? response : null;
     }
 
     private List<SearchRecommendation> parseSearchRecommendations(String response) {

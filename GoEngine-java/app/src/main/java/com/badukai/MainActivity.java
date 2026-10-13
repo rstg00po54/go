@@ -1104,6 +1104,10 @@ public class MainActivity extends AppCompatActivity {
      * Optional unfinished-position evidence. Not a final-score or life/death verdict.
      * Uses existing exact local rules plus one bounded non-playing KataGo search.
      */
+    /**
+     * Four user-facing results from strict simple-ko state plus native KataGo PASS comparisons.
+     * Not a self-written Go endgame/life-and-death solver. Does not play or pass for either side.
+     */
     private void inspectUnfinishedPosition() {
         if (!engineReady || !gameReady || evaluating || thinking || variationBoard != null) return;
         evaluating = true;
@@ -1111,75 +1115,82 @@ public class MainActivity extends AppCompatActivity {
         final int moves = board.getMoveCount(), size = boardSize;
         final boolean ended = board.isGameOver();
         final StoneColor side = currentPlayer;
-        final int atariGroups = snapshot.countAtariGroups();
         final Point simpleKo = snapshot.getSimpleKoPoint();
+        final int atariGroups = snapshot.countAtariGroups();
         final long startedNs = System.nanoTime();
-        render("局面检查：正在查看官子与攻防...");
+        render("KataGo：正在比较双方继续落子与 PASS...");
         engineExecutor.execute(() -> {
             KataGoEngine.NativePositionInspection inspection = null;
-            if (!ended) {
+            if (simpleKo == null) {
                 try {
-                    inspection = engine.inspectPositionNative(side == StoneColor.BLACK ? "black" : "white",size,12,0.5);
+                    inspection = engine.inspectPositionNative(
+                            side == StoneColor.BLACK ? "black" : "white",size,24,0.5);
                 } catch (RuntimeException ex) {
-                    Log.w(TAG,"KataGo native position uncertainty unavailable",ex);
+                    Log.w(TAG,"KataGo endgame comparison unavailable",ex);
                 }
             }
             final KataGoEngine.NativePositionInspection nativeInfo = inspection;
-            final List<KataGoEngine.SearchRecommendation> suggestions = nativeInfo == null
-                    ? new ArrayList<>() : nativeInfo.recommendations;
             mainHandler.post(() -> {
                 if (board != snapshot || board.getMoveCount() != moves || boardSize != size) {
                     evaluating = false;
                     return;
                 }
                 evaluating = false;
-                StringBuilder note = new StringBuilder();
-                if (ended) note.append("双方已停棋，但死子、双活和劫争仍可能需要复核。");
-                else note.append("对局仍在进行。以下是继续落子的线索，而不是终局证明。");
-                if (atariGroups > 0)
-                    note.append("\n发现 ").append(atariGroups).append(" 块单气棋（打吃状态）；须分辨是否已死或能够提救。");
-                else note.append("\n未发现当前单气棋块；这不排除其他攻防。");
-                if (simpleKo != null)
-                    note.append("\n当前有劫禁点 ").append(simpleKo.toGtp(size)).append("，劫争是否结束仍须复核。");
-                else note.append("\n当前无简单劫禁点；这不排除潜在劫或复杂劫争。");
-                if (!ended && nativeInfo != null) {
-                    note.append(String.format(Locale.CHINA,
-                            "\nKataGo 原生地盘归属波动：最大 %.3f，波动超过 0.25 的点 %d 个。",
-                            nativeInfo.maximumOwnershipStdev,nativeInfo.highVariationPoints));
-                    if (nativeInfo.highVariationPoints > 0)
-                        note.append("\nKataGo 预测存在不稳定区域，可能仍有死活、攻防或收官争议，建议继续下棋。");
-                    else
-                        note.append("\n未发现较大归属波动，但 KataGo 不能据此证明双活、复杂劫争或死活已解决。");
-                } else if (!ended) {
-                    note.append("\nKataGo 未返回归属稳定性数据；无法确认局面是否已解决，请继续下棋。");
-                }
-                if (!ended && !suggestions.isEmpty()) {
-                    KataGoEngine.SearchRecommendation best = suggestions.get(0);
-                    if ("pass".equalsIgnoreCase(best.move))
-                        note.append("\nKataGo 短搜索首选停一手，但不证明所有官子已收完。");
-                    else
-                        note.append("\nKataGo 建议考虑 ").append(best.move)
-                                .append("；可能涉及官子或局部攻防，不等于已确认未收完。");
-                    if (!best.pvMoves.isEmpty()) {
-                        note.append("\n参考变化：");
-                        for (int i=0; i<best.pvMoves.size() && i<5; i++)
-                            note.append(" ").append(best.pvMoves.get(i));
+                String status;
+                String explanation;
+                if (simpleKo != null) {
+                    status = "有打劫";
+                    explanation = "当前劫禁点：" + simpleKo.toGtp(size) + "。劫争尚未解决，请继续下棋。";
+                } else if (nativeInfo == null) {
+                    status = "不能确认";
+                    explanation = "KataGo 暂时无法完成双方 PASS 对照分析，请继续下棋或稍后重试。";
+                } else {
+                    double blackGain = nativeInfo.black.estimatedMoveBenefit;
+                    double whiteGain = nativeInfo.white.estimatedMoveBenefit;
+                    // These are conservative DISPLAY thresholds for two KataGo estimates,
+                    // not a locally implemented algorithm for calculating territory or life/death.
+                    if (!ended && (blackGain >= 1.5 || whiteGain >= 1.5)) {
+                        status = "官子未收完";
+                        explanation = "KataGo 认为继续落子仍有明显收益，可能是官子或局部攻防。建议继续下棋。";
+                    } else if (ended && atariGroups == 0 && nativeInfo.highVariationPoints == 0
+                            && blackGain <= 0.5 && whiteGain <= 0.5) {
+                        status = "裁判完成";
+                        explanation = "双方已停棋，KataGo 未发现明显后续收益或归属波动。可进一步查看原生数子结果。";
+                    } else {
+                        status = "不能确认";
+                        explanation = atariGroups > 0
+                                ? "存在单气棋块，尚不能确认死活，请继续下棋。"
+                                : nativeInfo.highVariationPoints > 0
+                                ? "KataGo 预测的归属存在波动，可能有死活或争议，请继续下棋。"
+                                : ended ? "双方已停棋，但 KataGo 仍发现可能有价值的后续着法，需要复核。"
+                                : "继续落子与 PASS 的差异较小，但双方未停棋，暂不能确认终局。";
                     }
-                } else if (!ended) {
-                    note.append("\nKataGo 短搜索未返回有效候选，无法判断是否仍有官子。");
+                    explanation += String.format(Locale.CHINA,
+                            "\n黑方 %s：继续落子相对 PASS 预计多 %.1f 目。"
+                            + "\n白方 %s：继续落子相对 PASS 预计多 %.1f 目。",
+                            nativeInfo.black.bestMove,Math.max(0.0,blackGain),
+                            nativeInfo.white.bestMove,Math.max(0.0,whiteGain));
+                    if (atariGroups > 0 && !"不能确认".equals(status))
+                        explanation += "\n注意：当前有 " + atariGroups + " 块单气棋，仍需复核死活。";
                 }
-                note.append("\n\n要正式确认胜负，应结合双方停棋、原生死子预测和人工复核。");
+                String message = explanation + "\n\n以上为 KataGo 估计，不会自动结束或改动棋谱。";
                 Log.i(TAG,String.format(Locale.US,
-                        "REFEREE_UNFINISHED_CHECK moves=%d terminal=%s atariGroups=%d simpleKo=%s candidates=%d nativeHighVariation=%d elapsedMs=%d",
-                        moves,ended,atariGroups,simpleKo == null ? "none" : simpleKo.toGtp(size),
-                        suggestions.size(),nativeInfo == null ? -1 : nativeInfo.highVariationPoints,
+                        "REFEREE_ENDGAME_RESULT status=%s moves=%d terminal=%s ko=%s atari=%d blackGain=%.3f whiteGain=%.3f highVariation=%d elapsedMs=%d",
+                        status,moves,ended,simpleKo == null ? "none" : simpleKo.toGtp(size),
+                        atariGroups,nativeInfo == null ? Double.NaN : nativeInfo.black.estimatedMoveBenefit,
+                        nativeInfo == null ? Double.NaN : nativeInfo.white.estimatedMoveBenefit,
+                        nativeInfo == null ? -1 : nativeInfo.highVariationPoints,
                         (System.nanoTime()-startedNs)/1000000L));
-                render("局面检查完成");
-                new AlertDialog.Builder(this).setTitle("局面检查 · KataGo 原生分析")
-                        .setMessage(note.toString())
-                        .setPositiveButton("继续下棋", (dialog,which) -> {
-                            if (ended && board == snapshot && board.canResumeAfterPasses()) resumeFromReferee();
-                        }).show();
+                render("局面检查：" + status);
+                AlertDialog.Builder dialog = new AlertDialog.Builder(this)
+                        .setTitle("局面检查 · " + status).setMessage(message)
+                        .setPositiveButton("裁判完成".equals(status) ? "关闭" : "继续下棋", (d,w) -> {
+                            if (!"裁判完成".equals(status) && ended
+                                    && board == snapshot && board.canResumeAfterPasses()) resumeFromReferee();
+                        });
+                if ("裁判完成".equals(status))
+                    dialog.setNeutralButton("查看胜负", (d,w) -> startNativeReferee());
+                dialog.show();
             });
         });
     }

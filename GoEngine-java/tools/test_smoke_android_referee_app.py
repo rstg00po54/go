@@ -135,35 +135,33 @@ class RefereeSmokeHostTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
         board = (root/"app/src/main/java/com/badukai/game/GoBoard.java").read_text(encoding="utf-8")
+        engine = (root/"app/src/main/java/com/badukai/engine/KataGoEngine.java").read_text(encoding="utf-8")
         quick = activity.split("private void showQuickNnRefereeEstimate()",1)[1].split(
             "private static String refereeSearchSummary",1)[0]
         self.assertIn('setNegativeButton("局面检查", (dialog,which) -> inspectUnfinishedPosition())',quick)
         inspection = activity.split("private void inspectUnfinishedPosition()",1)[1].split(
             "private void startSmartReferee()",1)[0]
-        self.assertIn("snapshot.countAtariGroups()",inspection)
-        self.assertIn("snapshot.getSimpleKoPoint()",inspection)
-        self.assertIn("engine.inspectPositionNative(",inspection)
-        self.assertIn("size,12,0.5",inspection)
-        self.assertIn("nativeInfo.highVariationPoints",inspection)
-        self.assertIn("resumeFromReferee()",inspection)
-        self.assertIn("KataGo 原生地盘归属波动",inspection)
-        self.assertIn('if (!ended)',inspection)
-        self.assertIn("REFEREE_UNFINISHED_CHECK",inspection)
-        self.assertIn("不证明所有官子已收完",inspection)
-        self.assertIn("不等于已确认未收完",inspection)
+        for status in ('"有打劫"', '"官子未收完"', '"不能确认"', '"裁判完成"'):
+            self.assertIn(status,inspection)
+        for symbol in ("snapshot.countAtariGroups()", "snapshot.getSimpleKoPoint()",
+                       "engine.inspectPositionNative(", "size,24,0.5",
+                       "nativeInfo.black.estimatedMoveBenefit", "nativeInfo.white.estimatedMoveBenefit",
+                       "nativeInfo.highVariationPoints", "REFEREE_ENDGAME_RESULT",
+                       "resumeFromReferee()", "startNativeReferee()"):
+            self.assertIn(symbol,inspection)
+        self.assertIn("public Point getSimpleKoPoint()",board)
+        self.assertIn("public int countAtariGroups()",board)
+        self.assertIn("countLiberties(group) == 1",board)
+        self.assertIn("public NativePositionInspection inspectPositionNative(",engine)
+        self.assertIn("allow \" + color + \" pass 1",engine)
+        self.assertIn("ownershipStdev true",engine)
+        self.assertIn("parseSearchRecommendations(normal)",engine)
+        self.assertIn("parseSearchRecommendations(forced)",engine)
+        self.assertIn("kata-set-param maxVisits \" + oldVisits",engine)
         for forbidden in ("engine.getFinalScore(", "engine.getFinalDeadStones(",
                           "engine.playMove(", "board.playMove(", "engine.undo(",
                           "SmartReferee.analyze(", "EndgameAdjudicator.analyze("):
             self.assertNotIn(forbidden,inspection)
-        self.assertIn("public Point getSimpleKoPoint()",board)
-        self.assertIn("public int countAtariGroups()",board)
-        self.assertIn("countLiberties(group) == 1",board)
-        engine = (root/"app/src/main/java/com/badukai/engine/KataGoEngine.java").read_text(encoding="utf-8")
-        self.assertIn("public NativePositionInspection inspectPositionNative(",engine)
-        self.assertIn("ownershipStdev true",engine)
-        self.assertIn("parseSearchRecommendations(response)",engine)
-        self.assertNotIn("EndgameAdjudicator.analyze(",inspection)
-        self.assertNotIn("SmartReferee.analyze(",inspection)
 
     def test_midgame_referee_is_available_without_passes_or_scoring(self):
         root = Path(__file__).resolve().parents[1]
