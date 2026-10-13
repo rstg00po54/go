@@ -1,0 +1,19 @@
+{
+  "game": "cgos9_5",
+  "run_id": "48b4a0daf04b4271",
+  "status": "PASS",
+  "backend": "cpu",
+  "app_result": {
+    "status": "PASS",
+    "line": "I/RefereeSmoke( 8831): PASS id=48b4a0daf04b4271 game=cgos9_5 stage=dispute_dialog verdict=REVIEW_REQUIRED moves=56 dead=1 review=0 vulnerable=0 minLead=NaN maxLead=NaN hasBlack=true hasWhite=true hasPV=true"
+  },
+  "marks": {
+    "dead": 10,
+    "review": 0,
+    "alerts": 15
+  },
+  "resumed": {
+    "status": "PASS",
+    "line": "I/RefereeSmoke( 8831): RESUME id=48b4a0daf04b4271 moves=54 terminal=false refereeMode=false gameReady=true"
+  }
+}

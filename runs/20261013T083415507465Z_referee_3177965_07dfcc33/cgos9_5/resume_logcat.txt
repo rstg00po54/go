@@ -1,0 +1,11 @@
+--------- beginning of main
+I/RefereeSmoke( 8551): REPLAY id=7ace4390ba434c87 game=cgos9_5 moves=56 terminal=true backend=PIE/ProcessBuilder lead=-22.60 dead=1 review=0 vulnerable=0
+I/RefereeSmoke( 8551): PASS id=7ace4390ba434c87 game=cgos9_5 stage=dialog verdict=REVIEW_REQUIRED moves=56 dead=1 review=0 vulnerable=0 minLead=NaN maxLead=NaN hasBlack=true hasWhite=true hasPV=true
+I/RefereeSmoke( 8551): RESUME id=7ace4390ba434c87 moves=54 terminal=false refereeMode=false gameReady=true
+I/RefereeSmoke( 8551): PASS id=7ace4390ba434c87 game=cgos9_5 stage=dialog verdict=READY_TO_COUNT moves=58 dead=0 review=0 vulnerable=0 minLead=NaN maxLead=NaN hasBlack=false hasWhite=false hasPV=false
+I/RefereeSmoke( 8831): START id=48b4a0daf04b4271 game=cgos9_5 requested=cpu
+I/RefereeSmoke( 8831): REPLAY id=48b4a0daf04b4271 game=cgos9_5 moves=56 terminal=true backend=PIE/ProcessBuilder lead=-22.60 dead=1 review=0 vulnerable=0
+I/RefereeSmoke( 8831): OVERLAY id=48b4a0daf04b4271 dead=10 review=0 alerts=15
+I/RefereeSmoke( 8831): PASS id=48b4a0daf04b4271 game=cgos9_5 stage=dispute_dialog verdict=REVIEW_REQUIRED moves=56 dead=1 review=0 vulnerable=0 minLead=NaN maxLead=NaN hasBlack=true hasWhite=true hasPV=true
+I/RefereeSmoke( 8831): ARMED id=48b4a0daf04b4271 moves=56 terminal=true marked=10
+I/RefereeSmoke( 8831): RESUME id=48b4a0daf04b4271 moves=54 terminal=false refereeMode=false gameReady=true
