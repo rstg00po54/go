@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""One-command Android DEBUG APK end-to-end smart-referee smoke.
+"""Run the REAL Android smart-referee dialog against curated scored SGFs.
 
-Replays bundled real SGF cgos9_expand_006_12 inside MainActivity, drives its
-actual KataGo engine and real referee dialog, and verifies logcat + dialog UI.
-No taps, Human SL download, root, or test-framework APK required.
+Debug-only intent, no screen taps. Builds/installs once, then starts an isolated
+app session per case; checks Kotlin-free Java referee, KataGo GTP and UI dialog.
+Official SGF RE is NOT treated as ground-truth for dead-stone adjudication.
 """
 import argparse
 from datetime import datetime, timezone
@@ -18,143 +18,187 @@ from uuid import uuid4
 import xml.etree.ElementTree as ET
 
 PROJECT = Path(__file__).resolve().parents[1]
-PACKAGE = "com.badukai.java"  # Gradle applicationId, not Java source package.
-MAIN_ACTIVITY_CLASS = "com.badukai.MainActivity"  # Manifest activity in namespace com.badukai.
+PACKAGE = "com.badukai.java"
+MAIN_ACTIVITY_CLASS = "com.badukai.MainActivity"
 ACTIVITY = PACKAGE + "/" + MAIN_ACTIVITY_CLASS
+CASES = ("cgos9_expand_006_12", "cgos9_1", "cgos9_2", "cgos9_5")
+STRICT_CASE = "cgos9_expand_006_12"
 
 
 def run(argv, timeout=30, check=True):
-    completed = subprocess.run(argv, text=True, stdout=subprocess.PIPE,
-                               stderr=subprocess.STDOUT, timeout=timeout)
-    if check and completed.returncode:
+    result = subprocess.run(argv, text=True, stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT, timeout=timeout)
+    if check and result.returncode:
         raise RuntimeError("Command failed (%d): %s\n%s" %
-                           (completed.returncode, " ".join(map(str, argv)), completed.stdout[-1800:]))
-    return completed.stdout
+                           (result.returncode, " ".join(map(str,argv)), result.stdout[-1800:]))
+    return result.stdout
 
 
 def connected_serial(adb, requested):
-    lines = run([adb, "devices"]).splitlines()[1:]
+    lines = run([adb,"devices"]).splitlines()[1:]
     devices = [line.split()[0] for line in lines if line.split()[1:2] == ["device"]]
     if requested:
         if requested not in devices:
-            raise RuntimeError("ADB device %s not ready; connected: %s" % (requested, devices))
+            raise RuntimeError("ADB device %s not ready; connected: %s" % (requested,devices))
         return requested
     if len(devices) != 1:
         raise RuntimeError("Provide --serial; detected devices: %s" % devices)
     return devices[0]
 
 
+def selected_cases(game=None, games=None, all_games=False):
+    if sum(bool(x) for x in (game,games,all_games)) > 1:
+        raise ValueError("Choose only one of --game, --games, --all")
+    names = list(CASES) if all_games else ([name.strip() for name in games.split(",") if name.strip()]
+                                           if games else [game or STRICT_CASE])
+    if not names or len(names) != len(set(names)):
+        raise ValueError("Empty or duplicate SGF case names")
+    unknown = [name for name in names if name not in CASES]
+    if unknown:
+        raise ValueError("Unsupported debug SGF %s; available: %s" % (unknown,", ".join(CASES)))
+    return names
+
+
 def smoke_event(log, run_id):
-    """Find the terminal event for THIS run, never stale prior log entries."""
+    """Require unique run ID; don't mistake a prior PASS for this run."""
     final = None
     for line in log.splitlines():
-        match = re.search(r"\b(PASS|FAIL) id=" + re.escape(run_id) + r"\b", line)
+        match = re.search(r"\b(PASS|FAIL) id=" + re.escape(run_id) + r"\b",line)
         if "RefereeSmoke" in line and match:
-            final = {"status": match.group(1), "line": line.strip()}
+            final = {"status":match.group(1),"line":line.strip()}
     return final
 
 
-def read_dialog_xml(adb, serial):
+def read_dialog_xml(adb,serial):
     target = "/sdcard/referee_smoke_window.xml"
-    run([adb, "-s", serial, "shell", "uiautomator", "dump", target], timeout=35)
-    xml = run([adb, "-s", serial, "shell", "cat", target], timeout=15)
-    root = ET.fromstring(xml[xml.find("<?xml"):])
-    return " ".join(node.attrib.get("text", "") for node in root.iter())
+    run([adb,"-s",serial,"shell","uiautomator","dump",target],timeout=35)
+    content = run([adb,"-s",serial,"shell","cat",target],timeout=15)
+    start = content.find("<?xml")
+    if start < 0:
+        raise RuntimeError("UI Automator did not return an XML hierarchy")
+    root = ET.fromstring(content[start:])
+    return " ".join(node.attrib.get("text","") for node in root.iter())
 
 
-def validate_dialog(text):
-    required = ("智能裁判", "黑先：", "白先：", "搜索胜率", "不同死子组合", "黄圈")
-    return [item for item in required if item not in text]
+def validate_dialog(text, game=STRICT_CASE):
+    required = ("智能裁判","黄圈","待复核")
+    if game == STRICT_CASE:
+        required += ("黑先：","白先：","搜索胜率","不同死子组合")
+    return [part for part in required if part not in text]
+
+
+def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir):
+    case_dir = out_dir / game
+    case_dir.mkdir(parents=True,exist_ok=True)
+    run_id = uuid4().hex[:16]
+    result = {"game":game,"run_id":run_id,"status":"ERROR","backend":backend}
+    try:
+        print("\n--- %s [%s] ---" % (game,backend),flush=True)
+        run([adb,"-s",serial,"shell","am","force-stop",PACKAGE])
+        start = run([adb,"-s",serial,"shell","am","start","-W","-n",ACTIVITY,
+                     "--ez","referee_smoke","true",
+                     "--es","referee_smoke_id",run_id,
+                     "--es","referee_smoke_game",game,
+                     "--es","referee_smoke_backend",backend],timeout=35)
+        (case_dir/"activity.txt").write_text(start,encoding="utf-8")
+        if "Error:" in start or "Exception" in start:
+            raise RuntimeError("Failed to start Activity: " + start)
+        deadline = time.monotonic()+timeout
+        log = ""
+        terminal = None
+        while time.monotonic()<deadline:
+            log = run([adb,"-s",serial,"logcat","-d","-v","brief",
+                       "-s","RefereeSmoke:I","AndroidRuntime:E","*:S"],timeout=20)
+            terminal = smoke_event(log,run_id)
+            if terminal:
+                break
+            time.sleep(2)
+        (case_dir/"logcat.txt").write_text(log,encoding="utf-8")
+        if terminal is None:
+            raise RuntimeError("Timed out waiting for referee terminal event; inspect logcat.txt")
+        result["app_result"] = terminal
+        print(terminal["line"],flush=True)
+        if terminal["status"] != "PASS":
+            raise RuntimeError("Android referee assertion failed (see logcat.txt)")
+        if "game="+game not in terminal["line"]:
+            raise RuntimeError("Incorrect SGF in terminal event")
+        if not skip_ui:
+            dialog = read_dialog_xml(adb,serial)
+            (case_dir/"dialog.txt").write_text(dialog+"\n",encoding="utf-8")
+            missing = validate_dialog(dialog,game)
+            if missing:
+                raise RuntimeError("Dialog missing %s. If UI is locked/headless, use --skip-ui." % missing)
+            print("Dialog UI PASS: %s" % game,flush=True)
+        else:
+            print("Dialog UI skipped (engine + referee assertions still checked).",flush=True)
+        result["status"] = "PASS"
+    except (OSError,RuntimeError,subprocess.TimeoutExpired,ET.ParseError) as exc:
+        result["status"] = "FAIL"
+        result["error"] = str(exc)
+        print("FAIL %s: %s" % (game,exc),file=sys.stderr,flush=True)
+    finally:
+        (case_dir/"result.json").write_text(json.dumps(result,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+    return result
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--serial", help="ADB device ID (required if multiple devices connected)")
-    parser.add_argument("--adb", default=shutil.which("adb"), help="ADB executable")
-    parser.add_argument("--apk", type=Path, default=PROJECT / "app/build/outputs/apk/debug/app-debug.apk")
-    parser.add_argument("--backend", choices=("cpu", "gpu"), default="cpu",
-                        help="Actual App backend; gpu requires an APK built with GPU JNI")
-    parser.add_argument("--build", action="store_true", help="Build assembleDebug before installing")
-    parser.add_argument("--skip-install", action="store_true", help="Reuse installed DEBUG app")
-    parser.add_argument("--skip-ui", action="store_true", help="Skip hierarchy check on locked/headless screens")
-    parser.add_argument("--timeout", type=float, default=240, help="Time allowed for engine/SGF/referee")
+    parser.add_argument("--serial",help="ADB device ID")
+    parser.add_argument("--adb",default=shutil.which("adb"))
+    parser.add_argument("--apk",type=Path,default=PROJECT/"app/build/outputs/apk/debug/app-debug.apk")
+    parser.add_argument("--backend",choices=("cpu","gpu"),default="cpu")
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument("--game",choices=CASES,help="Single fixture (default: cgos9_expand_006_12)")
+    selection.add_argument("--games",help="Comma-separated subset of known fixture names")
+    selection.add_argument("--all",action="store_true",help="Run all curated SGFs, one fresh app session per game")
+    parser.add_argument("--build",action="store_true",help="Build Debug APK before install")
+    parser.add_argument("--skip-install",action="store_true",help="Use already installed Debug APK")
+    parser.add_argument("--skip-ui",action="store_true",help="Skip uiautomator hierarchy check")
+    parser.add_argument("--timeout",type=float,default=240,help="Seconds allowed PER game")
     args = parser.parse_args()
     if not args.adb:
-        parser.error("adb not found; install Android platform-tools or supply --adb")
-    if args.timeout < 15:
+        parser.error("adb not found; set --adb")
+    if args.timeout<15:
         parser.error("--timeout must be >= 15 seconds")
-    out_dir = PROJECT / "build/android_referee_smoke" / datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-    out_dir.mkdir(parents=True, exist_ok=True)
-    report = {"status": "ERROR", "backend_requested": args.backend, "outputs": str(out_dir)}
     try:
-        serial = connected_serial(args.adb, args.serial)
+        games = selected_cases(args.game,args.games,args.all)
+    except ValueError as exc:
+        parser.error(str(exc))
+    out_dir = PROJECT/"build/android_referee_smoke"/datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    out_dir.mkdir(parents=True,exist_ok=True)
+    report = {"status":"ERROR","backend_requested":args.backend,"cases":[],"outputs":str(out_dir)}
+    try:
+        serial = connected_serial(args.adb,args.serial)
         report["serial"] = serial
         if args.build:
-            print("Building DEBUG APK...", flush=True)
-            gradle = [str(PROJECT / "gradlew"), "assembleDebug"]
-            if args.backend == "gpu":
+            gradle = [str(PROJECT/"gradlew"),"assembleDebug"]
+            if args.backend=="gpu":
                 gradle.append("-PenableKataGoGpuJni=true")
-            proc = subprocess.run(gradle, cwd=PROJECT, text=True, stdout=subprocess.PIPE,
-                                  stderr=subprocess.STDOUT)
-            (out_dir / "gradle.log").write_text(proc.stdout, encoding="utf-8")
+            print("Building DEBUG APK...",flush=True)
+            proc = subprocess.run(gradle,cwd=PROJECT,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+            (out_dir/"gradle.log").write_text(proc.stdout,encoding="utf-8")
             if proc.returncode:
-                raise RuntimeError("Gradle failed; see %s" % (out_dir / "gradle.log"))
+                raise RuntimeError("Gradle build failed; check %s" % (out_dir/"gradle.log"))
         if not args.skip_install:
             if not args.apk.is_file():
-                raise RuntimeError("Missing DEBUG APK: %s (run ./gradlew assembleDebug)" % args.apk)
-            print("Installing:", args.apk, flush=True)
-            print(run([args.adb, "-s", serial, "install", "-r", "-t", str(args.apk)],
-                      timeout=120).strip(), flush=True)
-
-        run_id = uuid4().hex[:16]
-        report["run_id"] = run_id
-        print("Starting automated real-SGF referee on %s (%s)..." % (serial, args.backend), flush=True)
-        run([args.adb, "-s", serial, "shell", "am", "force-stop", PACKAGE])
-        start = run([args.adb, "-s", serial, "shell", "am", "start", "-W", "-n", ACTIVITY,
-                     "--ez", "referee_smoke", "true", "--es", "referee_smoke_id", run_id,
-                     "--es", "referee_smoke_backend", args.backend], timeout=35)
-        if "Error:" in start or "Exception" in start:
-            raise RuntimeError("Failed to start Activity: " + start)
-        deadline = time.monotonic() + args.timeout
-        terminal = None
-        log = ""
-        while time.monotonic() < deadline:
-            # The unique ID prevents an old logcat PASS from passing this run.
-            log = run([args.adb, "-s", serial, "logcat", "-d", "-v", "brief",
-                       "-s", "RefereeSmoke:I", "AndroidRuntime:E", "*:S"], timeout=20)
-            terminal = smoke_event(log, run_id)
-            if terminal:
-                break
-            time.sleep(2)
-        (out_dir / "logcat.txt").write_text(log, encoding="utf-8")
-        if not terminal:
-            raise RuntimeError("Timed out waiting for RefereeSmoke PASS/FAIL (see logcat.txt); "
-                               "check engine initialization, GPU library, model, and activity.")
-        report["app_result"] = terminal
-        print(terminal["line"], flush=True)
-        if terminal["status"] != "PASS":
-            raise RuntimeError("Android referee returned FAIL; inspect %s/logcat.txt" % out_dir)
-        if not args.skip_ui:
-            dialog_text = read_dialog_xml(args.adb, serial)
-            (out_dir / "dialog.txt").write_text(dialog_text + "\n", encoding="utf-8")
-            missing = validate_dialog(dialog_text)
-            if missing:
-                raise RuntimeError("Dialog missing %s (screen locked/covered or actual UI regression); "
-                                   "see dialog.txt. Use --skip-ui for headless testing." % missing)
-            print("Dialog UI PASS: title, two-sided search, winrate, score what-if and review hint.", flush=True)
-        else:
-            print("Skipped UI hierarchy; Android engine/referee/dialog assertions passed.", flush=True)
-        report["status"] = "PASS"
-        return 0
-    except (OSError, RuntimeError, subprocess.TimeoutExpired, ET.ParseError) as exc:
+                raise RuntimeError("Missing DEBUG APK: %s (use --build)" % args.apk)
+            print("Installing:",args.apk,flush=True)
+            print(run([args.adb,"-s",serial,"install","-r","-t",str(args.apk)],timeout=120).strip(),flush=True)
+        for game in games:
+            report["cases"].append(run_one_case(args.adb,serial,args.backend,game,args.timeout,args.skip_ui,out_dir))
+        good = sum(case["status"]=="PASS" for case in report["cases"])
+        report["status"] = "PASS" if good==len(games) else "FAIL"
+        print("\nSummary: %d/%d PASS; %s" % (good,len(games),report["status"]),flush=True)
+        return 0 if report["status"]=="PASS" else 1
+    except (OSError,RuntimeError,subprocess.TimeoutExpired) as exc:
+        report["status"] = "FAIL"
         report["error"] = str(exc)
-        print("FAIL:", exc, file=sys.stderr, flush=True)
+        print("FAIL:",exc,file=sys.stderr,flush=True)
         return 1
     finally:
-        (out_dir / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n",
-                                             encoding="utf-8")
-        print("Report:", out_dir / "report.json", flush=True)
+        (out_dir/"report.json").write_text(json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+        print("Report:",out_dir/"report.json",flush=True)
 
 
-if __name__ == "__main__":
+if __name__=="__main__":
     sys.exit(main())
