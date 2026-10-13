@@ -9,7 +9,7 @@
 - `DataSet/2015-Go9-small`：9 路在线真实对局，共 753 份候选文件。
 - `DataSet/2019-1255games`：19 路真实 KGS 对局，共 1255 份候选文件，很多是认输、让子或日本规则，需要严格过滤。
 
-默认目标是**筛出 80 盘 9 路、40 盘 19 路**；这是目标数量，不保证两组都满足条件。Downloader 必须逐份下载并调用已有 `read_recorded_game()` 验证：`RU[Chinese]`、合法数字 `RE[B+目数]`/`RE[W+目数]`、明确贴目、没有让子和中途摆子、多手真实交替落子、棋盘尺寸正确。过滤失败的棋谱不会冒充有效结果；最终以控制台 `accepted` 和 `manifest.json` 为准。
+默认目标是**筛出 80 盘 9 路、20 盘 19 路**；这是目标数量，不保证两组都满足条件。Downloader 必须逐份下载并调用已有 `read_recorded_game()` 验证：`RU[Chinese]`、合法数字 `RE[B+目数]`/`RE[W+目数]`、明确贴目、没有让子和中途摆子、多手真实交替落子、棋盘尺寸正确。过滤失败的棋谱不会冒充有效结果；最终以控制台 `accepted` 和 `manifest.json` 为准。
 
 固定采样顺序（固定 seed）、保留每局原始 SGF、来源 URL、SHA-256 和官方 `RE`。不会把来源转为 NN 预测结果。文件放在 `build/real_sgf_corpus`；没有自动上传私人数据到 GitHub。
 
@@ -21,7 +21,7 @@
 git pull origin rk3588-engine
 python3 tools/test_real_sgf_nn.py
 python3 tools/test_fetch_real_sgf_corpus.py
-python3 tools/fetch_real_sgf_corpus.py --nine 80 --nineteen 40
+python3 tools/fetch_real_sgf_corpus.py --nine 80 --nineteen 20
 python3 tools/benchmark_real_sgf_nn_android.py --preflight --sgf-dir build/real_sgf_corpus --limit 1000
 python3 tools/benchmark_real_sgf_nn_android.py --serial 8719e18a71a2a66c --mode gpu --sgf-dir build/real_sgf_corpus --limit 1000 --repeats 1 --upload
 ```
