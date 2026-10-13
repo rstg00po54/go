@@ -426,6 +426,7 @@ def main():
             (out_dir/"gradle.log").write_text(proc.stdout,encoding="utf-8")
             if proc.returncode:
                 raise RuntimeError("Gradle build failed; check %s" % (out_dir/"gradle.log"))
+            print(run([sys.executable,str(PROJECT/"tools/check_android_16kb.py"),str(args.apk)],timeout=45),flush=True)
         if not args.skip_install:
             if not args.apk.is_file():
                 raise RuntimeError("Missing DEBUG APK: %s (use --build)" % args.apk)
