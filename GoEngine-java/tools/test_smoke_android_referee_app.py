@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """Host-side unit tests for Android referee smoke log and UI validation."""
 import unittest
-from smoke_android_referee_app import smoke_event, validate_dialog
+from smoke_android_referee_app import ACTIVITY, MAIN_ACTIVITY_CLASS, PACKAGE, smoke_event, validate_dialog
 
 
 class RefereeSmokeHostTests(unittest.TestCase):
+    def test_activity_component_is_not_application_id_relative(self):
+        self.assertEqual(PACKAGE, "com.badukai.java")
+        self.assertEqual(MAIN_ACTIVITY_CLASS, "com.badukai.MainActivity")
+        self.assertEqual(ACTIVITY, "com.badukai.java/com.badukai.MainActivity")
+
     def test_only_matching_run_id_counts_as_success(self):
         log = ("I/RefereeSmoke(123): PASS id=old stage=dialog\n"
                "I/RefereeSmoke(123): START id=current requested=cpu\n"
