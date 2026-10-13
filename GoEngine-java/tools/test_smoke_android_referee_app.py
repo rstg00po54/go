@@ -147,9 +147,13 @@ class RefereeSmokeHostTests(unittest.TestCase):
                        "engine.inspectPositionNative(", "size,24,0.5",
                        "nativeInfo.black.estimatedMoveBenefit", "nativeInfo.white.estimatedMoveBenefit",
                        "nativeInfo.highVariationPoints", "REFEREE_ENDGAME_RESULT",
-                       "resumeFromReferee()", "startNativeReferee()"):
+                       "resumeFromReferee()", "engine.getFinalScore()", "engine.getFinalDeadStones()"):
             self.assertIn(symbol,inspection)
         self.assertIn("blackGain <= 0.5 && whiteGain <= 0.5",inspection)
+        self.assertNotIn("if (!ended && (blackGain >= 1.5",inspection)
+        self.assertIn("nativeScore != null && !nativeScore.trim().isEmpty() && nativeDead != null",inspection)
+        self.assertIn("if (inspection != null && simpleKo == null && atariGroups == 0",inspection)
+        self.assertIn('setNeutralButton("查看详情"',inspection)
         self.assertNotIn("else if (ended && atariGroups == 0",inspection)
         self.assertIn("public Point getSimpleKoPoint()",board)
         self.assertIn("public int countAtariGroups()",board)
@@ -160,8 +164,7 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn("parseSearchRecommendations(normal)",engine)
         self.assertIn("parseSearchRecommendations(forced)",engine)
         self.assertIn("kata-set-param maxVisits \" + oldVisits",engine)
-        for forbidden in ("engine.getFinalScore(", "engine.getFinalDeadStones(",
-                          "engine.playMove(", "board.playMove(", "engine.undo(",
+        for forbidden in ("engine.playMove(", "board.playMove(", "engine.undo(",
                           "SmartReferee.analyze(", "EndgameAdjudicator.analyze("):
             self.assertNotIn(forbidden,inspection)
 
