@@ -102,6 +102,9 @@ public class MainActivity extends AppCompatActivity {
     private EndgameAdjudicator.Result endgameDecision;
     // Experimental referee is a local, explicitly confirmed dead-chain overlay.
     private boolean refereeMode;
+    // Native referee overlays survive dialog dismissal until cleared or the position changes.
+    private GoBoard nativeRefereeMarkedBoard;
+    private int nativeRefereeMarkedMoves = -1;
     private boolean refereeAwaitingTap;
     private boolean refereeConfirmed;
     private final Set<Point> refereeAccepted = new HashSet<>();
@@ -990,6 +993,8 @@ public class MainActivity extends AppCompatActivity {
         final int moves = board.getMoveCount(), size = boardSize;
         final boolean endedAtStart = board.isGameOver();
         final long startedNs = System.nanoTime();
+        nativeRefereeMarkedBoard = null;
+        boardView.setRefereeMarks(null,null);
         render("智能裁判：KataGo 正在检查形势与死子...");
         engineExecutor.execute(() -> {
             String nativeScore = null, nativeDead = null;
@@ -1031,20 +1036,24 @@ public class MainActivity extends AppCompatActivity {
                         "REFEREE_NATIVE_GTP moves=%d terminal=%s score=%s dead=%d elapsedMs=%d",
                         moves,endedAtStart,score,predictedDead.size(),
                         (System.nanoTime()-startedNs)/1000000L));
+                nativeRefereeMarkedBoard = snapshot;
+                nativeRefereeMarkedMoves = moves;
                 boardView.setRefereeMarks(predictedDead,null);
                 render("KataGo 原生裁判：" + estimate);
                 new AlertDialog.Builder(this).setTitle("智能裁判 · KataGo 原生预测")
                         .setMessage(estimate + "\n" + deadInfo
                                 + (predictedDead.isEmpty() ? "" : "\n棋盘红叉为 KataGo 预测死子。")
                                 + "\n\n" + caution)
-                        .setPositiveButton(endedAtStart ? "关闭" : "继续下棋",null)
+                        .setPositiveButton("查看棋盘",null)
+                        .setNeutralButton("清除标记",(dialog,which) -> {
+                            nativeRefereeMarkedBoard = null;
+                            boardView.setRefereeMarks(null,null);
+                        })
                         .setOnDismissListener(dialog -> {
-                            if (board == snapshot && board.getMoveCount() == moves && !refereeMode) {
-                                boardView.setRefereeMarks(null,null);
+                            if (board == snapshot && board.getMoveCount() == moves && !refereeMode)
                                 render(endedAtStart
                                         ? (finalScoreText == null ? "终局预估" : finalScoreText)
                                         : (currentPlayer == playerColor ? "轮到你了" : "轮到 AI"));
-                            }
                         }).show();
             });
         });
@@ -2253,6 +2262,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void render(String message) {
         DebugLog.enter(TAG, "render in, message=" + message + ", engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer);
+        if (nativeRefereeMarkedBoard != null && (board != nativeRefereeMarkedBoard
+                || board.getMoveCount() != nativeRefereeMarkedMoves)) {
+            nativeRefereeMarkedBoard = null;
+            boardView.setRefereeMarks(null,null);
+        }
         statusText.setText(message);
         updateWinRateLabels();
         aiDifficultyText.setText(getDifficultyName() + " · Human SL · "
