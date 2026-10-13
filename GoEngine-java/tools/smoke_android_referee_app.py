@@ -90,8 +90,10 @@ def main():
         report["serial"] = serial
         if args.build:
             print("Building DEBUG APK...", flush=True)
-            proc = subprocess.run([str(PROJECT / "gradlew"), "assembleDebug"],
-                                  cwd=PROJECT, text=True, stdout=subprocess.PIPE,
+            gradle = [str(PROJECT / "gradlew"), "assembleDebug"]
+            if args.backend == "gpu":
+                gradle.append("-PenableKataGoGpuJni=true")
+            proc = subprocess.run(gradle, cwd=PROJECT, text=True, stdout=subprocess.PIPE,
                                   stderr=subprocess.STDOUT)
             (out_dir / "gradle.log").write_text(proc.stdout, encoding="utf-8")
             if proc.returncode:
