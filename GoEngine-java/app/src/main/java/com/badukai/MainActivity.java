@@ -101,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
     private EndgameAdjudicator.Result endgameDecision;
     // Experimental referee is a local, explicitly confirmed dead-chain overlay.
     private boolean refereeMode;
+    private boolean refereeAwaitingTap;
     private boolean refereeConfirmed;
     private final Set<Point> refereeAccepted = new HashSet<>();
     private final Set<Point> refereeDead = new HashSet<>();
@@ -421,7 +422,7 @@ public class MainActivity extends AppCompatActivity {
         gameActionPanel = findViewById(R.id.gameActionPanel);
         refereeTapOverlay = findViewById(R.id.refereeTapOverlay);
         refereeTapOverlay.setOnClickListener(v -> {
-            if (refereeMode && refereeRequiresContinuation()) resumeFromReferee();
+            if (refereeMode && refereeRequiresContinuation() && refereeAwaitingTap) resumeFromReferee();
         });
         refereePanelTitle = findViewById(R.id.refereePanelTitle);
         refereePanelScore = findViewById(R.id.refereePanelScore);
@@ -609,7 +610,7 @@ public class MainActivity extends AppCompatActivity {
             // Fallback if a board touch bypasses the transparent full-screen overlay:
             // consume the entire gesture to continue, NEVER also place a stone.
             if (refereeRequiresContinuation()) {
-                resumeFromReferee();
+                if (refereeAwaitingTap) resumeFromReferee();
                 return;
             }
             if (board.isInside(x, y) && board.get(x, y) != Intersection.EMPTY) {
@@ -912,8 +913,9 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         if (refereeMode) {
-            if (refereeRequiresContinuation()) resumeFromReferee();
-            else showRefereeConfirmation();
+            if (refereeRequiresContinuation()) {
+                if (refereeAwaitingTap) resumeFromReferee();
+            } else showRefereeConfirmation();
             return;
         }
         if (refereeConfirmed) {
@@ -1009,6 +1011,7 @@ public class MainActivity extends AppCompatActivity {
                 if (evaluated != null && evaluated.size == size) endgameEvaluation = evaluated;
                 endgameDecision = decision;
                 refereeMode = true;
+                refereeAwaitingTap = false;
                 refereeDead.clear();
                 refereeSuggested.clear();
                 refereeReview.clear();
@@ -1067,9 +1070,24 @@ public class MainActivity extends AppCompatActivity {
                             .setPositiveButton("确认数子", null)
                             .setNegativeButton("稍后确认", null).show();
                 } else {
-                    // Leave existing red crosses, amber rings and tactical points
-                    // visible on the BOARD. A single touch anywhere dismisses
-                    // them and resumes the two passes; no blocking alert dialog.
+                    // Step 1: show the dialog while the marks are ALREADY on the
+                    // real board. Step 2: Continue closes ONLY the dialog; the
+                    // next screen tap clears marks and resumes the game.
+                    StringBuilder prompt = new StringBuilder(String.format(Locale.CHINA,
+                            "棋盘上已标出争议：红叉 %d 处、黄圈 %d 处、橙圈 %d 处。\\n",
+                            refereeDead.size(),refereeReview.size(),alerts.size()));
+                    int described = 0;
+                    for (EndgameAdjudicator.Finding finding : decision.findings) {
+                        if (described++ >= 2) break;
+                        prompt.append("· ").append(finding.message).append("\\n");
+                    }
+                    prompt.append("\\n点「继续下棋」关闭弹窗，争议标记仍保留。");
+                    prompt.append("\\n然后再点屏幕任意位置，清除标记并恢复对局。");
+                    new AlertDialog.Builder(this).setTitle("智能裁判 · 存在争议")
+                            .setMessage(prompt.toString())
+                            .setCancelable(false)
+                            .setPositiveButton("继续下棋", (dialog, which) -> armRefereeTapToResume())
+                            .show();
                     Log.i(TAG,"REFEREE_BOARD_DISPUTE dead=" + refereeDead.size()
                             + " review=" + refereeReview.size() + " alerts=" + alerts.size());
                     if (isRefereeSmokeIntent()) Log.i("RefereeSmoke","OVERLAY id=" + refereeSmokeId()
@@ -1099,7 +1117,7 @@ public class MainActivity extends AppCompatActivity {
                             "%s id=%s game=%s stage=%s verdict=%s moves=%d dead=%d review=%d vulnerable=%d "
                             + "minLead=%.1f maxLead=%.1f hasBlack=%s hasWhite=%s hasPV=%s",
                             good ? "PASS" : "FAIL",refereeSmokeId(),game,
-                            decision.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT ? "dialog" : "overlay",
+                            decision.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT ? "dialog" : "dispute_dialog",
                             decision.verdict,moves,
                             suggestion == null ? -1 : suggestion.suggestedGroups,
                             suggestion == null ? -1 : suggestion.reviewGroups,
@@ -1110,6 +1128,19 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         });
+    }
+
+    /** The dialog's Continue button arms the NEXT screen tap; it does not undo moves. */
+    private void armRefereeTapToResume() {
+        if (!refereeMode || !refereeRequiresContinuation() || !board.canResumeAfterPasses()) {
+            Toast.makeText(this,"当前不能继续对局",Toast.LENGTH_LONG).show();
+            return;
+        }
+        refereeAwaitingTap = true;
+        render("争议已标记，点屏幕清除标记并继续下棋");
+        if (isRefereeSmokeIntent()) Log.i("RefereeSmoke","ARMED id=" + refereeSmokeId()
+                + " moves=" + board.getMoveCount() + " terminal=" + board.isGameOver()
+                + " marked=" + (refereeDead.size()+refereeReview.size()));
     }
 
     /** Review toolbar always operates on temporary stone marks, never on the live board. */
@@ -1244,6 +1275,7 @@ public class MainActivity extends AppCompatActivity {
         final Move lastPass = board.getLastMove();
         final StoneColor next = lastPass.color.opposite();
         evaluating = true;
+        refereeAwaitingTap = false;
         // Hide dispute markings instantly on the dismissing tap. The touch
         // overlay consumes the gesture so it cannot also place a new stone.
         boardView.setRefereeMarks(null,null);
@@ -2058,7 +2090,8 @@ public class MainActivity extends AppCompatActivity {
         boolean mustContinue = refereeMode && refereeRequiresContinuation();
         refereePanel.setVisibility(refereeMode && !(mustContinue && evaluating) ? View.VISIBLE : View.GONE);
         gameActionPanel.setVisibility(refereeMode ? View.GONE : View.VISIBLE);
-        refereeTapOverlay.setVisibility(mustContinue && !evaluating ? View.VISIBLE : View.GONE);
+        refereeTapOverlay.setVisibility(mustContinue && refereeAwaitingTap && !evaluating
+                ? View.VISIBLE : View.GONE);
         // Disputed positions are handled by a tap anywhere on the screen,
         // not a fourth large button at the bottom.
         refereeContinueButton.setVisibility(View.GONE);
@@ -2092,7 +2125,7 @@ public class MainActivity extends AppCompatActivity {
     public void onBackPressed() {
         DebugLog.enter(TAG, "onBackPressed in, gameVisible=" + (gamePageContainer.getVisibility() == View.VISIBLE));
         if (refereeMode && refereeRequiresContinuation()) {
-            resumeFromReferee();
+            if (refereeAwaitingTap) resumeFromReferee();
             return;
         }
         if (variationBoard != null) exitVariationPreview();
