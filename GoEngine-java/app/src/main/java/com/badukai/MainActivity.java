@@ -1152,10 +1152,10 @@ public class MainActivity extends AppCompatActivity {
                     if (!ended && (blackGain >= 1.5 || whiteGain >= 1.5)) {
                         status = "官子未收完";
                         explanation = "KataGo 认为继续落子仍有明显收益，可能是官子或局部攻防。建议继续下棋。";
-                    } else if (ended && atariGroups == 0 && nativeInfo.highVariationPoints == 0
+                    } else if (atariGroups == 0 && nativeInfo.highVariationPoints == 0
                             && blackGain <= 0.5 && whiteGain <= 0.5) {
                         status = "裁判完成";
-                        explanation = "双方已停棋，KataGo 未发现明显后续收益或归属波动。可进一步查看原生数子结果。";
+                        explanation = "KataGo 认为双方都没有明显值得继续争取的目数，官子检查完成。正式胜负仍需数子复核。";
                     } else {
                         status = "不能确认";
                         explanation = atariGroups > 0

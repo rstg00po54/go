@@ -149,6 +149,8 @@ class RefereeSmokeHostTests(unittest.TestCase):
                        "nativeInfo.highVariationPoints", "REFEREE_ENDGAME_RESULT",
                        "resumeFromReferee()", "startNativeReferee()"):
             self.assertIn(symbol,inspection)
+        self.assertIn("blackGain <= 0.5 && whiteGain <= 0.5",inspection)
+        self.assertNotIn("else if (ended && atariGroups == 0",inspection)
         self.assertIn("public Point getSimpleKoPoint()",board)
         self.assertIn("public int countAtariGroups()",board)
         self.assertIn("countLiberties(group) == 1",board)
