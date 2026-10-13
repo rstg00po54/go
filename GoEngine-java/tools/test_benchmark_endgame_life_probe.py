@@ -3,7 +3,7 @@
 import unittest
 
 from benchmark_endgame_life_probe_android import (
-    nn_ownership_at, parse_vertices, run_probes,
+    nn_ownership_at, parse_vertices, parse_search_candidates, run_probes,
 )
 
 
@@ -23,6 +23,13 @@ class FakeGtpEngine:
             return '{"scoring":"AREA","tax":"NONE"}', 0.1
         if command == "get_komi":
             return "7", 0.1
+        if command.startswith("kata-set-param "):
+            return "",0.1
+        if command.startswith("kata-search_analyze "):
+            return ("info move D4 visits 64 winrate 0.73 scoreLead 3.25 "
+                    "prior 0.13 order 0 pv D4 C7 B9 "
+                    "info move A9 visits 12 winrate 0.50 scoreLead -0.75 "
+                    "order 1 pv A9 B9"),2.5
         if command.startswith("play "):
             self.move = command
             return "", 0.1
@@ -46,6 +53,25 @@ class LifeProbeTests(unittest.TestCase):
             parse_vertices("T9", 9)
         with self.assertRaises(ValueError):
             parse_vertices("A0", 9)
+
+    def test_search_parse(self):
+        rows = parse_search_candidates(
+            "info move D4 visits 64 winrate 0.73 scoreLead 3.25 order 0 pv D4 C7 B9 "
+            "info move A9 visits 12 winrate 0.50 scoreLead -0.75 order 1 pv A9 B9")
+        self.assertEqual([r["move"] for r in rows], ["D4","A9"])
+        self.assertEqual(rows[0]["pv"], ["D4","C7","B9"])
+        self.assertEqual(rows[0]["reply_score_lead"], 3.25)
+
+    def test_mcts_reply_probe_is_nonplaying(self):
+        engine = FakeGtpEngine()
+        case = {"name":"case", "remote":"/tmp/end.sgf", "size":9,
+                "moves":82, "komi":7.0, "terminal_passes":True}
+        baseline, rows = run_probes(engine, case, ["A9"], ["B9"],64,3.0)
+        self.assertEqual([r["reply_player"] for r in rows], ["white","black"])
+        self.assertEqual(rows[0]["reply_candidates"][0]["move"], "D4")
+        self.assertEqual(engine.calls.count("kata-search_analyze white 50 minmoves 3 maxmoves 3"),1)
+        self.assertEqual(engine.calls.count("kata-search_analyze black 50 minmoves 3 maxmoves 3"),1)
+        self.assertEqual(engine.calls[-1], "loadsgf /tmp/end.sgf")
 
     def test_probes_reload_original_passes_and_are_independent(self):
         engine = FakeGtpEngine()
