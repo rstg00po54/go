@@ -598,9 +598,8 @@
 
                 <Button
                     android:id="@+id/refereeConfirmButton"
-                    android:layout_width="0dp"
+                    android:layout_width="150dp"
                     android:layout_height="36dp"
-                    android:layout_weight="1"
                     android:layout_marginEnd="3dp"
                     android:background="@drawable/txwq_green_button"
                     android:minHeight="0dp"
