@@ -1,0 +1,1345 @@
+{
+  "source": {
+    "run_url": "https://github.com/rstg00po54/go/actions/runs/38399530299",
+    "date": "2026-10-13",
+    "engine": "KataGo",
+    "model": "g170-b10c128-s1141046784-d204142634",
+    "platform": "Linux x86_64 CPU/Eigen AVX2",
+    "note": "Estimated results are not authoritative",
+    "version_counts": {
+      "1.15.0": {
+        "total": 19,
+        "stable": 18
+      },
+      "1.18.1": {
+        "total": 19,
+        "stable": 14
+      }
+    }
+  },
+  "per_fixture": [
+    {
+      "name": "ko_shape9",
+      "category": "复杂",
+      "size": 9,
+      "a": {
+        "scores": [
+          "W+0.5"
+        ],
+        "dead": [
+          ""
+        ],
+        "scoreMs": 1929.3,
+        "deadMs": 915.3,
+        "totalMs": 2929.9,
+        "stable": true
+      },
+      "b": {
+        "scores": [
+          "W+1.5"
+        ],
+        "dead": [
+          "F5",
+          ""
+        ],
+        "scoreMs": 1839.7,
+        "deadMs": 893.9,
+        "totalMs": 2865.2,
+        "stable": false
+      }
+    },
+    {
+      "name": "false_eye9",
+      "category": "复杂",
+      "size": 9,
+      "a": {
+        "scores": [
+          "B+11.5"
+        ],
+        "dead": [
+          "C6 E6"
+        ],
+        "scoreMs": 2623.2,
+        "deadMs": 914.4,
+        "totalMs": 3538.1,
+        "stable": true
+      },
+      "b": {
+        "scores": [
+          "B+11.5"
+        ],
+        "dead": [
+          "C6 E6"
+        ],
+        "scoreMs": 2504.7,
+        "deadMs": 891.3,
+        "totalMs": 3396.4,
+        "stable": true
+      }
+    },
+    {
+      "name": "mutual_liberties9",
+      "category": "复杂",
+      "size": 9,
+      "a": {
+        "scores": [
+          "B+2.5"
+        ],
+        "dead": [
+          ""
+        ],
+        "scoreMs": 2356.3,
+        "deadMs": 878.6,
+        "totalMs": 3235.3,
+        "stable": true
+      },
+      "b": {
+        "scores": [
+          "B+3.5",
+          "B+2.5"
+        ],
+        "dead": [
+          ""
+        ],
+        "scoreMs": 2286.5,
+        "deadMs": 873.3,
+        "totalMs": 3160.3,
+        "stable": false
+      }
+    },
+    {
+      "name": "ladder_pressure9",
+      "category": "复杂",
+      "size": 9,
+      "a": {
+        "scores": [
+          "W+2.5"
+        ],
+        "dead": [
+          "D6"
+        ],
+        "scoreMs": 2411.3,
+        "deadMs": 944.8,
+        "totalMs": 3356.6,
+        "stable": true
+      },
+      "b": {
+        "scores": [
+          "W+2.5"
+        ],
+        "dead": [
+          "D6"
+        ],
+        "scoreMs": 2302.5,
+        "deadMs": 905.9,
+        "totalMs": 3208.9,
+        "stable": true
+      }
+    },
+    {
+      "name": "multi_atari9",
+      "category": "复杂",
+      "size": 9,
+      "a": {
+        "scores": [
+          "W+10.5"
+        ],
+        "dead": [
+          "F5 H5"
+        ],
+        "scoreMs": 2388.7,
+        "deadMs": 921.2,
+        "totalMs": 3310.3,
+        "stable": true
+      },
+      "b": {
+        "scores": [
+          "W+10.5",
+          "W+11.5"
+        ],
+        "dead": [
+          "F5 H5"
+        ],
+        "scoreMs": 2293.5,
+        "deadMs": 888.3,
+        "totalMs": 3182.2,
+        "stable": false
+      }
+    },
+    {
+      "name": "double_ko_shape13",
+      "category": "复杂",
+      "size": 13,
+      "a": {
+        "scores": [
+          "W+4.5"
+        ],
+        "dead": [
+          "K7",
+          "L7"
+        ],
+        "scoreMs": 2959.4,
+        "deadMs": 991.8,
+        "totalMs": 4128.3,
+        "stable": false
+      },
+      "b": {
+        "scores": [
+          "W+4.5"
+        ],
+        "dead": [
+          "F8 K7",
+          "F8 K5 K7 L6"
+        ],
+        "scoreMs": 2862.9,
+        "deadMs": 980.2,
+        "totalMs": 4134.6,
+        "stable": false
+      }
+    },
+    {
+      "name": "mutual_liberties13",
+      "category": "复杂",
+      "size": 13,
+      "a": {
+        "scores": [
+          "B+8.5"
+        ],
+        "dead": [
+          ""
+        ],
+        "scoreMs": 3560.4,
+        "deadMs": 1007.9,
+        "totalMs": 4568.7,
+        "stable": true
+      },
+      "b": {
+        "scores": [
+          "B+8.5"
+        ],
+        "dead": [
+          ""
+        ],
+        "scoreMs": 3365.2,
+        "deadMs": 1009.9,
+        "totalMs": 4375.5,
+        "stable": true
+      }
+    },
+    {
+      "name": "false_eye13",
+      "category": "复杂",
+      "size": 13,
+      "a": {
+        "scores": [
+          "B+12.5"
+        ],
+        "dead": [
+          "E8 G8 J7"
+        ],
+        "scoreMs": 4212.6,
+        "deadMs": 1005.1,
+        "totalMs": 5218.1,
+        "stable": true
+      },
+      "b": {
+        "scores": [
+          "B+11.5"
+        ],
+        "dead": [
+          "E8 G8 J7"
+        ],
+        "scoreMs": 3332.3,
+        "deadMs": 1009.1,
+        "totalMs": 4341.9,
+        "stable": true
+      }
+    },
+    {
+      "name": "mixed_fight19",
+      "category": "复杂",
+      "size": 19,
+      "a": {
+        "scores": [
+          "B+34.5"
+        ],
+        "dead": [
+          "E6 G6 H12 O11"
+        ],
+        "scoreMs": 6684.7,
+        "deadMs": 1010.2,
+        "totalMs": 7870.5,
+        "stable": true
+      },
+      "b": {
+        "scores": [
+          "B+34.5",
+          "B+35.5"
+        ],
+        "dead": [
+          "E6 G6 H12 O11"
+        ],
+        "scoreMs": 6042.5,
+        "deadMs": 1011.1,
+        "totalMs": 7338.5,
+        "stable": false
+      }
+    },
+    {
+      "name": "simple",
+      "category": "基础",
+      "size": 9,
+      "a": {
+        "scores": [
+          "W+2.5"
+        ],
+        "dead": [
+          ""
+        ],
+        "scoreMs": 2364.1,
+        "deadMs": 916.3,
+        "totalMs": 3456.2,
+        "stable": true
+      },
+      "b": {
+        "scores": [
+          "W+2.5"
+        ],
+        "dead": [
+          ""
+        ],
+        "scoreMs": 2294.8,
+        "deadMs": 906.3,
+        "totalMs": 3488.7,
+        "stable": true
+      }
+    },
+    {
+      "name": "territory",
+      "category": "基础",
+      "size": 9,
+      "a": {
+        "scores": [
+          "W+6.5"
+        ],
+        "dead": [
+          ""
+        ],
+        "scoreMs": 2345.4,
+        "deadMs": 922.4,
+        "totalMs": 3268.2,
+        "stable": true
+      },
+      "b": {
+        "scores": [
+          "W+6.5"
+        ],
+        "dead": [
+          ""
+        ],
+        "scoreMs": 2274.3,
+        "deadMs": 884.1,
+        "totalMs": 3158.9,
+        "stable": true
+      }
+    },
+    {
+      "name": "tactical",
+      "category": "基础",
+      "size": 9,
+      "a": {
+        "scores": [
+          "W+10.5"
+        ],
+        "dead": [
+          "F5"
+        ],
+        "scoreMs": 2365.6,
+        "deadMs": 927.5,
+        "totalMs": 3293.6,
+        "stable": true
+      },
+      "b": {
+        "scores": [
+          "W+10.5"
+        ],
+        "dead": [
+          "F5"
+        ],
+        "scoreMs": 2295.4,
+        "deadMs": 889.6,
+        "totalMs": 3185.5,
+        "stable": true
+      }
+    },
+    {
+      "name": "cgos9_1",
+      "category": "真实完局",
+      "size": 9,
+      "a": {
+        "scores": [
+          "B+2.0"
+        ],
+        "dead": [
+          ""
+        ],
+        "scoreMs": 1227.5,
+        "deadMs": 482.7,
+        "totalMs": 1710.7,
+        "stable": true
+      },
+      "b": {
+        "scores": [
+          "B+2.0"
+        ],
+        "dead": [
+          ""
+        ],
+        "scoreMs": 1238.8,
+        "deadMs": 489,
+        "totalMs": 1728.3,
+        "stable": true
+      }
+    },
+    {
+      "name": "cgos9_2",
+      "category": "真实完局",
+      "size": 9,
+      "a": {
+        "scores": [
+          "W+2.0"
+        ],
+        "dead": [
+          ""
+        ],
+        "scoreMs": 1876.6,
+        "deadMs": 739.7,
+        "totalMs": 2616.6,
+        "stable": true
+      },
+      "b": {
+        "scores": [
+          "W+2.0"
+        ],
+        "dead": [
+          ""
+        ],
+        "scoreMs": 1835.6,
+        "deadMs": 737.7,
+        "totalMs": 2573.8,
+        "stable": true
+      }
+    },
+    {
+      "name": "cgos9_3",
+      "category": "真实完局",
+      "size": 9,
+      "a": {
+        "scores": [
+          "W+8.0"
+        ],
+        "dead": [
+          ""
+        ],
+        "scoreMs": 1471.6,
+        "deadMs": 629.9,
+        "totalMs": 2102,
+        "stable": true
+      },
+      "b": {
+        "scores": [
+          "W+8.0"
+        ],
+        "dead": [
+          ""
+        ],
+        "scoreMs": 1463.2,
+        "deadMs": 627,
+        "totalMs": 2090.6,
+        "stable": true
+      }
+    },
+    {
+      "name": "cgos9_4",
+      "category": "真实完局",
+      "size": 9,
+      "a": {
+        "scores": [
+          "W+2.0"
+        ],
+        "dead": [
+          "D5 D6"
+        ],
+        "scoreMs": 1853.8,
+        "deadMs": 700.4,
+        "totalMs": 2554.7,
+        "stable": true
+      },
+      "b": {
+        "scores": [
+          "W+2.0"
+        ],
+        "dead": [
+          "D5 D6"
+        ],
+        "scoreMs": 1996.9,
+        "deadMs": 776.1,
+        "totalMs": 2773.5,
+        "stable": true
+      }
+    },
+    {
+      "name": "cgos9_5",
+      "category": "真实完局",
+      "size": 9,
+      "a": {
+        "scores": [
+          "B+22.0"
+        ],
+        "dead": [
+          "A6 A7 B7 B8 C8 D8 E7 E8 E9 F9"
+        ],
+        "scoreMs": 2362.6,
+        "deadMs": 908.9,
+        "totalMs": 3272,
+        "stable": true
+      },
+      "b": {
+        "scores": [
+          "B+22.0"
+        ],
+        "dead": [
+          "A6 A7 B7 B8 C8 D8 E7 E8 E9 F9"
+        ],
+        "scoreMs": 2726.4,
+        "deadMs": 952.8,
+        "totalMs": 3679.8,
+        "stable": true
+      }
+    },
+    {
+      "name": "alphago_kejie19_20170523",
+      "category": "真实完局",
+      "size": 19,
+      "a": {
+        "scores": [
+          "W+0.5"
+        ],
+        "dead": [
+          "B12 C12 D11 D12 E12 H3 H4 K15 K16 K4 N16 P2 Q14"
+        ],
+        "scoreMs": 3482,
+        "deadMs": 1013.4,
+        "totalMs": 4665.5,
+        "stable": true
+      },
+      "b": {
+        "scores": [
+          "W+0.5"
+        ],
+        "dead": [
+          "B12 C12 D11 D12 E12 H3 H4 K15 K16 K4 N16 P2 Q14"
+        ],
+        "scoreMs": 3739.1,
+        "deadMs": 1016.8,
+        "totalMs": 5045.7,
+        "stable": true
+      }
+    },
+    {
+      "name": "cgos9_3_move64",
+      "category": "真实中盘",
+      "size": 9,
+      "a": {
+        "scores": [
+          "W+8.0"
+        ],
+        "dead": [
+          "H7 H8 H9"
+        ],
+        "scoreMs": 2374,
+        "deadMs": 913.4,
+        "totalMs": 3456.2,
+        "stable": true
+      },
+      "b": {
+        "scores": [
+          "W+8.0"
+        ],
+        "dead": [
+          "H7 H8 H9"
+        ],
+        "scoreMs": 2340.4,
+        "deadMs": 889.6,
+        "totalMs": 3514.8,
+        "stable": true
+      }
+    }
+  ],
+  "individual_runs": {
+    "1.18.1": [
+      {
+        "index": 1,
+        "repeat": 1,
+        "fixture": "ko_shape9",
+        "score": "W+1.5",
+        "dead": "F5",
+        "scoreMs": 1844.53,
+        "deadMs": 893.45,
+        "totalMs": 3000.84
+      },
+      {
+        "index": 2,
+        "repeat": 1,
+        "fixture": "false_eye9",
+        "score": "B+11.5",
+        "dead": "C6 E6",
+        "scoreMs": 2721.95,
+        "deadMs": 890.01,
+        "totalMs": 3612.44
+      },
+      {
+        "index": 3,
+        "repeat": 1,
+        "fixture": "mutual_liberties9",
+        "score": "B+3.5",
+        "dead": "",
+        "scoreMs": 2287.34,
+        "deadMs": 890.53,
+        "totalMs": 3178.31
+      },
+      {
+        "index": 4,
+        "repeat": 1,
+        "fixture": "ladder_pressure9",
+        "score": "W+2.5",
+        "dead": "D6",
+        "scoreMs": 2299.95,
+        "deadMs": 908.85,
+        "totalMs": 3209.25
+      },
+      {
+        "index": 5,
+        "repeat": 1,
+        "fixture": "multi_atari9",
+        "score": "W+10.5",
+        "dead": "F5 H5",
+        "scoreMs": 2291.94,
+        "deadMs": 900.81,
+        "totalMs": 3193.19
+      },
+      {
+        "index": 6,
+        "repeat": 1,
+        "fixture": "double_ko_shape13",
+        "score": "W+4.5",
+        "dead": "F8 K7",
+        "scoreMs": 2873.69,
+        "deadMs": 959.5,
+        "totalMs": 4133.58
+      },
+      {
+        "index": 7,
+        "repeat": 1,
+        "fixture": "mutual_liberties13",
+        "score": "B+8.5",
+        "dead": "",
+        "scoreMs": 3367.86,
+        "deadMs": 1010.75,
+        "totalMs": 4379.11
+      },
+      {
+        "index": 8,
+        "repeat": 1,
+        "fixture": "false_eye13",
+        "score": "B+11.5",
+        "dead": "E8 G8 J7",
+        "scoreMs": 3363.38,
+        "deadMs": 1010.9,
+        "totalMs": 4374.74
+      },
+      {
+        "index": 9,
+        "repeat": 1,
+        "fixture": "mixed_fight19",
+        "score": "B+34.5",
+        "dead": "E6 G6 H12 O11",
+        "scoreMs": 6000.82,
+        "deadMs": 1006.18,
+        "totalMs": 7294.12
+      },
+      {
+        "index": 10,
+        "repeat": 1,
+        "fixture": "simple",
+        "score": "W+2.5",
+        "dead": "",
+        "scoreMs": 2285.95,
+        "deadMs": 911.97,
+        "totalMs": 3485.75
+      },
+      {
+        "index": 11,
+        "repeat": 1,
+        "fixture": "territory",
+        "score": "W+6.5",
+        "dead": "",
+        "scoreMs": 2258.37,
+        "deadMs": 883.05,
+        "totalMs": 3141.92
+      },
+      {
+        "index": 12,
+        "repeat": 1,
+        "fixture": "tactical",
+        "score": "W+10.5",
+        "dead": "F5",
+        "scoreMs": 2284.48,
+        "deadMs": 875.16,
+        "totalMs": 3160.11
+      },
+      {
+        "index": 13,
+        "repeat": 1,
+        "fixture": "cgos9_1",
+        "score": "B+2.0",
+        "dead": "",
+        "scoreMs": 1322.18,
+        "deadMs": 469.09,
+        "totalMs": 1791.84
+      },
+      {
+        "index": 14,
+        "repeat": 1,
+        "fixture": "cgos9_2",
+        "score": "W+2.0",
+        "dead": "",
+        "scoreMs": 1783.82,
+        "deadMs": 745.44,
+        "totalMs": 2529.77
+      },
+      {
+        "index": 15,
+        "repeat": 1,
+        "fixture": "cgos9_3",
+        "score": "W+8.0",
+        "dead": "",
+        "scoreMs": 1523.54,
+        "deadMs": 627.12,
+        "totalMs": 2151.12
+      },
+      {
+        "index": 16,
+        "repeat": 1,
+        "fixture": "cgos9_4",
+        "score": "W+2.0",
+        "dead": "D5 D6",
+        "scoreMs": 2019.22,
+        "deadMs": 772.05,
+        "totalMs": 2791.76
+      },
+      {
+        "index": 17,
+        "repeat": 1,
+        "fixture": "cgos9_5",
+        "score": "B+22.0",
+        "dead": "A6 A7 B7 B8 C8 D8 E7 E8 E9 F9",
+        "scoreMs": 3002.65,
+        "deadMs": 942.96,
+        "totalMs": 3946.12
+      },
+      {
+        "index": 18,
+        "repeat": 1,
+        "fixture": "alphago_kejie19_20170523",
+        "score": "W+0.5",
+        "dead": "B12 C12 D11 D12 E12 H3 H4 K15 K16 K4 N16 P2 Q14",
+        "scoreMs": 3618.48,
+        "deadMs": 1020.43,
+        "totalMs": 4931.4
+      },
+      {
+        "index": 19,
+        "repeat": 1,
+        "fixture": "cgos9_3_move64",
+        "score": "W+8.0",
+        "dead": "H7 H8 H9",
+        "scoreMs": 2351.29,
+        "deadMs": 898.51,
+        "totalMs": 3531.93
+      },
+      {
+        "index": 1,
+        "repeat": 2,
+        "fixture": "ko_shape9",
+        "score": "W+1.5",
+        "dead": "",
+        "scoreMs": 1834.81,
+        "deadMs": 894.25,
+        "totalMs": 2729.55
+      },
+      {
+        "index": 2,
+        "repeat": 2,
+        "fixture": "false_eye9",
+        "score": "B+11.5",
+        "dead": "C6 E6",
+        "scoreMs": 2287.42,
+        "deadMs": 892.49,
+        "totalMs": 3180.36
+      },
+      {
+        "index": 3,
+        "repeat": 2,
+        "fixture": "mutual_liberties9",
+        "score": "B+2.5",
+        "dead": "",
+        "scoreMs": 2285.74,
+        "deadMs": 856.05,
+        "totalMs": 3142.32
+      },
+      {
+        "index": 4,
+        "repeat": 2,
+        "fixture": "ladder_pressure9",
+        "score": "W+2.5",
+        "dead": "D6",
+        "scoreMs": 2305.1,
+        "deadMs": 902.91,
+        "totalMs": 3208.49
+      },
+      {
+        "index": 5,
+        "repeat": 2,
+        "fixture": "multi_atari9",
+        "score": "W+11.5",
+        "dead": "F5 H5",
+        "scoreMs": 2295.05,
+        "deadMs": 875.71,
+        "totalMs": 3171.24
+      },
+      {
+        "index": 6,
+        "repeat": 2,
+        "fixture": "double_ko_shape13",
+        "score": "W+4.5",
+        "dead": "F8 K5 K7 L6",
+        "scoreMs": 2852.07,
+        "deadMs": 1000.84,
+        "totalMs": 4135.57
+      },
+      {
+        "index": 7,
+        "repeat": 2,
+        "fixture": "mutual_liberties13",
+        "score": "B+8.5",
+        "dead": "",
+        "scoreMs": 3362.53,
+        "deadMs": 1008.97,
+        "totalMs": 4371.92
+      },
+      {
+        "index": 8,
+        "repeat": 2,
+        "fixture": "false_eye13",
+        "score": "B+11.5",
+        "dead": "E8 G8 J7",
+        "scoreMs": 3301.31,
+        "deadMs": 1007.25,
+        "totalMs": 4309.06
+      },
+      {
+        "index": 9,
+        "repeat": 2,
+        "fixture": "mixed_fight19",
+        "score": "B+35.5",
+        "dead": "E6 G6 H12 O11",
+        "scoreMs": 6084.21,
+        "deadMs": 1015.98,
+        "totalMs": 7382.81
+      },
+      {
+        "index": 10,
+        "repeat": 2,
+        "fixture": "simple",
+        "score": "W+2.5",
+        "dead": "",
+        "scoreMs": 2303.69,
+        "deadMs": 900.7,
+        "totalMs": 3491.74
+      },
+      {
+        "index": 11,
+        "repeat": 2,
+        "fixture": "territory",
+        "score": "W+6.5",
+        "dead": "",
+        "scoreMs": 2290.16,
+        "deadMs": 885.11,
+        "totalMs": 3175.78
+      },
+      {
+        "index": 12,
+        "repeat": 2,
+        "fixture": "tactical",
+        "score": "W+10.5",
+        "dead": "F5",
+        "scoreMs": 2306.38,
+        "deadMs": 904.03,
+        "totalMs": 3210.86
+      },
+      {
+        "index": 13,
+        "repeat": 2,
+        "fixture": "cgos9_1",
+        "score": "B+2.0",
+        "dead": "",
+        "scoreMs": 1155.36,
+        "deadMs": 508.94,
+        "totalMs": 1664.82
+      },
+      {
+        "index": 14,
+        "repeat": 2,
+        "fixture": "cgos9_2",
+        "score": "W+2.0",
+        "dead": "",
+        "scoreMs": 1887.31,
+        "deadMs": 729.96,
+        "totalMs": 2617.77
+      },
+      {
+        "index": 15,
+        "repeat": 2,
+        "fixture": "cgos9_3",
+        "score": "W+8.0",
+        "dead": "",
+        "scoreMs": 1402.83,
+        "deadMs": 626.8,
+        "totalMs": 2030.06
+      },
+      {
+        "index": 16,
+        "repeat": 2,
+        "fixture": "cgos9_4",
+        "score": "W+2.0",
+        "dead": "D5 D6",
+        "scoreMs": 1974.55,
+        "deadMs": 780.16,
+        "totalMs": 2755.3
+      },
+      {
+        "index": 17,
+        "repeat": 2,
+        "fixture": "cgos9_5",
+        "score": "B+22.0",
+        "dead": "A6 A7 B7 B8 C8 D8 E7 E8 E9 F9",
+        "scoreMs": 2450.21,
+        "deadMs": 962.65,
+        "totalMs": 3413.39
+      },
+      {
+        "index": 18,
+        "repeat": 2,
+        "fixture": "alphago_kejie19_20170523",
+        "score": "W+0.5",
+        "dead": "B12 C12 D11 D12 E12 H3 H4 K15 K16 K4 N16 P2 Q14",
+        "scoreMs": 3859.77,
+        "deadMs": 1013.08,
+        "totalMs": 5159.97
+      },
+      {
+        "index": 19,
+        "repeat": 2,
+        "fixture": "cgos9_3_move64",
+        "score": "W+8.0",
+        "dead": "H7 H8 H9",
+        "scoreMs": 2329.46,
+        "deadMs": 880.73,
+        "totalMs": 3497.69
+      }
+    ],
+    "1.15.0": [
+      {
+        "index": 1,
+        "repeat": 1,
+        "fixture": "ko_shape9",
+        "score": "W+0.5",
+        "dead": "",
+        "scoreMs": 1935.68,
+        "deadMs": 905.88,
+        "totalMs": 3011.62
+      },
+      {
+        "index": 2,
+        "repeat": 1,
+        "fixture": "false_eye9",
+        "score": "B+11.5",
+        "dead": "C6 E6",
+        "scoreMs": 2428.9,
+        "deadMs": 904.01,
+        "totalMs": 3333.43
+      },
+      {
+        "index": 3,
+        "repeat": 1,
+        "fixture": "mutual_liberties9",
+        "score": "B+2.5",
+        "dead": "",
+        "scoreMs": 2375.17,
+        "deadMs": 922.69,
+        "totalMs": 3298.29
+      },
+      {
+        "index": 4,
+        "repeat": 1,
+        "fixture": "ladder_pressure9",
+        "score": "W+2.5",
+        "dead": "D6",
+        "scoreMs": 2427.54,
+        "deadMs": 938.26,
+        "totalMs": 3366.25
+      },
+      {
+        "index": 5,
+        "repeat": 1,
+        "fixture": "multi_atari9",
+        "score": "W+10.5",
+        "dead": "F5 H5",
+        "scoreMs": 2371.41,
+        "deadMs": 926.96,
+        "totalMs": 3298.81
+      },
+      {
+        "index": 6,
+        "repeat": 1,
+        "fixture": "double_ko_shape13",
+        "score": "W+4.5",
+        "dead": "K7",
+        "scoreMs": 2974.43,
+        "deadMs": 1009.06,
+        "totalMs": 4164.47
+      },
+      {
+        "index": 7,
+        "repeat": 1,
+        "fixture": "mutual_liberties13",
+        "score": "B+8.5",
+        "dead": "",
+        "scoreMs": 3838.21,
+        "deadMs": 1013,
+        "totalMs": 4851.66
+      },
+      {
+        "index": 8,
+        "repeat": 1,
+        "fixture": "false_eye13",
+        "score": "B+12.5",
+        "dead": "E8 G8 J7",
+        "scoreMs": 5175.28,
+        "deadMs": 1002.54,
+        "totalMs": 6178.25
+      },
+      {
+        "index": 9,
+        "repeat": 1,
+        "fixture": "mixed_fight19",
+        "score": "B+34.5",
+        "dead": "E6 G6 H12 O11",
+        "scoreMs": 6673.9,
+        "deadMs": 1006.38,
+        "totalMs": 7860.95
+      },
+      {
+        "index": 10,
+        "repeat": 1,
+        "fixture": "simple",
+        "score": "W+2.5",
+        "dead": "",
+        "scoreMs": 2396.63,
+        "deadMs": 937.39,
+        "totalMs": 3511.03
+      },
+      {
+        "index": 11,
+        "repeat": 1,
+        "fixture": "territory",
+        "score": "W+6.5",
+        "dead": "",
+        "scoreMs": 2362.52,
+        "deadMs": 934,
+        "totalMs": 3296.98
+      },
+      {
+        "index": 12,
+        "repeat": 1,
+        "fixture": "tactical",
+        "score": "W+10.5",
+        "dead": "F5",
+        "scoreMs": 2344.04,
+        "deadMs": 930.56,
+        "totalMs": 3275.1
+      },
+      {
+        "index": 13,
+        "repeat": 1,
+        "fixture": "cgos9_1",
+        "score": "B+2.0",
+        "dead": "",
+        "scoreMs": 1140.84,
+        "deadMs": 456.02,
+        "totalMs": 1597.37
+      },
+      {
+        "index": 14,
+        "repeat": 1,
+        "fixture": "cgos9_2",
+        "score": "W+2.0",
+        "dead": "",
+        "scoreMs": 1723.79,
+        "deadMs": 728.46,
+        "totalMs": 2452.65
+      },
+      {
+        "index": 15,
+        "repeat": 1,
+        "fixture": "cgos9_3",
+        "score": "W+8.0",
+        "dead": "",
+        "scoreMs": 1438.48,
+        "deadMs": 616.85,
+        "totalMs": 2055.77
+      },
+      {
+        "index": 16,
+        "repeat": 1,
+        "fixture": "cgos9_4",
+        "score": "W+2.0",
+        "dead": "D5 D6",
+        "scoreMs": 1828.71,
+        "deadMs": 689.71,
+        "totalMs": 2518.89
+      },
+      {
+        "index": 17,
+        "repeat": 1,
+        "fixture": "cgos9_5",
+        "score": "B+22.0",
+        "dead": "A6 A7 B7 B8 C8 D8 E7 E8 E9 F9",
+        "scoreMs": 2310.5,
+        "deadMs": 876.78,
+        "totalMs": 3187.74
+      },
+      {
+        "index": 18,
+        "repeat": 1,
+        "fixture": "alphago_kejie19_20170523",
+        "score": "W+0.5",
+        "dead": "B12 C12 D11 D12 E12 H3 H4 K15 K16 K4 N16 P2 Q14",
+        "scoreMs": 3486.88,
+        "deadMs": 1014.64,
+        "totalMs": 4673.89
+      },
+      {
+        "index": 19,
+        "repeat": 1,
+        "fixture": "cgos9_3_move64",
+        "score": "W+8.0",
+        "dead": "H7 H8 H9",
+        "scoreMs": 2382.72,
+        "deadMs": 890.41,
+        "totalMs": 3443.4
+      },
+      {
+        "index": 1,
+        "repeat": 2,
+        "fixture": "ko_shape9",
+        "score": "W+0.5",
+        "dead": "",
+        "scoreMs": 1923.01,
+        "deadMs": 924.81,
+        "totalMs": 2848.27
+      },
+      {
+        "index": 2,
+        "repeat": 2,
+        "fixture": "false_eye9",
+        "score": "B+11.5",
+        "dead": "C6 E6",
+        "scoreMs": 2817.43,
+        "deadMs": 924.87,
+        "totalMs": 3742.75
+      },
+      {
+        "index": 3,
+        "repeat": 2,
+        "fixture": "mutual_liberties9",
+        "score": "B+2.5",
+        "dead": "",
+        "scoreMs": 2337.49,
+        "deadMs": 834.49,
+        "totalMs": 3172.41
+      },
+      {
+        "index": 4,
+        "repeat": 2,
+        "fixture": "ladder_pressure9",
+        "score": "W+2.5",
+        "dead": "D6",
+        "scoreMs": 2395.04,
+        "deadMs": 951.37,
+        "totalMs": 3346.86
+      },
+      {
+        "index": 5,
+        "repeat": 2,
+        "fixture": "multi_atari9",
+        "score": "W+10.5",
+        "dead": "F5 H5",
+        "scoreMs": 2405.91,
+        "deadMs": 915.46,
+        "totalMs": 3321.85
+      },
+      {
+        "index": 6,
+        "repeat": 2,
+        "fixture": "double_ko_shape13",
+        "score": "W+4.5",
+        "dead": "L7",
+        "scoreMs": 2944.45,
+        "deadMs": 974.59,
+        "totalMs": 4092.03
+      },
+      {
+        "index": 7,
+        "repeat": 2,
+        "fixture": "mutual_liberties13",
+        "score": "B+8.5",
+        "dead": "",
+        "scoreMs": 3282.61,
+        "deadMs": 1002.81,
+        "totalMs": 4285.83
+      },
+      {
+        "index": 8,
+        "repeat": 2,
+        "fixture": "false_eye13",
+        "score": "B+12.5",
+        "dead": "E8 G8 J7",
+        "scoreMs": 3249.88,
+        "deadMs": 1007.57,
+        "totalMs": 4257.88
+      },
+      {
+        "index": 9,
+        "repeat": 2,
+        "fixture": "mixed_fight19",
+        "score": "B+34.5",
+        "dead": "E6 G6 H12 O11",
+        "scoreMs": 6695.49,
+        "deadMs": 1014.09,
+        "totalMs": 7880.05
+      },
+      {
+        "index": 10,
+        "repeat": 2,
+        "fixture": "simple",
+        "score": "W+2.5",
+        "dead": "",
+        "scoreMs": 2331.6,
+        "deadMs": 895.18,
+        "totalMs": 3401.35
+      },
+      {
+        "index": 11,
+        "repeat": 2,
+        "fixture": "territory",
+        "score": "W+6.5",
+        "dead": "",
+        "scoreMs": 2328.28,
+        "deadMs": 910.77,
+        "totalMs": 3239.5
+      },
+      {
+        "index": 12,
+        "repeat": 2,
+        "fixture": "tactical",
+        "score": "W+10.5",
+        "dead": "F5",
+        "scoreMs": 2387.09,
+        "deadMs": 924.52,
+        "totalMs": 3312.02
+      },
+      {
+        "index": 13,
+        "repeat": 2,
+        "fixture": "cgos9_1",
+        "score": "B+2.0",
+        "dead": "",
+        "scoreMs": 1314.19,
+        "deadMs": 509.32,
+        "totalMs": 1823.96
+      },
+      {
+        "index": 14,
+        "repeat": 2,
+        "fixture": "cgos9_2",
+        "score": "W+2.0",
+        "dead": "",
+        "scoreMs": 2029.33,
+        "deadMs": 750.84,
+        "totalMs": 2780.61
+      },
+      {
+        "index": 15,
+        "repeat": 2,
+        "fixture": "cgos9_3",
+        "score": "W+8.0",
+        "dead": "",
+        "scoreMs": 1504.76,
+        "deadMs": 643.02,
+        "totalMs": 2148.21
+      },
+      {
+        "index": 16,
+        "repeat": 2,
+        "fixture": "cgos9_4",
+        "score": "W+2.0",
+        "dead": "D5 D6",
+        "scoreMs": 1878.87,
+        "deadMs": 711.17,
+        "totalMs": 2590.48
+      },
+      {
+        "index": 17,
+        "repeat": 2,
+        "fixture": "cgos9_5",
+        "score": "B+22.0",
+        "dead": "A6 A7 B7 B8 C8 D8 E7 E8 E9 F9",
+        "scoreMs": 2414.7,
+        "deadMs": 941,
+        "totalMs": 3356.18
+      },
+      {
+        "index": 18,
+        "repeat": 2,
+        "fixture": "alphago_kejie19_20170523",
+        "score": "W+0.5",
+        "dead": "B12 C12 D11 D12 E12 H3 H4 K15 K16 K4 N16 P2 Q14",
+        "scoreMs": 3477.19,
+        "deadMs": 1012.24,
+        "totalMs": 4657.11
+      },
+      {
+        "index": 19,
+        "repeat": 2,
+        "fixture": "cgos9_3_move64",
+        "score": "W+8.0",
+        "dead": "H7 H8 H9",
+        "scoreMs": 2365.25,
+        "deadMs": 936.31,
+        "totalMs": 3469.03
+      }
+    ]
+  }
+}
