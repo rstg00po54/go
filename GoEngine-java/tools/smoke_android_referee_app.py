@@ -104,7 +104,10 @@ def validate_review_panel(text,game=STRICT_CASE):
         required += ("可能没下完","继续下棋，解决争议")
     if game == STRICT_CASE:
         required += ("黄圈 2 块",)
-    return [part for part in required if part not in text]
+    missing = [part for part in required if part not in text]
+    if game == "cgos9_1" and "继续下棋，解决争议" in text:
+        missing.append("stable case unexpectedly offers continue-playing")
+    return missing
 
 
 def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir):
