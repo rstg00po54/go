@@ -84,6 +84,15 @@ def resume_event(log,run_id):
     return result
 
 
+def armed_event(log,run_id):
+    """Ensure dialog Continue only ARMS a future tap; it must not undo passes."""
+    result = None
+    for line in log.splitlines():
+        if "RefereeSmoke" in line and re.search(r"\bARMED id="+re.escape(run_id)+r"\b",line):
+            result = line.strip()
+    return result
+
+
 def overlay_marks(log,run_id):
     # Ground highlighted positions in the real Java board, not only UI labels.
     result = None
@@ -146,14 +155,12 @@ def click_ui_description(adb,serial,description):
     raise RuntimeError("Missing clickable full-screen referee overlay: "+description)
 
 
-def validate_dialog(text, game=STRICT_CASE):
-    required = ("智能裁判","黄圈")
-    if game == STRICT_CASE:
-        required += ("黑先：","白先：","搜索胜率","不同死子组合")
+def validate_dialog(text,game=STRICT_CASE):
     if game != "cgos9_1":
-        required += ("继续下棋",)
+        required = ("智能裁判 · 存在争议","棋盘上已标出争议","红叉","黄圈","橙圈",
+                    "继续下棋","争议标记仍保留","再点屏幕任意位置")
     else:
-        required += ("确认数子",)
+        required = ("智能裁判","黄圈","确认数子")
     return [part for part in required if part not in text]
 
 
@@ -251,24 +258,50 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir):
                 capture_screenshot(adb,serial,case_dir/"confirmation_dialog.png")
                 print("Ready-to-count UI PASS: scoring dialog opens.",flush=True)
             else:
-                if "stage=overlay" not in terminal["line"]:
-                    raise RuntimeError("Disputed game unexpectedly opened a referee dialog")
-                marked = overlay_marks(log,run_id)
-                if marked is None or sum(marked.values())==0:
-                    raise RuntimeError("No dispute stones or positions were highlighted on the board")
-                result["marks"] = marked
+                if "stage=dispute_dialog" not in terminal["line"]:
+                    raise RuntimeError("Disputed game failed to show the first-stage referee dialog")
+                marks = overlay_marks(log,run_id)
+                if marks is None or sum(marks.values())==0:
+                    raise RuntimeError("Referee found a dispute but marked no stones or intersections")
+                result["marks"] = marks
+                dialog = read_dialog_xml(adb,serial)
+                (case_dir/"dialog.txt").write_text(dialog+"\n",encoding="utf-8")
+                missing_dialog = validate_dialog(dialog,game)
+                if missing_dialog:
+                    raise RuntimeError("Dispute dialog missing: %s" % missing_dialog)
+                capture_screenshot(adb,serial,case_dir/"analysis_dialog.png")
+                # First tap: only dismiss the dialog; preserve the same terminal
+                # board and all highlighted positions on it.
+                click_ui_text(adb,serial,"继续下棋")
+                armed = None
+                arm_log = ""
+                deadline = time.monotonic()+20
+                while time.monotonic()<deadline:
+                    arm_log = run([adb,"-s",serial,"logcat","-d","-v","brief",
+                                   "-s","RefereeSmoke:I","AndroidRuntime:E","*:S"],timeout=20)
+                    armed = armed_event(arm_log,run_id)
+                    if armed:
+                        break
+                    time.sleep(1)
+                (case_dir/"armed_logcat.txt").write_text(arm_log,encoding="utf-8")
+                if not armed:
+                    raise RuntimeError("Dialog Continue did not arm tap-to-resume")
+                expected_before = int(re.search(r"\bmoves=(\d+)\b",terminal["line"]).group(1))
+                if "moves="+str(expected_before) not in armed or "terminal=true" not in armed:
+                    raise RuntimeError("First Continue unexpectedly changed the Go game: "+armed)
+                if resume_event(arm_log,run_id):
+                    raise RuntimeError("First Continue already resumed the game; expected a second tap")
                 root = read_dialog_root(adb,serial)
-                missing = validate_dispute_overlay(root)
-                if missing:
-                    raise RuntimeError("Disputed board overlay not shown: %s" % missing)
-                screen = " ".join(node.attrib.get("text","") for node in root.iter())
-                (case_dir/"review_panel.txt").write_text(screen+"\n",encoding="utf-8")
+                missing_overlay = validate_dispute_overlay(root)
+                if missing_overlay:
+                    raise RuntimeError("Dispute marks not retained for second tap: %s" % missing_overlay)
+                panel = " ".join(node.attrib.get("text","") for node in root.iter())
+                (case_dir/"review_panel.txt").write_text(panel+"\n",encoding="utf-8")
                 capture_screenshot(adb,serial,case_dir/"review_screen.png")
-                # The dismissing tap is at the CENTER of the entire screen:
-                # not necessarily on a valid Go intersection. It must be
-                # consumed and must never place a stone.
+                print("Dispute dialog PASS: Continue closed popup, retained marked board and unchanged moves.",flush=True)
+                # Second tap: NOW remove dispute marks and undo the two passes.
                 click_ui_description(adb,serial,"点击屏幕继续下棋")
-                expected_moves = int(re.search(r"\bmoves=(\d+)\b",terminal["line"]).group(1))-2
+                expected_moves = expected_before-2
                 resume = None
                 logs = ""
                 deadline = time.monotonic()+40
@@ -281,14 +314,14 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir):
                     time.sleep(2)
                 (case_dir/"resume_logcat.txt").write_text(logs,encoding="utf-8")
                 if not resume or resume["status"]!="PASS":
-                    raise RuntimeError("Tap-to-resume failed: "+str(resume))
+                    raise RuntimeError("Second tap failed to resume playing: "+str(resume))
                 line = resume["line"]
                 if ("moves="+str(expected_moves)) not in line or ("terminal=false") not in line or (
                         "refereeMode=false") not in line or ("gameReady=true") not in line:
-                    raise RuntimeError("Resume incorrectly advanced or desynced the board: "+line)
+                    raise RuntimeError("Second tap changed board incorrectly: "+line)
                 result["resumed"] = resume
                 capture_screenshot(adb,serial,case_dir/"resumed_screen.png")
-                print("Tap-anywhere overlay PASS: dispute marks dismissed, two passes undone; no accidental move.",flush=True)
+                print("Second-tap resume PASS: overlays cleared and exactly two passes undone.",flush=True)
         else:
             print("UI check skipped (engine + referee assertions still checked).",flush=True)
         result["status"] = "PASS"
