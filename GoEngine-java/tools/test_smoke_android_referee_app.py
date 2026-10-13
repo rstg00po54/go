@@ -22,13 +22,17 @@ class RefereeSmokeHostTests(unittest.TestCase):
         layout = layout_path.read_text(encoding="utf-8")
         activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
         ids = ("refereePanel","refereePanelTitle","refereePanelScore","refereePanelHint",
-               "refereeResetButton","refereeConfirmButton","refereeExitButton","gameActionPanel")
+               "refereeResetButton","refereeConfirmButton","refereeExitButton",
+               "refereeContinueButton","gameActionPanel")
         for name in ids:
             self.assertEqual(layout.count('android:id="@+id/'+name+'"'),1)
             self.assertIn("R.id."+name,activity)
         self.assertIn("gameActionPanel.setVisibility(refereeMode ? View.GONE : View.VISIBLE)",activity)
         self.assertIn("refereePanel.setVisibility(refereeMode ? View.VISIBLE : View.GONE)",activity)
         self.assertIn('refereeExitButton.setOnClickListener(v -> leaveRefereeReview())',activity)
+        self.assertIn('refereeContinueButton.setOnClickListener(v -> resumeFromReferee())',activity)
+        self.assertIn('refereeContinueButton.setVisibility(recommendContinue ? View.VISIBLE : View.GONE)',activity)
+        self.assertIn('boolean recommendContinue = refereeMode && board.canResumeAfterPasses()',activity)
 
     def test_screenshot_accepts_only_png_bytes(self):
         class Result:
@@ -70,13 +74,18 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn("白先：", validate_dialog(text.replace("白先：","")))
 
     def test_review_toolbar_has_real_actions_and_pending_count(self):
-        panel = ("智能裁判 · 待复核 2 块 黑 34.0 · 白 41.0 "
-                 "黄圈 2 块待复核；红叉可撤销 恢复 AI 建议 确认数子 退出复核")
+        panel = ("智能裁判 · 可能没下完 黑 34.0 · 白 41.0 "
+                 "黄圈 2 块需要确认；红叉可撤销 继续下棋，解决争议 "
+                 "恢复 AI 建议 确认数子 退出复核")
         self.assertEqual(validate_review_panel(panel),[])
         self.assertIn("退出复核",validate_review_panel(panel.replace("退出复核","")))
-        self.assertIn("待复核 2 块",validate_review_panel(panel.replace("待复核 2 块","")))
-        self.assertEqual(validate_review_panel(panel.replace("待复核 2 块","可以确认数子"),
-                                               "cgos9_1"),[])
+        self.assertIn("可能没下完",validate_review_panel(panel.replace("可能没下完","")))
+        self.assertIn("继续下棋，解决争议",
+                      validate_review_panel(panel.replace("继续下棋，解决争议","")))
+        self.assertIn("黄圈 2 块",validate_review_panel(panel.replace("黄圈 2 块","")))
+        ready = ("智能裁判 · 可以确认数子 黑 34.0 · 白 41.0 "
+                 "恢复 AI 建议 确认数子 退出复核")
+        self.assertEqual(validate_review_panel(ready,"cgos9_1"),[])
 
     def test_curated_case_selection_and_input_validation(self):
         self.assertEqual(len(CASES), 4)
