@@ -199,10 +199,108 @@ public class MainActivity extends AppCompatActivity {
         variationButton.setOnClickListener(v -> showVariations());
         render("正在启动 AI...");
         showMainPage();
-        if (!jniGtpSmoke && !jniGtpRepeat) {
+        if (isRefereeSmokeIntent()) {
+            startDebugRefereeSmoke();
+        } else if (!jniGtpSmoke && !jniGtpRepeat) {
             showGpuStartupScreen(boardSize, selectedBackend);
             startEngine();
         }
+    }
+
+    // Explicit Debug-APK-only ADB smoke. Production APKs cannot enter this path.
+    private boolean isRefereeSmokeIntent() {
+        return (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+                && getIntent() != null && getIntent().getBooleanExtra("referee_smoke", false);
+    }
+
+    private String refereeSmokeId() {
+        String raw = getIntent() == null ? "" : getIntent().getStringExtra("referee_smoke_id");
+        return raw == null ? "" : raw.replaceAll("[^A-Za-z0-9_-]", "").substring(0,Math.min(raw.length(),40));
+    }
+
+    private void startDebugRefereeSmoke() {
+        final String id = refereeSmokeId();
+        final String backend = getIntent().getStringExtra("referee_smoke_backend");
+        final boolean gpu = "gpu".equalsIgnoreCase(backend);
+        Log.i("RefereeSmoke","START id=" + id + " requested=" + (gpu ? "gpu" : "cpu"));
+        render("自动测试：准备重放真实终局棋谱...");
+        engineExecutor.execute(() -> {
+            try {
+                engine.setStartupBoardSize(9);
+                engine.setBackendPreference(gpu ? KataGoEngine.BackendPreference.GPU
+                        : KataGoEngine.BackendPreference.CPU);
+                if (!engine.start(KataGoEngine.Model.HUMAN,false))
+                    throw new IllegalStateException("10b KataGo engine startup failed");
+                if (gpu && !engine.getBackendName().startsWith("GPU"))
+                    throw new IllegalStateException("GPU requested but actual backend is " + engine.getBackendName());
+                if (!engine.setBoardSize(9) || !engine.clearBoard() || !engine.setChineseRules()
+                        || !engine.setKomi(7f) || !engine.setSearchLimits(48,1.0))
+                    throw new IllegalStateException("9x9 Chinese/komi/search setup failed");
+
+                StringBuilder source = new StringBuilder();
+                try (java.io.InputStream input = getAssets().open("referee_smoke_006_12.sgf")) {
+                    byte[] buffer = new byte[4096];
+                    int got;
+                    while ((got = input.read(buffer)) != -1)
+                        source.append(new String(buffer,0,got,StandardCharsets.UTF_8));
+                }
+                java.util.regex.Matcher matcher = java.util.regex.Pattern.compile(
+                        ";([BW])\\[([a-i]{0,2})\\]").matcher(source);
+                GoBoard replay = new GoBoard(9);
+                int played = 0;
+                while (matcher.find()) {
+                    StoneColor color = "B".equals(matcher.group(1)) ? StoneColor.BLACK : StoneColor.WHITE;
+                    String vertex = matcher.group(2);
+                    String gtp = "pass";
+                    Move move;
+                    if (vertex.isEmpty()) move = new Move.Pass(color);
+                    else {
+                        if (vertex.length() != 2) throw new IllegalStateException("Invalid SGF vertex " + vertex);
+                        Point point = new Point(vertex.charAt(0)-'a',vertex.charAt(1)-'a');
+                        if (!replay.isLegalMove(point,color))
+                            throw new IllegalStateException("Illegal fixture move " + played + " " + vertex);
+                        move = new Move.Stone(point,color);
+                        gtp = point.toGtp(9);
+                    }
+                    if (!engine.playMove(color.toGtp(),gtp))
+                        throw new IllegalStateException("KataGo rejected fixture move " + played + " " + gtp);
+                    replay.playMove(move);
+                    played++;
+                }
+                if (played != 82 || !replay.isGameOver())
+                    throw new IllegalStateException("Fixture must end after 82 SGF moves and two passes; got " + played);
+                KataGoEngine.PositionEvaluation nn = engine.evaluatePosition(9);
+                if (nn == null || nn.whiteOwnership == null || nn.whiteOwnership.length != 81)
+                    throw new IllegalStateException("10b raw NN ownership unavailable");
+                SmartReferee.Analysis analysis = SmartReferee.analyze(replay,nn.whiteOwnership);
+                Log.i("RefereeSmoke",String.format(Locale.US,
+                        "REPLAY id=%s moves=%d terminal=%s backend=%s lead=%+.2f dead=%d review=%d vulnerable=%d",
+                        id,played,replay.isGameOver(),engine.getBackendName(),nn.whiteLead,
+                        analysis.suggestedGroups,analysis.reviewGroups,analysis.vulnerableGroups));
+                mainHandler.post(() -> {
+                    board = replay;
+                    boardSize = 9;
+                    gameCondition = 0;
+                    playerColor = StoneColor.BLACK;
+                    currentPlayer = StoneColor.BLACK;
+                    engineReady = true;
+                    engineStarting = false;
+                    gameReady = true;
+                    thinking = false;
+                    evaluating = false;
+                    endgameEvaluation = nn;
+                    preciseScoreReady = false;
+                    refereeMode = false;
+                    finalDeadStones = null;
+                    showGamePage();
+                    render("自动测试：真实9路SGF终局已加载，正在打开智能裁判...");
+                    startSmartReferee();
+                });
+            } catch (Exception ex) {
+                Log.e("RefereeSmoke","FAIL id=" + id + " stage=replay reason=" + ex,ex);
+                mainHandler.post(() -> render("智能裁判自动测试失败，查看 RefereeSmoke 日志"));
+            }
+        });
     }
 
     private void runJniGtpSmoke(boolean repeat) {
@@ -925,6 +1023,29 @@ public class MainActivity extends AppCompatActivity {
                             .setNeutralButton("先复核死子", null);
                 } else dialog.setPositiveButton("开始复核", null);
                 dialog.show();
+                if (isRefereeSmokeIntent()) {
+                    SmartReferee.ScoreWhatIf actualRange = sensitivity;
+                    boolean good = suggestion != null && suggestion.suggestedGroups == 1
+                            && suggestion.reviewGroups == 2 && suggestion.vulnerableGroups == 1
+                            && actualRange != null && actualRange.exhaustive()
+                            && Math.abs(actualRange.minWhiteLead + 20.0) < 0.01
+                            && Math.abs(actualRange.maxWhiteLead - 8.0) < 0.01
+                            && decision.verdict == EndgameAdjudicator.Verdict.REVIEW_REQUIRED
+                            && mctsInfo.contains("黑先：") && mctsInfo.contains("白先：")
+                            && mctsInfo.contains("搜索胜率") && mctsInfo.contains("变化：")
+                            && reasons.toString().contains("不同死子组合可能改变胜负")
+                            && reasons.toString().contains("黄圈");
+                    Log.i("RefereeSmoke",String.format(Locale.US,
+                            "%s id=%s stage=dialog verdict=%s moves=%d dead=%d review=%d vulnerable=%d "
+                            + "minLead=%.1f maxLead=%.1f hasBlack=%s hasWhite=%s hasPV=%s",
+                            good ? "PASS" : "FAIL",refereeSmokeId(),decision.verdict,moves,
+                            suggestion == null ? -1 : suggestion.suggestedGroups,
+                            suggestion == null ? -1 : suggestion.reviewGroups,
+                            suggestion == null ? -1 : suggestion.vulnerableGroups,
+                            actualRange == null ? Double.NaN : actualRange.minWhiteLead,
+                            actualRange == null ? Double.NaN : actualRange.maxWhiteLead,
+                            mctsInfo.contains("黑先："),mctsInfo.contains("白先："),mctsInfo.contains("变化：")));
+                }
             });
         });
     }
@@ -1809,6 +1930,8 @@ public class MainActivity extends AppCompatActivity {
 
     private float komiFor(int size) {
         DebugLog.enter(TAG, "komiFor in, size=" + size + ", condition=" + gameCondition);
+        // The regression SGF explicitly records KM[7], unlike the app's ordinary 9x9 5.5.
+        if (isRefereeSmokeIntent() && size == 9) return 7f;
         if (gameCondition != 0) return 0f; // Handicap/first-move games have no normal komi.
         return size <= 11 ? 5.5f : 7.5f;
     }
