@@ -3,7 +3,9 @@
 
 For each candidate point, reload the original SGF retaining its final
 passes, play either color at that point, and compare KataGo raw NN output.
-Each probe is independent. No original SGF, game app or board is modified.
+Optional --root-search searches the original stopped position with both sides
+to play, with a replayed best PV for each. Every branch is independent.
+No original SGF, game app or board is modified.
 """
 import argparse
 from datetime import datetime, timezone
@@ -92,7 +94,7 @@ def parse_search_candidates(response):
     return candidates[:3]
 
 
-def verify_pv(engine, case, initial_lead, watched, reply, candidate, depth):
+def verify_pv(engine, case, initial_lead, watched, reply, candidate, depth, start_ply=2):
     """Play MCTS PV one step at a time on this disposable branch; no new search.
 
     scoreLead and winrate in the candidate refer to the search before the
@@ -118,7 +120,7 @@ def verify_pv(engine, case, initial_lead, watched, reply, candidate, depth):
         except (RuntimeError,TimeoutError,ValueError) as exc:
             error = "PV stopped at move %d (%s %s): %s" % (index+1,color,move,str(exc)[:180])
             break
-        steps.append({"ply":index+2,"color":color,"move":move,
+        steps.append({"ply":index+start_ply,"color":color,"move":move,
                       "white_lead":round(lead,3),
                       "delta_white_lead":round(lead-initial_lead,3),
                       "white_win":round(white_win,5),
@@ -128,6 +130,43 @@ def verify_pv(engine, case, initial_lead, watched, reply, candidate, depth):
                           v:nn_ownership_at(ownership,v,case["size"]) for v in watched}})
         color = "black" if color == "white" else "white"
     return steps,error
+
+
+def run_root_searches(engine, case, baseline, watched, visits, seconds, pv_depth):
+    """Search original SGF as either player to move, independently of probes.
+
+    A best PV is a predicted continuation, NOT evidence of a forced win or
+    proof that both passing players should have resumed the finished game.
+    """
+    engine.command("kata-set-param maxVisits %d" % visits)
+    engine.command("kata-set-param maxTime %.3f" % seconds)
+    results = []
+    for player in ("black","white"):
+        restore_probe_position(engine,case)
+        row = {"player":player}
+        try:
+            response, elapsed = engine.command(
+                "kata-search_analyze %s 50 minmoves 3 maxmoves 3" % player)
+            row["search_ms"] = round(elapsed,3)
+            row["search_raw"] = response[:16000]
+            row["search_raw_length"] = len(response)
+            row["candidates"] = parse_search_candidates(response)
+            if row["candidates"]:
+                best = row["candidates"][0]
+                row["best_move"] = best["move"]
+                restore_probe_position(engine,case)
+                row["pv_trace"],error = verify_pv(
+                    engine,case,baseline["white_lead"],watched,player,
+                    best,pv_depth,start_ply=1)
+                if error:
+                    row["pv_warning"] = error
+            else:
+                row["warning"] = "No candidates parsed: " + repr(response[:350])
+        except (RuntimeError,TimeoutError,ValueError) as exc:
+            row["warning"] = str(exc)[:300]
+        results.append(row)
+    restore_probe_position(engine,case)
+    return results
 
 
 def run_probes(engine, case, candidates, watched, search_visits=0,
@@ -206,7 +245,8 @@ def run_probes(engine, case, candidates, watched, search_visits=0,
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--games", required=True, help="Comma-separated exact SGF case names")
-    p.add_argument("--probe-vertices", required=True, help="Comma-separated moves to test as black AND white")
+    p.add_argument("--probe-vertices", default="",
+                   help="Optional comma-separated moves to test as black AND white")
     p.add_argument("--watch-vertices", required=True, help="Locations whose raw whiteOwnership should be tracked")
     p.add_argument("--serial", default=os.getenv("ANDROID_SERIAL"))
     p.add_argument("--mode", choices=("gpu", "cpu"), default="gpu")
@@ -218,6 +258,8 @@ def main():
                    help="KataGo MCTS time cap in seconds per tested reply")
     p.add_argument("--verify-replies", action="store_true",
                    help="Replay best MCTS reply and evaluate the resulting NN position")
+    p.add_argument("--root-search", action="store_true",
+                   help="Search both players at original stopped SGF and replay each best PV")
     p.add_argument("--pv-depth", type=int, default=1,
                    help="Maximum MCTS PV moves to replay after the first probe (1..10, default 1)")
     p.add_argument("--timeout", type=float, default=160.0)
@@ -228,12 +270,14 @@ def main():
     args = p.parse_args()
     if args.limit < 1 or not 1 <= args.threads <= 64 or args.search_visits < 0 or args.search_seconds <= 0:
         p.error("Invalid --limit, --threads, --search-visits or --search-seconds")
-    if args.verify_replies and args.search_visits == 0:
-        p.error("--verify-replies requires --search-visits > 0")
+    if (args.verify_replies or args.root_search) and args.search_visits == 0:
+        p.error("--verify-replies and --root-search require --search-visits > 0")
     if not 1 <= args.pv_depth <= 10:
         p.error("--pv-depth must be between 1 and 10")
-    if args.pv_depth > 1 and not args.verify_replies:
-        p.error("--pv-depth > 1 requires --verify-replies")
+    if args.pv_depth > 1 and not (args.verify_replies or args.root_search):
+        p.error("--pv-depth > 1 requires --verify-replies or --root-search")
+    if not args.probe_vertices.strip() and not args.root_search:
+        p.error("Provide --probe-vertices or --root-search")
     names = {name.strip() for name in args.games.split(",") if name.strip()}
     if not names:
         p.error("--games cannot be empty")
@@ -268,8 +312,27 @@ def main():
             baseline, probes = run_probes(engine, case, candidates, watched,
                                           args.search_visits,args.search_seconds,
                                           args.verify_replies,args.pv_depth)
+            roots = run_root_searches(engine,case,baseline,watched,
+                    args.search_visits,args.search_seconds,args.pv_depth) if args.root_search else []
             print("%s: baseline NN white lead %+6.2f; target white ownership %s" %
                   (case["name"], baseline["white_lead"], baseline["watch_white_ownership"]), flush=True)
+            for root in roots:
+                if not root.get("candidates"):
+                    print("  Root MCTS %-5s no candidates: %s" %
+                          (root["player"],root.get("warning","unknown")),flush=True)
+                    continue
+                summaries = ["%s(v=%d win=%.3f lead=%+.2f pv=%s)" %
+                             (c["move"],c["visits"],c["reply_winrate"],
+                              c["reply_score_lead"]," ".join(c["pv"][:8]))
+                             for c in root["candidates"]]
+                print("  Root MCTS %-5s %s" % (root["player"],"; ".join(summaries)),flush=True)
+                for step in root.get("pv_trace",[]):
+                    print("    Root PV ply %-2d %-5s %-5s NN white lead=%+7.2f "
+                          "whiteWin=%.3f targets=%s" %
+                          (step["ply"],step["color"],step["move"],step["white_lead"],
+                           step["white_win"],step["watch_white_ownership"]),flush=True)
+                if root.get("pv_warning"):
+                    print("    Root PV warning:",root["pv_warning"],flush=True)
             for probe in probes:
                 if probe["status"] != "ok":
                     print("  %-5s %-6s rejected: %s" %
@@ -303,9 +366,9 @@ def main():
                 if "reply_search_warning" in probe:
                     print("    MCTS warning:",probe["reply_search_warning"],flush=True)
             rows.append({"game": case["name"], "size": size, "official_re": case["official_re"],
-                         "baseline": baseline, "probes": probes})
+                         "baseline": baseline, "root_searches": roots, "probes": probes})
         report = output / "life_probe.json"
-        report.write_text(json.dumps({"type": "endgame_one_move_nn_probes",
+        report.write_text(json.dumps({"type": "endgame_nn_probes_and_optional_two_sided_root_search",
             "warning": "Raw NN after each MCTS-PV move and root MCTS searches cannot prove life or death; no deeper search occurs during PV replay.",
             "device": serial, "mode": args.mode, "cases": rows}, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8")
