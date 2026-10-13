@@ -89,6 +89,15 @@ def validate_dialog(text, game=STRICT_CASE):
     return [part for part in required if part not in text]
 
 
+def capture_screenshot(adb,serial,target):
+    """Grab original Android framebuffer bytes; no cropping or conversion."""
+    proc = subprocess.run([adb,"-s",serial,"exec-out","screencap","-p"],
+                          stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=25)
+    if proc.returncode or not proc.stdout.startswith(b"\\x89PNG\\r\\n\\x1a\\n"):
+        raise RuntimeError("ADB screenshot failed: " + proc.stderr.decode("utf-8","replace")[-300:])
+    target.write_bytes(proc.stdout)
+
+
 def validate_review_panel(text,game=STRICT_CASE):
     required = ("智能裁判 ·","黑","白","恢复 AI 建议","确认数子","退出复核")
     if game == STRICT_CASE:
@@ -138,6 +147,7 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir):
             if missing:
                 raise RuntimeError("Dialog missing %s. If UI is locked/headless, use --skip-ui." % missing)
             print("Dialog UI PASS: %s" % game,flush=True)
+            capture_screenshot(adb,serial,case_dir/"analysis_dialog.png")
             # Close only the information dialog. The board remains in review mode;
             # verify the actual controls the user will use to confirm dead stones.
             run([adb,"-s",serial,"shell","input","keyevent","4"],timeout=10)
@@ -147,6 +157,7 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir):
             if missing_panel:
                 raise RuntimeError("Referee review toolbar missing %s; see review_panel.txt" % missing_panel)
             print("Review toolbar UI PASS: live score, pending groups and three referee actions.",flush=True)
+            capture_screenshot(adb,serial,case_dir/"review_screen.png")
         else:
             print("Dialog UI skipped (engine + referee assertions still checked).",flush=True)
         result["status"] = "PASS"
