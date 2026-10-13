@@ -1,0 +1,13 @@
+--------- beginning of main
+I/RefereeSmoke( 7414): START id=59d9e9c8126641b3 game=cgos9_1 requested=cpu
+I/RefereeSmoke( 7414): REPLAY id=59d9e9c8126641b3 game=cgos9_1 moves=45 terminal=true backend=PIE/ProcessBuilder lead=-0.75 dead=0 review=0 vulnerable=0
+I/RefereeSmoke( 7414): PASS id=59d9e9c8126641b3 game=cgos9_1 stage=dialog verdict=READY_TO_COUNT moves=45 dead=0 review=0 vulnerable=0 minLead=NaN maxLead=NaN hasBlack=false hasWhite=false hasPV=false
+I/RefereeSmoke( 7533): START id=4ade2af4584347d8 game=cgos9_2 requested=cpu
+I/RefereeSmoke( 7533): REPLAY id=4ade2af4584347d8 game=cgos9_2 moves=60 terminal=true backend=PIE/ProcessBuilder lead=+0.79 dead=0 review=1 vulnerable=1
+I/RefereeSmoke( 7533): PASS id=4ade2af4584347d8 game=cgos9_2 stage=dialog verdict=REVIEW_REQUIRED moves=60 dead=0 review=1 vulnerable=1 minLead=-13.0 maxLead=2.0 hasBlack=true hasWhite=true hasPV=true
+I/RefereeSmoke( 7661): START id=3f5a24d5f2b84f02 game=cgos9_5 requested=cpu
+I/RefereeSmoke( 7661): REPLAY id=3f5a24d5f2b84f02 game=cgos9_5 moves=56 terminal=true backend=PIE/ProcessBuilder lead=-22.60 dead=1 review=0 vulnerable=0
+I/RefereeSmoke( 7661): PASS id=3f5a24d5f2b84f02 game=cgos9_5 stage=dialog verdict=REVIEW_REQUIRED moves=56 dead=1 review=0 vulnerable=0 minLead=NaN maxLead=NaN hasBlack=true hasWhite=true hasPV=true
+I/RefereeSmoke( 7860): START id=6646b3c25e39445e game=cgos9_expand_006_12 requested=cpu
+I/RefereeSmoke( 7860): REPLAY id=6646b3c25e39445e game=cgos9_expand_006_12 moves=82 terminal=true backend=PIE/ProcessBuilder lead=+4.77 dead=1 review=2 vulnerable=1
+I/RefereeSmoke( 7860): PASS id=6646b3c25e39445e game=cgos9_expand_006_12 stage=dialog verdict=REVIEW_REQUIRED moves=82 dead=1 review=2 vulnerable=1 minLead=-20.0 maxLead=8.0 hasBlack=true hasWhite=true hasPV=true

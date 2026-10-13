@@ -1,0 +1,11 @@
+{
+  "game": "cgos9_1",
+  "run_id": "29862a29fea04519",
+  "status": "FAIL",
+  "backend": "cpu",
+  "app_result": {
+    "status": "PASS",
+    "line": "I/RefereeSmoke( 8051): PASS id=29862a29fea04519 game=cgos9_1 stage=dialog verdict=READY_TO_COUNT moves=45 dead=0 review=0 vulnerable=0 minLead=NaN maxLead=NaN hasBlack=false hasWhite=false hasPV=false"
+  },
+  "error": "Referee review toolbar missing ['unexpected button: 确认死子']; see review_panel.txt"
+}

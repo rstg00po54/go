@@ -1,0 +1,49 @@
+{
+  "status": "FAIL",
+  "backend_requested": "cpu",
+  "cases": [
+    {
+      "game": "cgos9_expand_006_12",
+      "run_id": "6646b3c25e39445e",
+      "status": "PASS",
+      "backend": "cpu",
+      "app_result": {
+        "status": "PASS",
+        "line": "I/RefereeSmoke( 7860): PASS id=6646b3c25e39445e game=cgos9_expand_006_12 stage=dialog verdict=REVIEW_REQUIRED moves=82 dead=1 review=2 vulnerable=1 minLead=-20.0 maxLead=8.0 hasBlack=true hasWhite=true hasPV=true"
+      }
+    },
+    {
+      "game": "cgos9_1",
+      "run_id": "29862a29fea04519",
+      "status": "FAIL",
+      "backend": "cpu",
+      "app_result": {
+        "status": "PASS",
+        "line": "I/RefereeSmoke( 8051): PASS id=29862a29fea04519 game=cgos9_1 stage=dialog verdict=READY_TO_COUNT moves=45 dead=0 review=0 vulnerable=0 minLead=NaN maxLead=NaN hasBlack=false hasWhite=false hasPV=false"
+      },
+      "error": "Referee review toolbar missing ['unexpected button: 确认死子']; see review_panel.txt"
+    },
+    {
+      "game": "cgos9_2",
+      "run_id": "bebf59c5f5994810",
+      "status": "PASS",
+      "backend": "cpu",
+      "app_result": {
+        "status": "PASS",
+        "line": "I/RefereeSmoke( 8164): PASS id=bebf59c5f5994810 game=cgos9_2 stage=dialog verdict=REVIEW_REQUIRED moves=60 dead=0 review=1 vulnerable=1 minLead=-13.0 maxLead=2.0 hasBlack=true hasWhite=true hasPV=true"
+      }
+    },
+    {
+      "game": "cgos9_5",
+      "run_id": "5c830a1c9bc04d40",
+      "status": "PASS",
+      "backend": "cpu",
+      "app_result": {
+        "status": "PASS",
+        "line": "I/RefereeSmoke( 8343): PASS id=5c830a1c9bc04d40 game=cgos9_5 stage=dialog verdict=REVIEW_REQUIRED moves=56 dead=1 review=0 vulnerable=0 minLead=NaN maxLead=NaN hasBlack=true hasWhite=true hasPV=true"
+      }
+    }
+  ],
+  "outputs": "/mnt/hgfs/D/code/go/GoEngine-java/build/android_referee_smoke/20261013T074528256879Z",
+  "serial": "8719e18a71a2a66c"
+}
