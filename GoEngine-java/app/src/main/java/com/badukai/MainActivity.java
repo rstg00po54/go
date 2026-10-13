@@ -598,10 +598,10 @@ public class MainActivity extends AppCompatActivity {
                 .setView(chart).setPositiveButton("关闭", null).show();
     }
 
-    /** User-facing rule: any unresolved endgame dispute means continue playing. */
+    /** Midgame inspections never count as completed games, even when NN looks stable. */
     private boolean refereeRequiresContinuation() {
-        return endgameDecision != null
-                && endgameDecision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT;
+        return !board.isGameOver() || (endgameDecision != null
+                && endgameDecision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT);
     }
 
     private void onBoardTap(int x, int y) {
@@ -906,12 +906,6 @@ public class MainActivity extends AppCompatActivity {
     private void showEndgameScoringOptions() {
         if (!engineReady || !gameReady || evaluating || thinking
                 || board.getLastMove() instanceof Move.Resign) return;
-        if (!board.isGameOver()) {
-            new AlertDialog.Builder(this).setTitle("智能裁判 · 对局还没结束")
-                    .setMessage("现在仍在下棋。继续对弈，双方连续停一手后再点智能裁判，检查死活争议并确认数子。")
-                    .setPositiveButton("继续下棋",null).show();
-            return;
-        }
         if (refereeMode) {
             if (refereeRequiresContinuation()) {
                 if (refereeAwaitingTap) resumeFromReferee();
@@ -951,12 +945,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startSmartReferee() {
-        if (!engineReady || evaluating || thinking || !board.isGameOver()) return;
+        if (!engineReady || !gameReady || evaluating || thinking || variationBoard != null) return;
         evaluating = true;
         final GoBoard snapshot = board;
         final int moves = board.getMoveCount(), size = boardSize;
-        final KataGoEngine.PositionEvaluation cached = endgameEvaluation;
-        render("智能裁判：正在分析可能的死棋...");
+        final boolean endedAtStart = board.isGameOver();
+        // Endgame ownership caches do not describe an ongoing, changing game.
+        final KataGoEngine.PositionEvaluation cached = endedAtStart ? endgameEvaluation : null;
+        render(endedAtStart ? "智能裁判：正在检查终局争议..." : "智能裁判：正在检查当前棋形...");
         engineExecutor.execute(() -> {
             SmartReferee.Analysis analysis = null;
             KataGoEngine.PositionEvaluation nn = cached;
@@ -1008,7 +1004,7 @@ public class MainActivity extends AppCompatActivity {
             mainHandler.post(() -> {
                 evaluating = false;
                 if (board != snapshot || board.getMoveCount() != moves || boardSize != size) return;
-                if (evaluated != null && evaluated.size == size) endgameEvaluation = evaluated;
+                if (evaluated != null && evaluated.size == size && endedAtStart) endgameEvaluation = evaluated;
                 endgameDecision = decision;
                 refereeMode = true;
                 refereeAwaitingTap = false;
@@ -1074,7 +1070,8 @@ public class MainActivity extends AppCompatActivity {
                     // Continue only dismisses the modal; the following screen
                     // tap clears the annotations and resumes the game.
                     StringBuilder prompt = new StringBuilder(String.format(Locale.CHINA,
-                            "棋盘上已标出争议：红叉 %d 处、黄圈 %d 处、橙圈 %d 处。\n",
+                            "%s：红叉 %d 处、黄圈 %d 处、橙圈 %d 处。\n",
+                            endedAtStart ? "棋盘上已标出争议" : "正在对局，当前棋形仅供参考，棋盘标记",
                             refereeDead.size(),refereeReview.size(),alerts.size()));
                     int described = 0;
                     for (EndgameAdjudicator.Finding finding : decision.findings) {
@@ -1082,8 +1079,11 @@ public class MainActivity extends AppCompatActivity {
                         prompt.append("· ").append(finding.message).append("\n");
                     }
                     prompt.append("\n点「继续下棋」关闭弹窗，争议标记仍保留。");
-                    prompt.append("\n然后再点屏幕任意位置，清除标记并恢复对局。");
-                    new AlertDialog.Builder(this).setTitle("智能裁判 · 存在争议")
+                    prompt.append(endedAtStart
+                            ? "\n然后再点屏幕任意位置，清除标记并恢复对局。"
+                            : "\n然后再点屏幕任意位置，清除标记并继续当前对局；不会撤销落子。");
+                    new AlertDialog.Builder(this).setTitle(endedAtStart
+                            ? "智能裁判 · 存在争议" : "智能裁判 · 当前棋形分析")
                             .setMessage(prompt.toString()).setCancelable(false)
                             .setPositiveButton("继续下棋", (dialog, which) -> armRefereeTapToResume())
                             .show();
@@ -1101,7 +1101,7 @@ public class MainActivity extends AppCompatActivity {
                     boolean hasSearch = decision.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT
                             || (mctsInfo.contains("黑先：") && mctsInfo.contains("白先："));
                     boolean genericGood = suggestion != null
-                            && board.isGameOver() && hasSearch
+                            && (endedAtStart == board.isGameOver()) && hasSearch
                             && reasons.toString().contains("黄圈");
                     boolean strictGood = !knownCase || (suggestion.suggestedGroups == 1
                             && suggestion.reviewGroups == 2 && suggestion.vulnerableGroups == 1
@@ -1116,7 +1116,8 @@ public class MainActivity extends AppCompatActivity {
                             "%s id=%s game=%s stage=%s verdict=%s moves=%d dead=%d review=%d vulnerable=%d "
                             + "minLead=%.1f maxLead=%.1f hasBlack=%s hasWhite=%s hasPV=%s",
                             good ? "PASS" : "FAIL",refereeSmokeId(),game,
-                            decision.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT ? "dialog" : "dispute_dialog",
+                            !endedAtStart ? "midgame_dialog"
+                                    : decision.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT ? "dialog" : "dispute_dialog",
                             decision.verdict,moves,
                             suggestion == null ? -1 : suggestion.suggestedGroups,
                             suggestion == null ? -1 : suggestion.reviewGroups,
@@ -1129,9 +1130,10 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /** Arm the on-board dispute overlay immediately; the NEXT screen tap undoes both passes. */
+    /** The modal's Continue action only arms the next screen tap; it never plays a move. */
     private void armRefereeTapToResume() {
-        if (!refereeMode || !refereeRequiresContinuation() || !board.canResumeAfterPasses()) {
+        if (!refereeMode || !refereeRequiresContinuation()
+                || (board.isGameOver() && !board.canResumeAfterPasses())) {
             Toast.makeText(this,"当前不能继续对局",Toast.LENGTH_LONG).show();
             return;
         }
@@ -1174,7 +1176,8 @@ public class MainActivity extends AppCompatActivity {
         boardView.setRefereeMarks(refereeDead, refereeReview);
         boolean mustContinue = refereeRequiresContinuation();
         String shortStatus = mustContinue ? "智能裁判\n建议继续下" : "智能裁判\n确认数子";
-        refereePanelTitle.setText(mustContinue ? "智能裁判 · 存在争议" : "智能裁判 · 可以确认数子");
+        refereePanelTitle.setText(!board.isGameOver() ? "智能裁判 · 当前棋形"
+                : mustContinue ? "智能裁判 · 存在争议" : "智能裁判 · 可以确认数子");
         refereePanelScore.setText(mustContinue ? "红叉：疑似死棋  ·  黄圈：待确认  ·  橙圈：争议点"
                 : String.format(Locale.CHINA,"黑 %.1f · 白 %.1f · %s",
                         audit.score.blackPoints,audit.score.whitePoints,
@@ -1191,8 +1194,7 @@ public class MainActivity extends AppCompatActivity {
     private void showRefereeConfirmation(boolean ignoreContinueAdvice) {
         // Unresolved disputes always return to play, never manual scoring.
         if (refereeRequiresContinuation()) {
-            if (board.canResumeAfterPasses()) resumeFromReferee();
-            else Toast.makeText(this,"当前无法恢复对局，请重新检查棋局",Toast.LENGTH_LONG).show();
+            resumeFromReferee();
             return;
         }
         if (!refereeReview.isEmpty()) {
@@ -1263,10 +1265,34 @@ public class MainActivity extends AppCompatActivity {
                 .setNegativeButton("退出裁判", (dialog, which) -> leaveRefereeReview()).show();
     }
 
-    /** Undo the two end passes on both boards before gameplay can continue. */
+    /** Midgame inspection only clears marks; terminal inspection also undoes both passes. */
     private void resumeFromReferee() {
-        if (evaluating || thinking || !engineReady || !gameReady || !board.canResumeAfterPasses()) {
+        if (evaluating || thinking || !engineReady || !gameReady) {
             Toast.makeText(this, "当前不能恢复对局", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (!board.isGameOver()) {
+            final int moves = board.getMoveCount();
+            refereeAwaitingTap = false;
+            refereeMode = false;
+            refereeConfirmed = false;
+            refereeAccepted.clear();
+            refereeDead.clear();
+            refereeReview.clear();
+            refereeSuggested.clear();
+            refereeInitialReview.clear();
+            boardView.setRefereeMarks(null,null);
+            boardView.setEndgameAlerts(null);
+            endgameDecision = null;
+            // Do not touch engine.undo(), currentPlayer or move history.
+            render(currentPlayer == playerColor ? "棋形检查完成，轮到你了" : "棋形检查完成，轮到 AI");
+            if (isRefereeSmokeIntent()) Log.i("RefereeSmoke","INSPECT_RESUME id=" + refereeSmokeId()
+                    + " moves=" + moves + " after=" + board.getMoveCount() + " terminal="
+                    + board.isGameOver() + " refereeMode=" + refereeMode + " gameReady=" + gameReady);
+            return;
+        }
+        if (!board.canResumeAfterPasses()) {
+            Toast.makeText(this,"当前不能恢复对局",Toast.LENGTH_LONG).show();
             return;
         }
         final GoBoard snapshot = board;
@@ -1872,6 +1898,7 @@ public class MainActivity extends AppCompatActivity {
         endgameEvaluation = null;
         endgameDecision = null;
         refereeMode = false;
+        refereeAwaitingTap = false;
         refereeConfirmed = false;
         refereeAccepted.clear();
         refereeDead.clear();
