@@ -33,6 +33,8 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn('refereeContinueButton.setOnClickListener(v -> resumeFromReferee())',activity)
         self.assertIn('refereeContinueButton.setVisibility(recommendContinue ? View.VISIBLE : View.GONE)',activity)
         self.assertIn('boolean recommendContinue = refereeMode && board.canResumeAfterPasses()',activity)
+        self.assertIn("render(shortStatus);",activity)
+        self.assertIn("refereePanelScore.setText(",activity)
 
     def test_screenshot_accepts_only_png_bytes(self):
         class Result:
