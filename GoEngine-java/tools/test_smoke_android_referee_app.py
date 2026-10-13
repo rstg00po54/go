@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Host-side unit tests for Android referee smoke log and UI validation."""
 import re
+import subprocess
 import sys
 from contextlib import ExitStack
 from pathlib import Path
@@ -13,6 +14,34 @@ from smoke_android_referee_app import (ACTIVITY, CASES, MAIN_ACTIVITY_CLASS, PAC
 
 
 class RefereeSmokeHostTests(unittest.TestCase):
+    def test_review_ui_layout_and_java_bindings(self):
+        root = Path(__file__).resolve().parents[1]
+        layout = (root/"app/src/main/res/layout/activity_main.xml").read_text(encoding="utf-8")
+        activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
+        ids = ("refereePanel","refereePanelTitle","refereePanelScore","refereePanelHint",
+               "refereeResetButton","refereeConfirmButton","refereeExitButton","gameActionPanel")
+        for name in ids:
+            self.assertEqual(layout.count('android:id="@+id/'+name+'"'),1)
+            self.assertIn("R.id."+name,activity)
+        self.assertIn("gameActionPanel.setVisibility(refereeMode ? View.GONE : View.VISIBLE)",activity)
+        self.assertIn("refereePanel.setVisibility(refereeMode ? View.VISIBLE : View.GONE)",activity)
+        self.assertIn('refereeExitButton.setOnClickListener(v -> leaveRefereeReview())',activity)
+
+    def test_screenshot_accepts_only_png_bytes(self):
+        class Result:
+            returncode = 0
+            stdout = b"\\x89PNG\\r\\n\\x1a\\n"+b"test"
+            stderr = b""
+        with tempfile.TemporaryDirectory() as folder:
+            dest = Path(folder)/"screen.png"
+            with mock.patch.object(smoke.subprocess,"run",return_value=Result()):
+                smoke.capture_screenshot("adb","device",dest)
+            self.assertTrue(dest.read_bytes().startswith(b"\\x89PNG"))
+            Result.stdout = b"not a png"
+            with mock.patch.object(smoke.subprocess,"run",return_value=Result()):
+                with self.assertRaises(RuntimeError):
+                    smoke.capture_screenshot("adb","device",dest)
+
     def test_activity_component_is_not_application_id_relative(self):
         self.assertEqual(PACKAGE, "com.badukai.java")
         self.assertEqual(MAIN_ACTIVITY_CLASS, "com.badukai.MainActivity")
