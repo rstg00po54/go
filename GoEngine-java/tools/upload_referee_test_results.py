@@ -20,7 +20,8 @@ from uuid import uuid4
 REPO_NAME = "rstg00po54/go"
 RESULT_BRANCH = "ui-test-results"
 MAX_FILE_SIZE = 12 * 1024 * 1024
-ALLOWED = {"result.json","dialog.txt","logcat.txt","activity.txt","gradle.log"}
+ALLOWED = {"result.json","dialog.txt","review_panel.txt","logcat.txt","activity.txt",
+           "gradle.log","analysis_dialog.png","review_screen.png"}
 
 
 class UploadError(RuntimeError):
