@@ -37,8 +37,9 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn('if (refereeMode && refereeRequiresContinuation() && refereeAwaitingTap)',activity)
         self.assertIn('refereeAwaitingTap = false;',activity)
         self.assertIn('refereeAwaitingTap = true;',activity)
-        self.assertIn('.setPositiveButton("继续下棋", (dialog, which) -> armRefereeTapToResume())',activity)
-        self.assertIn('.setCancelable(false)',activity)
+        self.assertIn('armRefereeTapToResume();',activity)
+        self.assertNotIn('setCancelable(false)',activity)
+        self.assertNotIn('stage=dispute_dialog',activity)
         self.assertIn('refereeContinueButton.setVisibility(View.GONE)',activity)
         self.assertIn('boardView.setRefereeMarks(null,null);',activity)
         self.assertIn('refereeConfirmButton.setVisibility(refereeMode && !mustContinue ? View.VISIBLE : View.GONE)',activity)
@@ -105,14 +106,10 @@ class RefereeSmokeHostTests(unittest.TestCase):
         ready = "智能裁判 · 可以进入确认数子 黄圈 确认数子"
         self.assertEqual(validate_dialog(ready,"cgos9_1"),[])
         self.assertIn("黄圈",validate_dialog(ready.replace("黄圈",""),"cgos9_1"))
-        disputed = ("智能裁判 · 存在争议 棋盘上已标出争议：红叉 5 处、黄圈 2 处、橙圈 1 处。"
-                    "点「继续下棋」关闭弹窗，争议标记仍保留。"
-                    "然后再点屏幕任意位置，清除标记并恢复对局。")
-        for case in ("cgos9_expand_006_12","cgos9_2","cgos9_5"):
-            self.assertEqual(validate_dialog(disputed,case),[],case)
-            self.assertIn("争议标记仍保留",validate_dialog(disputed.replace("争议标记仍保留",""),case))
+        # Disputed cases go directly to the board with a transparent touch
+        # overlay. No modal message is required in that branch.
 
-    def test_two_stage_dispute_dialog_then_full_screen_touch_overlay(self):
+    def test_dispute_shows_marked_board_without_preceding_dialog(self):
         xml = ET.fromstring('<hierarchy><node text="智能裁判 · 存在争议" clickable="false" />'
                             '<node content-desc="点击屏幕继续下棋" clickable="true" '
                             'bounds="[0,0][960,1500]" /></hierarchy>')
@@ -145,7 +142,7 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIsNone(smoke.overlay_marks(log,"missing"))
         self.assertIsNone(smoke.overlay_marks("I/Other: OVERLAY id=active dead=1 review=2 alerts=3","active"))
 
-    def test_first_dialog_continue_only_arms_without_undoing_moves(self):
+    def test_direct_dispute_overlay_arms_without_undoing_moves(self):
         log = ("I/RefereeSmoke: ARMED id=other moves=70 terminal=true marked=5\n"
                "I/RefereeSmoke: ARMED id=active moves=82 terminal=true marked=4")
         self.assertEqual(smoke.armed_event(log,"active"),log.splitlines()[-1])
