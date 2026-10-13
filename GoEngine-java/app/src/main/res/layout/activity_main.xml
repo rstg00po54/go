@@ -558,6 +558,19 @@
                 android:textColor="#71573B"
                 android:textSize="12sp" />
 
+            <!-- Only offered for unsettled verdicts when both terminal passes can be undone. -->
+            <Button
+                android:id="@+id/refereeContinueButton"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/txwq_green_button"
+                android:text="继续下棋，解决争议"
+                android:textAllCaps="false"
+                android:textColor="#FFF4CB"
+                android:textSize="15sp"
+                android:visibility="gone" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
