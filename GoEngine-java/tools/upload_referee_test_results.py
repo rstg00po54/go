@@ -22,7 +22,7 @@ RESULT_BRANCH = "ui-test-results"
 MAX_FILE_SIZE = 12 * 1024 * 1024
 ALLOWED = {"result.json","dialog.txt","review_panel.txt","confirmation_dialog.txt",
            "logcat.txt","activity.txt","gradle.log","analysis_dialog.png",
-           "review_screen.png","confirmation_dialog.png"}
+           "review_screen.png","resumed_screen.png","resume_logcat.txt","confirmation_dialog.png"}
 
 
 class UploadError(RuntimeError):
