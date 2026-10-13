@@ -134,6 +134,10 @@ public final class SmartRefereeSmoke {
         EndgameAdjudicator.Result koResult = EndgameAdjudicator.analyze(ko,new float[81]);
         ok(hasReason(koResult, EndgameAdjudicator.Reason.POSSIBLE_KO),
                 "single-stone recapture ko pattern should be detected");
+        ok(koResult.verdict == EndgameAdjudicator.Verdict.REVIEW_REQUIRED,
+                "ko with an available recapture is a review-or-resume choice, not a mandatory continuation");
+        ok(!hasReason(koResult, EndgameAdjudicator.Reason.FIRST_MOVE_TACTIC),
+                "the same ko exchange must not be counted twice as non-ko life/death urgency");
         GoBoard dame = new GoBoard(9);
         dame.playMove(new Move.Stone(new Point(0,0), StoneColor.BLACK));
         dame.playMove(new Move.Stone(new Point(2,0), StoneColor.WHITE));
