@@ -15,7 +15,21 @@
 
 **仍然缺 13 路正式计目可靠数据**；脚本不拿 9/19 路数据伪称 13 路。若有带 `RU[Chinese]`、数值型 `RE`、无让子的 13 路 SGF，可放到单独目录，用同样的 `--sgf-dir` 参数测试。
 
-## 执行顺序（GoEngine-java 目录）
+## 先测仓库内已经准备好的 115 盘（推荐）
+
+现在仓库中已经附带 **113 盘 9 路 + 2 盘 19 路** 经 `RE` 数字比分筛选的原始棋谱，`benchmark_real_sgf_nn_android.py` 默认读取上限已提高到 200，不会截断后面几盘。**这部分不需要重新下载，也不需要重新编译 APK**：
+
+```bash
+git pull origin rk3588-engine
+python3 tools/test_real_sgf_nn.py
+python3 tools/test_fetch_real_sgf_corpus.py
+python3 tools/benchmark_real_sgf_nn_android.py --preflight
+python3 tools/benchmark_real_sgf_nn_android.py --serial 8719e18a71a2a66c --mode gpu --repeats 1
+```
+
+`test_fetch_real_sgf_corpus.py` 之前出现 `1 != 2` 是因为它错误地假设默认返回前 100 盘的最后一盘一定是 19 路；已修正为在全部样本中按棋盘大小寻找 19 路样本。
+
+## 进一步尝试额外下载 80 + 20 盘（需要网络）
 
 ```bash
 git pull origin rk3588-engine
