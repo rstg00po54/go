@@ -1,9 +1,6 @@
 name: Export KataGo 10b ONNX
 
 on:
-  push:
-    paths:
-      - .github/workflows/export_katago_onnx.yml
   workflow_dispatch:
 
 permissions:
