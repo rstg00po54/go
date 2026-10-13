@@ -129,6 +129,20 @@ public final class EndgameAdjudicator {
         return true;
     }
 
+    /** Two distinct points repeatedly played by opposite sides indicate ko activity, not proof an unsettled ko. */
+    private static boolean recentKoActivity(GoBoard board, Point liberty, Point captured) {
+        List<Move> history = board.getMoveHistorySnapshot();
+        int atLiberty = 0, atCaptured = 0, limit = Math.max(0, history.size() - 48);
+        for (int i = history.size()-1; i >= limit; i--) {
+            Move move = history.get(i);
+            if (!(move instanceof Move.Stone)) continue;
+            Point point = ((Move.Stone) move).point;
+            if (liberty.equals(point)) atLiberty++;
+            else if (captured.equals(point)) atCaptured++;
+        }
+        return atLiberty >= 2 && atCaptured >= 2;
+    }
+
     public static Result analyze(GoBoard board, float[] whiteOwnership) {
         if (board == null) throw new IllegalArgumentException("Missing board");
         int n = board.getSize();
@@ -162,6 +176,14 @@ public final class EndgameAdjudicator {
             }
         }
 
+        Set<Point> possibleKoPoints = new HashSet<>();
+        for (Chain chain : groups) {
+            if (chain.stones.size() != 1 || chain.liberties.size() != 1) continue;
+            Point liberty = chain.liberties.iterator().next();
+            StoneColor attack = chain.color == Intersection.BLACK ? StoneColor.WHITE : StoneColor.BLACK;
+            if (quickKo(board,liberty,attack)) possibleKoPoints.add(liberty);
+        }
+
         for (Chain chain : groups) {
             if (chain.liberties.isEmpty()) {
                 add(findings, highlighted, Reason.UNFINISHED_BOARD, "发现无气棋块，棋面需要检查",
@@ -175,6 +197,9 @@ public final class EndgameAdjudicator {
             // Only tactical threats on chains not strongly marked dead recommend play.
             if (confidentlyDead.containsAll(chain.stones)) continue;
             Point liberty = chain.liberties.iterator().next();
+            // The exact same one-move swing is a normal ko exchange. Handle it
+            // with the ko verdict below, NOT as proven unresolved life/death.
+            if (chain.stones.size() == 1 && possibleKoPoints.contains(liberty)) continue;
             if (canSaveAtari(board,chain,liberty) && canCaptureAtari(board,chain,liberty)) {
                 Set<Point> marked = new LinkedHashSet<>(chain.stones);
                 marked.add(liberty);
@@ -192,11 +217,14 @@ public final class EndgameAdjudicator {
             if (chain.liberties.size() != 1 || chain.stones.size() != 1) continue;
             Point liberty = chain.liberties.iterator().next();
             if (!koChecked.add(liberty)) continue;
-            if (quickKo(board,liberty,chain.color == Intersection.BLACK ? StoneColor.WHITE : StoneColor.BLACK)) {
+            if (possibleKoPoints.contains(liberty)) {
                 Set<Point> marked = new LinkedHashSet<>(chain.stones);
                 marked.add(liberty);
+                boolean fought = recentKoActivity(board, liberty, chain.stones.iterator().next());
                 add(findings, highlighted, Reason.POSSIBLE_KO,
-                        "发现疑似劫形：是否仍在劫争需检查历史及双方确认", marked, liberty);
+                        fought ? "发现劫形，棋谱中两处劫点曾反复落子；请双方确认劫争是否已结束，或继续对局"
+                                : "发现疑似劫形，但尚不能证明劫争未结束；请人工确认或继续对局",
+                        marked, liberty);
                 needsReview = true;
             }
         }
