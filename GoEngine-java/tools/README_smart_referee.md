@@ -14,6 +14,14 @@ KataGo v1.15.0 原生源码中，final_score 采用至少 50 次访问、final_s
 
 ---
 
+## KataGo 实机 GTP 劫争回归（GitHub Actions）
+
+`.github/workflows/katago-native-ko-check.yml` 会下载官方 Linux CPU 引擎 / 从源码构建 v1.15.0，然后运行 `tools/test_native_katago_ko.py`。两版均使用仓库原有的 `10b.bin` 模型及中国规则配置，测试真实 `cgos9_3` 第 64 手和人工构造的标准单劫。具体 CI 结果见 GitHub Actions。
+
+- **v1.15.0**: 有劫时 `final_score` 与 `final_status_list dead` 依旧给预测结果；GTP `play` 对简单劫立即回提返回 `? illegal move`。
+- **v1.18.1**: 计分和死子预测仍然返回；GTP `play` 的宽松合法性已移除简单劫禁检查，立即回提返回 `=`。KataGo 搜索和对局规则的严格合法性不可与宽松 GTP `play` 混同。
+- 因此不能用 `final_score` 是否返回、也不能跨版本用 GTP `play` 成功与否，判断棋局已结束。智能裁判应以本地 `GoBoard` 的严格劫禁及可用搜索证据作独立检查。
+
 ## 可选的局面检查（官子、打吃、劫）
 
 快速 NN 估分弹窗增加「局面检查」按钮；不改变已有快速估分速度。仅点击时执行一次有限的原生 KataGo `kata-search_analyze` 搜索（48 次访问上限、1 秒搜索时间上限），不会落子。棋盘规则层仅复用现有的棋块/气计算，显示当前单气棋块数量和简单劫禁点。日志：`REFEREE_UNFINISHED_CHECK`。
