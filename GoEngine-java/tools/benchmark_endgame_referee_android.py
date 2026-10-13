@@ -66,19 +66,25 @@ public final class RealRefereeRunner {
                 EndgameAdjudicator.Result result = EndgameAdjudicator.analyze(board,ownership);
                 GoBoard.FinalScore count = board.countChineseScore(dead.suggestedDead,
                         Double.parseDouble(fields[1]),0);
-                StringBuilder reasons = new StringBuilder(), moves = new StringBuilder();
+                StringBuilder reasons = new StringBuilder(), moves = new StringBuilder(), locations = new StringBuilder();
                 for (EndgameAdjudicator.Finding finding : result.findings) {
                     if (reasons.length()>0) reasons.append(",");
                     reasons.append(finding.reason.name());
+                    if (locations.length()>0) locations.append("|");
+                    locations.append(finding.reason.name()).append(":")
+                             .append(SmartReferee.toGtpVertices(finding.points,size).replace(' ',','));
                     if (finding.suggestedMove != null) {
                         if (moves.length()>0) moves.append(",");
                         moves.append(finding.suggestedMove.toGtp(size));
                     }
                 }
-                System.out.printf(Locale.US,"RESULT\t%s\t%s\t%d\t%d\t%d\t%.3f\t%s\t%s\t%d%n",
+                System.out.printf(Locale.US,"RESULT\t%s\t%s\t%d\t%d\t%d\t%.3f\t%s\t%s\t%d\t%s\t%s\t%s%n",
                         name,result.verdict,dead.suggestedGroups,dead.reviewGroups,
                         result.groups,count.whitePoints-count.blackPoints,reasons,moves,
-                        board.isGameOver()?1:0);
+                        board.isGameOver()?1:0,
+                        SmartReferee.toGtpVertices(dead.suggestedDead,size).replace(' ',','),
+                        SmartReferee.toGtpVertices(dead.needsReview,size).replace(' ',','),
+                        locations);
                 System.out.flush();
                 name = null; board = null;
             } else throw new IllegalArgumentException("Unknown input: " + fields[0]);
@@ -149,13 +155,18 @@ def java_case(proc, case, ownership):
     proc.stdin.flush()
     response = proc.stdout.readline().strip()
     parts = response.split("\t")
-    if len(parts) != 10 or parts[0] != "RESULT" or parts[1] != case["name"]:
+    if len(parts) != 13 or parts[0] != "RESULT" or parts[1] != case["name"]:
         raise ValueError("Unexpected Java referee result: " + repr(response))
     return dict(game=parts[1], verdict=parts[2], dead_groups=int(parts[3]),
                 review_groups=int(parts[4]), total_groups=int(parts[5]),
                 local_white_lead=float(parts[6]), reasons=parts[7].split(",") if parts[7] else [],
                 suggested_moves=parts[8].split(",") if parts[8] else [],
-                terminal_passes_java=parts[9] == "1")
+                terminal_passes_java=parts[9] == "1",
+                suggested_dead_vertices=parts[10].split(",") if parts[10] else [],
+                needs_review_vertices=parts[11].split(",") if parts[11] else [],
+                finding_locations={entry.split(":",1)[0]+"#"+str(i): entry.split(":",1)[1].split(",")
+                                   if entry.split(":",1)[1] else []
+                                   for i,entry in enumerate(parts[12].split("|")) if ":" in entry})
 
 
 def main():
@@ -163,6 +174,8 @@ def main():
     p.add_argument("--serial", default=os.getenv("ANDROID_SERIAL"))
     p.add_argument("--mode", choices=("gpu","cpu"), default="gpu")
     p.add_argument("--limit", type=int, default=115)
+    p.add_argument("--games", help="Comma-separated exact SGF case names to debug, e.g. cgos9_expand_001_05,cgos9_expand_006_12")
+    p.add_argument("--debug-ownership", action="store_true", help="Keep raw per-intersection NN ownership in local JSON report")
     p.add_argument("--threads", type=int, default=1)
     p.add_argument("--timeout", type=float, default=160)
     p.add_argument("--adb", default=os.getenv("ADB") or shutil.which("adb"))
@@ -173,7 +186,13 @@ def main():
     args = p.parse_args()
     if args.limit < 1 or not 1 <= args.threads <= 64: p.error("Invalid limit/threads")
     cases, skipped = collect_games(args.sgf_dir,args.limit)
-    print("Referee corpus: %d qualified SGFs, %d skipped" % (len(cases),len(skipped)),flush=True)
+    if args.games:
+        names = {item.strip() for item in args.games.split(",") if item.strip()}
+        selected = [game for game in cases if game["name"] in names]
+        missing = names - {game["name"] for game in selected}
+        if missing: p.error("Unknown case name or beyond --limit: " + ", ".join(sorted(missing)))
+        cases = selected
+    print("Referee corpus: %d qualified SGFs selected, %d skipped" % (len(cases),len(skipped)),flush=True)
     if args.preflight: return 0
     if not args.adb: p.error("adb not found")
     if not shutil.which("javac") or not shutil.which("java"): p.error("JDK javac/java missing")
@@ -205,7 +224,11 @@ def main():
             engine.command("clear_cache")
             raw, nn_ms = engine.command("kata-raw-nn 0")
             nn_lead,nn_win,nn_loss = parse_nn_metrics(raw)
-            row = java_case(java,case,ownership_from_raw(raw,case["size"]))
+            ownership = ownership_from_raw(raw,case["size"])
+            row = java_case(java,case,ownership)
+            if args.debug_ownership:
+                row["white_ownership_rows"] = [ownership[i:i+case["size"]]
+                                               for i in range(0,len(ownership),case["size"])]
             row.update(size=case["size"],official_re=case["official_re"],
                        official_white_lead=case["official_white_lead"],
                        nn_white_lead=nn_lead,nn_ms=round(nn_ms,3),
@@ -220,6 +243,10 @@ def main():
             row["recorded_winner_conflict"] = opposite_winner
             row["needs_recorded_score_review"] = opposite_winner or abs(lead_gap) >= 5.0
             results.append(row)
+            if args.games:
+                print("  Dead:",",".join(row["suggested_dead_vertices"]),
+                      "Review:",",".join(row["needs_review_vertices"]),
+                      "Finding locations:",row["finding_locations"],flush=True)
             print("%-27s %-22s dead=%d review=%d raw=%+6.2f area=%+6.2f RE=%s %s%s" %
                   (case["name"],row["verdict"],row["dead_groups"],row["review_groups"],
                    nn_lead,row["local_white_lead"],case["official_re"],
