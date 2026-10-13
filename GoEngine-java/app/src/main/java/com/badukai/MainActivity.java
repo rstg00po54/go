@@ -1142,7 +1142,7 @@ public class MainActivity extends AppCompatActivity {
                     if (!best.pvMoves.isEmpty()) {
                         note.append("\n参考变化：");
                         for (int i=0; i<best.pvMoves.size() && i<5; i++)
-                            note.append(i==0 ? " " : " ").append(best.pvMoves.get(i));
+                            note.append(" ").append(best.pvMoves.get(i));
                     }
                 } else if (!ended) {
                     note.append("\nKataGo 短搜索未返回有效候选，无法判断是否仍有官子。");
@@ -1154,7 +1154,7 @@ public class MainActivity extends AppCompatActivity {
                         suggestions.size(),(System.nanoTime()-startedNs)/1000000L));
                 render("局面检查完成");
                 new AlertDialog.Builder(this).setTitle("局面检查 · KataGo 搜索")
-                        .setMessage(note.toString()).setPositiveButton("继续下棋",null).show();
+                        .setMessage(note.toString()).setPositiveButton(ended ? "关闭" : "继续下棋",null).show();
             });
         });
     }

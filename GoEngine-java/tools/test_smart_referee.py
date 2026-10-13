@@ -98,6 +98,8 @@ public final class SmartRefereeSmoke {
         urgent.playMove(new Move.Stone(new Point(2,1), StoneColor.WHITE));
         urgent.playMove(new Move.Pass(StoneColor.BLACK));
         urgent.playMove(new Move.Pass(StoneColor.WHITE));
+        ok(urgent.countAtariGroups() == 1, "the surrounded black string is in atari");
+        ok(urgent.getSimpleKoPoint() == null, "ordinary atari is not a ko");
         EndgameAdjudicator.Result tactical = EndgameAdjudicator.analyze(urgent, new float[81]);
         ok(tactical.verdict == EndgameAdjudicator.Verdict.CONTINUE_RECOMMENDED,
                 "first-move tactical capture should recommend continuation");
