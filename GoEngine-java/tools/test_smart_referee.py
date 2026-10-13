@@ -110,8 +110,8 @@ public final class SmartRefereeSmoke {
         EndgameAdjudicator.Result doomedAtari = EndgameAdjudicator.analyze(urgent,doomedOwnership);
         ok(doomedAtari.verdict == EndgameAdjudicator.Verdict.REVIEW_REQUIRED,
                 "a strongly NN-dead atari group needs human confirmation, not forced continuation");
-        ok(doomedAtari.summary().contains("确认死子"),
-                "uncertain terminal result must request dead-stone confirmation, not continued play");
+        ok(doomedAtari.summary().contains("建议继续下"),
+                "an unresolved terminal dispute must suggest continuing play");
         ok(!hasReason(doomedAtari,EndgameAdjudicator.Reason.FIRST_MOVE_TACTIC),
                 "extending a proposed dead chain is not proof the game must resume");
         GoBoard shared = new GoBoard(3);
@@ -128,8 +128,8 @@ public final class SmartRefereeSmoke {
         EndgameAdjudicator.Result seki = EndgameAdjudicator.analyze(shared,sekiOwner);
         ok(hasReason(seki, EndgameAdjudicator.Reason.POSSIBLE_SEKI), "shared two-liberty seki-like shape flagged");
         ok(seki.verdict == EndgameAdjudicator.Verdict.REVIEW_REQUIRED, "suspected seki requires confirmation");
-        ok(seki.summary().contains("确认死子"),
-                "seki after both sides pass is reviewable without forcing another move");
+        ok(seki.summary().contains("建议继续下"),
+                "seki-like unresolved dispute must suggest continuing play");
         GoBoard ko = new GoBoard(9);
         ko.playMove(new Move.Stone(new Point(1,1), StoneColor.BLACK));
         for (Point p : new Point[]{new Point(0,2),new Point(2,2),new Point(1,3)})
