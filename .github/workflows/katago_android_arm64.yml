@@ -1,11 +1,6 @@
 name: Build KataGo Android ARM64 CPU
 
 on:
-  push:
-    branches: [rk3588-engine]
-    paths:
-      - 'GoEngine-java/tools/build_katago_android.sh'
-      - '.github/workflows/katago_android_arm64.yml'
   workflow_dispatch:
 
 jobs:
