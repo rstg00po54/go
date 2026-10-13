@@ -15,12 +15,18 @@ jobs:
   real-katago-ko:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        katago_version: ["1.15.0", "1.18.1"]
     steps:
       - uses: actions/checkout@v4
-      - name: Download official KataGo CPU Eigen AVX2 v1.18.1
+      - name: Download official KataGo CPU Eigen AVX2
+        env:
+          KATAGO_VERSION: ${{ matrix.katago_version }}
         run: |
           curl --fail --location --retry 3 --connect-timeout 20 --output /tmp/katago.zip \
-            https://github.com/lightvector/KataGo/releases/download/v1.18.1/katago-v1.18.1-eigenavx2-linux-x64.zip
+            "https://github.com/lightvector/KataGo/releases/download/v${KATAGO_VERSION}/katago-v${KATAGO_VERSION}-eigenavx2-linux-x64.zip"
           mkdir -p /tmp/katago
           unzip -q /tmp/katago.zip -d /tmp/katago
           find /tmp/katago -maxdepth 3 -type f | head -40
