@@ -8,6 +8,8 @@ on:
       - "GoEngine-java/app/src/main/java/com/badukai/game/**"
       - "GoEngine-java/tools/test_smart_referee.py"
       - "GoEngine-java/tools/test_benchmark_endgame_referee_protocol.py"
+      - "GoEngine-java/tools/benchmark_endgame_life_probe_android.py"
+      - "GoEngine-java/tools/test_benchmark_endgame_life_probe.py"
       - "GoEngine-java/tools/benchmark_endgame_referee_android.py"
   pull_request:
     paths:
@@ -15,6 +17,8 @@ on:
       - "GoEngine-java/app/src/main/java/com/badukai/game/**"
       - "GoEngine-java/tools/test_smart_referee.py"
       - "GoEngine-java/tools/test_benchmark_endgame_referee_protocol.py"
+      - "GoEngine-java/tools/benchmark_endgame_life_probe_android.py"
+      - "GoEngine-java/tools/test_benchmark_endgame_life_probe.py"
       - "GoEngine-java/tools/benchmark_endgame_referee_android.py"
   workflow_dispatch:
 
@@ -36,3 +40,7 @@ jobs:
         run: python3 -m py_compile tools/benchmark_endgame_referee_android.py
       - name: Test Java/Python referee TSV protocol
         run: python3 tools/test_benchmark_endgame_referee_protocol.py
+      - name: Test local SGF tactical probe protocol
+        run: python3 tools/test_benchmark_endgame_life_probe.py
+      - name: Syntax-check local probe
+        run: python3 -m py_compile tools/benchmark_endgame_life_probe_android.py
