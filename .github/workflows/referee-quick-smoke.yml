@@ -1,0 +1,22 @@
+name: Android referee quick-path smoke
+on:
+  push:
+    branches: [rk3588-engine]
+    paths:
+      - GoEngine-java/app/src/main/java/com/badukai/MainActivity.java
+      - GoEngine-java/tools/test_smoke_android_referee_app.py
+      - .github/workflows/referee-quick-smoke.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  referee-quick-smoke:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax check host tests
+        working-directory: GoEngine-java
+        run: python3 -m py_compile tools/test_smoke_android_referee_app.py
+      - name: Run complete host-side referee UI smoke tests
+        working-directory: GoEngine-java
+        run: python3 tools/test_smoke_android_referee_app.py
