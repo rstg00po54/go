@@ -156,9 +156,14 @@ def click_ui_description(adb,serial,description):
 
 
 def validate_dialog(text,game=STRICT_CASE):
+    # Both stages are intentional: disputed games first show a dialog while
+    # marks are drawn; Continue dismisses the dialog, the NEXT tap resumes.
     if game != "cgos9_1":
-        raise ValueError("Disputed cases show board marks directly, without a blocking dialog")
-    return [part for part in ("智能裁判","黄圈","确认数子") if part not in text]
+        required = ("智能裁判 · 存在争议","棋盘上已标出争议","红叉","黄圈","橙圈",
+                    "继续下棋","争议标记仍保留","再点屏幕任意位置")
+    else:
+        required = ("智能裁判","黄圈","确认数子")
+    return [part for part in required if part not in text]
 
 
 def capture_screenshot(adb,serial,target):
