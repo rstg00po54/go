@@ -931,9 +931,61 @@ public class MainActivity extends AppCompatActivity {
             refreshRefereePreview();
             return;
         }
-        // Direct entry: disputed games show board marks; settled games show
-        // scoring confirmation. No intermediate choice dialog.
-        startSmartReferee();
+        // Fast raw NN estimate first, just like the automatic pass scoring.
+        // Explicit dead-group search remains available as a separate action.
+        showQuickNnRefereeEstimate();
+    }
+
+    /**
+     * One raw KataGo NN inference, no MCTS, no pass moves and no board changes.
+     * Midgame estimates are informational, not proof of life, death or a final score.
+     */
+    private void showQuickNnRefereeEstimate() {
+        if (!engineReady || !gameReady || evaluating || thinking || variationBoard != null) return;
+        evaluating = true;
+        final GoBoard snapshot = board;
+        final int moves = board.getMoveCount(), size = boardSize;
+        final boolean gameEnded = board.isGameOver();
+        final KataGoEngine.PositionEvaluation cached = gameEnded ? endgameEvaluation : null;
+        render("智能裁判：正在快速 NN 估分...");
+        engineExecutor.execute(() -> {
+            KataGoEngine.PositionEvaluation nn = cached;
+            try {
+                if (nn == null || nn.size != size) nn = engine.evaluatePosition(size);
+            } catch (RuntimeException e) {
+                Log.w(TAG,"Quick referee NN evaluation failed",e);
+                nn = null;
+            }
+            final KataGoEngine.PositionEvaluation result = nn;
+            mainHandler.post(() -> {
+                if (board != snapshot || board.getMoveCount() != moves || boardSize != size) {
+                    evaluating = false;
+                    return;
+                }
+                evaluating = false;
+                if (result == null || !Double.isFinite(result.whiteLead)
+                        || !Double.isFinite(result.blackWin) || !Double.isFinite(result.whiteWin)) {
+                    render("快速 NN 估分失败，请重试");
+                    return;
+                }
+                String leader = Math.abs(result.whiteLead) < 0.05 ? "双方接近持平"
+                        : String.format(Locale.CHINA,"%s领先约 %.1f 目",
+                                result.whiteLead > 0 ? "白棋" : "黑棋",Math.abs(result.whiteLead));
+                String summary = String.format(Locale.CHINA,
+                        "%s\n黑棋胜率 %.1f%% · 白棋胜率 %.1f%%",
+                        leader,result.blackWin * 100.0,result.whiteWin * 100.0);
+                render("快速 NN 预估：" + leader);
+                Log.i(TAG,String.format(Locale.US,"REFEREE_FAST_NN moves=%d terminal=%s whiteLead=%.3f blackWin=%.4f whiteWin=%.4f",
+                        moves,gameEnded,result.whiteLead,result.blackWin,result.whiteWin));
+                new AlertDialog.Builder(this).setTitle("智能裁判 · 快速 NN 估分")
+                        .setMessage(summary + (gameEnded
+                                ? "\n\n双方已停棋，以上仍是预估，不是确认数子结果。"
+                                : "\n\n当前棋形估算，仅供参考；不代表已经判定死活。"))
+                        .setPositiveButton("继续下棋",null)
+                        .setNeutralButton("详细死活分析", (dialog,which) -> startSmartReferee())
+                        .show();
+            });
+        });
     }
 
     private static String refereeSearchSummary(String side, List<KataGoEngine.SearchRecommendation> choices) {
