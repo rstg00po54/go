@@ -222,9 +222,20 @@ public class MainActivity extends AppCompatActivity {
 
     private void startDebugRefereeSmoke() {
         final String id = refereeSmokeId();
+        final String game = getIntent().getStringExtra("referee_smoke_game") == null
+                ? "cgos9_expand_006_12" : getIntent().getStringExtra("referee_smoke_game");
+        // Literal allowlist prevents ADB extras from reading arbitrary assets.
+        if (!("cgos9_1".equals(game) || "cgos9_2".equals(game)
+                || "cgos9_5".equals(game) || "cgos9_expand_006_12".equals(game))) {
+            Log.e("RefereeSmoke","FAIL id=" + id + " stage=fixture unknown=" + game);
+            return;
+        }
+        final String asset = "cgos9_expand_006_12".equals(game)
+                ? "referee_smoke_006_12.sgf" : "referee_smoke_" + game + ".sgf";
         final String backend = getIntent().getStringExtra("referee_smoke_backend");
         final boolean gpu = "gpu".equalsIgnoreCase(backend);
-        Log.i("RefereeSmoke","START id=" + id + " requested=" + (gpu ? "gpu" : "cpu"));
+        Log.i("RefereeSmoke","START id=" + id + " game=" + game
+                + " requested=" + (gpu ? "gpu" : "cpu"));
         render("自动测试：准备重放真实终局棋谱...");
         engineExecutor.execute(() -> {
             try {
@@ -240,7 +251,7 @@ public class MainActivity extends AppCompatActivity {
                     throw new IllegalStateException("9x9 Chinese/komi/search setup failed");
 
                 StringBuilder source = new StringBuilder();
-                try (java.io.InputStream input = getAssets().open("referee_smoke_006_12.sgf")) {
+                try (java.io.InputStream input = getAssets().open(asset)) {
                     byte[] buffer = new byte[4096];
                     int got;
                     while ((got = input.read(buffer)) != -1)
@@ -269,15 +280,15 @@ public class MainActivity extends AppCompatActivity {
                     replay.playMove(move);
                     played++;
                 }
-                if (played != 82 || !replay.isGameOver())
-                    throw new IllegalStateException("Fixture must end after 82 SGF moves and two passes; got " + played);
+                if (played < 4 || !replay.isGameOver())
+                    throw new IllegalStateException("Fixture must end with two passes; moves=" + played);
                 KataGoEngine.PositionEvaluation nn = engine.evaluatePosition(9);
                 if (nn == null || nn.whiteOwnership == null || nn.whiteOwnership.length != 81)
                     throw new IllegalStateException("10b raw NN ownership unavailable");
                 SmartReferee.Analysis analysis = SmartReferee.analyze(replay,nn.whiteOwnership);
                 Log.i("RefereeSmoke",String.format(Locale.US,
-                        "REPLAY id=%s moves=%d terminal=%s backend=%s lead=%+.2f dead=%d review=%d vulnerable=%d",
-                        id,played,replay.isGameOver(),engine.getBackendName(),nn.whiteLead,
+                        "REPLAY id=%s game=%s moves=%d terminal=%s backend=%s lead=%+.2f dead=%d review=%d vulnerable=%d",
+                        id,game,played,replay.isGameOver(),engine.getBackendName(),nn.whiteLead,
                         analysis.suggestedGroups,analysis.reviewGroups,analysis.vulnerableGroups));
                 mainHandler.post(() -> {
                     board = replay;
@@ -1027,20 +1038,28 @@ public class MainActivity extends AppCompatActivity {
                 dialog.show();
                 if (isRefereeSmokeIntent()) {
                     SmartReferee.ScoreWhatIf actualRange = sensitivity;
-                    boolean good = suggestion != null && suggestion.suggestedGroups == 1
+                    String game = getIntent().getStringExtra("referee_smoke_game");
+                    if (game == null) game = "cgos9_expand_006_12";
+                    boolean knownCase = "cgos9_expand_006_12".equals(game);
+                    boolean hasSearch = decision.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT
+                            || (mctsInfo.contains("黑先：") && mctsInfo.contains("白先："));
+                    boolean genericGood = suggestion != null && decision != null
+                            && board.isGameOver() && hasSearch
+                            && reasons.toString().contains("智能裁判") == false
+                            && reasons.toString().contains("黄圈");
+                    boolean strictGood = !knownCase || (suggestion.suggestedGroups == 1
                             && suggestion.reviewGroups == 2 && suggestion.vulnerableGroups == 1
                             && actualRange != null && actualRange.exhaustive()
                             && Math.abs(actualRange.minWhiteLead + 20.0) < 0.01
                             && Math.abs(actualRange.maxWhiteLead - 8.0) < 0.01
                             && decision.verdict == EndgameAdjudicator.Verdict.REVIEW_REQUIRED
-                            && mctsInfo.contains("黑先：") && mctsInfo.contains("白先：")
                             && mctsInfo.contains("搜索胜率") && mctsInfo.contains("变化：")
-                            && reasons.toString().contains("不同死子组合可能改变胜负")
-                            && reasons.toString().contains("黄圈");
+                            && reasons.toString().contains("不同死子组合可能改变胜负"));
+                    boolean good = genericGood && strictGood;
                     Log.i("RefereeSmoke",String.format(Locale.US,
-                            "%s id=%s stage=dialog verdict=%s moves=%d dead=%d review=%d vulnerable=%d "
+                            "%s id=%s game=%s stage=dialog verdict=%s moves=%d dead=%d review=%d vulnerable=%d "
                             + "minLead=%.1f maxLead=%.1f hasBlack=%s hasWhite=%s hasPV=%s",
-                            good ? "PASS" : "FAIL",refereeSmokeId(),decision.verdict,moves,
+                            good ? "PASS" : "FAIL",refereeSmokeId(),game,decision.verdict,moves,
                             suggestion == null ? -1 : suggestion.suggestedGroups,
                             suggestion == null ? -1 : suggestion.reviewGroups,
                             suggestion == null ? -1 : suggestion.vulnerableGroups,
