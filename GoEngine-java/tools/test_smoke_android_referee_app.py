@@ -44,8 +44,9 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn('boardView.setRefereeMarks(null,null);',activity)
         self.assertIn('refereeConfirmButton.setVisibility(refereeMode && !mustContinue ? View.VISIBLE : View.GONE)',activity)
         self.assertIn('refereeConfirmButton.setText("确认数子")',activity)
-        self.assertIn('endgameDecision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT;',activity)
-        self.assertIn('if (decision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT',activity)
+        self.assertIn('return !board.isGameOver() || (endgameDecision != null',activity)
+        self.assertIn('if ((!endedAtStart || decision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT)',activity)
+        self.assertIn('if (endedAtStart && decision.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT)',activity)
         self.assertIn("render(shortStatus);",activity)
         self.assertIn("refereePanelScore.setText(",activity)
 
@@ -53,7 +54,7 @@ class RefereeSmokeHostTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
         self.assertIn('countTerritoryButton.setText("智能裁判");',activity)
-        self.assertIn('new AlertDialog.Builder(this).setTitle("智能裁判 · 对局还没结束")',activity)
+        self.assertNotIn('现在仍在下棋。继续对弈，双方连续停一手后再点智能裁判',activity)
         self.assertIn('countTerritoryButton.setEnabled(engineReady && gameReady',activity)
         self.assertIn('if (refereeAwaitingTap) resumeFromReferee();',activity)
 
