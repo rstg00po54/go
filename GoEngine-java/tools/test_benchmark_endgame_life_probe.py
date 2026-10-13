@@ -72,6 +72,14 @@ class LifeProbeTests(unittest.TestCase):
         self.assertEqual([item["move"] for item in found], ["E4","P16"])
         self.assertEqual(found[0]["visits"], 487)
         self.assertEqual(found[0]["pv"], ["E4","E3","F3","D3"])
+        streaming = ("info move C7 visits 62 winrate 0.996 scoreLead 20.81 pv C7 D9 C8 "
+                     "info move C7 visits 81 winrate 0.996 scoreLead 20.86 pv C7 D9 C8 "
+                     "info move H5 visits 3 winrate 0.200 scoreLead -5.00 pv H5 "
+                     "info move C7 visits 82 winrate 0.996 scoreLead 20.86 pv C7 D9 C8")
+        dedup = parse_search_candidates(streaming)
+        self.assertEqual([row["move"] for row in dedup], ["C7","H5"])
+        self.assertEqual(dedup[0]["visits"], 82)
+        self.assertEqual(dedup[0]["pv"], ["C7","D9","C8"])
 
     def test_mcts_reply_probe_is_nonplaying(self):
         engine = FakeGtpEngine()
@@ -84,6 +92,20 @@ class LifeProbeTests(unittest.TestCase):
         self.assertGreater(rows[0]["reply_search_raw_length"], 20)
         self.assertEqual(engine.calls.count("kata-search_analyze white 50 minmoves 3 maxmoves 3"),1)
         self.assertEqual(engine.calls.count("kata-search_analyze black 50 minmoves 3 maxmoves 3"),1)
+        self.assertEqual(engine.calls[-1], "loadsgf /tmp/end.sgf")
+
+    def test_best_reply_is_applied_and_raw_nn_recomputed(self):
+        engine = FakeGtpEngine()
+        case = {"name":"case", "remote":"/tmp/end.sgf", "size":9,
+                "moves":82, "komi":7.0, "terminal_passes":True}
+        baseline, rows = run_probes(engine, case, ["A9"], ["B9"],64,3.0,True)
+        self.assertEqual(baseline["white_lead"], 1.0)
+        self.assertEqual([r["verified_reply_move"] for r in rows], ["D4","D4"])
+        self.assertEqual([r["verified_reply_color"] for r in rows], ["white","black"])
+        self.assertEqual([r["two_ply_white_lead"] for r in rows], [0.0,2.0])
+        self.assertEqual([r["two_ply_delta_white_lead"] for r in rows], [-1.0,1.0])
+        self.assertEqual(engine.calls.count("play white D4"),1)
+        self.assertEqual(engine.calls.count("play black D4"),1)
         self.assertEqual(engine.calls[-1], "loadsgf /tmp/end.sgf")
 
     def test_probes_reload_original_passes_and_are_independent(self):
