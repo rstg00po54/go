@@ -177,9 +177,12 @@ def read_recorded_game(sgf_text, filename):
 def collect_games(sgf_dir=None, limit=100):
     sources = []
     if sgf_dir is None:
-        data = json.loads(CORPUS.read_text(encoding="utf-8"))
-        for case in data["cases"]:
-            sources.append((case["name"], case["sgf"], case["url"]))
+        # All SGFs are bundled in version control: no runtime download needed.
+        # Shards keep individual GitHub file writes under size limits.
+        for corpus_path in [CORPUS] + sorted(CORPUS.parent.glob("real_scored_games_extra_*.json")):
+            data = json.loads(corpus_path.read_text(encoding="utf-8"))
+            for case in data["cases"]:
+                sources.append((case["name"], case["sgf"], case["url"]))
     else:
         if not sgf_dir.is_dir():
             raise ValueError("Not a directory: " + str(sgf_dir))
@@ -191,14 +194,18 @@ def collect_games(sgf_dir=None, limit=100):
                 continue
             sources.append((str(path.relative_to(sgf_dir)), path.read_text(
                 encoding="utf-8-sig", errors="replace"), str(path)))
-    accepted, skipped = [], []
+    accepted, skipped, seen = [], [], set()
     for name, sgf, source in sources:
         if len(accepted) >= limit:
             break
         try:
             item = read_recorded_game(sgf, name)
-            item.update(sgf=sgf, source=source,
-                        sha256=hashlib.sha256(sgf.encode("utf-8")).hexdigest())
+            digest = hashlib.sha256(sgf.encode("utf-8")).hexdigest()
+            if digest in seen:
+                skipped.append({"name": name, "reason": "duplicate SGF content"})
+                continue
+            seen.add(digest)
+            item.update(sgf=sgf, source=source, sha256=digest)
             accepted.append(item)
         except ValueError as err:
             skipped.append({"name": name, "reason": str(err)})
@@ -315,7 +322,7 @@ def main(argv=None):
     p.add_argument("--serial", default=os.getenv("ANDROID_SERIAL"))
     p.add_argument("--mode", choices=("gpu", "cpu", "both"), default="gpu")
     p.add_argument("--sgf-dir", type=Path, help="Your own real scored SGFs, supports 9/13/19; private by default")
-    p.add_argument("--limit", type=int, default=100)
+    p.add_argument("--limit", type=int, default=150)
     p.add_argument("--repeats", type=int, default=2)
     p.add_argument("--threads", type=int, default=1)
     p.add_argument("--adb", default=os.getenv("ADB") or shutil.which("adb"))
@@ -337,10 +344,13 @@ def main(argv=None):
     counts = {size: sum(g["size"] == size for g in cases) for size in (9, 13, 19)}
     print("Validated %d recorded scored games (9=%d, 13=%d, 19=%d), skipped %d" %
           (len(cases), counts[9], counts[13], counts[19], len(skipped)), flush=True)
-    for game in cases:
+    for game in cases[:10]:
         print("  %-34s %2dx%d %-8s passes=%s" % (
             game["name"], game["size"], game["size"], game["official_re"],
             game["terminal_passes"]), flush=True)
+    if len(cases) > 10:
+        print("  ... %d more real scored games, full details in report" % (len(cases) - 10),
+              flush=True)
     for drop in skipped[:10]:
         print("  SKIP %s: %s" % (drop["name"], drop["reason"]), file=sys.stderr)
     if args.preflight:
