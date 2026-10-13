@@ -99,13 +99,13 @@ def capture_screenshot(adb,serial,target):
 
 
 def validate_review_panel(text,game=STRICT_CASE):
-    required = ("智能裁判 ·","黑","白","恢复 AI 建议","确认数子","退出复核")
+    required = ("智能裁判 ·","黑","白","恢复建议","确认数子","退出复核")
     if game != "cgos9_1":
-        required += ("可能没下完","继续下棋，解决争议")
+        required += ("可能没下完","继续下棋")
     if game == STRICT_CASE:
         required += ("黄圈 2 块",)
     missing = [part for part in required if part not in text]
-    if game == "cgos9_1" and "继续下棋，解决争议" in text:
+    if game == "cgos9_1" and "继续下棋" in text:
         missing.append("stable case unexpectedly offers continue-playing")
     return missing
 
