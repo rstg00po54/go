@@ -58,6 +58,22 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn('countTerritoryButton.setEnabled(engineReady && gameReady',activity)
         self.assertIn('if (refereeAwaitingTap) resumeFromReferee();',activity)
 
+    def test_unmarked_midgame_shows_only_unfinished_message(self):
+        root = Path(__file__).resolve().parents[1]
+        activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
+        marker = "if (!endedAtStart && refereeDead.isEmpty() && refereeReview.isEmpty() && alerts.isEmpty()) {"
+        self.assertIn(marker,activity)
+        branch = activity.split(marker,1)[1].split("refreshRefereePreview();",1)[0]
+        self.assertIn('refereeMode = false;',branch)
+        self.assertIn('endgameDecision = null;',branch)
+        self.assertIn('render("棋局还没下完");',branch)
+        self.assertIn('.setMessage("棋局还没下完")',branch)
+        self.assertIn('.setPositiveButton("继续下棋",null)',branch)
+        self.assertIn('return;',branch)
+        self.assertNotIn('armRefereeTapToResume()',branch)
+        self.assertNotIn('resumeFromReferee()',branch)
+        self.assertNotIn('engine.undo()',branch)
+
     def test_midgame_referee_is_available_without_passes_or_scoring(self):
         root = Path(__file__).resolve().parents[1]
         activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
