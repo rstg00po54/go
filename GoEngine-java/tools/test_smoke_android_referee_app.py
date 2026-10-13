@@ -34,7 +34,9 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn('refereeContinueButton.setOnClickListener(v -> resumeFromReferee())',activity)
         self.assertIn('refereeContinueButton.setVisibility(mustContinue ? View.VISIBLE : View.GONE)',activity)
         self.assertIn('refereeConfirmButton.setVisibility(refereeMode && !mustContinue ? View.VISIBLE : View.GONE)',activity)
-        self.assertIn('refereeConfirmButton.setText(needsReview ? "确认死子" : "确认数子")',activity)
+        self.assertIn('refereeConfirmButton.setText("确认数子")',activity)
+        self.assertIn('endgameDecision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT;',activity)
+        self.assertIn('if (decision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT',activity)
         self.assertIn("render(shortStatus);",activity)
         self.assertIn("refereePanelScore.setText(",activity)
 
@@ -85,12 +87,13 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertEqual(validate_dialog(text), [])
         self.assertIn("白先：", validate_dialog(text.replace("白先：","")))
 
-    def test_finished_disputed_referee_offers_dead_review_not_continue(self):
-        panel = "智能裁判 · 请确认死子 试算：黑 34.0 · 白 41.0 确认死子"
-        self.assertEqual(validate_review_panel(panel),[])
-        self.assertIn("确认死子",validate_review_panel(panel.replace("确认死子","")))
-        for label in ("继续下棋","确认数子","恢复建议","退出复核"):
-            self.assertIn("unexpected button: "+label,validate_review_panel(panel+" "+label))
+    def test_disputed_referee_only_offers_continue(self):
+        panel = "智能裁判 · 存在争议 死活或劫争不确定 · 暂不结算 继续下棋"
+        for case in ("cgos9_expand_006_12","cgos9_2","cgos9_5"):
+            self.assertEqual(validate_review_panel(panel,case),[],case)
+            self.assertIn("继续下棋",validate_review_panel(panel.replace("继续下棋",""),case))
+            for label in ("确认死子","确认数子","恢复建议","退出复核"):
+                self.assertIn("unexpected button: "+label,validate_review_panel(panel+" "+label,case))
 
     def test_settled_referee_can_confirm_score_without_continue_button(self):
         panel = "智能裁判 · 可以确认数子 黑 34.0 · 白 41.0 恢复建议 确认数子 退出复核"
@@ -99,28 +102,31 @@ class RefereeSmokeHostTests(unittest.TestCase):
                       validate_review_panel(panel+" 继续下棋","cgos9_1"))
         self.assertIn("确认数子",validate_review_panel(panel.replace("确认数子",""),"cgos9_1"))
 
-    def test_android_confirmation_dialogs_for_double_pass_cases(self):
-        samples = {
-            "cgos9_expand_006_12":"还有 2 块死子需要确认 返回棋盘确认 黄圈全部判活",
-            "cgos9_2":"还有 1 块死子需要确认 返回棋盘确认 黄圈全部判活",
-            "cgos9_5":"疑似双活或劫争尚未证明 人工确认并数子",
-            "cgos9_1":"确认中国规则数子 已复核并确认"}
-        for case,text in samples.items():
-            self.assertEqual(validate_confirmation_dialog(text,case),[],case)
-            self.assertNotEqual(validate_confirmation_dialog("",case),[],case)
-            if case != "cgos9_1":
-                self.assertIn("unexpected forced continuation",
-                              validate_confirmation_dialog(text+" 继续下棋",case))
+    def test_only_ready_to_count_opens_scoring_confirmation(self):
+        text = "确认中国规则数子 已复核并确认"
+        self.assertEqual(validate_confirmation_dialog(text,"cgos9_1"),[])
+        self.assertIn("已复核并确认",validate_confirmation_dialog("确认中国规则数子","cgos9_1"))
+        for case in ("cgos9_expand_006_12","cgos9_2","cgos9_5"):
+            with self.assertRaises(ValueError):
+                validate_confirmation_dialog(text,case)
+
+    def test_resume_event_from_live_android_app(self):
+        records = ("I/RefereeSmoke: RESUME id=prior moves=99 terminal=false refereeMode=false gameReady=true\n"
+                   "I/RefereeSmoke: RESUME_FAIL id=active moves=82 undo=false\n"
+                   "I/RefereeSmoke: RESUME id=active moves=80 terminal=false refereeMode=false gameReady=true")
+        self.assertEqual(smoke.resume_event(records,"active")["status"],"PASS")
+        self.assertEqual(smoke.resume_event(records.splitlines()[1],"active")["status"],"FAIL")
+        self.assertIsNone(smoke.resume_event(records,"missing"))
 
     def test_tap_ui_text_uses_exact_accessibility_bounds(self):
-        xml = ET.fromstring('<hierarchy><node text="确认死子" bounds="[50,100][250,136]" />'
+        xml = ET.fromstring('<hierarchy><node text="继续下棋" bounds="[50,100][250,136]" />'
                             '<node text="确认数子" bounds="[251,100][451,136]" /></hierarchy>')
         with mock.patch.object(smoke,"read_dialog_root",return_value=xml), \
              mock.patch.object(smoke,"run",return_value="") as adb_run:
-            smoke.click_ui_text("adb","serial","确认死子")
+            smoke.click_ui_text("adb","serial","继续下棋")
             self.assertEqual(adb_run.call_args.args[0][-2:],["150","118"])
             with self.assertRaises(RuntimeError):
-                smoke.click_ui_text("adb","serial","继续下棋")
+                smoke.click_ui_text("adb","serial","确认死子")
 
     def test_referee_buttons_share_one_compact_row(self):
         root = Path(__file__).resolve().parents[1]
