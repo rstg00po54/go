@@ -84,6 +84,14 @@ def resume_event(log,run_id):
     return result
 
 
+def midgame_resume_event(log,run_id):
+    """Midgame dismiss keeps every move, unlike terminal-pass undo."""
+    for line in reversed(log.splitlines()):
+        if "RefereeSmoke" in line and re.search(r"\bINSPECT_RESUME id="+re.escape(run_id)+r"\b",line):
+            return line.strip()
+    return None
+
+
 def armed_event(log,run_id):
     """Ensure dialog Continue only ARMS a future tap; it must not undo passes."""
     result = None
@@ -155,10 +163,12 @@ def click_ui_description(adb,serial,description):
     raise RuntimeError("Missing clickable full-screen referee overlay: "+description)
 
 
-def validate_dialog(text,game=STRICT_CASE):
-    # Both stages are intentional: disputed games first show a dialog while
-    # marks are drawn; Continue dismisses the dialog, the NEXT tap resumes.
-    if game != "cgos9_1":
+def validate_dialog(text,game=STRICT_CASE,midgame=False):
+    # Both stages: popup with live board marks, then tap-to-dismiss.
+    if midgame:
+        required = ("智能裁判 · 当前棋形分析","正在对局","红叉","黄圈","橙圈",
+                    "继续下棋","争议标记仍保留","不会撤销落子")
+    elif game != "cgos9_1":
         required = ("智能裁判 · 存在争议","棋盘上已标出争议","红叉","黄圈","橙圈",
                     "继续下棋","争议标记仍保留","再点屏幕任意位置")
     else:
@@ -201,11 +211,12 @@ def validate_confirmation_dialog(text,game):
     return [part for part in required if part not in text]
 
 
-def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir):
-    case_dir = out_dir / game
+def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir,midgame=False):
+    case_dir = out_dir / (game+"_midgame" if midgame else game)
     case_dir.mkdir(parents=True,exist_ok=True)
     run_id = uuid4().hex[:16]
-    result = {"game":game,"run_id":run_id,"status":"ERROR","backend":backend}
+    result = {"game":game,"run_id":run_id,"status":"ERROR","backend":backend,
+              "inspection":"midgame" if midgame else "terminal"}
     try:
         print("\n--- %s [%s] ---" % (game,backend),flush=True)
         run([adb,"-s",serial,"shell","am","force-stop",PACKAGE])
@@ -213,7 +224,8 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir):
                      "--ez","referee_smoke","true",
                      "--es","referee_smoke_id",run_id,
                      "--es","referee_smoke_game",game,
-                     "--es","referee_smoke_backend",backend],timeout=35)
+                     "--es","referee_smoke_backend",backend,
+                     "--ez","referee_smoke_midgame",str(midgame).lower()],timeout=35)
         (case_dir/"activity.txt").write_text(start,encoding="utf-8")
         if "Error:" in start or "Exception" in start:
             raise RuntimeError("Failed to start Activity: " + start)
@@ -237,7 +249,7 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir):
         if "game="+game not in terminal["line"]:
             raise RuntimeError("Incorrect SGF in terminal event")
         if not skip_ui:
-            if game=="cgos9_1":
+            if game=="cgos9_1" and not midgame:
                 dialog = read_dialog_xml(adb,serial)
                 (case_dir/"dialog.txt").write_text(dialog+"\n",encoding="utf-8")
                 missing = validate_dialog(dialog,game)
@@ -260,15 +272,16 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir):
                 capture_screenshot(adb,serial,case_dir/"confirmation_dialog.png")
                 print("Ready-to-count UI PASS: scoring dialog opens.",flush=True)
             else:
-                if "stage=dispute_dialog" not in terminal["line"]:
-                    raise RuntimeError("Expected referee dispute dialog before screen touch")
+                expected_stage = "midgame_dialog" if midgame else "dispute_dialog"
+                if "stage="+expected_stage not in terminal["line"]:
+                    raise RuntimeError("Expected referee "+expected_stage+" before screen touch")
                 marks = overlay_marks(log,run_id)
-                if marks is None or sum(marks.values())==0:
-                    raise RuntimeError("Referee found a dispute but marked no board positions")
+                if marks is None or (not midgame and sum(marks.values())==0):
+                    raise RuntimeError("Referee dispute mark log missing or terminal marks empty")
                 result["marks"] = marks
                 first = read_dialog_xml(adb,serial)
                 (case_dir/"dialog.txt").write_text(first+"\n",encoding="utf-8")
-                missing = validate_dialog(first,game)
+                missing = validate_dialog(first,game,midgame=midgame)
                 if missing:
                     raise RuntimeError("Initial dispute dialog missing: %s" % missing)
                 capture_screenshot(adb,serial,case_dir/"analysis_dialog.png")
@@ -288,8 +301,9 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir):
                     time.sleep(1)
                 (case_dir/"armed_logcat.txt").write_text(arm_log,encoding="utf-8")
                 before = int(re.search(r"\bmoves=(\d+)\b",terminal["line"]).group(1))
-                if armed is None or "moves="+str(before) not in armed or "terminal=true" not in armed:
-                    raise RuntimeError("First Continue did not retain the two-pass game: "+str(armed))
+                original_terminal = "false" if midgame else "true"
+                if armed is None or "moves="+str(before) not in armed or ("terminal="+original_terminal) not in armed:
+                    raise RuntimeError("First Continue incorrectly changed the current game: "+str(armed))
                 if resume_event(arm_log,run_id):
                     raise RuntimeError("First Continue resumed before the required screen tap")
                 root = read_dialog_root(adb,serial)
@@ -303,27 +317,39 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir):
                 # Stage two: tap the full-screen overlay. This gesture is never
                 # forwarded to the Go board as a move.
                 click_ui_description(adb,serial,"点击屏幕继续下棋")
-                expected_moves = before-2
-                resume = None
+                expected_moves = before if midgame else before-2
+                event = None
                 logs = ""
                 deadline = time.monotonic()+40
                 while time.monotonic()<deadline:
                     logs = run([adb,"-s",serial,"logcat","-d","-v","brief",
                                 "-s","RefereeSmoke:I","AndroidRuntime:E","*:S"],timeout=20)
-                    resume = resume_event(logs,run_id)
-                    if resume:
+                    event = midgame_resume_event(logs,run_id) if midgame else resume_event(logs,run_id)
+                    if event:
                         break
                     time.sleep(2)
                 (case_dir/"resume_logcat.txt").write_text(logs,encoding="utf-8")
-                if not resume or resume["status"]!="PASS":
-                    raise RuntimeError("Second-tap resume failed: "+str(resume))
-                line = resume["line"]
-                if ("moves="+str(expected_moves)) not in line or ("terminal=false") not in line or (
-                        "refereeMode=false") not in line or ("gameReady=true") not in line:
-                    raise RuntimeError("Second tap incorrectly advanced or desynced the game: "+line)
-                result["resumed"] = resume
+                if not event:
+                    raise RuntimeError("Second-tap resume event missing")
+                if midgame:
+                    if ("moves="+str(expected_moves)) not in event or (
+                            "after="+str(expected_moves)) not in event or "terminal=false" not in event or (
+                            "refereeMode=false") not in event or "gameReady=true" not in event:
+                        raise RuntimeError("Midgame inspection changed moves or active game: "+event)
+                    if resume_event(logs,run_id):
+                        raise RuntimeError("Midgame inspection unexpectedly undid terminal passes")
+                    result["resumed"] = {"status":"PASS","line":event}
+                else:
+                    if event["status"]!="PASS":
+                        raise RuntimeError("Terminal resume failed: "+str(event))
+                    line = event["line"]
+                    if ("moves="+str(expected_moves)) not in line or "terminal=false" not in line or (
+                            "refereeMode=false") not in line or "gameReady=true" not in line:
+                        raise RuntimeError("Terminal resume changed the board incorrectly: "+line)
+                    result["resumed"] = event
                 capture_screenshot(adb,serial,case_dir/"resumed_screen.png")
-                print("Second screen tap PASS: marks removed, two passes undone, no accidental move.",flush=True)
+                print("Second screen tap PASS: %s, no accidental move." %
+                      ("midgame moves preserved" if midgame else "terminal passes undone"),flush=True)
         else:
             print("UI check skipped (engine + referee assertions still checked).",flush=True)
         result["status"] = "PASS"
@@ -342,6 +368,8 @@ def main():
     parser.add_argument("--adb",default=shutil.which("adb"))
     parser.add_argument("--apk",type=Path,default=PROJECT/"app/build/outputs/apk/debug/app-debug.apk")
     parser.add_argument("--backend",choices=("cpu","gpu"),default="cpu")
+    parser.add_argument("--midgame",action="store_true",
+                        help="Replay SGF without terminal passes; inspect while game is still running")
     selection = parser.add_mutually_exclusive_group()
     selection.add_argument("--game",choices=CASES,help="Single fixture (default: cgos9_expand_006_12)")
     selection.add_argument("--games",help="Comma-separated subset of known fixture names")
@@ -382,7 +410,8 @@ def main():
         parser.error(str(exc))
     out_dir = PROJECT/"build/android_referee_smoke"/datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     out_dir.mkdir(parents=True,exist_ok=True)
-    report = {"status":"ERROR","backend_requested":args.backend,"cases":[],"outputs":str(out_dir)}
+    report = {"status":"ERROR","backend_requested":args.backend,
+              "inspection":"midgame" if args.midgame else "terminal","cases":[],"outputs":str(out_dir)}
     code = 1
     upload_error = None
     try:
@@ -403,7 +432,8 @@ def main():
             print("Installing:",args.apk,flush=True)
             print(run([args.adb,"-s",serial,"install","-r","-t",str(args.apk)],timeout=120).strip(),flush=True)
         for game in games:
-            report["cases"].append(run_one_case(args.adb,serial,args.backend,game,args.timeout,args.skip_ui,out_dir))
+            report["cases"].append(run_one_case(args.adb,serial,args.backend,game,args.timeout,
+                                                args.skip_ui,out_dir,midgame=args.midgame))
         good = sum(case["status"]=="PASS" for case in report["cases"])
         report["status"] = "PASS" if good==len(games) else "FAIL"
         print("\nSummary: %d/%d PASS; %s" % (good,len(games),report["status"]),flush=True)
