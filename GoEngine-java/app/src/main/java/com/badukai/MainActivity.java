@@ -593,21 +593,16 @@ public class MainActivity extends AppCompatActivity {
                 .setView(chart).setPositiveButton("关闭", null).show();
     }
 
-    /** Actual tactical continuation is distinct from uncertain dead stones after both passes. */
+    /** User-facing rule: any unresolved endgame dispute means continue playing. */
     private boolean refereeRequiresContinuation() {
         return endgameDecision != null
-                && endgameDecision.verdict == EndgameAdjudicator.Verdict.CONTINUE_RECOMMENDED;
-    }
-
-    private boolean refereeNeedsDeadReview() {
-        return endgameDecision != null
-                && endgameDecision.verdict == EndgameAdjudicator.Verdict.REVIEW_REQUIRED;
+                && endgameDecision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT;
     }
 
     private void onBoardTap(int x, int y) {
         DebugLog.enter(TAG, "onBoardTap in, x=" + x + ", y=" + y + ", engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer + ", playerColor=" + playerColor);
         if (refereeMode) {
-            // Only proven first-move tactical urgency blocks manual dead-stone review.
+            // Unresolved dead-stone / ko / seki disputes cannot be manually scored.
             if (refereeRequiresContinuation()) return;
             if (board.isInside(x, y) && board.get(x, y) != Intersection.EMPTY) {
                 Point tapped = new Point(x, y);
@@ -1066,12 +1061,12 @@ public class MainActivity extends AppCompatActivity {
                         + "以上均为辅助判断，不能代替双方确认。");
                 AlertDialog.Builder dialog = new AlertDialog.Builder(this)
                         .setTitle("智能裁判 · " + decision.summary()).setMessage(reasons.toString());
-                if (decision.verdict == EndgameAdjudicator.Verdict.CONTINUE_RECOMMENDED
+                if (decision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT
                         && board.canResumeAfterPasses())
                     dialog.setPositiveButton("继续下棋", (ignored, which) -> resumeFromReferee());
-                else if (decision.verdict == EndgameAdjudicator.Verdict.CONTINUE_RECOMMENDED)
+                else if (decision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT)
                     dialog.setPositiveButton("返回棋盘", null);
-                else dialog.setPositiveButton("确认死子", null).setNegativeButton("稍后确认", null);
+                else dialog.setPositiveButton("确认数子", null).setNegativeButton("稍后确认", null);
                 dialog.show();
                 if (isRefereeSmokeIntent()) {
                     SmartReferee.ScoreWhatIf actualRange = sensitivity;
@@ -1138,30 +1133,23 @@ public class MainActivity extends AppCompatActivity {
         int pending = SmartReferee.countGroups(board, refereeReview);
         boardView.setRefereeMarks(refereeDead, refereeReview);
         boolean mustContinue = refereeRequiresContinuation();
-        boolean needsReview = refereeNeedsDeadReview();
-        // Uncertain dead stones after both passes are reviewable; a short NN search
-        // is not sufficient evidence to force the players to continue indefinitely.
-        String shortStatus = mustContinue ? "智能裁判\n建议继续下" : "智能裁判\n确认死子";
-        refereePanelTitle.setText(mustContinue ? "智能裁判 · 建议继续下"
-                : needsReview ? "智能裁判 · 请确认死子" : "智能裁判 · 可以确认数子");
-        refereePanelScore.setText(mustContinue ? "发现紧急攻防 · 暂不结算"
-                : String.format(Locale.CHINA,"试算：黑 %.1f · 白 %.1f · %s",
+        String shortStatus = mustContinue ? "智能裁判\n建议继续下" : "智能裁判\n确认数子";
+        refereePanelTitle.setText(mustContinue ? "智能裁判 · 存在争议" : "智能裁判 · 可以确认数子");
+        refereePanelScore.setText(mustContinue ? "死活或劫争不确定 · 暂不结算"
+                : String.format(Locale.CHINA,"黑 %.1f · 白 %.1f · %s",
                         audit.score.blackPoints,audit.score.whitePoints,
                         Math.abs(lead) < 0.001 ? "平局" :
                                 String.format(Locale.CHINA,"%s领先 %.1f 目",lead > 0 ? "白" : "黑",Math.abs(lead))));
-        refereePanelHint.setText(mustContinue ? "有可立即提子的攻防，建议恢复对局。"
-                : needsReview ? (pending > 0
-                        ? "双方已停棋；点黄圈逐块判活或判死。待确认 " + pending + " 块。"
-                        : "双方已停棋；检查红叉建议死子，确认后即可数子。")
-                : "点棋子可整块确认死活；红叉为拟死子，橙圈提示攻防风险。");
+        refereePanelHint.setText(mustContinue
+                ? "双方虽已停棋，但 AI 发现争议，建议继续下几手再停棋。"
+                : "双方已停棋且无明显争议；确认死子后即可数子。");
         render(shortStatus);
     }
 
     private void showRefereeConfirmation() { showRefereeConfirmation(false); }
 
     private void showRefereeConfirmation(boolean ignoreContinueAdvice) {
-        // Continue only on explicit tactical urgency. REVIEW_REQUIRED is a
-        // finished game whose disputed dead stones can be confirmed by the user.
+        // Unresolved disputes always return to play, never manual scoring.
         if (refereeRequiresContinuation()) {
             if (board.canResumeAfterPasses()) resumeFromReferee();
             else Toast.makeText(this,"当前无法恢复对局，请重新检查棋局",Toast.LENGTH_LONG).show();
@@ -2048,19 +2036,17 @@ public class MainActivity extends AppCompatActivity {
         refereePanel.setVisibility(refereeMode ? View.VISIBLE : View.GONE);
         gameActionPanel.setVisibility(refereeMode ? View.GONE : View.VISIBLE);
         boolean mustContinue = refereeMode && refereeRequiresContinuation();
-        boolean needsReview = refereeMode && refereeNeedsDeadReview();
         boolean mayResume = mustContinue && board.canResumeAfterPasses();
         refereeContinueButton.setVisibility(mustContinue ? View.VISIBLE : View.GONE);
         refereeContinueButton.setEnabled(mayResume && !evaluating && !thinking);
-        // Exactly one action for urgent fighting or uncertain dead stones; stable
-        // positions retain the three normal manual scoring actions.
-        refereeResetButton.setVisibility(refereeMode && !mustContinue && !needsReview ? View.VISIBLE : View.GONE);
+        // One action for any disagreement; scoring actions only if READY_TO_COUNT.
+        refereeResetButton.setVisibility(refereeMode && !mustContinue ? View.VISIBLE : View.GONE);
         refereeConfirmButton.setVisibility(refereeMode && !mustContinue ? View.VISIBLE : View.GONE);
-        refereeExitButton.setVisibility(refereeMode && !mustContinue && !needsReview ? View.VISIBLE : View.GONE);
-        refereeConfirmButton.setText(needsReview ? "确认死子" : "确认数子");
+        refereeExitButton.setVisibility(refereeMode && !mustContinue ? View.VISIBLE : View.GONE);
+        refereeConfirmButton.setText("确认数子");
         refereeConfirmButton.setEnabled(refereeMode && !mustContinue && !evaluating);
-        refereeResetButton.setEnabled(refereeMode && !mustContinue && !needsReview && !evaluating);
-        refereeExitButton.setEnabled(refereeMode && !mustContinue && !needsReview && !evaluating);
+        refereeResetButton.setEnabled(refereeMode && !mustContinue && !evaluating);
+        refereeExitButton.setEnabled(refereeMode && !mustContinue && !evaluating);
         newGameButton.setEnabled(!thinking && !engineStarting && !evaluating);
         newRoundButton.setEnabled(!thinking && !engineStarting && !evaluating);
         countTerritoryButton.setText("智能裁判");
