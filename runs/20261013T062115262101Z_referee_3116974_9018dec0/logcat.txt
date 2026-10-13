@@ -1,0 +1,4 @@
+--------- beginning of main
+I/RefereeSmoke( 4673): START id=7e8d6d08d8bd49cc requested=cpu
+I/RefereeSmoke( 4673): REPLAY id=7e8d6d08d8bd49cc moves=82 terminal=true backend=PIE/ProcessBuilder lead=+4.77 dead=1 review=2 vulnerable=1
+I/RefereeSmoke( 4673): PASS id=7e8d6d08d8bd49cc stage=dialog verdict=REVIEW_REQUIRED moves=82 dead=1 review=2 vulnerable=1 minLead=-20.0 maxLead=8.0 hasBlack=true hasWhite=true hasPV=true
