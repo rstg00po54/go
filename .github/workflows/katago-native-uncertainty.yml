@@ -1,0 +1,56 @@
+name: Native KataGo uncertainty evidence
+on:
+  push:
+    branches: [rk3588-engine]
+    paths:
+      - .github/workflows/katago-native-uncertainty.yml
+      - GoEngine-java/tools/test_katago_native_uncertainty.py
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ["1.15.0", "1.18.1"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build KataGo v1.15.0
+        if: matrix.version == '1.15.0'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libeigen3-dev zlib1g-dev libzip-dev
+          git clone -b v1.15.0 --depth 1 https://github.com/lightvector/KataGo.git /tmp/k-src
+          cmake -S /tmp/k-src/cpp -B /tmp/k-build -DUSE_BACKEND=EIGEN -DUSE_AVX2=1 -DNO_LIBZIP=1 -DCMAKE_BUILD_TYPE=Release
+          cmake --build /tmp/k-build --parallel 4
+          echo "KATAGO_BIN=/tmp/k-build/katago" >> "$GITHUB_ENV"
+      - name: Download KataGo v1.18.1
+        if: matrix.version == '1.18.1'
+        run: |
+          curl -fL --retry 3 -o /tmp/k.zip https://github.com/lightvector/KataGo/releases/download/v1.18.1/katago-v1.18.1-eigenavx2-linux-x64.zip
+          mkdir -p /tmp/k
+          unzip -q /tmp/k.zip -d /tmp/k
+          chmod +x /tmp/k/katago
+          echo "KATAGO_BIN=/tmp/k/katago" >> "$GITHUB_ENV"
+      - name: Run direct native KataGo confidence probes
+        env:
+          VERSION: ${{ matrix.version }}
+        run: |
+          python3 -m py_compile GoEngine-java/tools/test_katago_native_uncertainty.py
+          timeout 660 python3 GoEngine-java/tools/test_katago_native_uncertainty.py --katago "$KATAGO_BIN" --config GoEngine-java/app/src/main/assets/engine/default_gtp.cfg --model GoEngine-java/app/src/main/assets/engine/10b.bin --out "GoEngine-java/build/native_uncertainty/v$VERSION"
+      - name: Publish summary
+        if: always()
+        env:
+          VERSION: ${{ matrix.version }}
+        run: |
+          test -f "GoEngine-java/build/native_uncertainty/v$VERSION/report.md" && cat "GoEngine-java/build/native_uncertainty/v$VERSION/report.md" >> "$GITHUB_STEP_SUMMARY" || true
+      - name: Upload native results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: katago-native-uncertainty-v${{ matrix.version }}
+          path: GoEngine-java/build/native_uncertainty/
+          if-no-files-found: warn
