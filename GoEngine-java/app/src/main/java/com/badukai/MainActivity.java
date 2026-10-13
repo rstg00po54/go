@@ -144,6 +144,9 @@ public class MainActivity extends AppCompatActivity {
     private Button situationButton;
     private Button aiSuggestionButton;
     private Button countTerritoryButton;
+    private View refereePanel, gameActionPanel;
+    private TextView refereePanelTitle, refereePanelScore, refereePanelHint;
+    private Button refereeResetButton, refereeConfirmButton, refereeExitButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -414,6 +417,17 @@ public class MainActivity extends AppCompatActivity {
         situationButton = findViewById(R.id.situationButton);
         aiSuggestionButton = findViewById(R.id.aiSuggestionButton);
         countTerritoryButton = findViewById(R.id.countTerritoryButton);
+        refereePanel = findViewById(R.id.refereePanel);
+        gameActionPanel = findViewById(R.id.gameActionPanel);
+        refereePanelTitle = findViewById(R.id.refereePanelTitle);
+        refereePanelScore = findViewById(R.id.refereePanelScore);
+        refereePanelHint = findViewById(R.id.refereePanelHint);
+        refereeResetButton = findViewById(R.id.refereeResetButton);
+        refereeConfirmButton = findViewById(R.id.refereeConfirmButton);
+        refereeExitButton = findViewById(R.id.refereeExitButton);
+        refereeResetButton.setOnClickListener(v -> resetRefereeSuggestions());
+        refereeConfirmButton.setOnClickListener(v -> showRefereeConfirmation());
+        refereeExitButton.setOnClickListener(v -> leaveRefereeReview());
     }
 
     private void startEngine() {
@@ -886,9 +900,12 @@ public class MainActivity extends AppCompatActivity {
             refreshRefereePreview();
             return;
         }
-        String[] choices = preciseScoreReady || finalDeadStones == null
-                ? new String[]{"智能裁判（人工确认死子）"}
-                : new String[]{"智能裁判（人工确认死子）", "深度对照（KataGo 搜索）"};
+        // One available action should open directly: don't ask users to pick a menu of one.
+        if (preciseScoreReady || finalDeadStones == null) {
+            startSmartReferee();
+            return;
+        }
+        String[] choices = {"智能裁判（人工确认死子）", "深度对照（KataGo 搜索）"};
         new AlertDialog.Builder(this).setTitle("终局结算方式")
                 .setItems(choices, (dialog, index) -> {
                     if (index == 0) startSmartReferee();
@@ -1070,6 +1087,29 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /** Review toolbar always operates on temporary stone marks, never on the live board. */
+    private void resetRefereeSuggestions() {
+        if (!refereeMode) return;
+        refereeDead.clear();
+        refereeDead.addAll(refereeSuggested);
+        refereeReview.clear();
+        refereeReview.addAll(refereeInitialReview);
+        refreshRefereePreview();
+    }
+
+    private void leaveRefereeReview() {
+        if (!refereeMode) return;
+        refereeMode = false;
+        refereeDead.clear();
+        refereeReview.clear();
+        if (refereeConfirmed) {
+            refereeDead.addAll(refereeAccepted);
+            boardView.setRefereeMarks(refereeAccepted,null);
+        } else boardView.setRefereeMarks(null,null);
+        boardView.setEndgameAlerts(null);
+        render(finalScoreText == null ? "快速 AI 预估" : finalScoreText);
+    }
+
     private void refreshRefereePreview() {
         double nnLead = endgameEvaluation == null ? fastEndgameLead : endgameEvaluation.whiteLead;
         SmartReferee.ScoreAudit audit = SmartReferee.audit(board, refereeDead, nnLead, komiFor(boardSize),
@@ -1084,6 +1124,18 @@ public class MainActivity extends AppCompatActivity {
                         String.format(Locale.CHINA, "%s领先 %.1f 目", lead > 0 ? "白" : "黑", Math.abs(lead)), pending);
         if (audit.needsVerification) summary += String.format(Locale.CHINA,
                 "\n注意：与 NN 估分相差 %.1f 目，请仔细检查", audit.difference);
+        refereePanelTitle.setText(String.format(Locale.CHINA,
+                "智能裁判 · %s", pending > 0 ? "待复核 " + pending + " 块" : "可以确认数子"));
+        refereePanelScore.setText(String.format(Locale.CHINA,
+                "黑 %.1f · 白 %.1f · %s",
+                audit.score.blackPoints,audit.score.whitePoints,
+                Math.abs(lead) < 0.001 ? "平局" :
+                        String.format(Locale.CHINA,"%s领先 %.1f 目",lead > 0 ? "白" : "黑",Math.abs(lead))));
+        refereePanelHint.setText(pending > 0
+                ? "黄圈：" + pending + " 块待复核，点棋块选判活/判死；红叉可撤销；橙圈为争议点。"
+                : audit.needsVerification
+                        ? String.format(Locale.CHINA,"复核已完成，但与 NN 估分相差 %.1f 目，确认前再看一眼。",audit.difference)
+                        : "点棋子可整块切换死活；红叉为拟死子，橙圈提示攻防风险。");
         render(summary);
     }
 
@@ -1165,23 +1217,8 @@ public class MainActivity extends AppCompatActivity {
                             + " black=" + totals.blackPoints + " white=" + totals.whitePoints);
                     render(finalScoreText);
                 })
-                .setNeutralButton("恢复 AI 建议", (dialog, which) -> {
-                    refereeDead.clear();
-                    refereeDead.addAll(refereeSuggested);
-                    refereeReview.clear();
-                    refereeReview.addAll(refereeInitialReview);
-                    refreshRefereePreview();
-                })
-                .setNegativeButton("退出裁判", (dialog, which) -> {
-                    refereeMode = false;
-                    refereeDead.clear();
-                    refereeReview.clear();
-                    if (refereeConfirmed) {
-                        refereeDead.addAll(refereeAccepted);
-                        boardView.setRefereeMarks(refereeAccepted, null);
-                    } else boardView.setRefereeMarks(null, null);
-                    render(finalScoreText == null ? "快速 AI 预估" : finalScoreText);
-                }).show();
+                .setNeutralButton("恢复 AI 建议", (dialog, which) -> resetRefereeSuggestions())
+                .setNegativeButton("退出裁判", (dialog, which) -> leaveRefereeReview()).show();
     }
 
     /** Undo the two end passes on both boards before gameplay can continue. */
@@ -1994,6 +2031,11 @@ public class MainActivity extends AppCompatActivity {
     private void updateButtons() {
         DebugLog.enter(TAG, "updateButtons in, engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer + ", playerColor=" + playerColor);
         boolean playerTurn = engineReady && gameReady && !engineStarting && !thinking && !evaluating && currentPlayer == playerColor && !board.isGameOver();
+        refereePanel.setVisibility(refereeMode ? View.VISIBLE : View.GONE);
+        gameActionPanel.setVisibility(refereeMode ? View.GONE : View.VISIBLE);
+        refereeConfirmButton.setEnabled(refereeMode && !evaluating);
+        refereeResetButton.setEnabled(refereeMode && !evaluating);
+        refereeExitButton.setEnabled(refereeMode && !evaluating);
         newGameButton.setEnabled(!thinking && !engineStarting && !evaluating);
         newRoundButton.setEnabled(!thinking && !engineStarting && !evaluating);
         countTerritoryButton.setText(board.isGameOver()
