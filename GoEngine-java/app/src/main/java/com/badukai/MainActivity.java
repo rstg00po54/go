@@ -925,18 +925,9 @@ public class MainActivity extends AppCompatActivity {
             refreshRefereePreview();
             return;
         }
-        // One available action should open directly: don't ask users to pick a menu of one.
-        if (preciseScoreReady || finalDeadStones == null) {
-            startSmartReferee();
-            return;
-        }
-        String[] choices = {"智能裁判（人工确认死子）", "深度对照（KataGo 搜索）"};
-        new AlertDialog.Builder(this).setTitle("终局结算方式")
-                .setItems(choices, (dialog, index) -> {
-                    if (index == 0) startSmartReferee();
-                    else requestPreciseEndgame();
-                })
-                .setNegativeButton("取消", null).show();
+        // Direct entry: disputed games show board marks; settled games show
+        // scoring confirmation. No intermediate choice dialog.
+        startSmartReferee();
     }
 
     private static String refereeSearchSummary(String side, List<KataGoEngine.SearchRecommendation> choices) {
