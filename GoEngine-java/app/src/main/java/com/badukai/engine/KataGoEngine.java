@@ -935,6 +935,60 @@ public class KataGoEngine {
         }
     }
 
+    private List<SearchRecommendation> parseSearchRecommendations(String response) {
+        // Intermediate analyses can repeat the same move. Keep the latest snapshot.
+        Map<String, SearchRecommendation> latest = new LinkedHashMap<>();
+        String[] segments = response.split("\\binfo\\s+");
+        for (int i = 1; i < segments.length; i++) {
+            String[] tokens = segments[i].trim().split("\\s+");
+            String move = null;
+            int visits = -1, order = -1;
+            double winrate = Double.NaN, scoreLead = Double.NaN, prior = Double.NaN;
+            List<String> variation = new ArrayList<>();
+            try {
+                for (int j = 0; j + 1 < tokens.length; j++) {
+                    String key = tokens[j];
+                    if ("pv".equals(key)) {
+                        for (int p = j + 1; p < tokens.length && variation.size() < 12; p++) {
+                            String vertex = tokens[p];
+                            if ("rootInfo".equals(vertex) || "ownership".equals(vertex)
+                                    || "ownershipStdev".equals(vertex) || "play".equals(vertex)) break;
+                            variation.add(vertex);
+                        }
+                        break;
+                    }
+                    if ("rootInfo".equals(key) || "ownership".equals(key)
+                            || "play".equals(key) || "ownershipStdev".equals(key)) break;
+                    if ("move".equals(key)) move = tokens[++j];
+                    else if ("visits".equals(key)) visits = Integer.parseInt(tokens[++j]);
+                    else if ("winrate".equals(key)) winrate = Double.parseDouble(tokens[++j]);
+                    else if ("scoreLead".equals(key)) scoreLead = Double.parseDouble(tokens[++j]);
+                    else if ("prior".equals(key)) prior = Double.parseDouble(tokens[++j]);
+                    else if ("order".equals(key)) order = Integer.parseInt(tokens[++j]);
+                }
+                if (move != null && order >= 0 && visits >= 0 && Double.isFinite(winrate)
+                        && winrate >= 0 && winrate <= 1 && Double.isFinite(scoreLead)) {
+                    // Some KataGo responses omit PV for low-visit candidates.
+                    if (variation.isEmpty() || !move.equalsIgnoreCase(variation.get(0))) {
+                        variation.clear();
+                        variation.add(move);
+                    }
+                    latest.put(move, new SearchRecommendation(move, winrate, scoreLead, prior, visits, order, variation));
+                }
+            } catch (NumberFormatException e) {
+                Log.w(TAG, "Invalid KataGo candidate analysis data", e);
+            }
+        }
+        List<SearchRecommendation> candidates = new ArrayList<>(latest.values());
+        // Rank displayed suggestions by the current player's win rate (high to low).
+        // Use KataGo's original search order to break ties.
+        candidates.sort((a, b) -> {
+            int result = Double.compare(b.winrate, a.winrate);
+            return result != 0 ? result : Integer.compare(a.order, b.order);
+        });
+        return candidates;
+    }
+
     public static final class WinRate {
         public final float black, white;
 
