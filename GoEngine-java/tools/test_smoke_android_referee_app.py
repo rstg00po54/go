@@ -185,7 +185,7 @@ class NnSmokeTests(unittest.TestCase):
         </hierarchy>""")
         def fake_run(argv,timeout=30,check=True):
             if "logcat" in argv:
-                suffix = "\\nI/RefereeSmoke: NN_DISMISS id=current moves=82 terminal=true" if state["clicked"] else ""
+                suffix = "\nI/RefereeSmoke: NN_DISMISS id=current moves=82 terminal=true" if state["clicked"] else ""
                 return GOOD_GPU + suffix
             if "input" in argv and "tap" in argv:
                 state["clicked"]=True
