@@ -34,7 +34,8 @@ val allow4kRknnRuntime = providers.gradleProperty("allow4kRknnRuntime")
 
 android {
     namespace = "com.badukai"
-    compileSdk = 34
+    // LiteRT 2.3.0 dependencies require API 35 at compile time.
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.badukai.java"
@@ -87,12 +88,13 @@ android {
     }
 
     androidResources {
-        noCompress += listOf("bin", "gz", "model", "so")
+        noCompress += listOf("bin", "gz", "model", "so", "tflite")
     }
 }
 
 dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.google.ai.edge.litert:litert:2.3.0")
 }
 
 configurations.configureEach {
