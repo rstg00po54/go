@@ -198,13 +198,15 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
                 .map { it.trim().split(Regex("\\s+")).last().removePrefix("0x").toLongOrNull(16) }
                 .toList()
         }
+        val pieInspector = rootProject.file("tools/check_katago_pie.py")
         fun isAlignedPie(file: File): Boolean {
             if (!file.isFile) return false
-            val header = readElf(file, "-h")
-            if (!Regex("(?m)^\\s*Machine:\\s*AArch64\\b").containsMatchIn(header)
-                    || !Regex("(?m)^\\s*Type:\\s*DYN\\b").containsMatchIn(header)) return false
-            val loads = elfLoadAlignments(file)
-            return loads.isNotEmpty() && loads.all { it != null && it >= 16384L && it % 16384L == 0L }
+            val process = ProcessBuilder("python3", pieInspector.absolutePath, file.absolutePath)
+                .redirectErrorStream(true).start()
+            val verdict = process.inputStream.bufferedReader().use { it.readText() }.trim()
+            val accepted = process.waitFor() == 0
+            println(verdict)
+            return accepted
         }
         val executable = pieCandidates.firstOrNull { isAlignedPie(it) }
         if (executable == null) {
