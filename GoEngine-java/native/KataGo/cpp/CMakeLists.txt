@@ -28,7 +28,7 @@ endif()
 set(BUILD_DISTRIBUTED 0 CACHE BOOL "Build with http support for contributing to distributed training")
 set(USE_BACKEND CACHE STRING "Neural net backend")
 string(TOUPPER "${USE_BACKEND}" USE_BACKEND)
-set_property(CACHE USE_BACKEND PROPERTY STRINGS "" CUDA TENSORRT OPENCL EIGEN)
+set_property(CACHE USE_BACKEND PROPERTY STRINGS "" CUDA TENSORRT OPENCL EIGEN RKNN)
 
 set(USE_TCMALLOC 0 CACHE BOOL "Use TCMalloc")
 set(NO_GIT_REVISION 0 CACHE BOOL "Disable embedding the git revision into the compiled exe")
@@ -95,6 +95,12 @@ elseif(USE_BACKEND STREQUAL "OPENCL")
     neuralnet/openclhelpers.cpp
     neuralnet/opencltuner.cpp
     )
+elseif(USE_BACKEND STREQUAL "RKNN")
+  message(STATUS "-DUSE_BACKEND=RKNN, using RK3588 RKNPU2 for 10b and Eigen for Human SL.")
+  set(NEURALNET_BACKEND_SOURCES
+    neuralnet/eigenbackend.cpp
+    neuralnet/rknnbackend.cpp
+  )
 elseif(USE_BACKEND STREQUAL "EIGEN")
   message(STATUS "-DUSE_BACKEND=EIGEN, using Eigen CPU backend.")
   if(NOT USE_AVX2)
@@ -299,7 +305,9 @@ if(KATAGO_BUILD_JNI_LIBRARY)
   # Both CPU and GPU JNI libraries may coexist in one process. Keep all
   # internal KataGo C++ symbols local; JNIEXPORT remains publicly visible.
   set_target_properties(katago PROPERTIES CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN YES)
-  if(USE_BACKEND STREQUAL "OPENCL")
+  if(USE_BACKEND STREQUAL "RKNN")
+    set_target_properties(katago PROPERTIES OUTPUT_NAME katago_npu)
+  elseif(USE_BACKEND STREQUAL "OPENCL")
     # In-process GPU and CPU JNI libraries must have distinct ELF SONAMEs.
     # Previously the GPU APK only renamed libkatago.so, which is unsafe when
     # both backends are loaded by the same Android classloader/process.
@@ -366,6 +374,18 @@ elseif(USE_BACKEND STREQUAL "OPENCL")
     target_include_directories(katago SYSTEM PRIVATE "${OpenCL_INCLUDE_DIR}")
     target_link_libraries(katago ${OpenCL_LIBRARY})
   endif()
+elseif(USE_BACKEND STREQUAL "RKNN")
+  target_compile_definitions(katago PRIVATE USE_EIGEN_BACKEND USE_RKNN_BACKEND)
+  find_package(Eigen3 REQUIRED)
+  include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
+  if(NOT RKNN_INCLUDE_DIR OR NOT EXISTS "${RKNN_INCLUDE_DIR}/rknn_api.h")
+    message(FATAL_ERROR "Set RKNN_INCLUDE_DIR to the Android rknn_api.h directory")
+  endif()
+  if(NOT RKNN_LIBRARY OR NOT EXISTS "${RKNN_LIBRARY}")
+    message(FATAL_ERROR "Set RKNN_LIBRARY to Android arm64-v8a librknnrt.so")
+  endif()
+  target_include_directories(katago PRIVATE "${RKNN_INCLUDE_DIR}")
+  target_link_libraries(katago "${RKNN_LIBRARY}")
 elseif(USE_BACKEND STREQUAL "EIGEN")
   target_compile_definitions(katago PRIVATE USE_EIGEN_BACKEND)
   if(NOT (MSVC OR MINGW))
