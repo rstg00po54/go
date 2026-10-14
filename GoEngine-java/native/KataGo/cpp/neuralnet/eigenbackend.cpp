@@ -10,6 +10,11 @@
 
 #include "../neuralnet/nninterface.h"
 
+#ifdef USE_RKNN_BACKEND
+#include "rknnbackend.h"
+#include <cstdlib>
+#endif
+
 #include <Eigen/Dense>
 #include <unsupported/Eigen/CXX11/Tensor>
 
@@ -1737,6 +1742,10 @@ struct ComputeHandle {
   std::unique_ptr<ScratchBuffers> scratch;
   std::unique_ptr<Buffers> buffers;
 
+#ifdef USE_RKNN_BACKEND
+  std::unique_ptr<KataGoRknnRunner> rknn;
+#endif
+
   ComputeHandle() = delete;
   ComputeHandle(const ComputeHandle&) = delete;
   ComputeHandle& operator=(const ComputeHandle&) = delete;
@@ -1759,6 +1768,24 @@ struct ComputeHandle {
 
     scratch = std::make_unique<ScratchBuffers>(maxBatchSize,context->nnXLen,context->nnYLen);
     buffers = std::make_unique<Buffers>(loadedModel.modelDesc,*model,maxBatchSize,context->nnXLen,context->nnYLen);
+#ifdef USE_RKNN_BACKEND
+    // The published 19x19 RKNN graph matches the g170 10b network only.
+    // Human SL uses its separate b18 network and stays on Eigen.
+    if(loadedModel.modelDesc.name.find("g170-b10c128") == 0) {
+      if(context->nnXLen != 19 || context->nnYLen != 19)
+        throw StringError("RKNN 10b requires 19x19 NN shape");
+      if(maxBatchSize != 1)
+        throw StringError("RKNN 10b is batch=1 only; set nnMaxBatchSize = 1");
+      if(model->numInputChannels != 22 || model->numInputGlobalChannels != 19 ||
+         model->numPolicyChannels != 1 || model->numValueChannels != 3 ||
+         model->numScoreValueChannels != 4 || model->numOwnershipChannels != 1)
+        throw StringError("RKNN 10b model architecture is not the expected g170 network");
+      const char* rknnPath = std::getenv("KATAGO_RKNN_MODEL");
+      if(rknnPath == nullptr || !*rknnPath)
+        throw StringError("KATAGO_RKNN_MODEL must point to the 19x19 RKNN weights");
+      rknn.reset(new KataGoRknnRunner(rknnPath));
+    }
+#endif
   }
 
   ~ComputeHandle() {
@@ -1868,6 +1895,15 @@ void NeuralNet::getOutput(
   computeMaskSum(&mask,maskSum.data());
   vector<float>& convWorkspace = buffers.convWorkspace;
 
+#ifdef USE_RKNN_BACKEND
+  if(computeHandle->rknn) {
+    if(batchSize != 1) throw StringError("RKNN inference only supports batch 1");
+    computeHandle->rknn->infer(inputBuffers->spatialInput.data(), inputBuffers->globalInput.data(),
+                              policyPass.data(), policy.data(), value.data(),
+                              scoreValue.data(), ownership.data());
+  }
+  else
+#endif
   computeHandle->model->apply(
     &computeHandle->handleInternal,
     computeHandle->scratch.get(),
