@@ -207,18 +207,9 @@ else
     BIN="$BUILD_DIR/katago"
 fi
 [[ -f "$BIN" ]] || { echo "Missing compiled binary $BIN" >&2; exit 1; }
-# Verify PT_LOAD alignment before copying; do not report successful native
+# Verify ARM64 ELF type and PT_LOAD alignment before copying; do not report successful native
 # compilation and then fail only when the APK staging task runs.
-python3 - "$BIN" <<'PY'
-import sys
-from pathlib import Path
-from tools.check_android_16kb import inspect_library
-p = Path(sys.argv[1])
-_, failures = inspect_library(str(p),p.read_bytes())
-if failures:
-    raise SystemExit("ERROR: KataGo native ELF is not 16 KB-aligned: " + "; ".join(failures))
-print("16 KB native ELF alignment OK:",p)
-PY
+python3 "$PROJECT_DIR/tools/check_katago_pie.py" "$BIN"
 HEADER="$(LC_ALL=C "$READELF" -h "$BIN")"
 echo "$HEADER" | grep -E '^[[:space:]]*(Type|Machine):' || true
 if ! grep -Eq '^[[:space:]]*Machine:[[:space:]]*AArch64([[:space:]]|$)' <<< "$HEADER" || \
