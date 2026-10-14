@@ -15,6 +15,8 @@
 #include <vector>
 
 #include "command/gtp_io.h"
+#include "game/board.h"
+#include "game/boardhistory.h"
 
 #if defined(USE_OPENCL_BACKEND)
 #define KATAGO_SESSION_JNI(name) Java_com_badukai_engine_KataGoGpuNative_##name
@@ -262,4 +264,39 @@ KATAGO_SESSION_JNI(nativeDestroySession)(JNIEnv*, jclass, jlong handle) {
     }
     // Destroy outside the registry mutex; joining the native search can block.
     removed.reset();
+}
+
+// A read-only, strict Benson/pass-alive endgame check. Both CPU and GPU JNI
+// libraries export this symbol. No GTP commands, NN estimates, or search are
+// used. False means "unconfirmed", not necessarily "unfinished".
+extern "C" JNIEXPORT jboolean JNICALL
+KATAGO_SESSION_JNI(nativeEndgameAllPassAlive)(JNIEnv* env, jclass, jint size, jbyteArray cells) {
+    if (!cells || size < 2 || size > Board::MAX_LEN || !Board::IS_ZOBRIST_INITALIZED
+            || env->GetArrayLength(cells) != size * size) return JNI_FALSE;
+    std::vector<jbyte> values(static_cast<size_t>(size) * size);
+    env->GetByteArrayRegion(cells, 0, static_cast<jsize>(values.size()), values.data());
+    if (env->ExceptionCheck()) return JNI_FALSE;
+    try {
+        Board snapshot(size,size);
+        std::vector<Move> stones;
+        stones.reserve(values.size());
+        for (int y=0; y<size; y++) {
+            for (int x=0; x<size; x++) {
+                jbyte color = values[static_cast<size_t>(y)*size+x];
+                if (color != C_EMPTY && color != C_BLACK && color != C_WHITE) return JNI_FALSE;
+                if (color != C_EMPTY) stones.emplace_back(Location::getLoc(x,y,size),color);
+            }
+        }
+        if (!snapshot.setStonesFailIfNoLibs(std::move(stones))) return JNI_FALSE;
+        Rules rules = Rules::getTrompTaylorish();
+        rules.scoringRule = Rules::SCORING_AREA;
+        rules.taxRule = Rules::TAX_NONE;
+        rules.multiStoneSuicideLegal = false;
+        BoardHistory history(snapshot,P_BLACK,rules,0);
+        history.endGameIfAllPassAlive(snapshot);
+        return history.isGameFinished && history.isScored && !history.isNoResult ? JNI_TRUE : JNI_FALSE;
+    } catch (...) {
+        // Conservative failure. JNI call must never certify malformed positions.
+        return JNI_FALSE;
+    }
 }
