@@ -4,6 +4,9 @@ on:
     branches: [rk3588-engine]
     paths:
       - GoEngine-java/build.sh
+      - GoEngine-java/tools/build_katago_from_source.sh
+      - GoEngine-java/tools/invalidate_unaligned_pie.py
+      - GoEngine-java/tools/test_invalidate_unaligned_pie.py
       - GoEngine-java/app/build.gradle.kts
       - GoEngine-java/app/src/main/java/com/badukai/MainActivity.java
       - GoEngine-java/app/src/main/java/com/badukai/ui/GoBoardView.java
@@ -38,6 +41,12 @@ jobs:
       - name: Syntax-check NN test scripts
         working-directory: GoEngine-java
         run: python3 -m py_compile tools/smoke_android_referee_app.py tools/test_smoke_android_referee_app.py tools/test_smart_referee.py
+      - name: Stale PIE cache invalidation regression
+        working-directory: GoEngine-java
+        run: python3 tools/test_invalidate_unaligned_pie.py
+      - name: Native build wrapper syntax
+        working-directory: GoEngine-java
+        run: bash -n tools/build_katago_from_source.sh
       - name: NN area rules JDK-only test
         working-directory: GoEngine-java
         run: python3 tools/test_smart_referee.py
