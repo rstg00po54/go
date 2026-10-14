@@ -1,0 +1,34 @@
+name: NPU multi-board smoke host checks
+
+on:
+  push:
+    branches: [feature/rk3588-rknn]
+    paths:
+      - '.github/workflows/npu-smoke-host.yml'
+      - 'GoEngine-java/tools/smoke_android_npu_switch.py'
+      - 'GoEngine-java/tools/test_smoke_android_npu_switch.py'
+      - 'GoEngine-java/tools/upload_referee_test_results.py'
+      - 'GoEngine-java/tools/test_upload_referee_test_results.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  host-tests:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate NPU scripts syntax
+        run: |
+          python3 -m py_compile GoEngine-java/tools/smoke_android_npu_switch.py \
+            GoEngine-java/tools/test_smoke_android_npu_switch.py \
+            GoEngine-java/tools/upload_referee_test_results.py
+      - name: Run NPU parser and GitHub upload regression tests
+        working-directory: GoEngine-java
+        run: |
+          python3 -m unittest discover -s tools -p 'test_smoke_android_npu_switch.py' -v
+          python3 -m unittest discover -s tools -p 'test_upload_referee_test_results.py' -v
