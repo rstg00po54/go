@@ -5,6 +5,7 @@ on:
     paths:
       - GoEngine-java/build.sh
       - GoEngine-java/tools/build_katago_from_source.sh
+      - GoEngine-java/tools/check_katago_pie.py
       - GoEngine-java/tools/invalidate_unaligned_pie.py
       - GoEngine-java/tools/test_invalidate_unaligned_pie.py
       - GoEngine-java/app/build.gradle.kts
@@ -40,7 +41,7 @@ jobs:
         run: bash -n build.sh
       - name: Syntax-check NN test scripts
         working-directory: GoEngine-java
-        run: python3 -m py_compile tools/smoke_android_referee_app.py tools/test_smoke_android_referee_app.py tools/test_smart_referee.py
+        run: python3 -m py_compile tools/smoke_android_referee_app.py tools/test_smoke_android_referee_app.py tools/test_smart_referee.py tools/check_katago_pie.py tools/invalidate_unaligned_pie.py tools/test_invalidate_unaligned_pie.py
       - name: Stale PIE cache invalidation regression
         working-directory: GoEngine-java
         run: python3 tools/test_invalidate_unaligned_pie.py
