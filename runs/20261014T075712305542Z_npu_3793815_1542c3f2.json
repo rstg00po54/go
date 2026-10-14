@@ -1,0 +1,19 @@
+{
+  "test": "RK3588 NPU multi-board smoke",
+  "run_id": "f98340994005497f",
+  "sizes": [
+    9,
+    13,
+    19,
+    9
+  ],
+  "human_sl": true,
+  "status": "ERROR",
+  "steps": [],
+  "errors": [
+    "TypeError: unsupported operand type(s) for +: 'int' and 'NoneType'"
+  ],
+  "started_utc": "2026-10-14T07:57:06.506034+00:00",
+  "serial": "8719e18a71a2a66c",
+  "finished_utc": "2026-10-14T07:57:12.294980+00:00"
+}

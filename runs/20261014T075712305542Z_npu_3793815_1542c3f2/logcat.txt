@@ -1,0 +1,21 @@
+--------- beginning of main
+I/NpuSmoke( 8076): START id=f98340994005497f sizes=9,13,19,9 humanSL=true
+I/KataGoEngine( 8076): Human SL model ready: /data/user/0/com.badukai.java/files/engine/b18c384nbt-humanv0.bin
+I/NpuSmoke( 8076): STEP_BEGIN id=f98340994005497f index=0 board=9
+I/KataGoEngine( 8076): === JAVA KATAGO ENGINE / ANDROID ARM64 ===
+I/KataGoEngine( 8076): STARTUP_TIMING phase=engine_backend_and_paths ms=0.261333
+I/KataGoEngine( 8076): Native GTP defaultBoardSize=9
+I/KataGoEngine( 8076): STARTUP_TIMING phase=engine_prepare_config ms=5.148501
+I/KataGoEngine( 8076): STARTUP_TIMING phase=engine_prepare_model_asset ms=82.249133
+I/KataGoEngine( 8076): Human SL model: /data/user/0/com.badukai.java/files/engine/b18c384nbt-humanv0.bin size=107185997
+I/KataGoEngine( 8076): STARTUP_TIMING phase=engine_find_human_model ms=0.203
+I/KataGoEngine( 8076): Model: /data/user/0/com.badukai.java/files/engine/10b.bin size=12003218
+I/KataGoEngine( 8076): Config: /data/user/0/com.badukai.java/files/engine/human_gtp.cfg
+I/KataGoEngine( 8076): Backend requested: NPU/RKNN in-process JNI
+I/KataGoEngine( 8076): STARTUP_TIMING phase=engine_npu_native_create ms=2.795916
+I/KataGoEngine( 8076): NPU_MODEL_SELECTED board=9 path=/data/user/0/com.badukai.java/files/engine/katago_10b_9x9.rknn
+I/KataGoRKNN( 8076): RKNN_INIT board=9 path=/data/user/0/com.badukai.java/files/engine/katago_10b_9x9.rknn
+I/KataGoRKNN( 8076): RKNN_INPUT board=9 slot=0 name=InputSpatial dims=1x9x9x22 elems=1782 expected=1782 size=3564 fmt=1 type=1
+I/KataGoRKNN( 8076): RKNN_INPUT board=9 slot=1 name=InputGlobal dims=1x1x1x19 elems=19 expected=19 size=38 fmt=1 type=1
+I/KataGoRKNN( 8076): RKNN_INPUT board=9 slot=2 name=InputMask dims=1x9x9x1 elems=81 expected=81 size=162 fmt=1 type=1
+I/KataGoRKNN( 8076): RKNN_READY board=9 model=/data/user/0/com.badukai.java/files/engine/katago_10b_9x9.rknn
