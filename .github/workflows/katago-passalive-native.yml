@@ -1,0 +1,48 @@
+name: KataGo pass alive original C++ benchmark
+on:
+  push:
+    branches: [rk3588-engine]
+    paths:
+      - .github/workflows/katago-passalive-native.yml
+      - GoEngine-java/tools/benchmark_katago_passalive_native.py
+      - GoEngine-java/tools/patch_katago_passalive_gtp.py
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-passalive:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile temporary KataGo v1.15.0 CPU with original function exposed for test
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libeigen3-dev zlib1g-dev libzip-dev
+          git clone --branch v1.15.0 --depth 1 https://github.com/lightvector/KataGo.git /tmp/katago-src
+          python3 GoEngine-java/tools/patch_katago_passalive_gtp.py /tmp/katago-src/cpp/command/gtp.cpp
+          cmake -S /tmp/katago-src/cpp -B /tmp/katago-build \
+            -DUSE_BACKEND=EIGEN -DUSE_AVX2=1 -DNO_LIBZIP=1 -DCMAKE_BUILD_TYPE=Release
+          cmake --build /tmp/katago-build --parallel 4
+          test -x /tmp/katago-build/katago
+      - name: Run direct C++ pass-alive checks on 19 fixture SGFs
+        run: |
+          python3 -m py_compile GoEngine-java/tools/benchmark_katago_passalive_native.py
+          timeout 480 python3 GoEngine-java/tools/benchmark_katago_passalive_native.py \
+            --katago /tmp/katago-build/katago \
+            --config GoEngine-java/app/src/main/assets/engine/default_gtp.cfg \
+            --model GoEngine-java/app/src/main/assets/engine/10b.bin \
+            --out GoEngine-java/build/passalive_native
+      - name: Show complete report
+        if: always()
+        run: |
+          test -f GoEngine-java/build/passalive_native/report.md && \
+            cat GoEngine-java/build/passalive_native/report.md >> "$GITHUB_STEP_SUMMARY" || true
+      - name: Upload results JSON CSV Markdown
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: katago-native-passalive-report
+          path: GoEngine-java/build/passalive_native/
+          retention-days: 14
+          if-no-files-found: warn
