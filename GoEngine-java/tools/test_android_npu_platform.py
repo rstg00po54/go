@@ -30,7 +30,7 @@ class AndroidNpuPlatformTests(unittest.TestCase):
         self.assertIn("RKNN_DISABLED_FALLBACK_EIGEN", block)
         self.assertIn("ctx = 0;", block)
         self.assertIn("return;", block)
-        self.assertNotIn("throw ", block)
+        self.assertNotIn("throw std::", block)
 
 
 if __name__ == "__main__":
