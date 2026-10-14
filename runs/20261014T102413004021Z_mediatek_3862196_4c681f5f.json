@@ -1,0 +1,14 @@
+{
+  "test": "Vivo MediaTek KataGo 10b LiteRT graph",
+  "run_id": "9775ebdf5b794dcb",
+  "board": 13,
+  "serial": "10AFB21HP5002ZK",
+  "status": "PROBE_PASS",
+  "hardwareExecution": "UNVERIFIED",
+  "errors": [],
+  "soc": "MT6993",
+  "hardware": "mt6993",
+  "modelInferenceCount": 3,
+  "vendorLogLineCount": 117,
+  "fallbackWarnings": []
+}
