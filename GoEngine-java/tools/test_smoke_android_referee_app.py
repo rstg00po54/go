@@ -141,21 +141,27 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn('setNegativeButton("局面检查", (dialog,which) -> inspectUnfinishedPosition())',quick)
         inspection = activity.split("private void inspectUnfinishedPosition()",1)[1].split(
             "private void startSmartReferee()",1)[0]
-        for status in ('"有打劫"', '"官子未收完"', '"建议继续下棋"', '"需要复核"', '"不能确认"', '"裁判完成"'):
+        for status in ('"有打劫"', '"官子未收完"', '"建议继续下棋"', '"需要复核"', '"不能确认"', '"基本收官"'):
             self.assertIn(status,inspection)
         for symbol in ("snapshot.countAtariGroups()", "snapshot.getSimpleKoPoint()",
                        "engine.inspectPositionNative(", "size,24,0.5",
                        "nativeInfo.black.estimatedMoveBenefit", "nativeInfo.white.estimatedMoveBenefit",
                        "nativeInfo.highVariationPoints", "REFEREE_ENDGAME_RESULT",
-                       "resumeFromReferee()", "engine.getFinalScore()", "engine.getFinalDeadStones()"):
+                       "resumeFromReferee()", 'setNegativeButton("详细数子"'):
             self.assertIn(symbol,inspection)
-        self.assertIn("inspection.black.estimatedMoveBenefit <= 0.5",inspection)
-        self.assertIn("inspection.white.estimatedMoveBenefit <= 0.5",inspection)
-        self.assertNotIn("if (!ended && (blackGain >= 1.5",inspection)
-        self.assertIn("nativeScore != null && !nativeScore.trim().isEmpty() && nativeDead != null",inspection)
-        self.assertIn("final boolean scoreWasRequested = scoringAttempted;",inspection)
-        self.assertIn("scoringAttempted = true;",inspection)
-        self.assertIn("if (inspection != null && simpleKo == null && atariGroups == 0",inspection)
+        # The fast check must NEVER run native final_score/dead searches implicitly.
+        self.assertNotIn("engine.getFinalScore(",inspection)
+        self.assertNotIn("engine.getFinalDeadStones(",inspection)
+        self.assertIn("final long searchMs =",inspection)
+        self.assertIn('scoreRequested=false',inspection)
+        self.assertIn('status = "基本收官";',inspection)
+        self.assertIn('dialog.setNegativeButton("详细数子", (d,w) -> startNativeReferee())',inspection)
+        self.assertIn('KataGo PASS 对照未发现明显的继续落子收益',inspection)
+        self.assertIn('双方还没有正式停棋',inspection)
+        native = activity.split("private void startNativeReferee()",1)[1].split(
+            "private static String refereeSearchSummary",1)[0]
+        self.assertIn("engine.getFinalScore()",native)
+        self.assertIn("engine.getFinalDeadStones()",native)
         # Screenshot regression: white H9 +1.44 and black H9 -0.29 must enter the
         # small remaining endgame branch, not incorrectly claim native scoring failed.
         self.assertIn("else if (blackGain > 0.5 || whiteGain > 0.5)",inspection)
