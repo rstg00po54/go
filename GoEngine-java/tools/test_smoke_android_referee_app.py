@@ -151,6 +151,60 @@ class NnSmokeTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             smoke.selected_cases(games="unknown")
 
+    def test_launch_does_not_block_on_android_activity_idle(self):
+        class Id:
+            hex = "current"
+        adb_calls = []
+        def fake_run(argv,timeout=30,check=True):
+            adb_calls.append(argv)
+            if "logcat" in argv:
+                return GOOD_GPU
+            if "am" in argv and "start" in argv:
+                return "Starting: Intent { ... }"
+            return ""
+        with tempfile.TemporaryDirectory() as folder:
+            with mock.patch.object(smoke,"uuid4",return_value=Id()):
+                with mock.patch.object(smoke,"run",side_effect=fake_run):
+                    result = smoke.run_one_case("adb","device","gpu","cgos9_expand_006_12",
+                                                15,True,Path(folder))
+        self.assertEqual(result["status"],"PASS",result.get("error"))
+        starts = [call for call in adb_calls if "am" in call and "start" in call]
+        self.assertEqual(len(starts),1)
+        self.assertNotIn("-W",starts[0])
+        self.assertIn("--ez",starts[0])
+
+    def test_ui_uses_single_hierarchy_dump_for_validation_and_button_tap(self):
+        class Id:
+            hex = "current"
+        state = {"clicked":False}
+        ui = ET.fromstring("""<hierarchy>
+            <node text="智能裁判 · 快速 NN 估分" />
+            <node text="黑棋约 45.0 目 · 白棋约 43.0 目 黑棋胜率 60.0% 白棋胜率 40.0%
+                         双方目数按 NN 地盘归属估算" />
+            <node text="关闭" bounds="[100,500][300,570]" />
+        </hierarchy>""")
+        def fake_run(argv,timeout=30,check=True):
+            if "logcat" in argv:
+                suffix = "\\nI/RefereeSmoke: NN_DISMISS id=current moves=82 terminal=true" if state["clicked"] else ""
+                return GOOD_GPU + suffix
+            if "input" in argv and "tap" in argv:
+                state["clicked"]=True
+            if "am" in argv and "start" in argv:
+                return "Starting: Intent { ... }"
+            return ""
+        def fake_screenshot(adb,serial,target):
+            target.write_bytes(b"fake png")
+        with tempfile.TemporaryDirectory() as folder:
+            with mock.patch.object(smoke,"uuid4",return_value=Id()):
+                with mock.patch.object(smoke,"run",side_effect=fake_run):
+                    with mock.patch.object(smoke,"read_dialog_root",return_value=ui) as dump:
+                        with mock.patch.object(smoke,"capture_screenshot",side_effect=fake_screenshot):
+                            result=smoke.run_one_case("adb","device","gpu","cgos9_expand_006_12",
+                                                       15,False,Path(folder))
+        self.assertEqual(result["status"],"PASS",result.get("error"))
+        self.assertTrue(state["clicked"])
+        dump.assert_called_once_with("adb","device")
+
     def test_upload_error_keeps_local_report(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
