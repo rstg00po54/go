@@ -18,7 +18,9 @@
 #include "game/board.h"
 #include "game/boardhistory.h"
 
-#if defined(USE_OPENCL_BACKEND)
+#if defined(USE_RKNN_BACKEND)
+#define KATAGO_SESSION_JNI(name) Java_com_badukai_engine_KataGoNpuNative_##name
+#elif defined(USE_OPENCL_BACKEND)
 #define KATAGO_SESSION_JNI(name) Java_com_badukai_engine_KataGoGpuNative_##name
 #else
 #define KATAGO_SESSION_JNI(name) Java_com_badukai_engine_KataGoNative_##name
@@ -207,10 +209,18 @@ std::string toUtf8(JNIEnv* env, jstring value) {
 } // namespace
 
 extern "C" JNIEXPORT jlong JNICALL
+#if defined(USE_RKNN_BACKEND)
+KATAGO_SESSION_JNI(nativeCreateSession)(JNIEnv* env, jclass, jstring model, jstring config, jstring humanModel, jstring rknnModel) {
+#else
 KATAGO_SESSION_JNI(nativeCreateSession)(JNIEnv* env, jclass, jstring model, jstring config, jstring humanModel) {
+#endif
     const std::string modelPath = toUtf8(env, model);
     const std::string configPath = toUtf8(env, config);
     const std::string humanModelPath = toUtf8(env, humanModel);
+#if defined(USE_RKNN_BACKEND)
+    const std::string rknnPath = toUtf8(env, rknnModel);
+    if (rknnPath.empty() || setenv("KATAGO_RKNN_MODEL", rknnPath.c_str(), 1) != 0) return 0;
+#endif
     if (modelPath.empty() || configPath.empty()) return 0;
     std::lock_guard<std::mutex> lock(sessionsMutex);
     if (!sessions.empty()) return 0;
