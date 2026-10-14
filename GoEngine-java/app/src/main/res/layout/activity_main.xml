@@ -432,6 +432,16 @@
                     android:text="白胜率 --%"
                     android:textColor="#276949"
                     android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/aiMoveTimeText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="start"
+                    android:singleLine="true"
+                    android:text="本手用时 --"
+                    android:textColor="#5B7B69"
+                    android:textSize="11sp" />
             </LinearLayout>
 
             <TextView

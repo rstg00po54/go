@@ -91,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean engineReady;
     private boolean engineStarting;
     private boolean thinking;
+    private long lastAiMoveTimeMs = -1;
     private boolean evaluating;
     private boolean gameReady;
     private String gameResultText;
@@ -134,6 +135,7 @@ public class MainActivity extends AppCompatActivity {
     private int gpuStartupGeneration;
     private long gpuStartupStartedMs;
     private TextView aiWinRateText;
+    private TextView aiMoveTimeText;
     private TextView playerWinRateText;
     private TextView aiCaptureText;
     private TextView playerCaptureText;
@@ -416,6 +418,7 @@ public class MainActivity extends AppCompatActivity {
         boardView = findViewById(R.id.boardView);
         statusText = findViewById(R.id.statusText);
         aiWinRateText = findViewById(R.id.aiWinRateText);
+        aiMoveTimeText = findViewById(R.id.aiMoveTimeText);
         playerWinRateText = findViewById(R.id.playerWinRateText);
         aiCaptureText = findViewById(R.id.aiCaptureText);
         playerCaptureText = findViewById(R.id.playerCaptureText);
@@ -691,13 +694,15 @@ public class MainActivity extends AppCompatActivity {
         render("AI 思考中...");
         StoneColor aiColor = currentPlayer;
         engineExecutor.execute(() -> {
+            long startedMs = SystemClock.elapsedRealtime();
             String move = engine.generateMove(aiColor.toGtp());
-            mainHandler.post(() -> handleAiMove(move, aiColor));
+            long elapsedMs = SystemClock.elapsedRealtime() - startedMs;
+            mainHandler.post(() -> handleAiMove(move, aiColor, elapsedMs));
         });
     }
 
-    private void handleAiMove(String move, StoneColor aiColor) {
-        DebugLog.enter(TAG, "handleAiMove in, move=" + move + ", aiColor=" + aiColor);
+    private void handleAiMove(String move, StoneColor aiColor, long elapsedMs) {
+        DebugLog.enter(TAG, "handleAiMove in, move=" + move + ", aiColor=" + aiColor + ", elapsedMs=" + elapsedMs);
         thinking = false;
         if (move == null || move.isEmpty()) {
             if (!engine.isReady()) {
@@ -709,6 +714,8 @@ public class MainActivity extends AppCompatActivity {
             }
             return;
         }
+        lastAiMoveTimeMs = Math.max(0, elapsedMs);
+        Log.i(TAG, "AI_MOVE_TIME move=" + move + " elapsedMs=" + lastAiMoveTimeMs);
         boardView.setOwnership(null);
         clearRecommendations();
         if ("pass".equalsIgnoreCase(move)) {
@@ -775,6 +782,7 @@ public class MainActivity extends AppCompatActivity {
         clearRecommendations();
         board.undo();
         board.undo();
+        lastAiMoveTimeMs = -1;
         winRateEpoch++;
         final GoBoard snapshot = board;
         final int moveCount = board.getMoveCount();
@@ -1962,6 +1970,7 @@ public class MainActivity extends AppCompatActivity {
         gameResultText = null;
         finalScoreText = null;
         finalDeadStones = null;
+        lastAiMoveTimeMs = -1;
         preciseScoreReady = false;
         fastEndgameLead = Double.NaN;
         endgameEvaluation = null;
@@ -2164,6 +2173,8 @@ public class MainActivity extends AppCompatActivity {
             boardView.setEndgameAlerts(null);
         }
         statusText.setText(message);
+        aiMoveTimeText.setText(thinking ? "AI 思考中…" : lastAiMoveTimeMs < 0
+                ? "本手用时 --" : String.format(Locale.CHINA,"本手用时 %.2f 秒",lastAiMoveTimeMs/1000.0));
         updateWinRateLabels();
         aiDifficultyText.setText(getDifficultyName() + " · Human SL · "
                 + (engineReady ? engine.getBackendName() : selectedBackend == KataGoEngine.BackendPreference.GPU ? "GPU 准备中" : "CPU 准备中"));

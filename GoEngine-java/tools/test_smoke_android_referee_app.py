@@ -51,6 +51,31 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn("render(shortStatus);",activity)
         self.assertIn("refereePanelScore.setText(",activity)
 
+    def test_ai_move_time_is_visible_and_tracks_genmove_only(self):
+        root = Path(__file__).resolve().parents[1]
+        activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
+        layout = (root/"app/src/main/res/layout/activity_main.xml").read_text(encoding="utf-8")
+        self.assertEqual(layout.count('android:id="@+id/aiMoveTimeText"'),1)
+        self.assertIn('aiMoveTimeText = findViewById(R.id.aiMoveTimeText);',activity)
+        request = activity.split("private void requestAiMove()",1)[1].split("private void handleAiMove(",1)[0]
+        self.assertIn("long startedMs = SystemClock.elapsedRealtime();",request)
+        self.assertIn("String move = engine.generateMove(aiColor.toGtp());",request)
+        self.assertIn("long elapsedMs = SystemClock.elapsedRealtime() - startedMs;",request)
+        self.assertIn("handleAiMove(move, aiColor, elapsedMs)",request)
+        self.assertNotIn("engine.evaluatePosition(",request)
+        handled = activity.split("private void handleAiMove(",1)[1].split("private void pass()",1)[0]
+        self.assertIn("lastAiMoveTimeMs = Math.max(0, elapsedMs);",handled)
+        self.assertIn("AI_MOVE_TIME move=",handled)
+        self.assertIn('if ("pass".equalsIgnoreCase(move))',handled)
+        self.assertIn('if ("resign".equalsIgnoreCase(move))',handled)
+        render = activity.split("private void render(String message)",1)[1].split("private void updateButtons()",1)[0]
+        self.assertIn('aiMoveTimeText.setText(thinking ? "AI 思考中…" : lastAiMoveTimeMs < 0',render)
+        self.assertIn('String.format(Locale.CHINA,"本手用时 %.2f 秒",lastAiMoveTimeMs/1000.0)',render)
+        newgame = activity.split("private void startNewGame()",1)[1].split("private void ",1)[0]
+        undo = activity.split("private void undo()",1)[1].split("private void resign()",1)[0]
+        self.assertIn("lastAiMoveTimeMs = -1;",newgame)
+        self.assertIn("lastAiMoveTimeMs = -1;",undo)
+
     def test_smart_referee_entry_stays_labeled_after_new_game(self):
         root = Path(__file__).resolve().parents[1]
         activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
