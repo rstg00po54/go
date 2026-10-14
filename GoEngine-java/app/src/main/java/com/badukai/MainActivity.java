@@ -26,6 +26,7 @@ import com.badukai.engine.GpuTuneCache;
 import com.badukai.engine.GpuStartupLogProgress;
 import com.badukai.engine.KataGoOpenCLProbe;
 import com.badukai.engine.KataGoNative;
+import com.badukai.engine.KataGoGpuNative;
 import com.badukai.game.GoBoard;
 import com.badukai.game.NnAreaScore;
 import com.badukai.game.Intersection;
@@ -233,6 +234,23 @@ public class MainActivity extends AppCompatActivity {
                     throw new IllegalStateException("10b KataGo engine startup failed");
                 if (gpu && !engine.getBackendName().startsWith("GPU"))
                     throw new IllegalStateException("GPU requested but actual backend is " + engine.getBackendName());
+                // Verify the new native proof is genuinely callable and can return
+                // both results, rather than silently reporting "unconfirmed" for all
+                // positions because an old JNI library was packaged.
+                byte[] proven = new byte[81];
+                java.util.Arrays.fill(proven,(byte)1);
+                proven[2*9+2] = 0;
+                proven[6*9+6] = 0; // Two independent one-point eyes in a single black chain.
+                byte[] empty = new byte[81];
+                boolean positive = gpu ? KataGoGpuNative.isAllPassAlive(9,proven)
+                        : KataGoNative.isAllPassAlive(9,proven);
+                boolean negative = gpu ? KataGoGpuNative.isAllPassAlive(9,empty)
+                        : KataGoNative.isAllPassAlive(9,empty);
+                if (!positive || negative)
+                    throw new IllegalStateException("Strict KataGo pass-alive native self-test failed: true="
+                            + positive + " false=" + negative + " (rebuild both JNI libraries)");
+                Log.i("RefereeSmoke","PASS_ALIVE_SELFTEST id=" + id + " positive=" + positive
+                        + " negative=" + negative + " backend=" + engine.getBackendName().replace(" ","_"));
                 if (!engine.setBoardSize(9) || !engine.clearBoard() || !engine.setChineseRules()
                         || !engine.setKomi(7f) || !engine.setSearchLimits(48,1.0))
                     throw new IllegalStateException("9x9 Chinese/komi/search setup failed");
