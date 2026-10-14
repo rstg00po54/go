@@ -36,36 +36,45 @@ elif [[ "$BUILD_GPU_JNI" == true ]]; then
     exit 1
 fi
 
-# The independent win-rate KataGo still starts the PIE/ProcessBuilder backend.
-# An APK-only rebuild needs an aligned executable even when the main game uses JNI.
-# Reuse a 16 KB cache, or rebuild the CPU PIE once if all candidates are 4 KB.
-if [[ "$BUILD_GPU_JNI" == false ]]; then
-    aligned_pie=false
-    for pie in "$PROJECT_DIR/app/src/main/jniLibs/arm64-v8a/libkatago_exec.so" \
-               "${KATAGO_WORKDIR:-$HOME/.cache/goengine_katago}/build_android_arm64_eigen/katago" \
-               "$PROJECT_DIR/build/katago_android_arm64_eigen/libkatago_exec.so"; do
-        [[ -s "$pie" ]] || continue
-        if python3 - "$pie" <<'PY'
+# The independent win-rate engine runs the KataGo PIE even when the main game
+# uses CPU/GPU JNI. Both normal and --apk-only builds must bundle a 16 KB PIE.
+# If the old CMake cache still contains a 4 KB executable, rebuild that one
+# native target completely; leave separately built CPU/GPU JNI libraries alone.
+aligned_pie=false
+for pie in "$PROJECT_DIR/app/src/main/jniLibs/arm64-v8a/libkatago_exec.so" \
+           "${KATAGO_WORKDIR:-$HOME/.cache/goengine_katago}/build_android_arm64_eigen/katago" \
+           "$PROJECT_DIR/build/katago_android_arm64_eigen/libkatago_exec.so"; do
+    [[ -s "$pie" ]] || continue
+    if python3 - "$pie" <<'PY'
 import sys
 from pathlib import Path
 from tools.check_android_16kb import inspect_library
 try:
     path = Path(sys.argv[1])
-    _, failures = inspect_library(str(path),path.read_bytes())
+    _, failures = inspect_library(str(path), path.read_bytes())
     sys.exit(1 if failures else 0)
-except (OSError,ValueError):
+except (OSError, ValueError):
     sys.exit(1)
 PY
-        then
-            aligned_pie=true
-            echo "Reusing 16 KB-aligned KataGo PIE: $pie"
-            break
-        fi
-    done
-    if [[ "$aligned_pie" == false ]]; then
-        echo "Old KataGo PIE is only 4 KB-aligned. Building a 16 KB PIE once for win-rate analysis..."
-        KATAGO_JOBS="${KATAGO_JOBS:-2}" bash "$PROJECT_DIR/tools/build_katago_from_source.sh" eigen
+    then
+        aligned_pie=true
+        echo "Reusing 16 KB-aligned KataGo PIE: $pie"
+        break
     fi
+done
+if [[ "$aligned_pie" == false ]]; then
+    pie_cache="${KATAGO_WORKDIR:-$HOME/.cache/goengine_katago}/build_android_arm64_eigen"
+    if [[ -d "$pie_cache" ]]; then
+        # Restrict deletion to this generated CMake build directory only.
+        [[ "${pie_cache##*/}" == build_android_arm64_eigen ]] || {
+            echo "Unsafe KataGo build cache path: $pie_cache" >&2
+            exit 1
+        }
+        echo "Removing old 4 KB KataGo PIE build cache: $pie_cache"
+        rm -rf -- "$pie_cache"
+    fi
+    echo "Building fresh 16 KB-aligned KataGo PIE for independent win-rate analysis..."
+    KATAGO_JOBS="${KATAGO_JOBS:-2}" bash "$PROJECT_DIR/tools/build_katago_from_source.sh" eigen
 fi
 
 ./gradlew assembleDebug "${GRADLE_ARGS[@]}" "$@"
