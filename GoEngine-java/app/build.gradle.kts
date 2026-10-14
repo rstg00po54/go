@@ -310,6 +310,34 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
     }
 }
 
+// Probe-only vivo builds must never silently omit the six KataGo LiteRT
+// model files. Download/verify before AGP snapshots its main source-set assets.
+// The script uses SHA256-pinned cached files and fails the build on network/
+// integrity errors. This task is NOT run for ordinary RK3588 builds.
+val prepareVivoLiteRtModels = tasks.register<Exec>("prepareVivoLiteRtModels") {
+    group = "build"
+    description = "Fetch and SHA256-check 9/13/19 LiteRT model assets before packaging"
+    onlyIf { vivoProbeApk }
+    workingDir(rootProject.projectDir)
+    commandLine("bash", "tools/prepare_vivo_litert.sh")
+}
+
+val verifyVivoLiteRtApk = tasks.register<Exec>("verifyVivoLiteRtApk") {
+    group = "verification"
+    description = "Reject APKs missing any of the six pinned Vivo LiteRT assets"
+    onlyIf { vivoProbeApk }
+    workingDir(rootProject.projectDir)
+    commandLine("python3", "tools/verify_vivo_litert_apk.py",
+        "app/build/outputs/apk/debug/app-debug.apk")
+}
+
+tasks.configureEach {
+    if (vivoProbeApk && name.startsWith("merge") && name.endsWith("Assets"))
+        dependsOn(prepareVivoLiteRtModels)
+    if (vivoProbeApk && name == "assembleDebug")
+        finalizedBy(verifyVivoLiteRtApk)
+}
+
 // AGP reads generated jniLibs in merge<Variant>JniLibFolders, before merge<Variant>NativeLibs.
 // Declare the producer dependency on both tasks to satisfy Gradle 8 input validation.
 tasks.configureEach {
