@@ -27,7 +27,8 @@ class SessionLifetimeTests(unittest.TestCase):
         src = GTP.read_text(encoding="utf-8")
         begin = src.index("int MainCmds::gtpWithIO(")
         startup = src[begin:begin + 1100]
-        self.assertRegex(startup, r"#ifdef KATAGO_EMBEDDED_GTP\s+static std::once_flag")
+        self.assertIn("#ifdef KATAGO_EMBEDDED_GTP", startup)
+        self.assertIn("static std::once_flag initGlobalTablesOnce;", startup)
         self.assertIn("std::call_once(initGlobalTablesOnce", startup)
         self.assertIn("Board::initHash();", startup)
         self.assertIn("ScoreValue::initTables();", startup)
