@@ -15,7 +15,7 @@ public final class KataGoNpuNative {
         long startedNs = System.nanoTime();
         System.loadLibrary("katago_npu");
         loaded = true;
-        Log.i(TAG, "STARTUP_TIMING phase=gpu_jni_load_library ms=" + (System.nanoTime() - startedNs) / 1000000.0);
+        Log.i(TAG, "STARTUP_TIMING phase=npu_jni_load_library ms=" + (System.nanoTime() - startedNs) / 1000000.0);
     }
 
     public static String checkCoreLinkage() {
@@ -33,9 +33,9 @@ public final class KataGoNpuNative {
         long startNs = System.nanoTime();
         long handle = nativeCreateSession(model.getAbsolutePath(), config.getAbsolutePath(),
                 humanModel == null ? null : humanModel.getAbsolutePath(), rknnModel.getAbsolutePath());
-        Log.i(TAG, "STARTUP_TIMING phase=gpu_jni_create_session ms=" +
+        Log.i(TAG, "STARTUP_TIMING phase=npu_jni_create_session ms=" +
                 (System.nanoTime() - startNs) / 1000000.0 + " ok=" + (handle != 0));
-        Log.i(TAG, "STARTUP_TIMING phase=gpu_jni_create_total ms=" +
+        Log.i(TAG, "STARTUP_TIMING phase=npu_jni_create_total ms=" +
                 (System.nanoTime() - totalNs) / 1000000.0);
         return handle == 0 ? null : new GtpSession(handle);
     }
