@@ -52,9 +52,6 @@ import java.util.concurrent.Executors;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final int DEFAULT_BOARD_SIZE = 9;
-    // Reversible experimental build option: false restores the original
-    // default final_score -> final_status_list dead -> kata-raw-nn 0 pipeline.
-    private static final boolean EXPERIMENTAL_FAST_ENDGAME = true;
     private static final int[] BOARD_SIZES = {9, 11, 13, 15, 19};
 
     private static boolean isSupportedBoardSize(int size) {
@@ -894,7 +891,8 @@ public class MainActivity extends AppCompatActivity {
                 if (isRefereeSmokeIntent()) Log.i("RefereeSmoke",String.format(Locale.US,
                         "PASS id=%s game=%s stage=nn_dialog backend=%s moves=%d terminal=%s "
                         + "whiteLead=%.3f blackWin=%.4f whiteWin=%.4f blackPoints=%.3f whitePoints=%.3f nnMs=%d",
-                        refereeSmokeId(),getIntent().getStringExtra("referee_smoke_game"),engine.getBackendName(),
+                        refereeSmokeId(),getIntent().getStringExtra("referee_smoke_game"),
+                        engine.getBackendName().replace(" ","_"),
                         moves,gameEnded,result.whiteLead,result.blackWin,result.whiteWin,
                         area.blackPoints,area.whitePoints,nnMs));
             });
