@@ -72,11 +72,15 @@ class NnSmokeTests(unittest.TestCase):
         self.assertEqual(quick.count("engine.evaluatePosition(size)"),1)
         for expected in ("NnAreaScore.estimate(", "result.whiteLead", "result.blackWin",
                          "result.whiteWin", "nnMs", "stage=nn_dialog",
-                         "setTitle(\"智能裁判 · 快速 NN 估分\")", "NN_DISMISS"):
+                         "setTitle(\"智能裁判 · NN预估\")", "NN_DISMISS"):
             self.assertIn(expected,quick)
         self.assertNotIn("searchRecommendations(",quick)
         self.assertNotIn("engine.playMove(",quick)
         self.assertNotIn("engine.undo()",quick)
+        self.assertIn('.setMessage(summary)',quick)
+        for obsolete in ("positionWarning","当前存在劫禁","单气棋","建议复核死活",
+                         "双方已停棋","双方目数按 NN 地盘归属估算"):
+            self.assertNotIn(obsolete,quick)
 
     def test_black_white_area_status_text_present(self):
         activity = ACTIVITY.read_text(encoding="utf-8")
@@ -129,12 +133,14 @@ class NnSmokeTests(unittest.TestCase):
         self.assertEqual(smoke.smoke_event(log,"current")["status"],"FAIL")
 
     def test_dialog_requires_nn_content_and_rejects_old_text(self):
-        text = ("智能裁判 · 快速 NN 估分 黑棋约 45.0 目 白棋约 43.0 目 "
-                "黑棋胜率 60.0% 白棋胜率 40.0% "
-                "双方目数按 NN 地盘归属估算 关闭")
+        text = ("智能裁判 · NN预估 黑棋领先 2.0目 黑棋 45.0目 · 白棋 43.0目 "
+                "胜率 黑 60.0% · 白 40.0% 关闭")
         self.assertEqual(smoke.validate_dialog(text),[])
         self.assertIn("deprecated UI",str(smoke.validate_dialog(text+" 确认中国规则数子")))
         self.assertIn("继续下棋",smoke.validate_dialog(text,midgame=True))
+        self.assertEqual(smoke.validate_dialog(text.replace("关闭","继续下棋"),midgame=True),[])
+        self.assertEqual(smoke.validate_dialog(text.replace("黑棋领先 2.0目","双方持平")),[])
+        self.assertIn("deprecated UI",str(smoke.validate_dialog(text+" 建议复核死活")))
 
     def test_dismiss_event_is_run_specific(self):
         log = "I/RefereeSmoke: NN_DISMISS id=other moves=80 terminal=false\n"
@@ -200,9 +206,8 @@ class NnSmokeTests(unittest.TestCase):
             hex = "current"
         state = {"clicked":False}
         ui = ET.fromstring("""<hierarchy>
-            <node text="智能裁判 · 快速 NN 估分" />
-            <node text="黑棋约 45.0 目 · 白棋约 43.0 目 黑棋胜率 60.0% 白棋胜率 40.0%
-                         双方目数按 NN 地盘归属估算" />
+            <node text="智能裁判 · NN预估" />
+            <node text="黑棋领先 2.0目 黑棋 45.0目 · 白棋 43.0目 胜率 黑 60.0% · 白 40.0%" />
             <node text="关闭" bounds="[100,500][300,570]" />
         </hierarchy>""")
         def fake_run(argv,timeout=30,check=True):
