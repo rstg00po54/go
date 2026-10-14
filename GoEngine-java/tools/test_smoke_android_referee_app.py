@@ -149,7 +149,8 @@ class RefereeSmokeHostTests(unittest.TestCase):
                        "nativeInfo.highVariationPoints", "REFEREE_ENDGAME_RESULT",
                        "resumeFromReferee()", "engine.getFinalScore()", "engine.getFinalDeadStones()"):
             self.assertIn(symbol,inspection)
-        self.assertIn("blackGain <= 0.5 && whiteGain <= 0.5",inspection)
+        self.assertIn("inspection.black.estimatedMoveBenefit <= 0.5",inspection)
+        self.assertIn("inspection.white.estimatedMoveBenefit <= 0.5",inspection)
         self.assertNotIn("if (!ended && (blackGain >= 1.5",inspection)
         self.assertIn("nativeScore != null && !nativeScore.trim().isEmpty() && nativeDead != null",inspection)
         self.assertIn("final boolean scoreWasRequested = scoringAttempted;",inspection)
