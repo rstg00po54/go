@@ -9,6 +9,8 @@ on:
       - 'GoEngine-java/tools/test_app_ui_units.py'
       - 'GoEngine-java/tools/test_rk3588_npu_game.sh'
       - 'GoEngine-java/tools/symbolize_npu_crash.sh'
+      - 'GoEngine-java/tools/watch_npu_crash.py'
+      - 'GoEngine-java/tools/test_watch_npu_crash.py'
   workflow_dispatch:
 
 permissions:
@@ -26,7 +28,10 @@ jobs:
         run: |
           bash -n GoEngine-java/tools/test_rk3588_npu_game.sh
           bash -n GoEngine-java/tools/symbolize_npu_crash.sh
-          python3 -m py_compile GoEngine-java/tools/test_app_ui.py GoEngine-java/tools/test_app_ui_units.py
+          python3 -m py_compile GoEngine-java/tools/test_app_ui.py GoEngine-java/tools/test_app_ui_units.py \
+            GoEngine-java/tools/watch_npu_crash.py GoEngine-java/tools/test_watch_npu_crash.py
       - name: Verify real-game UI automation and NPU parsing
         working-directory: GoEngine-java
-        run: python3 -m unittest discover -s tools -p 'test_app_ui_units.py' -v
+        run: |
+          python3 -m unittest discover -s tools -p 'test_app_ui_units.py' -v
+          python3 -m unittest discover -s tools -p 'test_watch_npu_crash.py' -v
