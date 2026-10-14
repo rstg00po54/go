@@ -22,7 +22,9 @@ git fetch
 git switch feature/rk3588-rknn
 bash tools/prepare_rknn.sh
 KATAGO_JOBS=2 bash tools/build_katago_from_source.sh rknnjni
-bash build.sh --apk-only
+# Check the RK3588 target first. Only use this path if device page size = 4096.
+adb -s 8719e18a71a2a66c shell getconf PAGESIZE
+ALLOW_4K_RKNN_RUNTIME=1 bash build.sh --apk-only
 ```
 
 `prepare_rknn.sh` reuses cached MiniGoCpp artifacts when available; else
@@ -83,3 +85,24 @@ human-rank conditioning inputs and model version, compare all heads against
 the native Eigen Human SL output for multiple ranks and legal 19x19 games,
 then extend the backend's model dispatch. Conversion success and NPU support
 for the full b18 graph remain to be established.
+
+## Important: Rockchip runtime page alignment and phone builds
+
+The RKNPU2 Android runtime `librknnrt.so` from Rockchip v2.3.2 in
+`tools/prepare_rknn.sh` has ELF `PT_LOAD p_align=0x1000`. The native
+`libkatago_npu.so` and our other JNI libraries are correctly linked with
+`p_align=0x4000`.
+
+To avoid weakening checks accidentally, APK packaging will **reject** the
+Rockchip runtime by default. For development on RK3588 Android systems verified
+to use **4 KB memory pages** (`adb shell getconf PAGESIZE` returns `4096`),
+opt in using `ALLOW_4K_RKNN_RUNTIME=1 bash build.sh --apk-only`. Gradle
+then validates only the exact `librknnrt.so` by a 4 KB threshold and keeps
+the 16 KB requirement for every other packaged ELF. The final APK inspection
+explicitly prints a `WARN` and does not count this runtime as 16 KB compatible.
+
+Do **not** ship that APK for a 16 KB page-size device or publish it as an
+all-device 16 KB-compatible APK. For such devices, obtain and validate a truly
+16 KB-aligned Android `librknnrt.so` from the SoC/firmware vendor, or produce
+a separate phone build without the Rockchip NPU backend and its dependencies.
+The vivo smartphone uses its CPU/GPU backend, **not** Rockchip's RKNN runtime.
