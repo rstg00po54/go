@@ -50,6 +50,13 @@ class NpuLogTests(unittest.TestCase):
         self.assertEqual(report["status"], "FAIL")
         self.assertTrue(any("fallback" in error.lower() for error in report["errors"]))
 
+    def test_event_predicate_is_boolean_and_progress_count_handles_absent_events(self):
+        self.assertIs(smoke.event("unrelated", "NpuSmoke", "STEP_BEGIN", "unique"), False)
+        line = "I/NpuSmoke( 100): STEP_BEGIN id=unique index=0 board=9"
+        self.assertIs(smoke.event(line, "NpuSmoke", "STEP_BEGIN", "unique"), True)
+        self.assertEqual(sum(smoke.event(item, "NpuSmoke", "STEP_BEGIN", "unique")
+                             for item in ["unrelated", line, "I/NpuSmoke: PASS id=other"]), 1)
+
     def test_stale_logcat_does_not_pass(self):
         report = smoke.parse_log(fixture(run_id="previous"), "current", (9, 13, 19, 9))
         self.assertEqual(report["status"], "FAIL")
