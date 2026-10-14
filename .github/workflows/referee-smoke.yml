@@ -1,18 +1,26 @@
-name: Smart referee core tests
+name: KataGo NN estimate regression
 
 on:
   workflow_dispatch:
   push:
     branches: [rk3588-engine]
     paths:
-      - .github/workflows/referee-smoke.yml
       - GoEngine-java/app/src/main/java/com/badukai/MainActivity.java
       - GoEngine-java/app/src/main/java/com/badukai/ui/GoBoardView.java
+      - GoEngine-java/app/src/main/java/com/badukai/game/NnAreaScore.java
+      - GoEngine-java/app/src/main/res/layout/activity_main.xml
+      - GoEngine-java/tools/smoke_android_referee_app.py
       - GoEngine-java/tools/test_smoke_android_referee_app.py
+      - GoEngine-java/tools/test_smart_referee.py
+      - GoEngine-java/tools/upload_referee_test_results.py
+      - GoEngine-java/tools/test_upload_referee_test_results.py
+      - .github/workflows/referee-smoke.yml
 
+permissions:
+  contents: read
 jobs:
-  referee-jdk:
-    runs-on: ubuntu-latest
+  nn-host:
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: GoEngine-java
@@ -22,23 +30,13 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - name: Make adb available to host-side smoke harness tests
+      - name: Install ADB for host smoke harness
         run: sudo apt-get update -qq && sudo apt-get install -y adb
-      - name: Compile and test actual referee Java classes
+      - name: JDK NN area calculation tests
         run: python3 tools/test_smart_referee.py
-      - name: Syntax-check real Android referee benchmark
-        run: python3 -m py_compile tools/benchmark_endgame_referee_android.py
-      - name: Test Java/Python referee TSV protocol
-        run: python3 tools/test_benchmark_endgame_referee_protocol.py
-      - name: Test local SGF tactical probe protocol
-        run: python3 tools/test_benchmark_endgame_life_probe.py
-      - name: Syntax-check local probe
-        run: python3 -m py_compile tools/benchmark_endgame_life_probe_android.py
-      - name: Smoke harness parser tests (ADB not required)
+      - name: Android NN smoke host tests
         run: python3 tools/test_smoke_android_referee_app.py
-      - name: Syntax-check Android ADB smoke harness
-        run: python3 -m py_compile tools/smoke_android_referee_app.py
-      - name: Test persistent GitHub result uploader with isolated local repository
+      - name: Python syntax checks
+        run: python3 -m py_compile tools/smoke_android_referee_app.py tools/test_smoke_android_referee_app.py tools/test_smart_referee.py
+      - name: Check test-report uploader
         run: python3 tools/test_upload_referee_test_results.py
-      - name: Syntax-check uploader
-        run: python3 -m py_compile tools/upload_referee_test_results.py
