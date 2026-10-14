@@ -138,7 +138,7 @@ class NnSmokeTests(unittest.TestCase):
                 "胜率 黑 60.0% · 白 40.0% 收官：未确认 关闭")
         self.assertEqual(smoke.validate_dialog(text),[])
         self.assertEqual(smoke.validate_dialog(text,certified=False),[])
-        self.assertIn("strict endgame status disagrees",smoke.validate_dialog(text,certified=True))
+        self.assertIn("strict endgame status disagrees",str(smoke.validate_dialog(text,certified=True)))
         self.assertEqual(smoke.validate_dialog(text.replace("收官：未确认","收官：已完成"),certified=True),[])
         self.assertIn("deprecated UI",str(smoke.validate_dialog(text+" 确认中国规则数子")))
         self.assertIn("继续下棋",smoke.validate_dialog(text,midgame=True))
