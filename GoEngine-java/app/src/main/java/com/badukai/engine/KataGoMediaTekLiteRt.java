@@ -51,11 +51,7 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
     private final boolean spatialIsNchw;
     private final int size;
 
-    public static boolean isMediaTek() {
-        String desc = (Build.HARDWARE + " " + Build.BOARD + " " + Build.SOC_MANUFACTURER
-                + " " + Build.SOC_MODEL).toLowerCase(Locale.US);
-        return desc.contains("mediatek") || desc.contains("mt6990") || desc.contains("mtk");
-    }
+    public static boolean isMediaTek() { return NpuHardware.canProbeMediaTekLiteRt(); }
 
     /** Requires an independently verified per-board TFLite graph + JSON. */
     public KataGoMediaTekLiteRt(Context context, File file, File json, int board) throws Exception {
