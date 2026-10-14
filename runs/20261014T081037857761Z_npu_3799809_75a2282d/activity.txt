@@ -1,0 +1,5 @@
+board/hardware: rk3588
+rk30board
+RK3588
+
+page_size=4096

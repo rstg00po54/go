@@ -1,0 +1,35 @@
+--------- beginning of main
+I/NpuSmoke( 8773): START id=7335380599be4d0f sizes=19 humanSL=true
+I/KataGoEngine( 8773): Human SL model ready: /data/user/0/com.badukai.java/files/engine/b18c384nbt-humanv0.bin
+I/NpuSmoke( 8773): STEP_BEGIN id=7335380599be4d0f index=0 board=19
+I/KataGoEngine( 8773): === JAVA KATAGO ENGINE / ANDROID ARM64 ===
+I/KataGoEngine( 8773): STARTUP_TIMING phase=engine_backend_and_paths ms=0.289041
+I/KataGoEngine( 8773): Native GTP defaultBoardSize=19
+I/KataGoEngine( 8773): STARTUP_TIMING phase=engine_prepare_config ms=5.270126
+I/KataGoEngine( 8773): Reusing installed model asset: /data/user/0/com.badukai.java/files/engine/10b.bin
+I/KataGoEngine( 8773): Reusing installed model asset: /data/user/0/com.badukai.java/files/engine/katago_10b_19x19.rknn
+I/KataGoEngine( 8773): STARTUP_TIMING phase=engine_prepare_model_asset ms=2.281417
+I/KataGoEngine( 8773): Human SL model: /data/user/0/com.badukai.java/files/engine/b18c384nbt-humanv0.bin size=107185997
+I/KataGoEngine( 8773): STARTUP_TIMING phase=engine_find_human_model ms=0.121042
+I/KataGoEngine( 8773): Model: /data/user/0/com.badukai.java/files/engine/10b.bin size=12003218
+I/KataGoEngine( 8773): Config: /data/user/0/com.badukai.java/files/engine/human_gtp.cfg
+I/KataGoEngine( 8773): Backend requested: NPU/RKNN in-process JNI
+I/KataGoEngine( 8773): STARTUP_TIMING phase=engine_npu_native_create ms=25.500711
+I/KataGoEngine( 8773): NPU_MODEL_SELECTED board=19 path=/data/user/0/com.badukai.java/files/engine/katago_10b_19x19.rknn
+I/KataGoRKNN( 8773): RKNN_INIT board=19 path=/data/user/0/com.badukai.java/files/engine/katago_10b_19x19.rknn
+I/KataGoRKNN( 8773): RKNN_INPUT board=19 slot=0 name=InputSpatial dims=1x19x19x22 elems=7942 expected=7942 size=15884 fmt=1 type=1
+I/KataGoRKNN( 8773): RKNN_INPUT board=19 slot=1 name=InputGlobal dims=1x1x1x19 elems=19 expected=19 size=38 fmt=1 type=1
+I/KataGoRKNN( 8773): RKNN_INPUT board=19 slot=2 name=InputMask dims=1x19x19x1 elems=361 expected=361 size=722 fmt=1 type=1
+I/KataGoRKNN( 8773): RKNN_READY board=19 model=/data/user/0/com.badukai.java/files/engine/katago_10b_19x19.rknn
+I/KataGoEngine( 8773): KataGo GTP ready response: = KataGo
+I/KataGoEngine( 8773): STARTUP_TIMING phase=engine_npu_ready ms=2472.742374
+I/KataGoEngine( 8773): GTP boardsize=19 ok=true elapsedMs=0
+I/KataGoEngine( 8773): Chinese rules verified=true rules={"friendlyPassOk":true,"hasButton":false,"ko":"SIMPLE","scoring":"AREA","suicide":false,"tax":"NONE","whiteHandicapBonus":"N"}
+I/KataGoEngine( 8773): Search limits verified=true requested: maxVisits=32 maxTime=2.000 readback: maxVisits=32 maxTime=2.0
+I/KataGoEngine( 8773): Human SL rank verified=true requested=rank_12k readback=rank_12k
+I/KataGoEngine( 8773): genmove color=black move=Q16 rootVisits=unavailable newPlayouts=unavailable elapsedMs=2006 (wall time includes GTP and inference overhead)
+I/KataGoEngine( 8773): genmove color=white move=C4 rootVisits=unavailable newPlayouts=unavailable elapsedMs=2010 (wall time includes GTP and inference overhead)
+I/NpuSmoke( 8773): STEP_PASS id=7335380599be4d0f index=0 board=19 active=19 startupMs=2473 black=Q16 blackMs=2006 white=C4 whiteMs=2010
+I/NpuSmoke( 8773): PASS id=7335380599be4d0f steps=1 sizes=19
+I/KataGoEngine( 8773): NPU/RKNN JNI session stopped
+I/KataGoEngine( 8773): KataGo stopped
