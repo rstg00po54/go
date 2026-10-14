@@ -27,7 +27,7 @@ PACKAGE = "com.badukai.java"
 ACTIVITY = PACKAGE + "/com.badukai.MainActivity"
 BOUNDS = re.compile(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]")
 TURN = re.compile(r"第\s*(\d+)\s*手")
-BACKEND_TEXT = {"cpu": "CPU/Eigen JNI", "gpu": "GPU/OpenCL JNI"}
+BACKEND_TEXT = {"cpu": "CPU/Eigen JNI", "gpu": "GPU/OpenCL JNI", "npu": "NPU"}
 
 
 class TestFailure(RuntimeError):
@@ -157,7 +157,7 @@ class AppTest:
         lines = raw.splitlines()
         backend = []
         for line in lines:
-            m = re.search(r"Game backend requested=(CPU|GPU) actual=(\S+(?: JNI)?) ready=(true|false)", line)
+            m = re.search(r"Game backend requested=(CPU|GPU|NPU) actual=(.*?) ready=(true|false)", line)
             if m:
                 backend.append((m.group(1), m.group(2), m.group(3) == "true"))
         return {
@@ -177,6 +177,27 @@ class AppTest:
             "fatal": any("FATAL EXCEPTION" in line for line in lines),
             "debug_active": any("render in, message=" in line for line in lines),
         }
+
+    def read_npu_state(self):
+        raw = self.adb("logcat", "-d", "-s", "KataGoRKNN:I", "KataGoEngine:I", "*:S", timeout=20)
+        return {
+            "selected": re.findall(r"NPU_MODEL_SELECTED board=(\\d+) path=([^\\s]+)", raw),
+            "ready": re.findall(r"RKNN_READY board=(\\d+) model=([^\\s]+)", raw),
+            "init": re.findall(r"RKNN_INIT board=(\\d+) path=([^\\s]+)", raw),
+            "fallback": raw.count("RKNN_DISABLED_FALLBACK_EIGEN"),
+        }
+
+    def assert_npu_board(self, size, before):
+        current = self.read_npu_state()
+        name = "katago_10b_%dx%d.rknn" % (size, size)
+        for key in ("selected", "init", "ready"):
+            old_count = len(before[key])
+            recent = current[key][old_count:]
+            if len(recent) != 1 or recent[0][0] != str(size) or not recent[0][1].endswith("/" + name):
+                raise TestFailure("NPU 模型不匹配：board=%d event=%s recent=%s" % (size, key, recent))
+        if current["fallback"] > before["fallback"]:
+            raise TestFailure("NPU 已回退到 CPU，拒绝判定为通过")
+        self.log("NPU 已验证真实模型：" + name)
 
     def wait_log(self, predicate, timeout, description):
         deadline = time.monotonic() + timeout
@@ -399,10 +420,10 @@ class AppTest:
         if rid == "sizeSpinner" and self.selected_size is not None:
             selected = f"{self.selected_size}路"
         elif rid == "backendSpinner" and self.selected_backend is not None:
-            selected = self.selected_backend + (" / OpenCL" if self.selected_backend == "GPU" else " / Eigen")
+            selected = self.selected_backend + (" / OpenCL" if self.selected_backend == "GPU" else " / RKNN" if self.selected_backend == "NPU" else " / Eigen")
         else:
             selected = self.spinner_selected(self.hierarchy(), rid)
-        if selected == option or (option == "CPU / Eigen" and selected.startswith("CPU / Eigen")):
+        if selected == option or (option in ("CPU / Eigen", "NPU / RKNN") and selected.startswith(option)):
             self.log(f"{rid} 已选择 {selected}，跳过下拉菜单")
             return
 
@@ -452,7 +473,7 @@ class AppTest:
                     actual = self.spinner_selected(root, rid)
                 except TestFailure:
                     return None
-                if actual == option or (option == "CPU / Eigen" and actual.startswith("CPU / Eigen")):
+                if actual == option or (option in ("CPU / Eigen", "NPU / RKNN") and actual.startswith(option)):
                     return True
                 return None
             self.poll(selected_in_dialog, 12, f"等待 {rid} 显示已选择 {option}")
@@ -460,7 +481,7 @@ class AppTest:
         if rid == "sizeSpinner":
             self.selected_size = int(option.replace("路", ""))
         if rid == "backendSpinner":
-            self.selected_backend = "GPU" if option.startswith("GPU") else "CPU"
+            self.selected_backend = "GPU" if option.startswith("GPU") else "NPU" if option.startswith("NPU") else "CPU"
     def text(self, root, rid):
         item = self.node(root, rid=rid)
         return item.get("text", "") if item is not None else ""
@@ -479,7 +500,7 @@ class AppTest:
                 if ready[-1] != "true":
                     raise TestFailure("MainActivity 日志报告首页 AI 初始化失败，请检查 logcat")
                 self.log("MainActivity 已报告 Initial engine ready=true")
-                prefs = re.findall(r"preload boardSize=(\d+); backend=(CPU|GPU)", logs)
+                prefs = re.findall(r"preload boardSize=(\d+); backend=(CPU|GPU|NPU)", logs)
                 if prefs:
                     self.selected_size = int(prefs[-1][0])
                     self.selected_backend = prefs[-1][1]
@@ -548,7 +569,7 @@ class AppTest:
                     return None
                 requested, actual, ready = state["backend"][-1]
                 expected = BACKEND_TEXT[backend]
-                if requested != backend.upper() or actual != expected or not ready:
+                if requested != backend.upper() or not actual.startswith(expected) or not ready:
                     raise TestFailure(f"后端不匹配：请求={backend} 实际={actual} ready={ready}")
                 if require_ai and state["ai_moves"] <= baseline["ai_moves"]:
                     return None
@@ -714,7 +735,7 @@ class AppTest:
         """
         def launches():
             raw = self.adb("logcat", "-d", "-s", "MainActivity:I", "*:S", timeout=15)
-            return re.findall(r"Saved new-game preference boardSize=(\d+) backend=(CPU|GPU)", raw)
+            return re.findall(r"Saved new-game preference boardSize=(\d+) backend=(CPU|GPU|NPU)", raw)
 
         before = launches()
         for attempt in range(2):
@@ -723,7 +744,7 @@ class AppTest:
                 if self.node(root, rid="startGameButton") is None:
                     raise TestFailure("开始对局未收到确认日志，但弹窗已经关闭；请查看故障日志")
                 actual = self.spinner_selected(root, "backendSpinner")
-                desired = "GPU / OpenCL" if backend == "gpu" else "CPU / Eigen"
+                desired = "GPU / OpenCL" if backend == "gpu" else "NPU / RKNN" if backend == "npu" else "CPU / Eigen"
                 if not actual.startswith(desired):
                     raise TestFailure(f"开始按钮重试前后端被改变：预期 {desired}，实际 {actual}")
                 self.log("开始对局首次点击未生效，弹窗仍在，重试按钮一次")
@@ -771,12 +792,14 @@ class AppTest:
         # Check actual dropdown selection instead of trusting enabled=false.
         # An APK without the GPU library has no GPU option, in which case
         # spinner() will fail with the observed list of available options.
-        self.spinner("backendSpinner", "GPU / OpenCL" if backend == "gpu" else "CPU / Eigen")
+        self.spinner("backendSpinner", "GPU / OpenCL" if backend == "gpu" else "NPU / RKNN" if backend == "npu" else "CPU / Eigen")
         # Record counters before the click, even if log mode is not active
         # yet: the first started game can enable DebugLog fast detection.
         baseline = self.read_log_state() if not self.args.slow_ui else None
+        npu_before = self.read_npu_state() if backend == "npu" else None
         self.start_game_confirmed(backend)
         turn = self.wait_turn(self.args.size, backend, baseline=baseline)
+        if backend == "npu": self.assert_npu_board(self.args.size, npu_before)
         self.check_process()
         if self.args.full_game:
             from full_game_test import run_full_game
@@ -836,6 +859,7 @@ class AppTest:
         for _ in range(self.args.rounds):
             for backend in self.args.backends.split(","):
                 index += 1
+                if self.args.sizes: self.args.size = self.args.sizes[index - 1]
                 self.case(backend, index)
         self.diagnostics("final", capture_ui=False)
         if self.args.benchmark:
@@ -965,6 +989,7 @@ def main():
     parser.add_argument("--backends", default="cpu,gpu,cpu", help="cpu,gpu,cpu 或 cpu")
     parser.add_argument("--rounds", type=int, default=1, help="重复整组后端测试次数")
     parser.add_argument("--size", type=int, choices=(9, 11, 13, 15, 19), default=9)
+    parser.add_argument("--sizes", help="Per-game board sizes, e.g. 9,13,19,9, preserving one app process")
     parser.add_argument("--moves", type=int, default=1)
     parser.add_argument("--benchmark", action="store_true", help="根据 Android 原始日志生成 CPU/GPU 真正回棋耗时统计")
     parser.add_argument("--full-game", action="store_true", help="自动完成正常对局直到双方停一手，再测 final_score、死子判断和地盘结算")
@@ -984,9 +1009,22 @@ def main():
     args = parser.parse_args()
     args.backends = ",".join(x.strip().lower() for x in args.backends.split(","))
     if any(x not in BACKEND_TEXT for x in args.backends.split(",")):
-        parser.error("--backends 只能用 cpu,gpu")
+        parser.error("--backends 只能用 cpu,gpu,npu")
+    if args.sizes:
+        try:
+            args.sizes = [int(x) for x in args.sizes.split(",")]
+        except ValueError:
+            parser.error("--sizes 格式应为 9,13,19,9")
+        if len(args.sizes) != len(args.backends.split(",")) * args.rounds:
+            parser.error("--sizes 数量必须等于 --backends 项数乘 --rounds")
+        if any(x not in (9, 11, 13, 15, 19) for x in args.sizes):
+            parser.error("--sizes 包含不支持的棋盘")
+        if "npu" in args.backends.split(",") and any(size not in (9, 13, 19) for size, b in zip(args.sizes, args.backends.split(",") * args.rounds) if b == "npu"):
+            parser.error("NPU 目前只支持 9/13/19 路")
     if args.moves < 0 or args.rounds < 1:
         parser.error("--moves 必须 >= 0，--rounds 必须 >= 1")
+    if args.benchmark and ("npu" in args.backends.split(",") or args.sizes):
+        parser.error("--benchmark 暂不支持 NPU 或混合棋盘，普通对局测试可以使用")
     if args.benchmark and (args.moves < 1 or not 0 <= args.warmup_moves < args.moves):
         parser.error("性能测试至少需要 1 手，且 0 <= warmup-moves < moves")
     if args.full_game and (args.benchmark or args.undo or args.pass_move or args.slow_ui):
@@ -1017,7 +1055,7 @@ def main():
     finally:
         (runner.out / "report.json").write_text(json.dumps({
             "status": status, "ui_dumps": runner.ui_dumps, "serial": runner.serial, "backends": args.backends,
-            "rounds": args.rounds, "size": args.size, "moves": args.moves,
+            "rounds": args.rounds, "size": args.size, "sizes": args.sizes, "moves": args.moves,
             "undo": args.undo, "pass": args.pass_move, "failure": failure,
             "events": runner.events, "benchmark": runner.benchmark,
             "full_games": runner.full_games
