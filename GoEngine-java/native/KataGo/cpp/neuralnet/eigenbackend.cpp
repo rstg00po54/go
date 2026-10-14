@@ -1809,17 +1809,22 @@ ComputeHandle* NeuralNet::createComputeHandle(
   int gpuIdxForThisThread,
   int serverThreadIdx
 ) {
-  if(logger != NULL) {
-    logger->write("Eigen (CPU) backend thread " + Global::intToString(serverThreadIdx) + ": Model version " + Global::intToString(loadedModel->modelDesc.modelVersion));
-    logger->write("Eigen (CPU) backend thread " + Global::intToString(serverThreadIdx) + ": Model name: " + loadedModel->modelDesc.name);
-  }
-
-  (void)requireExactNNLen; //We don't bother with mask optimizations if we know exact sizes right now.
-  (void)gpuIdxForThisThread; //Doesn't matter
-
+  (void)requireExactNNLen;
+  (void)gpuIdxForThisThread;
   if(!inputsUseNHWC)
-    throw StringError("Eigen backend: inputsUseNHWC = false unsupported");
-  return new ComputeHandle(context, *loadedModel, maxBatchSize, inputsUseNHWC);
+    throw StringError("Eigen/RKNN backend: inputsUseNHWC = false unsupported");
+  ComputeHandle* handle = new ComputeHandle(context, *loadedModel, maxBatchSize, inputsUseNHWC);
+  if(logger != NULL) {
+    std::string backend = "Eigen (CPU)";
+#ifdef USE_RKNN_BACKEND
+    if(handle->rknn != nullptr) backend = "RKNN (RK3588 NPU)";
+#endif
+    logger->write(backend + " backend thread " + Global::intToString(serverThreadIdx) +
+                  ": Model version " + Global::intToString(loadedModel->modelDesc.modelVersion));
+    logger->write(backend + " backend thread " + Global::intToString(serverThreadIdx) +
+                  ": Model name: " + loadedModel->modelDesc.name);
+  }
+  return handle;
 }
 
 void NeuralNet::freeComputeHandle(ComputeHandle* gpuHandle) {
