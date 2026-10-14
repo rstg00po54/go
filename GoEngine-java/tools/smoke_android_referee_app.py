@@ -70,6 +70,12 @@ def smoke_event(log, run_id):
     return final
 
 
+def native_proof_event(log,run_id):
+    return next((line.strip() for line in log.splitlines()
+                 if "RefereeSmoke" in line and re.search(
+                     r"\bPASS_ALIVE_SELFTEST id="+re.escape(run_id)+r"\b.*\bpositive=true negative=false\b",line)),None)
+
+
 def read_referee_log(adb,serial,run_id):
     """Fetch app smoke events with short ADB commands, trying both log buffers.
 
@@ -224,6 +230,10 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir,midgame=False):
         (case_dir/"logcat.txt").write_text(log,encoding="utf-8")
         if terminal is None:
             raise RuntimeError("Timed out waiting for NN result")
+        proof_test = native_proof_event(log,run_id)
+        if proof_test is None:
+            raise RuntimeError("Native strict pass-alive positive/negative self-test missing; rebuild CPU/GPU JNI and APK")
+        result["native_proof_selftest"] = proof_test
         result["app_result"] = terminal
         print(terminal["line"],flush=True)
         if terminal["status"]!="PASS":
