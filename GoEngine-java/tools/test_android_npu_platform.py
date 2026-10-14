@@ -10,12 +10,15 @@ class AndroidNpuPlatformTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.engine = (ROOT / "app/src/main/java/com/badukai/engine/KataGoEngine.java").read_text()
+        cls.hardware = (ROOT / "app/src/main/java/com/badukai/engine/NpuHardware.java").read_text()
         cls.ui = (ROOT / "app/src/main/java/com/badukai/MainActivity.java").read_text()
         cls.native = (ROOT / "native/KataGo/cpp/neuralnet/rknnbackend.cpp").read_text()
 
     def test_supported_platform_requires_rk3588(self):
         self.assertIn("public static boolean supportsRknnHardware()", self.engine)
-        self.assertIn('identity.contains("rk3588")', self.engine)
+        self.assertIn("return NpuHardware.canRunRknn();", self.engine)
+        self.assertIn('identity.contains("rk3588")', self.hardware)
+        self.assertIn('identity.contains("mediatek")', self.hardware)
         self.assertIn("rknnModelAvailable && supportsRknnHardware()", self.engine)
 
     def test_ui_hides_unsupported_npu_and_saved_choice_does_not_reload_it(self):
