@@ -133,6 +133,7 @@ public class MainActivity extends AppCompatActivity {
     private Button aiSuggestionButton;
     private Button countTerritoryButton;
     private boolean hasBundledNpuModel(int size) {
+        if (!KataGoEngine.supportsRknnHardware()) return false;
         if (size != 9 && size != 13 && size != 19) return false;
         String asset = "engine/katago_10b_" + size + "x" + size + ".rknn";
         try (InputStream in = getAssets().open(asset)) { return in.read() != -1; }
@@ -1299,7 +1300,8 @@ public class MainActivity extends AppCompatActivity {
         conditionSpinner.setSelection(gameCondition);
 
         boolean gpuBundled = new File(getApplicationInfo().nativeLibraryDir, "libkatago_gpu.so").isFile();
-        boolean npuBundled = new File(getApplicationInfo().nativeLibraryDir, "libkatago_npu.so").isFile()
+        boolean npuBundled = KataGoEngine.supportsRknnHardware()
+                && new File(getApplicationInfo().nativeLibraryDir, "libkatago_npu.so").isFile()
                 && new File(getApplicationInfo().nativeLibraryDir, "librknnrt.so").isFile();
         List<KataGoEngine.BackendPreference> backendChoices = new ArrayList<>();
         List<String> backendNames = new ArrayList<>();
