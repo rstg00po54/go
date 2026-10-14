@@ -158,11 +158,11 @@ val compileKataGoNative = tasks.register<Exec>("compileKataGoNative") {
 
 val stageKataGoNative = tasks.register("stageKataGoNative") {
     group = "build"
-    description = "Stage 16 KB-aligned KataGo JNI libraries and optional PIE fallback"
+    description = "Stage 16 KB-aligned KataGo executable and JNI libraries"
     dependsOn(compileKataGoNative)
     // --apk-only must not blindly stage the legacy 4 KB-aligned PIE from jniLibs.
-    // Reuse an existing 16 KB-compatible PIE if present. JNI backends remain
-    // usable without PIE, but ProcessBuilder fallback is then unavailable.
+    // Reuse an existing 16 KB-compatible PIE if present. The independent
+    // win-rate engine still uses ProcessBuilder, so PIE is required.
     val pieCandidates = if (skipKataGoNative) listOf(
         File(katagoPrebuiltDir, "libkatago_exec.so"),
         katagoExecutable,
@@ -198,10 +198,11 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
             return loads.isNotEmpty() && loads.all { it != null && it >= 16384L && it % 16384L == 0L }
         }
         val executable = pieCandidates.firstOrNull { isAlignedPie(it) }
-        if (executable == null && !enableKataGoJniCore) {
-            throw GradleException("No 16 KB-aligned KataGo PIE and CPU JNI is disabled. " +
-                "Run bash tools/build_katago_from_source.sh eigen to build a compatible executable, " +
-                "or build CPU JNI with bash tools/build_katago_from_source.sh eigenjni.")
+        if (executable == null) {
+            throw GradleException("No 16 KB-aligned KataGo PIE executable found. The independent " +
+                "win-rate engine requires libkatago_exec.so even when the playing engine uses JNI. " +
+                "Rebuild the PIE with bash tools/build_katago_from_source.sh eigen, " +
+                "then retry bash build.sh --apk-only.")
         }
         val abiDir = File(katagoGeneratedJniDir, "arm64-v8a")
         abiDir.mkdirs()
@@ -210,16 +211,9 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
             if (!target.isFile || Files.mismatch(source.toPath(), target.toPath()) != -1L)
                 source.copyTo(target, overwrite = true)
         }
-        val stagedBinaries = mutableListOf<File>()
-        if (executable != null) {
-            stageFile(executable, "libkatago_exec.so")
-            stagedBinaries.add(File(abiDir, "libkatago_exec.so"))
-            println("Using 16 KB-aligned KataGo PIE: ${executable.absolutePath}")
-        } else {
-            File(abiDir, "libkatago_exec.so").delete()
-            logger.warn("No 16 KB-aligned KataGo PIE found; omitting libkatago_exec.so. " +
-                "CPU/GPU JNI work, but PIE/ProcessBuilder fallback is unavailable in this APK.")
-        }
+        stageFile(executable, "libkatago_exec.so")
+        val stagedBinaries = mutableListOf(File(abiDir, "libkatago_exec.so"))
+        println("Using 16 KB-aligned KataGo PIE: ${executable.absolutePath}")
         if (enableKataGoJniCore) {
             if (!katagoJniCoreFile.isFile) throw GradleException(
                 "JNI core missing: $katagoJniCoreFile. Run bash tools/build_katago_from_source.sh eigenjni first.")
