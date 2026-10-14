@@ -20,5 +20,19 @@ APK="$PROJECT/app/build/outputs/apk/debug/app-debug.apk"
 [[ -s "$APK" ]] || { echo "APK missing: $APK" >&2; exit 1; }
 echo "Real UI game test on $SERIAL: sizes=$SIZES, human moves per game=$MOVES"
 echo "Tests real board taps, AI moves, exact RKNN model for each size; results auto-upload."
-exec python3 "$DIR/test_app_ui.py" -s "$SERIAL" --backends "$BACKENDS" \
+# Print function + source:line from debuggerd via local matching ELF.
+# Disabled only by setting NPU_CRASH_WATCH=0.
+WATCH_PID=""
+if [[ "${NPU_CRASH_WATCH:-1}" == 1 ]]; then
+    python3 "$DIR/watch_npu_crash.py" --serial "$SERIAL" &
+    WATCH_PID=$!
+fi
+cleanup_watcher() {
+    if [[ -n "$WATCH_PID" ]]; then
+        kill "$WATCH_PID" 2>/dev/null || true
+        wait "$WATCH_PID" 2>/dev/null || true
+    fi
+}
+trap cleanup_watcher EXIT
+python3 "$DIR/test_app_ui.py" -s "$SERIAL" --backends "$BACKENDS" \
     --sizes "$SIZES" --moves "$MOVES" --install "$APK" "$@"
