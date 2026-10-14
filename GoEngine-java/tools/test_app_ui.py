@@ -182,9 +182,9 @@ class AppTest:
     def read_npu_state(self):
         raw = self.adb("logcat", "-d", "-s", "KataGoRKNN:I", "KataGoEngine:I", "*:S", timeout=20)
         return {
-            "selected": re.findall(r"NPU_MODEL_SELECTED board=(\\d+) path=([^\\s]+)", raw),
-            "ready": re.findall(r"RKNN_READY board=(\\d+) model=([^\\s]+)", raw),
-            "init": re.findall(r"RKNN_INIT board=(\\d+) path=([^\\s]+)", raw),
+            "selected": re.findall(r"NPU_MODEL_SELECTED board=(\d+) path=([^\s]+)", raw),
+            "ready": re.findall(r"RKNN_READY board=(\d+) model=([^\s]+)", raw),
+            "init": re.findall(r"RKNN_INIT board=(\d+) path=([^\s]+)", raw),
             "fallback": raw.count("RKNN_DISABLED_FALLBACK_EIGEN"),
         }
 
