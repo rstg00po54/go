@@ -80,12 +80,13 @@ def read_dialog_root(adb,serial):
     return ET.fromstring(content[start:])
 
 
-def read_dialog_xml(adb,serial):
-    return " ".join(node.attrib.get("text","") for node in read_dialog_root(adb,serial).iter())
+def read_dialog_xml(adb,serial,root=None):
+    if root is None: root = read_dialog_root(adb,serial)
+    return " ".join(node.attrib.get("text","") for node in root.iter())
 
 
-def click_ui_text(adb,serial,label):
-    root = read_dialog_root(adb,serial)
+def click_ui_text(adb,serial,label,root=None):
+    if root is None: root = read_dialog_root(adb,serial)
     for node in root.iter():
         if node.attrib.get("text") != label:
             continue
@@ -159,23 +160,31 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir,midgame=False):
               "inspection":"midgame" if midgame else "terminal"}
     try:
         print("\n--- %s [%s] ---" % (game,backend),flush=True)
-        run([adb,"-s",serial,"shell","am","force-stop",PACKAGE])
-        activity = run([adb,"-s",serial,"shell","am","start","-W","-n",ACTIVITY,
+        print("  [1/7] Starting isolated Android activity...",flush=True)
+        run([adb,"-s",serial,"shell","am","force-stop",PACKAGE],timeout=15)
+        # Never wait for Activity idle (-W). GPU initialization and NN inference
+        # are asynchronous; RefereeSmoke PASS/FAIL is our actual completion event.
+        activity = run([adb,"-s",serial,"shell","am","start","-n",ACTIVITY,
                         "--ez","referee_smoke","true","--es","referee_smoke_id",run_id,
                         "--es","referee_smoke_game",game,"--es","referee_smoke_backend",backend,
-                        "--ez","referee_smoke_midgame",str(midgame).lower()],timeout=35)
+                        "--ez","referee_smoke_midgame",str(midgame).lower()],timeout=20)
         (case_dir/"activity.txt").write_text(activity,encoding="utf-8")
+        print("  [2/7] Activity started; waiting for NN result (limit %.0fs)..." % timeout,flush=True)
         if "Error:" in activity or "Exception" in activity:
             raise RuntimeError("Could not launch debug activity: "+activity)
         deadline = time.monotonic()+timeout
         terminal = None
         log = ""
+        last_progress = time.monotonic()
         while time.monotonic()<deadline:
             log = run([adb,"-s",serial,"logcat","-d","-v","brief",
                        "-s","RefereeSmoke:I","RefereeSmoke:E","AndroidRuntime:E","*:S"],timeout=20)
             terminal = smoke_event(log,run_id)
             if terminal:
                 break
+            if time.monotonic()-last_progress>=20:
+                print("  Waiting for NN PASS/FAIL, %.0fs left..." % max(0,deadline-time.monotonic()),flush=True)
+                last_progress=time.monotonic()
             time.sleep(2)
         (case_dir/"logcat.txt").write_text(log,encoding="utf-8")
         if terminal is None:
@@ -189,14 +198,20 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir,midgame=False):
         if "stage=nn_dialog" not in terminal["line"]:
             raise RuntimeError("Old referee flow used instead of NN dialog")
         result["nn"] = nn_event_values(terminal["line"],backend,midgame)
+        print("  [3/7] NN OK: %.0f ms, B=%.3f W=%.3f" %
+              (result["nn"]["nnMs"],result["nn"]["blackPoints"],result["nn"]["whitePoints"]),flush=True)
         if not skip_ui:
-            dialog = read_dialog_xml(adb,serial)
+            print("  [4/7] Reading Android dialog hierarchy (uiautomator, up to 35s)...",flush=True)
+            root = read_dialog_root(adb,serial)
+            dialog = read_dialog_xml(adb,serial,root)
             (case_dir/"dialog.txt").write_text(dialog+"\n",encoding="utf-8")
             errors = validate_dialog(dialog,game,midgame=midgame)
             if errors:
                 raise RuntimeError("NN dialog UI mismatch: %s" % errors)
+            print("  [5/7] Saving NN dialog screenshot...",flush=True)
             capture_screenshot(adb,serial,case_dir/"nn_dialog.png")
-            click_ui_text(adb,serial,"继续下棋" if midgame else "关闭")
+            print("  [6/7] Clicking dialog button (reuse same UI hierarchy)...",flush=True)
+            click_ui_text(adb,serial,"继续下棋" if midgame else "关闭",root)
             dismiss = None
             dismiss_log = ""
             deadline = time.monotonic()+20
@@ -212,9 +227,12 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir,midgame=False):
             state = "false" if midgame else "true"
             if dismiss is None or "moves="+str(count) not in dismiss or "terminal="+state not in dismiss:
                 raise RuntimeError("Dismissing NN dialog changed the game: "+str(dismiss))
+            print("  [7/7] Button acknowledged; capturing dismissed screen...",flush=True)
             capture_screenshot(adb,serial,case_dir/"dismissed.png")
             result["dismiss"] = dismiss
             print("NN UI PASS: metrics shown; dialog dismissed; board unchanged.",flush=True)
+        else:
+            print("  UI hierarchy / screenshots / dismissal intentionally skipped (--skip-ui).",flush=True)
         result["status"] = "PASS"
     except (OSError,RuntimeError,ValueError,subprocess.TimeoutExpired,ET.ParseError) as exc:
         result["status"] = "FAIL"
