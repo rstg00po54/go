@@ -1,0 +1,61 @@
+name: KataGo native PASS visits benchmark
+on:
+  push:
+    branches: [rk3588-engine]
+    paths:
+      - .github/workflows/katago-pass-visits-benchmark.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ["1.15.0","1.18.1"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build official KataGo 1.15 CPU for this benchmark only
+        if: matrix.version == '1.15.0'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libeigen3-dev zlib1g-dev libzip-dev
+          git clone -b v1.15.0 --depth 1 https://github.com/lightvector/KataGo.git /tmp/katago-src
+          cmake -S /tmp/katago-src/cpp -B /tmp/katago-build -DUSE_BACKEND=EIGEN -DUSE_AVX2=1 -DNO_LIBZIP=1 -DCMAKE_BUILD_TYPE=Release
+          cmake --build /tmp/katago-build --parallel 4
+          echo "KATAGO_BIN=/tmp/katago-build/katago" >> "$GITHUB_ENV"
+      - name: Download official KataGo 1.18 CPU binary for comparison
+        if: matrix.version == '1.18.1'
+        run: |
+          curl --fail --location --retry 3 -o /tmp/katago.zip https://github.com/lightvector/KataGo/releases/download/v1.18.1/katago-v1.18.1-eigenavx2-linux-x64.zip
+          mkdir -p /tmp/katago
+          unzip -q /tmp/katago.zip -d /tmp/katago
+          chmod +x /tmp/katago/katago
+          echo "KATAGO_BIN=/tmp/katago/katago" >> "$GITHUB_ENV"
+      - name: Benchmark 19 positions at 24, 12, 8 visits
+        run: |
+          python3 -m py_compile GoEngine-java/tools/benchmark_katago_pass_visits.py
+          timeout 1000 python3 GoEngine-java/tools/benchmark_katago_pass_visits.py \
+            --katago "$KATAGO_BIN" \
+            --config GoEngine-java/app/src/main/assets/engine/default_gtp.cfg \
+            --model GoEngine-java/app/src/main/assets/engine/10b.bin \
+            --out "GoEngine-java/build/pass_visits/$VERSION"
+        env:
+          VERSION: ${{ matrix.version }}
+      - name: Show results in GitHub Actions
+        if: always()
+        run: |
+          test -f "GoEngine-java/build/pass_visits/$VERSION/report.md" && \
+          cat "GoEngine-java/build/pass_visits/$VERSION/report.md" >> "$GITHUB_STEP_SUMMARY" || true
+        env:
+          VERSION: ${{ matrix.version }}
+      - name: Upload per-position raw data and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: katago-pass-visits-${{ matrix.version }}
+          path: GoEngine-java/build/pass_visits/
+          if-no-files-found: warn
+          retention-days: 14
