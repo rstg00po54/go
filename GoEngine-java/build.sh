@@ -45,17 +45,7 @@ for pie in "$PROJECT_DIR/app/src/main/jniLibs/arm64-v8a/libkatago_exec.so" \
            "${KATAGO_WORKDIR:-$HOME/.cache/goengine_katago}/build_android_arm64_eigen/katago" \
            "$PROJECT_DIR/build/katago_android_arm64_eigen/libkatago_exec.so"; do
     [[ -s "$pie" ]] || continue
-    if python3 - "$pie" <<'PY'
-import sys
-from pathlib import Path
-from tools.check_android_16kb import inspect_library
-try:
-    path = Path(sys.argv[1])
-    _, failures = inspect_library(str(path), path.read_bytes())
-    sys.exit(1 if failures else 0)
-except (OSError, ValueError):
-    sys.exit(1)
-PY
+    if python3 "$PROJECT_DIR/tools/check_katago_pie.py" "$pie" >/dev/null
     then
         aligned_pie=true
         echo "Reusing 16 KB-aligned KataGo PIE: $pie"
