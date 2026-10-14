@@ -221,7 +221,7 @@ class NnSmokeTests(unittest.TestCase):
             calls.append(argv)
             if "logcat" in argv:
                 if "-t" in argv and argv[argv.index("-t")+1]=="12000":
-                    return GOOD_NATIVE+"\\n"+GOOD_GPU
+                    return GOOD_NATIVE+"\n"+GOOD_GPU
                 if "shell" in argv:
                     return GOOD_GPU
                 return ""
