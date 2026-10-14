@@ -126,6 +126,14 @@ public class KataGoEngine {
             throw new IllegalArgumentException("Unsupported engine directory: " + engineDirectoryName);
     }
 
+    /** RKNN graphs bundled here target RK3588/RK3588S, not other Android NPUs. */
+    public static boolean supportsRknnHardware() {
+        String soc = android.os.Build.VERSION.SDK_INT >= 31 ? android.os.Build.SOC_MODEL : "";
+        String identity = (soc + " " + android.os.Build.FINGERPRINT + " " + android.os.Build.DEVICE
+                + " " + android.os.Build.BOARD + " " + android.os.Build.HARDWARE).toLowerCase(Locale.US);
+        return identity.contains("rk3588");
+    }
+
     /** Board size of the RKNN model loaded by the active native GTP session. */
     public int getActiveNpuBoardSize() { return npuSession != null ? activeNpuBoardSize : -1; }
 
@@ -211,7 +219,7 @@ public class KataGoEngine {
                 }
             }
             boolean npuAvailable = new File(nativeLibDir, "libkatago_npu.so").isFile()
-                    && new File(nativeLibDir, "librknnrt.so").isFile() && rknnModelAvailable;
+                    && new File(nativeLibDir, "librknnrt.so").isFile() && rknnModelAvailable && supportsRknnHardware();
             boolean useNpu = preferJni && backendPreference == BackendPreference.NPU
                     && !npuDisabledForProcess && npuAvailable;
             if (preferJni && backendPreference == BackendPreference.NPU && !useNpu)
