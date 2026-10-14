@@ -62,6 +62,16 @@ class NpuLogTests(unittest.TestCase):
         self.assertEqual(report["status"], "FAIL")
         self.assertEqual(report["steps"], [])
 
+    def test_partial_crash_keeps_previous_successful_steps(self):
+        full = fixture()
+        truncated = full.split("I/NpuSmoke( 100): STEP_BEGIN id=unique index=3")[0]
+        truncated += "I/NpuSmoke( 100): STEP_BEGIN id=unique index=2 board=19\\n"
+        truncated += "F/libc( 100): Fatal signal 11 (SIGSEGV) in com.badukai.java\\n"
+        result = smoke.parse_log(truncated, "unique", (9, 13, 19, 9))
+        self.assertEqual(result["status"], "FAIL")
+        self.assertEqual([x["status"] for x in result["steps"][:2]], ["PASS", "PASS"])
+        self.assertEqual(result["steps"][2]["status"], "FAIL")
+
     def test_requires_final_pass(self):
         log = fixture().rsplit("\n", 1)[0]
         self.assertEqual(smoke.parse_log(log, "unique", (9, 13, 19, 9))["status"], "FAIL")
