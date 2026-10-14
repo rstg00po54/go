@@ -152,6 +152,15 @@ val compileKataGoNative = tasks.register<Exec>("compileKataGoNative") {
         val jobs = if (requested.isNullOrBlank()) 8 else
             requested.toIntOrNull()?.takeIf { it > 0 } ?: throw GradleException("Invalid KATAGO_JOBS: $requested")
         println("KataGo C++ parallel jobs: $jobs")
+        // A cached 4 KB PIE can remain "up to date" to Ninja even when current
+        // CMake linker flags request 16 KB pages. Invalidate only the old linked
+        // executable; object files and CPU/GPU JNI caches are kept unchanged.
+        val invalidator = rootProject.file("tools/invalidate_unaligned_pie.py")
+        val repair = ProcessBuilder("python3", invalidator.absolutePath, katagoExecutable.absolutePath)
+            .redirectErrorStream(true).start()
+        val repairOutput = repair.inputStream.bufferedReader().use { it.readText() }
+        if (repair.waitFor() != 0) throw GradleException("KataGo PIE cache check failed: $repairOutput")
+        println(repairOutput.trim())
         (this as Exec).commandLine("cmake", "--build", katagoBuildDir.absolutePath, "--parallel", jobs.toString())
     }
 }
