@@ -1,0 +1,105 @@
+--------- beginning of main
+I/NpuSmoke( 8429): START id=f810baab32bd4bb3 sizes=9,13,19,9 humanSL=true
+I/KataGoEngine( 8429): Human SL model ready: /data/user/0/com.badukai.java/files/engine/b18c384nbt-humanv0.bin
+I/NpuSmoke( 8429): STEP_BEGIN id=f810baab32bd4bb3 index=0 board=9
+I/KataGoEngine( 8429): === JAVA KATAGO ENGINE / ANDROID ARM64 ===
+I/KataGoEngine( 8429): STARTUP_TIMING phase=engine_backend_and_paths ms=0.27825
+I/KataGoEngine( 8429): Native GTP defaultBoardSize=9
+I/KataGoEngine( 8429): STARTUP_TIMING phase=engine_prepare_config ms=5.319417
+I/KataGoEngine( 8429): STARTUP_TIMING phase=engine_prepare_model_asset ms=86.073467
+I/KataGoEngine( 8429): Human SL model: /data/user/0/com.badukai.java/files/engine/b18c384nbt-humanv0.bin size=107185997
+I/KataGoEngine( 8429): STARTUP_TIMING phase=engine_find_human_model ms=0.195709
+I/KataGoEngine( 8429): Model: /data/user/0/com.badukai.java/files/engine/10b.bin size=12003218
+I/KataGoEngine( 8429): Config: /data/user/0/com.badukai.java/files/engine/human_gtp.cfg
+I/KataGoEngine( 8429): Backend requested: NPU/RKNN in-process JNI
+I/KataGoEngine( 8429): STARTUP_TIMING phase=engine_npu_native_create ms=2.861251
+I/KataGoEngine( 8429): NPU_MODEL_SELECTED board=9 path=/data/user/0/com.badukai.java/files/engine/katago_10b_9x9.rknn
+I/KataGoRKNN( 8429): RKNN_INIT board=9 path=/data/user/0/com.badukai.java/files/engine/katago_10b_9x9.rknn
+I/KataGoRKNN( 8429): RKNN_INPUT board=9 slot=0 name=InputSpatial dims=1x9x9x22 elems=1782 expected=1782 size=3564 fmt=1 type=1
+I/KataGoRKNN( 8429): RKNN_INPUT board=9 slot=1 name=InputGlobal dims=1x1x1x19 elems=19 expected=19 size=38 fmt=1 type=1
+I/KataGoRKNN( 8429): RKNN_INPUT board=9 slot=2 name=InputMask dims=1x9x9x1 elems=81 expected=81 size=162 fmt=1 type=1
+I/KataGoRKNN( 8429): RKNN_READY board=9 model=/data/user/0/com.badukai.java/files/engine/katago_10b_9x9.rknn
+I/KataGoEngine( 8429): KataGo GTP ready response: = KataGo
+I/KataGoEngine( 8429): STARTUP_TIMING phase=engine_npu_ready ms=2530.222879
+I/KataGoEngine( 8429): GTP boardsize=9 ok=true elapsedMs=0
+I/KataGoEngine( 8429): Chinese rules verified=true rules={"friendlyPassOk":true,"hasButton":false,"ko":"SIMPLE","scoring":"AREA","suicide":false,"tax":"NONE","whiteHandicapBonus":"N"}
+I/KataGoEngine( 8429): Search limits verified=true requested: maxVisits=32 maxTime=2.000 readback: maxVisits=32 maxTime=2.0
+I/KataGoEngine( 8429): Human SL rank verified=true requested=rank_12k readback=rank_12k
+I/KataGoEngine( 8429): genmove color=black move=E5 rootVisits=unavailable newPlayouts=unavailable elapsedMs=783 (wall time includes GTP and inference overhead)
+I/KataGoEngine( 8429): genmove color=white move=C3 rootVisits=unavailable newPlayouts=unavailable elapsedMs=780 (wall time includes GTP and inference overhead)
+I/NpuSmoke( 8429): STEP_PASS id=f810baab32bd4bb3 index=0 board=9 active=9 startupMs=2530 black=E5 blackMs=784 white=C3 whiteMs=780
+I/NpuSmoke( 8429): STEP_BEGIN id=f810baab32bd4bb3 index=1 board=13
+I/KataGoEngine( 8429): NPU/RKNN JNI session stopped
+I/KataGoEngine( 8429): KataGo stopped
+I/KataGoEngine( 8429): === JAVA KATAGO ENGINE / ANDROID ARM64 ===
+I/KataGoEngine( 8429): STARTUP_TIMING phase=engine_backend_and_paths ms=0.48825
+I/KataGoEngine( 8429): Native GTP defaultBoardSize=13
+I/KataGoEngine( 8429): STARTUP_TIMING phase=engine_prepare_config ms=5.971584
+I/KataGoEngine( 8429): Reusing installed model asset: /data/user/0/com.badukai.java/files/engine/10b.bin
+I/KataGoEngine( 8429): STARTUP_TIMING phase=engine_prepare_model_asset ms=54.597672
+I/KataGoEngine( 8429): Human SL model: /data/user/0/com.badukai.java/files/engine/b18c384nbt-humanv0.bin size=107185997
+I/KataGoEngine( 8429): STARTUP_TIMING phase=engine_find_human_model ms=0.151083
+I/KataGoEngine( 8429): Model: /data/user/0/com.badukai.java/files/engine/10b.bin size=12003218
+I/KataGoEngine( 8429): Config: /data/user/0/com.badukai.java/files/engine/human_gtp.cfg
+I/KataGoEngine( 8429): Backend requested: NPU/RKNN in-process JNI
+I/KataGoEngine( 8429): STARTUP_TIMING phase=engine_npu_native_create ms=0.176459
+I/KataGoEngine( 8429): NPU_MODEL_SELECTED board=13 path=/data/user/0/com.badukai.java/files/engine/katago_10b_13x13.rknn
+I/KataGoRKNN( 8429): RKNN_INIT board=13 path=/data/user/0/com.badukai.java/files/engine/katago_10b_13x13.rknn
+I/KataGoRKNN( 8429): RKNN_INPUT board=13 slot=0 name=InputSpatial dims=1x13x13x22 elems=3718 expected=3718 size=7436 fmt=1 type=1
+I/KataGoRKNN( 8429): RKNN_INPUT board=13 slot=1 name=InputGlobal dims=1x1x1x19 elems=19 expected=19 size=38 fmt=1 type=1
+I/KataGoRKNN( 8429): RKNN_INPUT board=13 slot=2 name=InputMask dims=1x13x13x1 elems=169 expected=169 size=338 fmt=1 type=1
+I/KataGoRKNN( 8429): RKNN_READY board=13 model=/data/user/0/com.badukai.java/files/engine/katago_10b_13x13.rknn
+I/KataGoEngine( 8429): KataGo GTP ready response: = KataGo
+I/KataGoEngine( 8429): STARTUP_TIMING phase=engine_npu_ready ms=2509.644002
+I/KataGoEngine( 8429): GTP boardsize=13 ok=true elapsedMs=0
+I/KataGoEngine( 8429): Chinese rules verified=true rules={"friendlyPassOk":true,"hasButton":false,"ko":"SIMPLE","scoring":"AREA","suicide":false,"tax":"NONE","whiteHandicapBonus":"N"}
+I/KataGoEngine( 8429): Search limits verified=true requested: maxVisits=32 maxTime=2.000 readback: maxVisits=32 maxTime=2.0
+I/KataGoEngine( 8429): Human SL rank verified=true requested=rank_12k readback=rank_12k
+I/KataGoEngine( 8429): genmove color=black move=K10 rootVisits=unavailable newPlayouts=unavailable elapsedMs=1687 (wall time includes GTP and inference overhead)
+I/KataGoEngine( 8429): genmove color=white move=C4 rootVisits=unavailable newPlayouts=unavailable elapsedMs=1166 (wall time includes GTP and inference overhead)
+I/NpuSmoke( 8429): STEP_PASS id=f810baab32bd4bb3 index=1 board=13 active=13 startupMs=2509 black=K10 blackMs=1688 white=C4 whiteMs=1167
+I/NpuSmoke( 8429): STEP_BEGIN id=f810baab32bd4bb3 index=2 board=19
+I/KataGoEngine( 8429): NPU/RKNN JNI session stopped
+I/KataGoEngine( 8429): KataGo stopped
+I/KataGoEngine( 8429): === JAVA KATAGO ENGINE / ANDROID ARM64 ===
+I/KataGoEngine( 8429): STARTUP_TIMING phase=engine_backend_and_paths ms=1.068084
+I/KataGoEngine( 8429): Native GTP defaultBoardSize=19
+I/KataGoEngine( 8429): STARTUP_TIMING phase=engine_prepare_config ms=10.267543
+I/KataGoEngine( 8429): Reusing installed model asset: /data/user/0/com.badukai.java/files/engine/10b.bin
+I/KataGoEngine( 8429): STARTUP_TIMING phase=engine_prepare_model_asset ms=61.474964
+I/KataGoEngine( 8429): Human SL model: /data/user/0/com.badukai.java/files/engine/b18c384nbt-humanv0.bin size=107185997
+I/KataGoEngine( 8429): STARTUP_TIMING phase=engine_find_human_model ms=0.183459
+I/KataGoEngine( 8429): Model: /data/user/0/com.badukai.java/files/engine/10b.bin size=12003218
+I/KataGoEngine( 8429): Config: /data/user/0/com.badukai.java/files/engine/human_gtp.cfg
+I/KataGoEngine( 8429): Backend requested: NPU/RKNN in-process JNI
+I/KataGoEngine( 8429): STARTUP_TIMING phase=engine_npu_native_create ms=0.762125
+I/KataGoEngine( 8429): NPU_MODEL_SELECTED board=19 path=/data/user/0/com.badukai.java/files/engine/katago_10b_19x19.rknn
+--------- beginning of crash
+F/libc    ( 8429): Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0xb4000070078a9cb0 in tid 8491 (pool-2-thread-1), pid 8429 (om.badukai.java)
+W/KataGoEngine( 8429): NPU JNI GTP reader reached EOF
+F/DEBUG   ( 8495): *** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+F/DEBUG   ( 8495): Build fingerprint: 'EmbedFire/rk3588s_lubancat_4io_mipi1080p/rk3588s_lubancat_4io_mipi1080p:12/SQ3A.220705.003.A1/eng.dev.20251011.130102:userdebug/release-keys'
+F/DEBUG   ( 8495): Revision: '0'
+F/DEBUG   ( 8495): ABI: 'arm64'
+F/DEBUG   ( 8495): Timestamp: 2026-10-14 16:01:53.954026079+0800
+F/DEBUG   ( 8495): Process uptime: 0s
+F/DEBUG   ( 8495): Cmdline: com.badukai.java
+F/DEBUG   ( 8495): pid: 8429, tid: 8491, name: pool-2-thread-1  >>> com.badukai.java <<<
+F/DEBUG   ( 8495): uid: 10086
+F/DEBUG   ( 8495): tagged_addr_ctrl: 0000000000000001
+F/DEBUG   ( 8495): signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0xb4000070078a9cb0
+F/DEBUG   ( 8495):     x0  b40000701a9f34e0  x1  0000000000000051  x2  000000701a9f3000  x3  0000000000063000
+F/DEBUG   ( 8495):     x4  000000733c661b98  x5  0000000000000000  x6  73752f617461642f  x7  6d6f632f302f7265
+F/DEBUG   ( 8495):     x8  000000000000007c  x9  b40000701aa1ed70  x10 0000000000000d28  x11 00000000000002e8
+F/DEBUG   ( 8495):     x12 000000000000005c  x13 b4000070078a99d0  x14 b40000701aa15c20  x15 0000000000000328
+F/DEBUG   ( 8495):     x16 b40000701aa28010  x17 0000007338b60634  x18 0000007002b22000  x19 b400007007843a70
+F/DEBUG   ( 8495):     x20 b4000071995f6ae0  x21 b40000701a9f34e0  x22 000000000000c563  x23 00000000ffff9d4f
+F/DEBUG   ( 8495):     x24 000000000000c563  x25 0000007008324cb0  x26 0000007008324ff8  x27 00000000000fc000
+F/DEBUG   ( 8495):     x28 000000700822c000  x29 000000700830fca0
+F/DEBUG   ( 8495):     lr  00000070114e8644  sp  000000700830fc40  pc  00000070114e86b4  pst 0000000060001000
+F/DEBUG   ( 8495): backtrace:
+F/DEBUG   ( 8495):       #00 pc 00000000000dc6b4  /data/app/~~mWK9TNGspqbkAxpsbmel2Q==/com.badukai.java-PK22g9Q5usimH0MApnS88g==/lib/arm64/libkatago_npu.so (BuildId: 2fa190b99ea04bf6ee42790200be07d231d5e1cd)
+F/DEBUG   ( 8495):       #01 pc 0000000000178e18  /data/app/~~mWK9TNGspqbkAxpsbmel2Q==/com.badukai.java-PK22g9Q5usimH0MApnS88g==/lib/arm64/libkatago_npu.so (BuildId: 2fa190b99ea04bf6ee42790200be07d231d5e1cd)
+F/DEBUG   ( 8495):       #02 pc 000000000019a1fc  /data/app/~~mWK9TNGspqbkAxpsbmel2Q==/com.badukai.java-PK22g9Q5usimH0MApnS88g==/lib/arm64/libkatago_npu.so (BuildId: 2fa190b99ea04bf6ee42790200be07d231d5e1cd)
+F/DEBUG   ( 8495):       #03 pc 00000000000b1810  /apex/com.android.runtime/lib64/bionic/libc.so (__pthread_start(void*)+264) (BuildId: cd7952cb40d1a2deca6420c2da7910be)
+F/DEBUG   ( 8495):       #04 pc 00000000000512f0  /apex/com.android.runtime/lib64/bionic/libc.so (__start_thread+64) (BuildId: cd7952cb40d1a2deca6420c2da7910be)

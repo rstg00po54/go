@@ -1,0 +1,19 @@
+{
+  "test": "RK3588 NPU multi-board smoke",
+  "run_id": "f810baab32bd4bb3",
+  "sizes": [
+    9,
+    13,
+    19,
+    9
+  ],
+  "human_sl": true,
+  "status": "FAIL",
+  "steps": [],
+  "errors": [
+    "App native crash during NPU smoke"
+  ],
+  "started_utc": "2026-10-14T08:01:39.522221+00:00",
+  "serial": "8719e18a71a2a66c",
+  "finished_utc": "2026-10-14T08:01:56.143517+00:00"
+}
