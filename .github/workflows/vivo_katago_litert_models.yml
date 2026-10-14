@@ -27,7 +27,7 @@ jobs:
       - name: Install converter and CPU validation runtime
         run: |
           python -m pip install -U pip
-          python -m pip install 'onnx2tf[tensorflow]==2.6.9' 'ai-edge-litert==2.3.0'
+          python -m pip install 'onnx2tf[tensorflow]==2.6.9'
           python -c "import onnx; from ai_edge_litert.interpreter import Interpreter; print('Conversion dependencies ready')"
       - name: Download original weights and official KataGo ONNX dumper
         shell: bash
