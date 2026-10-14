@@ -127,12 +127,7 @@ public class KataGoEngine {
     }
 
     /** RKNN graphs bundled here target RK3588/RK3588S, not other Android NPUs. */
-    public static boolean supportsRknnHardware() {
-        String soc = android.os.Build.VERSION.SDK_INT >= 31 ? android.os.Build.SOC_MODEL : "";
-        String identity = (soc + " " + android.os.Build.FINGERPRINT + " " + android.os.Build.DEVICE
-                + " " + android.os.Build.BOARD + " " + android.os.Build.HARDWARE).toLowerCase(Locale.US);
-        return identity.contains("rk3588");
-    }
+    public static boolean supportsRknnHardware() { return NpuHardware.canRunRknn(); }
 
     /** Board size of the RKNN model loaded by the active native GTP session. */
     public int getActiveNpuBoardSize() { return npuSession != null ? activeNpuBoardSize : -1; }
