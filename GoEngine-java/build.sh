@@ -7,6 +7,12 @@ cd "$PROJECT_DIR"
 # Build GPU JNI before Gradle, so the normal build.sh command produces a GPU-capable APK.
 GRADLE_ARGS=()
 BUILD_GPU_JNI=true
+# Rockchip's packaged v2.3.2 Android runtime is 4 KB aligned. This is a
+# deliberate opt-in for 4 KB-page RK3588 Android builds only.
+if [[ "${ALLOW_4K_RKNN_RUNTIME:-0}" == 1 ]]; then
+    GRADLE_ARGS+=("-Pallow4kRknnRuntime=true")
+    echo "WARNING: building RK3588 4 KB-page test APK; NOT compatible with 16 KB page-size devices"
+fi
 if [[ "${1:-}" == "--apk-only" ]]; then
     GRADLE_ARGS+=("-PskipKataGoNative=true")
     BUILD_GPU_JNI=false
@@ -77,7 +83,11 @@ fi
 
 echo
 echo "Checking final APK for 16 KB ELF page alignment..."
-python3 "$PROJECT_DIR/tools/check_android_16kb.py" "$APK"
+if [[ "${ALLOW_4K_RKNN_RUNTIME:-0}" == 1 ]]; then
+    python3 "$PROJECT_DIR/tools/check_android_16kb.py" --allow-4k-rknnrt "$APK"
+else
+    python3 "$PROJECT_DIR/tools/check_android_16kb.py" "$APK"
+fi
 
 echo "Build successful"
 echo "APK: $APK"
