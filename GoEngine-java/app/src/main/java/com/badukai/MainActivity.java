@@ -472,9 +472,9 @@ public class MainActivity extends AppCompatActivity {
                 engineReady = ready;
                 aiBattleButton.setEnabled(true);
                 dismissGpuTuning(ready);
-                if (ready && selectedBackend == KataGoEngine.BackendPreference.GPU
-                        && !engine.getBackendName().startsWith("GPU"))
-                    Toast.makeText(this, "GPU 初始化失败，已使用 " + engine.getBackendName(), Toast.LENGTH_LONG).show();
+                if (ready && selectedBackend != KataGoEngine.BackendPreference.CPU
+                        && !engine.getBackendName().startsWith(selectedBackend.name()))
+                    Toast.makeText(this, selectedBackend.name() + " 初始化失败，已使用 " + engine.getBackendName(), Toast.LENGTH_LONG).show();
                 render(ready ? "准备好了" : "AI 启动失败，可重试新局");
             });
         });
@@ -1407,8 +1407,9 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
                 initializeWinRateAnalysis(board, size, komiFor(size), handicapPoints, currentPlayer);
-                if (gpuFallback) Toast.makeText(this, "GPU 不可用，已回退 " + runningBackend, Toast.LENGTH_LONG).show();
-                if (playerFirst) render(gpuFallback ? "轮到你了（已回退 CPU）" : "轮到你了");
+                if (gpuFallback || npuFallback) Toast.makeText(this,
+                        (npuFallback ? "NPU" : "GPU") + " 不可用，已回退 " + runningBackend, Toast.LENGTH_LONG).show();
+                if (playerFirst) render(gpuFallback || npuFallback ? "轮到你了（已回退 " + runningBackend + "）" : "轮到你了");
                 else requestAiMove();
             });
         });
@@ -1501,7 +1502,7 @@ public class MainActivity extends AppCompatActivity {
                 ? "本手用时 --" : String.format(Locale.CHINA,"本手用时 %.2f 秒",lastAiMoveTimeMs/1000.0));
         updateWinRateLabels();
         aiDifficultyText.setText(getDifficultyName() + " · Human SL · "
-                + (engineReady ? engine.getBackendName() : selectedBackend == KataGoEngine.BackendPreference.GPU ? "GPU 准备中" : "CPU 准备中"));
+                + (engineReady ? engine.getBackendName() : selectedBackend == KataGoEngine.BackendPreference.NPU ? "NPU 准备中" : selectedBackend == KataGoEngine.BackendPreference.GPU ? "GPU 准备中" : "CPU 准备中"));
         boardView.setBoard(board);
         boardView.setLastMove(lastMove);
         boardView.setInputEnabled(engineReady && gameReady && !engineStarting && !thinking
