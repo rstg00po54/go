@@ -8,6 +8,10 @@ on:
       - GoEngine-java/tools/check_katago_pie.py
       - GoEngine-java/tools/invalidate_unaligned_pie.py
       - GoEngine-java/tools/test_invalidate_unaligned_pie.py
+      - GoEngine-java/app/src/main/cpp/EngineSession.cpp
+      - GoEngine-java/app/src/main/java/com/badukai/engine/KataGoNative.java
+      - GoEngine-java/app/src/main/java/com/badukai/engine/KataGoGpuNative.java
+      - GoEngine-java/app/src/main/java/com/badukai/engine/KataGoEngine.java
       - GoEngine-java/app/build.gradle.kts
       - GoEngine-java/app/src/main/java/com/badukai/MainActivity.java
       - GoEngine-java/app/src/main/java/com/badukai/ui/GoBoardView.java
@@ -42,6 +46,12 @@ jobs:
       - name: Syntax-check NN test scripts
         working-directory: GoEngine-java
         run: python3 -m py_compile tools/smoke_android_referee_app.py tools/test_smoke_android_referee_app.py tools/test_smart_referee.py tools/check_katago_pie.py tools/invalidate_unaligned_pie.py tools/test_invalidate_unaligned_pie.py
+      - name: Check KataGo CPU and GPU JNI C++ syntax
+        working-directory: GoEngine-java
+        run: |
+          for backend in USE_EIGEN_BACKEND USE_OPENCL_BACKEND; do
+            g++ -std=c++17 -fsyntax-only -D"$backend" -Inative/KataGo/cpp -I"$JAVA_HOME/include" -I"$JAVA_HOME/include/linux" app/src/main/cpp/EngineSession.cpp
+          done
       - name: Stale PIE cache invalidation regression
         working-directory: GoEngine-java
         run: python3 tools/test_invalidate_unaligned_pie.py
