@@ -95,6 +95,33 @@ class CacheAndLogTests(unittest.TestCase):
         self.assertEqual(state["undo_done"], 1)
         self.assertTrue(state["debug_active"])
 
+    def test_npu_log_tracks_actual_human_sl_backend(self):
+        raw = ("I/MainActivity( 4823): Game backend requested=NPU "
+               "actual=NPU 10b + CPU Human SL ready=true\\n"
+               "D/MainActivity( 4823): render in, message=轮到你了, engineReady=true\\n")
+        self.app.adb = lambda *args, **kwargs: raw
+        state = self.app.read_log_state()
+        self.assertEqual(state["backend"], [("NPU", "NPU 10b + CPU Human SL", True)])
+
+    def test_npu_board_verifies_real_model_instead_of_selected_label(self):
+        self.app.last_verified_npu_size = 9
+        model = "/data/user/0/com.badukai.java/files/engine/katago_10b_13x13.rknn"
+        before = {"selected": [("9", "old")], "init": [("9", "old")],
+                  "ready": [("9", "old")], "fallback": 0}
+        current = {"selected": before["selected"] + [("13", model)],
+                   "init": before["init"] + [("13", model)],
+                   "ready": before["ready"] + [("13", model)], "fallback": 0}
+        self.app.read_npu_state = lambda: current
+        self.app.assert_npu_board(13, before)
+        self.assertEqual(self.app.last_verified_npu_size, 13)
+        bad = dict(current, ready=before["ready"] + [("9", model.replace("13x13", "9x9"))])
+        self.app.read_npu_state = lambda: bad
+        with self.assertRaises(TestFailure):
+            self.app.assert_npu_board(13, before)
+        self.app.read_npu_state = lambda: dict(current, fallback=1)
+        with self.assertRaises(TestFailure):
+            self.app.assert_npu_board(13, before)
+
     def test_fast_wait_detects_new_backend_and_turn(self):
         self.app.use_log_wait = True
         self.app.args = SimpleNamespace(think_timeout=5)
