@@ -5,6 +5,8 @@ import android.util.Log;
 import org.json.JSONObject;
 
 import com.badukai.util.DebugLog;
+import com.badukai.game.GoBoard;
+import com.badukai.game.Intersection;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -123,6 +125,29 @@ public class KataGoEngine {
 
     public String getBackendName() {
         return gpuSession != null ? "GPU/OpenCL JNI" : jniSession != null ? "CPU/Eigen JNI" : "PIE/ProcessBuilder";
+    }
+
+    /**
+     * Conservative, read-only strict endgame proof using KataGo's Benson/pass-alive
+     * area checker. True certifies a fully resolved area position. False includes
+     * unsettled points, current simple ko, invalid position, or missing JNI support.
+     * Never equate two passes or NN confidence with a proof.
+     */
+    public boolean isStrictPassAliveComplete(GoBoard position) {
+        if (position == null || !isReady() || position.getSimpleKoPoint() != null) return false;
+        int size = position.getSize();
+        if (size < 2 || size > 19) return false;
+        byte[] colors = new byte[size * size];
+        for (int y=0; y<size; y++) {
+            for (int x=0; x<size; x++) {
+                Intersection stone = position.get(x,y);
+                colors[y*size+x] = (byte)(stone == Intersection.BLACK ? 1 : stone == Intersection.WHITE ? 2 : 0);
+            }
+        }
+        boolean certified = gpuSession != null ? KataGoGpuNative.isAllPassAlive(size,colors)
+                : jniSession != null && KataGoNative.isAllPassAlive(size,colors);
+        Log.i(TAG,"PASS_ALIVE_CHECK board=" + size + " certified=" + certified + " backend=" + getBackendName());
+        return certified;
     }
 
     /** Native KataGo reads defaultBoardSize before loading any OpenCL model. */
