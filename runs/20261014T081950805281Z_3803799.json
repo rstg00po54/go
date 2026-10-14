@@ -1,0 +1,167 @@
+{
+  "schema": 3,
+  "status": "FAIL",
+  "timestamp_utc": "20261014T081950805281Z",
+  "ui_dumps": 3,
+  "cached_controls": 10,
+  "serial": "8719e18a71a2a66c",
+  "backends": "npu,npu,npu,npu",
+  "rounds": 1,
+  "size": 9,
+  "moves": 3,
+  "undo": false,
+  "pass": false,
+  "failure": "NPU 模型不匹配：board=9 event=selected recent=[]",
+  "events": [
+    {
+      "seconds": 0.003,
+      "message": "连接设备 8719e18a71a2a66c"
+    },
+    {
+      "seconds": 0.163,
+      "message": "APK 或显示环境变化，重新建立 UI 缓存"
+    },
+    {
+      "seconds": 0.211,
+      "message": "安装 APK: /mnt/hgfs/D/code/go/GoEngine-java/app/build/outputs/apk/debug/app-debug.apk"
+    },
+    {
+      "seconds": 7.246,
+      "message": "启动 APP"
+    },
+    {
+      "seconds": 7.246,
+      "message": "等待 MainActivity 的引擎完成日志（不依赖屏幕下方的按钮）"
+    },
+    {
+      "seconds": 7.302,
+      "message": "首页引擎尚未发出 ready 日志，已等待 0s"
+    },
+    {
+      "seconds": 11.399,
+      "message": "MainActivity 已报告 Initial engine ready=true"
+    },
+    {
+      "seconds": 11.399,
+      "message": "已读取 APP 会话设置：9路，NPU"
+    },
+    {
+      "seconds": 11.399,
+      "message": "动态检测将在第一局启动后选择 logcat 或 UIAutomator"
+    },
+    {
+      "seconds": 11.399,
+      "message": "=== Case 1: NPU / 9x9 ==="
+    },
+    {
+      "seconds": 11.399,
+      "message": "寻找首页 AI训练按钮（如不在当前屏幕，会自动上滑）"
+    },
+    {
+      "seconds": 15.327,
+      "message": "已进入 AI训练新开一局界面"
+    },
+    {
+      "seconds": 17.971,
+      "message": "新开一局弹窗已显示"
+    },
+    {
+      "seconds": 17.971,
+      "message": "sizeSpinner 已选择 9路，跳过下拉菜单"
+    },
+    {
+      "seconds": 17.971,
+      "message": "执黑已由本次会话确认，跳过 UI 检查"
+    },
+    {
+      "seconds": 17.971,
+      "message": "backendSpinner 已选择 NPU / RKNN，跳过下拉菜单"
+    },
+    {
+      "seconds": 18.134,
+      "message": "点击开始对局（本地缓存），坐标=(539, 1333)"
+    },
+    {
+      "seconds": 18.172,
+      "message": "MainActivity 已确认开始：9路 NPU"
+    },
+    {
+      "seconds": 18.209,
+      "message": "MainActivity DebugLog 已就绪，切换到 logcat 快速检测"
+    },
+    {
+      "seconds": 18.238,
+      "message": "NPU 就绪，第 1 手（logcat）"
+    },
+    {
+      "seconds": 18.26,
+      "message": "失败: NPU 模型不匹配：board=9 event=selected recent=[]"
+    },
+    {
+      "seconds": 21.435,
+      "message": "截图 failed.png"
+    },
+    {
+      "seconds": 21.481,
+      "message": "本地报告: /mnt/hgfs/D/code/go/GoEngine-java/build/app_ui_test/20261014_161929"
+    }
+  ],
+  "startup_timings": [
+    {
+      "phase": "engine_backend_and_paths",
+      "ms": 0.290792
+    },
+    {
+      "phase": "engine_prepare_config",
+      "ms": 5.208292
+    },
+    {
+      "phase": "engine_prepare_model_asset",
+      "ms": 78.320091
+    },
+    {
+      "phase": "engine_find_human_model",
+      "ms": 0.194834
+    },
+    {
+      "phase": "npu_jni_load_library",
+      "ms": 2.23475
+    },
+    {
+      "phase": "npu_jni_create_session",
+      "ms": 0.118125
+    },
+    {
+      "phase": "npu_jni_create_total",
+      "ms": 2.494917
+    },
+    {
+      "phase": "engine_npu_native_create",
+      "ms": 2.841708
+    },
+    {
+      "phase": "engine_npu_ready",
+      "ms": 2557.370924
+    },
+    {
+      "phase": "engine_backend_and_paths",
+      "ms": 0.343292
+    },
+    {
+      "phase": "engine_prepare_config",
+      "ms": 11.99771
+    },
+    {
+      "phase": "engine_prepare_model_asset",
+      "ms": 1.172209
+    },
+    {
+      "phase": "engine_find_human_model",
+      "ms": 0.003208
+    }
+  ],
+  "game_backends": [],
+  "benchmark": null,
+  "full_games": [],
+  "note": "PUBLIC and NOT REDACTED, diagnostics under runs/20261014T081950805281Z_3803799/"
+}
