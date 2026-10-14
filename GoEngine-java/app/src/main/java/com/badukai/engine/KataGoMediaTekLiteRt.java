@@ -147,7 +147,7 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
      * Caller supplies NHWC KataGo feature tensors. Uses exactly the 5 original
      * head semantics, without remapping the value/ownership head contents.
      */
-    public synchronized float[][] infer(float[] spatial, float[] global, float[] mask) {
+    public synchronized float[][] infer(float[] spatial, float[] global, float[] mask) throws Exception {
         float[][] values = {spatial, global, mask};
         for (int i=0;i<3;i++) {
             if (values[i].length != inputCounts[i])
@@ -176,7 +176,7 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
         return result;
     }
 
-    public synchronized String smokeOnce() {
+    public synchronized String smokeOnce() throws Exception {
         float[] spatial = new float[inputCounts[0]];
         float[] global = new float[19];
         float[] mask = new float[size * size];
