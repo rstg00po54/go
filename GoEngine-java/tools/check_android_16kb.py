@@ -57,35 +57,49 @@ def inspect_library(name, content, page_size=PAGE_SIZE):
     return segments, failures
 
 
-def check_apk(apk):
+def check_apk(apk, allow_4k_rknnrt=False):
     with zipfile.ZipFile(apk) as archive:
         names = sorted(name for name in archive.namelist() if name.startswith("lib/") and name.endswith(".so"))
         if not names:
             raise ValueError("APK contains no native libraries")
         failed = 0
+        exceptions = 0
         for name in names:
-            segments, problems = inspect_library(name, archive.read(name))
+            data = archive.read(name)
+            segments, problems = inspect_library(name, data)
+            if problems and allow_4k_rknnrt and name == "lib/arm64-v8a/librknnrt.so":
+                if data[4] != 2 or struct.unpack_from("<H", data, 18)[0] != 183:
+                    raise ValueError("librknnrt.so exception requires Android AArch64 ELF64")
+                _, fallback_problems = inspect_library(name, data, page_size=4096)
+                if not fallback_problems:
+                    exceptions += 1
+                    print("WARN " + name + ": Rockchip runtime is ONLY 4 KB aligned; "
+                          "this APK is NOT compatible with 16 KB page-size devices.")
+                    continue
             labels = ", ".join(f"0x{alignment:x}" for _, _, alignment in segments)
             if problems:
                 failed += 1
                 print(f"FAIL {name}: " + "; ".join(problems))
             else:
                 print(f"PASS {name}: PT_LOAD p_align = {labels}")
-    return len(names), failed
+    return len(names), failed, exceptions
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("apk", type=Path, help="Built APK to verify")
+    parser.add_argument("--allow-4k-rknnrt", action="store_true",
+                        help="Explicit RK3588 4 KB-page test exception, only for librknnrt.so")
     args = parser.parse_args()
     if not args.apk.is_file():
         parser.error(f"APK not found: {args.apk}")
     try:
-        count, failed = check_apk(args.apk)
+        count, failed, exceptions = check_apk(args.apk, allow_4k_rknnrt=args.allow_4k_rknnrt)
     except (OSError, ValueError, zipfile.BadZipFile) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
-    print(f"16 KB ELF alignment: {count - failed}/{count} PASS")
+    print(f"16 KB ELF alignment: {count - failed - exceptions}/{count} PASS"
+          + (f", {exceptions} RK3588 4 KB runtime exception (NOT 16 KB compatible)" if exceptions else ""))
     return 1 if failed else 0
 
 
