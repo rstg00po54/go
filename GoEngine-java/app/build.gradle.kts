@@ -95,6 +95,7 @@ android {
 dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.ai.edge.litert:litert:2.3.0")
+    implementation("com.google.ai.edge.litert:litert-npu-runtime-mediatek:2.3.0")
 }
 
 configurations.configureEach {
