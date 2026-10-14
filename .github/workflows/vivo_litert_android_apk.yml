@@ -3,7 +3,7 @@ name: Vivo MediaTek LiteRT probe APK
 on:
   workflow_dispatch:
   push:
-    branches: [feature/vivo-mediatek-litert]
+    branches: [feature/rk3588-rknn, feature/vivo-mediatek-litert]
     paths:
       - '.github/workflows/vivo_litert_android_apk.yml'
       - 'GoEngine-java/app/build.gradle.kts'
