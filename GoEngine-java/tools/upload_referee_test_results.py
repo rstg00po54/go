@@ -21,7 +21,7 @@ REPO_NAME = "rstg00po54/go"
 RESULT_BRANCH = "ui-test-results"
 MAX_FILE_SIZE = 12 * 1024 * 1024
 ALLOWED = {"result.json","dialog.txt","review_panel.txt","confirmation_dialog.txt",
-           "logcat.txt","activity.txt","gradle.log","analysis_dialog.png",
+           "logcat.txt","activity.txt","gradle.log","crash.txt","analysis_dialog.png",
            "review_screen.png","resumed_screen.png","armed_logcat.txt","resume_logcat.txt","confirmation_dialog.png"}
 
 
@@ -78,7 +78,7 @@ def report_items(run_dir,report,run_name,logger=print):
 
 
 def upload_referee_results(run_dir,report,remote="auto",branch=RESULT_BRANCH,
-                           repo_root=None,logger=print):
+                           repo_root=None,logger=print,run_kind="referee"):
     """Publish final PASS/FAIL/INTERRUPTED report + diagnostic artifacts.
 
     Branch and checkout state stay unchanged. If concurrent pushes race,
@@ -88,9 +88,11 @@ def upload_referee_results(run_dir,report,remote="auto",branch=RESULT_BRANCH,
     repo_root = Path(repo_root or Path(__file__).resolve().parents[2]).resolve()
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,60}",branch):
         raise UploadError("Invalid upload branch")
+    if not re.fullmatch(r"[a-z][a-z0-9_-]{0,30}",run_kind):
+        raise UploadError("Invalid report kind")
     chosen = choose_remote(repo_root,remote)
     time_id = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-    run_name = time_id+"_referee_"+str(os.getpid())+"_"+uuid4().hex[:8]
+    run_name = time_id+"_"+run_kind+"_"+str(os.getpid())+"_"+uuid4().hex[:8]
     report_path,items = report_items(run_dir,report,run_name,logger)
     logger("Uploading %d result artifacts to %s/%s (PUBLIC, raw diagnostics)..." %
            (len(items),chosen,branch))
@@ -120,7 +122,7 @@ def upload_referee_results(run_dir,report,remote="auto",branch=RESULT_BRANCH,
                   "commit-tree",tree]
             if parent:
                 args.extend(["-p",parent])
-            args.extend(["-m","Referee smoke "+report.get("status","ERROR")+" "+time_id])
+            args.extend(["-m",run_kind+" smoke "+report.get("status","ERROR")+" "+time_id])
             commit = git(repo_root,*args)
             try:
                 git(repo_root,"push",chosen,commit+":refs/heads/"+branch,timeout=90)
