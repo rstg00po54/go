@@ -141,7 +141,7 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn('setNegativeButton("局面检查", (dialog,which) -> inspectUnfinishedPosition())',quick)
         inspection = activity.split("private void inspectUnfinishedPosition()",1)[1].split(
             "private void startSmartReferee()",1)[0]
-        for status in ('"有打劫"', '"官子未收完"', '"不能确认"', '"裁判完成"'):
+        for status in ('"有打劫"', '"官子未收完"', '"建议继续下棋"', '"需要复核"', '"不能确认"', '"裁判完成"'):
             self.assertIn(status,inspection)
         for symbol in ("snapshot.countAtariGroups()", "snapshot.getSimpleKoPoint()",
                        "engine.inspectPositionNative(", "size,24,0.5",
@@ -152,7 +152,27 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn("blackGain <= 0.5 && whiteGain <= 0.5",inspection)
         self.assertNotIn("if (!ended && (blackGain >= 1.5",inspection)
         self.assertIn("nativeScore != null && !nativeScore.trim().isEmpty() && nativeDead != null",inspection)
+        self.assertIn("final boolean scoreWasRequested = scoringAttempted;",inspection)
+        self.assertIn("scoringAttempted = true;",inspection)
         self.assertIn("if (inspection != null && simpleKo == null && atariGroups == 0",inspection)
+        # Screenshot regression: white H9 +1.44 and black H9 -0.29 must enter the
+        # small remaining endgame branch, not incorrectly claim native scoring failed.
+        self.assertIn("else if (blackGain > 0.5 || whiteGain > 0.5)",inspection)
+        self.assertIn('status = "建议继续下棋";',inspection)
+        self.assertNotIn("PASS 对照接近，但原生计分或死子预测未完成",inspection)
+        self.assertIn('Point focusPoint = Point.fromGtp(focusMove,size);',inspection)
+        self.assertIn('boardView.setEndgameAlerts(java.util.Collections.singleton(focusPoint));',inspection)
+        self.assertIn('endgameInspectionMarkedBoard = snapshot;',inspection)
+        self.assertIn('snapshot.get(focusPoint) == Intersection.EMPTY',inspection)
+        self.assertIn('已在棋盘用橙圈标出该点',inspection)
+        self.assertIn('showFocus ? focusMove : "none"',inspection)
+        board_view = (root/"app/src/main/java/com/badukai/ui/GoBoardView.java").read_text(encoding="utf-8")
+        self.assertIn("drawEndgameAlerts(canvas);",board_view)
+        self.assertIn("public void setEndgameAlerts(Set<Point> alerts)",board_view)
+        render = activity.split("private void render(String message)",1)[1]
+        self.assertIn("board.getMoveCount() != endgameInspectionMarkedMoves",render)
+        self.assertIn("endgameInspectionMarkedBoard = null;",render)
+        self.assertIn("boardView.setEndgameAlerts(null);",render)
         self.assertIn('setNeutralButton("查看详情"',inspection)
         self.assertNotIn("else if (ended && atariGroups == 0",inspection)
         self.assertIn("public Point getSimpleKoPoint()",board)
