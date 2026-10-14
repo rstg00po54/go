@@ -2,6 +2,13 @@ name: Smart referee core tests
 
 on:
   workflow_dispatch:
+  push:
+    branches: [rk3588-engine]
+    paths:
+      - .github/workflows/referee-smoke.yml
+      - GoEngine-java/app/src/main/java/com/badukai/MainActivity.java
+      - GoEngine-java/app/src/main/java/com/badukai/ui/GoBoardView.java
+      - GoEngine-java/tools/test_smoke_android_referee_app.py
 
 jobs:
   referee-jdk:
