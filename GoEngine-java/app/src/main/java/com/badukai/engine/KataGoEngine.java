@@ -126,7 +126,7 @@ public class KataGoEngine {
     }
 
     public String getBackendName() {
-        return npuSession != null ? "NPU/RKNN JNI" : gpuSession != null ? "GPU/OpenCL JNI" : jniSession != null ? "CPU/Eigen JNI" : "PIE/ProcessBuilder";
+        return npuSession != null ? (humanSLRunning ? "NPU 10b + CPU Human SL" : "NPU/RKNN JNI") : gpuSession != null ? "GPU/OpenCL JNI" : jniSession != null ? "CPU/Eigen JNI" : "PIE/ProcessBuilder";
     }
 
     /**
