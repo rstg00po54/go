@@ -1246,7 +1246,8 @@ public class MainActivity extends AppCompatActivity {
                         "\n搜索：12 次初检 %d ms，24 次复核 %d ms%s。",fastMs,reviewedMs,
                         reviewFailed ? "（复核失败）" : categoryChanged ? "（判断有差异）" : "")
                         : String.format(Locale.CHINA,"\n搜索：12 次初检 %d ms，无需追加复核。",fastMs);
-                detail += reviewDetail;
+                final String detailedMessage = detail + reviewDetail;
+                final String dialogStatus = status;
                 String message = explanation
                         + (showFocus ? "\n\n关闭弹窗后可在棋盘看到橙圈，落下一手后自动清除。" : "")
                         + "\n\n以上为 KataGo 估计，不会自动结束或改动棋谱。";
@@ -1256,18 +1257,18 @@ public class MainActivity extends AppCompatActivity {
                         atariGroups,nativeInfo == null ? Double.NaN : nativeInfo.black.estimatedMoveBenefit,
                         nativeInfo == null ? Double.NaN : nativeInfo.white.estimatedMoveBenefit,
                         nativeInfo == null ? -1 : nativeInfo.highVariationPoints,
-                        didRefine ? 24 : 12,didRefine,reviewFailed,categoryChanged,
+                        simpleKo != null ? 0 : didRefine ? 24 : 12,didRefine,reviewFailed,categoryChanged,
                         fastMs,reviewedMs,searchMs,showFocus ? focusMove : "none",
                         (System.nanoTime()-startedNs)/1000000L));
                 render("局面检查：" + status);
                 AlertDialog.Builder dialog = new AlertDialog.Builder(this)
                         .setTitle("智能裁判 · " + status).setMessage(message)
                         .setPositiveButton("基本收官".equals(status) ? "关闭" : "继续下棋", (d,w) -> {
-                            if (!"基本收官".equals(status) && ended
+                            if (!"基本收官".equals(dialogStatus) && ended
                                     && board == snapshot && board.canResumeAfterPasses()) resumeFromReferee();
                         })
                         .setNeutralButton("查看详情", (d,w) -> new AlertDialog.Builder(this)
-                                .setTitle("KataGo 分析依据").setMessage(detail)
+                                .setTitle("KataGo 分析依据").setMessage(detailedMessage)
                                 .setPositiveButton("关闭",null).show());
                 if ("基本收官".equals(status))
                     dialog.setNegativeButton("详细数子", (d,w) -> startNativeReferee());
