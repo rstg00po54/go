@@ -151,6 +151,28 @@ class NnSmokeTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             smoke.selected_cases(games="unknown")
 
+    def test_device_logcat_fallback_finds_current_run(self):
+        calls = []
+        def fake_run(argv,timeout=30,check=True):
+            calls.append(argv)
+            if "shell" in argv and "logcat" in argv:
+                return "I/RefereeSmoke: START id=current\n"+GOOD_GPU+"\nI/OtherTag: noise"
+            return ""
+        with mock.patch.object(smoke,"run",side_effect=fake_run):
+            log, source = smoke.read_referee_log("adb","device","current")
+        self.assertEqual(source,"buffer-all")
+        self.assertEqual(smoke.smoke_event(log,"current")["status"],"PASS")
+        self.assertEqual(len(calls),2)
+        self.assertIn("-b",calls[1])
+        self.assertIn("all",calls[1])
+
+    def test_device_logcat_primary_does_not_use_stale_pass(self):
+        with mock.patch.object(smoke,"run",return_value=GOOD_GPU) as adb:
+            log, source = smoke.read_referee_log("adb","device","current")
+        self.assertEqual(source,"tag-filter")
+        self.assertEqual(smoke.smoke_event(log,"current")["status"],"PASS")
+        adb.assert_called_once()
+
     def test_launch_does_not_block_on_android_activity_idle(self):
         class Id:
             hex = "current"
