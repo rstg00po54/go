@@ -1,0 +1,470 @@
+{
+  "schema": 3,
+  "status": "PASS",
+  "timestamp_utc": "20261014T085530455900Z",
+  "ui_dumps": 9,
+  "cached_controls": 13,
+  "serial": "8719e18a71a2a66c",
+  "backends": "npu,npu,npu,npu",
+  "rounds": 1,
+  "size": 9,
+  "moves": 3,
+  "undo": false,
+  "pass": false,
+  "failure": null,
+  "events": [
+    {
+      "seconds": 0.003,
+      "message": "连接设备 8719e18a71a2a66c"
+    },
+    {
+      "seconds": 0.147,
+      "message": "APK 或显示环境变化，重新建立 UI 缓存"
+    },
+    {
+      "seconds": 0.185,
+      "message": "安装 APK: /mnt/hgfs/D/code/go/GoEngine-java/app/build/outputs/apk/debug/app-debug.apk"
+    },
+    {
+      "seconds": 8.808,
+      "message": "启动 APP"
+    },
+    {
+      "seconds": 8.808,
+      "message": "等待 MainActivity 的引擎完成日志（不依赖屏幕下方的按钮）"
+    },
+    {
+      "seconds": 8.851,
+      "message": "首页引擎尚未发出 ready 日志，已等待 0s"
+    },
+    {
+      "seconds": 12.951,
+      "message": "MainActivity 已报告 Initial engine ready=true"
+    },
+    {
+      "seconds": 12.951,
+      "message": "已读取 APP 会话设置：9路，NPU"
+    },
+    {
+      "seconds": 12.951,
+      "message": "动态检测将在第一局启动后选择 logcat 或 UIAutomator"
+    },
+    {
+      "seconds": 12.952,
+      "message": "=== Case 1: NPU / 9x9 ==="
+    },
+    {
+      "seconds": 12.952,
+      "message": "寻找首页 AI训练按钮（如不在当前屏幕，会自动上滑）"
+    },
+    {
+      "seconds": 15.319,
+      "message": "已进入 AI训练新开一局界面"
+    },
+    {
+      "seconds": 17.579,
+      "message": "新开一局弹窗已显示"
+    },
+    {
+      "seconds": 17.579,
+      "message": "sizeSpinner 已选择 9路，跳过下拉菜单"
+    },
+    {
+      "seconds": 17.579,
+      "message": "执黑已由本次会话确认，跳过 UI 检查"
+    },
+    {
+      "seconds": 17.579,
+      "message": "backendSpinner 已选择 NPU / RKNN，跳过下拉菜单"
+    },
+    {
+      "seconds": 17.738,
+      "message": "点击开始对局（本地缓存），坐标=(539, 1333)"
+    },
+    {
+      "seconds": 17.777,
+      "message": "MainActivity 已确认开始：9路 NPU"
+    },
+    {
+      "seconds": 17.825,
+      "message": "MainActivity DebugLog 已就绪，切换到 logcat 快速检测"
+    },
+    {
+      "seconds": 17.848,
+      "message": "NPU 就绪，第 1 手（logcat）"
+    },
+    {
+      "seconds": 17.882,
+      "message": "NPU 已验证真实模型：katago_10b_9x9.rknn"
+    },
+    {
+      "seconds": 17.944,
+      "message": "主进程 PID=10482，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 20.829,
+      "message": "落子 (2,2)，屏幕 (310,757)（缓存棋盘）"
+    },
+    {
+      "seconds": 21.728,
+      "message": "NPU 就绪，第 3 手（logcat）"
+    },
+    {
+      "seconds": 21.786,
+      "message": "落子 (6,6)，屏幕 (765,1212)（缓存棋盘）"
+    },
+    {
+      "seconds": 23.225,
+      "message": "落子 (6,6) 未被接受，换下一个交叉点"
+    },
+    {
+      "seconds": 23.318,
+      "message": "落子 (6,2)，屏幕 (765,757)（缓存棋盘）"
+    },
+    {
+      "seconds": 24.221,
+      "message": "NPU 就绪，第 5 手（logcat）"
+    },
+    {
+      "seconds": 24.295,
+      "message": "落子 (6,2)，屏幕 (765,757)（缓存棋盘）"
+    },
+    {
+      "seconds": 25.742,
+      "message": "落子 (6,2) 未被接受，换下一个交叉点"
+    },
+    {
+      "seconds": 25.826,
+      "message": "落子 (2,6)，屏幕 (310,1212)（缓存棋盘）"
+    },
+    {
+      "seconds": 27.28,
+      "message": "落子 (2,6) 未被接受，换下一个交叉点"
+    },
+    {
+      "seconds": 27.386,
+      "message": "落子 (4,4)，屏幕 (538,984)（缓存棋盘）"
+    },
+    {
+      "seconds": 28.293,
+      "message": "NPU 就绪，第 7 手（logcat）"
+    },
+    {
+      "seconds": 28.355,
+      "message": "主进程 PID=10482，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 28.669,
+      "message": "截图 case_001_npu.png"
+    },
+    {
+      "seconds": 28.669,
+      "message": "=== Case 1: PASS ==="
+    },
+    {
+      "seconds": 28.669,
+      "message": "=== Case 2: NPU / 13x13 ==="
+    },
+    {
+      "seconds": 28.722,
+      "message": "点击 newRoundButton（本地缓存），坐标=(933, 1594)"
+    },
+    {
+      "seconds": 30.874,
+      "message": "新开一局弹窗已显示"
+    },
+    {
+      "seconds": 30.927,
+      "message": "点击 sizeSpinner（本地缓存），坐标=(639, 624)"
+    },
+    {
+      "seconds": 33.33,
+      "message": "选择 sizeSpinner: 13路，坐标=(575, 887)"
+    },
+    {
+      "seconds": 33.78,
+      "message": "sizeSpinner 已点击 13路，等待开局日志确认实际参数"
+    },
+    {
+      "seconds": 33.78,
+      "message": "执黑已由本次会话确认，跳过 UI 检查"
+    },
+    {
+      "seconds": 33.781,
+      "message": "backendSpinner 已选择 NPU / RKNN，跳过下拉菜单"
+    },
+    {
+      "seconds": 33.962,
+      "message": "点击开始对局（本地缓存），坐标=(539, 1333)"
+    },
+    {
+      "seconds": 34.02,
+      "message": "MainActivity 已确认开始：13路 NPU"
+    },
+    {
+      "seconds": 36.6,
+      "message": "NPU 就绪，第 1 手（logcat）"
+    },
+    {
+      "seconds": 36.634,
+      "message": "NPU 已验证真实模型：katago_10b_13x13.rknn"
+    },
+    {
+      "seconds": 36.693,
+      "message": "主进程 PID=10482，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 36.772,
+      "message": "落子 (2,2)，屏幕 (219,666)（缓存棋盘）"
+    },
+    {
+      "seconds": 37.991,
+      "message": "NPU 就绪，第 3 手（logcat）"
+    },
+    {
+      "seconds": 38.09,
+      "message": "落子 (10,10)，屏幕 (856,1303)（缓存棋盘）"
+    },
+    {
+      "seconds": 39.576,
+      "message": "NPU 就绪，第 5 手（logcat）"
+    },
+    {
+      "seconds": 39.659,
+      "message": "落子 (10,2)，屏幕 (856,666)（缓存棋盘）"
+    },
+    {
+      "seconds": 40.875,
+      "message": "NPU 就绪，第 7 手（logcat）"
+    },
+    {
+      "seconds": 40.942,
+      "message": "主进程 PID=10482，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 41.235,
+      "message": "截图 case_002_npu.png"
+    },
+    {
+      "seconds": 41.235,
+      "message": "=== Case 2: PASS ==="
+    },
+    {
+      "seconds": 41.235,
+      "message": "=== Case 3: NPU / 19x19 ==="
+    },
+    {
+      "seconds": 41.279,
+      "message": "点击 newRoundButton（本地缓存），坐标=(933, 1594)"
+    },
+    {
+      "seconds": 43.514,
+      "message": "新开一局弹窗已显示"
+    },
+    {
+      "seconds": 43.566,
+      "message": "点击 sizeSpinner（本地缓存），坐标=(639, 624)"
+    },
+    {
+      "seconds": 45.815,
+      "message": "选择 sizeSpinner: 19路，坐标=(575, 1145)"
+    },
+    {
+      "seconds": 46.265,
+      "message": "sizeSpinner 已点击 19路，等待开局日志确认实际参数"
+    },
+    {
+      "seconds": 46.265,
+      "message": "执黑已由本次会话确认，跳过 UI 检查"
+    },
+    {
+      "seconds": 46.265,
+      "message": "backendSpinner 已选择 NPU / RKNN，跳过下拉菜单"
+    },
+    {
+      "seconds": 46.451,
+      "message": "点击开始对局（本地缓存），坐标=(539, 1333)"
+    },
+    {
+      "seconds": 46.514,
+      "message": "MainActivity 已确认开始：19路 NPU"
+    },
+    {
+      "seconds": 49.146,
+      "message": "NPU 就绪，第 1 手（logcat）"
+    },
+    {
+      "seconds": 49.184,
+      "message": "NPU 已验证真实模型：katago_10b_19x19.rknn"
+    },
+    {
+      "seconds": 49.234,
+      "message": "主进程 PID=10482，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 49.32,
+      "message": "落子 (2,2)，屏幕 (153,600)（缓存棋盘）"
+    },
+    {
+      "seconds": 51.425,
+      "message": "NPU 就绪，第 3 手（logcat）"
+    },
+    {
+      "seconds": 51.506,
+      "message": "落子 (16,16)，屏幕 (922,1369)（缓存棋盘）"
+    },
+    {
+      "seconds": 53.617,
+      "message": "NPU 就绪，第 5 手（logcat）"
+    },
+    {
+      "seconds": 53.696,
+      "message": "落子 (16,2)，屏幕 (922,600)（缓存棋盘）"
+    },
+    {
+      "seconds": 55.83,
+      "message": "NPU 就绪，第 7 手（logcat）"
+    },
+    {
+      "seconds": 55.888,
+      "message": "主进程 PID=10482，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 56.176,
+      "message": "截图 case_003_npu.png"
+    },
+    {
+      "seconds": 56.176,
+      "message": "=== Case 3: PASS ==="
+    },
+    {
+      "seconds": 56.176,
+      "message": "=== Case 4: NPU / 9x9 ==="
+    },
+    {
+      "seconds": 56.222,
+      "message": "点击 newRoundButton（本地缓存），坐标=(933, 1594)"
+    },
+    {
+      "seconds": 58.388,
+      "message": "新开一局弹窗已显示"
+    },
+    {
+      "seconds": 58.437,
+      "message": "点击 sizeSpinner（本地缓存），坐标=(639, 624)"
+    },
+    {
+      "seconds": 60.691,
+      "message": "选择 sizeSpinner: 9路，坐标=(575, 629)"
+    },
+    {
+      "seconds": 61.142,
+      "message": "sizeSpinner 已点击 9路，等待开局日志确认实际参数"
+    },
+    {
+      "seconds": 61.142,
+      "message": "执黑已由本次会话确认，跳过 UI 检查"
+    },
+    {
+      "seconds": 61.142,
+      "message": "backendSpinner 已选择 NPU / RKNN，跳过下拉菜单"
+    },
+    {
+      "seconds": 61.321,
+      "message": "点击开始对局（本地缓存），坐标=(539, 1333)"
+    },
+    {
+      "seconds": 61.383,
+      "message": "MainActivity 已确认开始：9路 NPU"
+    },
+    {
+      "seconds": 64.022,
+      "message": "NPU 就绪，第 1 手（logcat）"
+    },
+    {
+      "seconds": 64.063,
+      "message": "NPU 已验证真实模型：katago_10b_9x9.rknn"
+    },
+    {
+      "seconds": 64.118,
+      "message": "主进程 PID=10482，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 64.188,
+      "message": "落子 (2,2)，屏幕 (310,757)（缓存棋盘）"
+    },
+    {
+      "seconds": 65.147,
+      "message": "NPU 就绪，第 3 手（logcat）"
+    },
+    {
+      "seconds": 65.231,
+      "message": "落子 (6,6)，屏幕 (765,1212)（缓存棋盘）"
+    },
+    {
+      "seconds": 66.711,
+      "message": "落子 (6,6) 未被接受，换下一个交叉点"
+    },
+    {
+      "seconds": 66.834,
+      "message": "落子 (6,2)，屏幕 (765,757)（缓存棋盘）"
+    },
+    {
+      "seconds": 67.801,
+      "message": "NPU 就绪，第 5 手（logcat）"
+    },
+    {
+      "seconds": 67.899,
+      "message": "落子 (6,2)，屏幕 (765,757)（缓存棋盘）"
+    },
+    {
+      "seconds": 69.392,
+      "message": "落子 (6,2) 未被接受，换下一个交叉点"
+    },
+    {
+      "seconds": 69.48,
+      "message": "落子 (2,6)，屏幕 (310,1212)（缓存棋盘）"
+    },
+    {
+      "seconds": 71.022,
+      "message": "落子 (2,6) 未被接受，换下一个交叉点"
+    },
+    {
+      "seconds": 71.125,
+      "message": "落子 (4,4)，屏幕 (538,984)（缓存棋盘）"
+    },
+    {
+      "seconds": 72.096,
+      "message": "NPU 就绪，第 7 手（logcat）"
+    },
+    {
+      "seconds": 72.144,
+      "message": "主进程 PID=10482，没有独立 GPU 进程"
+    },
+    {
+      "seconds": 72.445,
+      "message": "截图 case_004_npu.png"
+    },
+    {
+      "seconds": 72.445,
+      "message": "=== Case 4: PASS ==="
+    },
+    {
+      "seconds": 72.747,
+      "message": "截图 final.png"
+    },
+    {
+      "seconds": 72.82,
+      "message": "全部 PASS；本次 UIAutomator 导出次数=9"
+    },
+    {
+      "seconds": 72.822,
+      "message": "本地报告: /mnt/hgfs/D/code/go/GoEngine-java/build/app_ui_test/20261014_165417"
+    }
+  ],
+  "startup_timings": [],
+  "game_backends": [],
+  "benchmark": null,
+  "full_games": [],
+  "note": "PUBLIC and NOT REDACTED, diagnostics under runs/20261014T085530455900Z_3819916/"
+}
