@@ -127,12 +127,16 @@ def capture_screenshot(adb,serial,target):
     target.write_bytes(proc.stdout)
 
 
-def validate_dialog(text,game=STRICT_CASE,midgame=False):
+def validate_dialog(text,game=STRICT_CASE,midgame=False,certified=None):
     required = ("智能裁判 · NN预估","黑棋 ","白棋 ","胜率 黑 "," · 白 ",
-                "目","继续下棋" if midgame else "关闭")
+                "目","收官：","继续下棋" if midgame else "关闭")
     errors = [part for part in required if part not in text]
     if "领先" not in text and "双方持平" not in text:
         errors.append("missing NN lead")
+    if "收官：已完成" not in text and "收官：未确认" not in text:
+        errors.append("missing strict endgame status")
+    if certified is not None and ("收官：已完成" if certified else "收官：未确认") not in text:
+        errors.append("strict endgame status disagrees with KataGo native proof")
     for removed in ("确认中国规则数子","恢复 AI 建议","已复核并确认","复核死子",
                     "争议标记仍保留","双方目数按 NN 地盘归属估算","建议复核死活",
                     "不是确认数子结果","不代表已经判定死活"):
@@ -163,9 +167,13 @@ def nn_event_values(line,backend,midgame):
         raise ValueError("Area points must sum to 81+7 (9x9 Chinese komi)")
     if int(moves)<4:
         raise ValueError("SGF replay was too short")
+    proof = re.search(r"\bpassAlive=(true|false)\b",line)
+    if not proof:
+        raise ValueError("Missing strict KataGo pass-alive check in Android test result; rebuild native JNI and APK")
     return {"backend":actual,"moves":int(moves),"terminal":terminal=="true",
             "whiteLead":values[0],"blackWin":values[1],"whiteWin":values[2],
-            "blackPoints":values[3],"whitePoints":values[4],"nnMs":int(ms)}
+            "blackPoints":values[3],"whitePoints":values[4],"nnMs":int(ms),
+            "passAlive":proof.group(1)=="true"}
 
 
 def dismiss_event(log,run_id):
@@ -232,7 +240,7 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir,midgame=False):
             root = read_dialog_root(adb,serial)
             dialog = read_dialog_xml(adb,serial,root)
             (case_dir/"dialog.txt").write_text(dialog+"\n",encoding="utf-8")
-            errors = validate_dialog(dialog,game,midgame=midgame)
+            errors = validate_dialog(dialog,game,midgame=midgame,certified=result["nn"]["passAlive"])
             if errors:
                 raise RuntimeError("NN dialog UI mismatch: %s" % errors)
             print("  [5/7] Saving NN dialog screenshot...",flush=True)
