@@ -1,4 +1,4 @@
-name: Vivo MediaTek LiteRT test APK
+name: Vivo MediaTek LiteRT probe APK
 
 on:
   workflow_dispatch:
@@ -36,7 +36,7 @@ jobs:
         working-directory: GoEngine-java
         run: |
           chmod +x gradlew
-          ./gradlew :app:assembleDebug -PskipKataGoNative=true -PenableKataGoNpuJni=false -PenableKataGoGpuJni=false -PenableKataGoJniCore=false --no-daemon
+          ./gradlew :app:assembleDebug -PskipKataGoNative=true -PvivoProbeApk=true -PenableKataGoNpuJni=false -PenableKataGoGpuJni=false -PenableKataGoJniCore=false --no-daemon
       - name: Inspect APK models and vendor NPU runtime
         run: |
           set -euo pipefail
