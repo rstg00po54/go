@@ -19,6 +19,8 @@ BOARD_VIEW = ROOT/"app/src/main/java/com/badukai/ui/GoBoardView.java"
 GOOD_GPU = ("I/RefereeSmoke: PASS id=current game=cgos9_expand_006_12 stage=nn_dialog "
             "backend=GPU/OpenCL moves=82 terminal=true whiteLead=-2.000 blackWin=0.6000 "
             "whiteWin=0.4000 blackPoints=45.000 whitePoints=43.000 nnMs=18 passAlive=false")
+GOOD_NATIVE = "I/RefereeSmoke: PASS_ALIVE_SELFTEST id=current positive=true negative=false backend=GPU/OpenCL_JNI"
+
 
 
 class NnSmokeTests(unittest.TestCase):
@@ -146,6 +148,11 @@ class NnSmokeTests(unittest.TestCase):
         self.assertEqual(smoke.validate_dialog(text.replace("黑棋领先 2.0目","双方持平")),[])
         self.assertIn("deprecated UI",str(smoke.validate_dialog(text+" 建议复核死活")))
 
+    def test_native_smoke_proof_requires_both_positive_and_negative(self):
+        self.assertIn("PASS_ALIVE_SELFTEST",smoke.native_proof_event(GOOD_NATIVE,"current"))
+        self.assertIsNone(smoke.native_proof_event(GOOD_NATIVE.replace("positive=true","positive=false"),"current"))
+        self.assertIsNone(smoke.native_proof_event(GOOD_NATIVE,"other"))
+
     def test_status_log_required_and_independent_from_game_over_or_winrate(self):
         with self.assertRaisesRegex(ValueError,"Missing strict KataGo pass-alive"):
             smoke.nn_event_values(GOOD_GPU.replace(" passAlive=false",""),"gpu",False)
@@ -213,7 +220,7 @@ class NnSmokeTests(unittest.TestCase):
         def fake_run(argv,timeout=30,check=True):
             adb_calls.append(argv)
             if "logcat" in argv:
-                return GOOD_GPU
+                return GOOD_NATIVE+"\n"+GOOD_GPU
             if "am" in argv and "start" in argv:
                 return "Starting: Intent { ... }"
             return ""
@@ -240,7 +247,7 @@ class NnSmokeTests(unittest.TestCase):
         def fake_run(argv,timeout=30,check=True):
             if "logcat" in argv:
                 suffix = "\nI/RefereeSmoke: NN_DISMISS id=current moves=82 terminal=true" if state["clicked"] else ""
-                return GOOD_GPU + suffix
+                return GOOD_NATIVE+"\n"+GOOD_GPU + suffix
             if "input" in argv and "tap" in argv:
                 state["clicked"]=True
             if "am" in argv and "start" in argv:
