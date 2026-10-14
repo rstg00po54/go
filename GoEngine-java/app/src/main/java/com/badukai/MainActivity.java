@@ -1213,7 +1213,7 @@ public class MainActivity extends AppCompatActivity {
         }
         if (npuBundled) {
             backendChoices.add(KataGoEngine.BackendPreference.NPU);
-            backendNames.add("NPU / RKNN（暂只支持19路）");
+            backendNames.add("NPU / RKNN（10b加速，Human SL仍用CPU，仅19路）");
         }
         ArrayAdapter<String> backendAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, backendNames);
         backendAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
