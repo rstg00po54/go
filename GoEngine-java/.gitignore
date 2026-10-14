@@ -60,5 +60,5 @@ __pycache__/
 *.log
 
 # Generated RK3588 RKNN runtime and model assets
-app/src/main/assets/engine/katago_10b_19x19.rknn
+app/src/main/assets/engine/katago_10b_*x*.rknn
 build/rknn_sdk/
