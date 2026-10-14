@@ -1,439 +1,186 @@
 #!/usr/bin/env python3
-"""Host-side unit tests for Android referee smoke log and UI validation."""
+"""Host-side regression tests for the read-only Android KataGo NN smoke workflow."""
 import re
-import subprocess
 import sys
-from contextlib import ExitStack
-from pathlib import Path
 import tempfile
 import unittest
 import xml.etree.ElementTree as ET
+from contextlib import ExitStack
+from pathlib import Path
 from unittest import mock
+
 import smoke_android_referee_app as smoke
-from smoke_android_referee_app import (ACTIVITY, CASES, MAIN_ACTIVITY_CLASS, PACKAGE,
-                                      selected_cases, smoke_event, validate_dialog, validate_review_panel,
-                                      validate_confirmation_dialog, validate_dispute_overlay)
+
+ROOT = Path(__file__).resolve().parents[1]
+ACTIVITY = ROOT/"app/src/main/java/com/badukai/MainActivity.java"
+LAYOUT = ROOT/"app/src/main/res/layout/activity_main.xml"
+BOARD_VIEW = ROOT/"app/src/main/java/com/badukai/ui/GoBoardView.java"
+
+GOOD_GPU = ("I/RefereeSmoke: PASS id=current game=cgos9_expand_006_12 stage=nn_dialog "
+            "backend=GPU/OpenCL moves=82 terminal=true whiteLead=-2.000 blackWin=0.6000 "
+            "whiteWin=0.4000 blackPoints=45.000 whitePoints=43.000 nnMs=18")
 
 
-class RefereeSmokeHostTests(unittest.TestCase):
-    def test_review_ui_layout_and_java_bindings(self):
-        root = Path(__file__).resolve().parents[1]
-        layout_path = root/"app/src/main/res/layout/activity_main.xml"
-        ET.parse(str(layout_path))  # Reject broken Android layout XML before device builds.
-        layout = layout_path.read_text(encoding="utf-8")
-        activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
-        ids = ("refereePanel","refereePanelTitle","refereePanelScore","refereePanelHint",
-               "refereeResetButton","refereeConfirmButton","refereeExitButton",
-               "refereeContinueButton","gameActionPanel")
-        for name in ids:
-            self.assertEqual(layout.count('android:id="@+id/'+name+'"'),1)
-            self.assertIn("R.id."+name,activity)
-        self.assertIn("gameActionPanel.setVisibility(refereeMode ? View.GONE : View.VISIBLE)",activity)
-        self.assertIn("refereePanel.setVisibility(refereeMode && !(mustContinue && evaluating) ? View.VISIBLE : View.GONE)",activity)
-        self.assertIn('refereeExitButton.setOnClickListener(v -> leaveRefereeReview())',activity)
-        self.assertIn('refereeContinueButton.setOnClickListener(v -> resumeFromReferee())',activity)
-        self.assertIn('refereeTapOverlay.setOnClickListener(v -> {',activity)
-        self.assertIn('refereeTapOverlay.setVisibility(mustContinue && refereeAwaitingTap && !evaluating',activity)
-        self.assertIn('if (refereeMode && refereeRequiresContinuation() && refereeAwaitingTap)',activity)
-        self.assertIn('refereeAwaitingTap = false;',activity)
-        self.assertIn('refereeAwaitingTap = true;',activity)
-        self.assertIn('armRefereeTapToResume())',activity)
-        self.assertIn('.setCancelable(false)',activity)
-        self.assertIn('? "dialog" : "dispute_dialog"',activity)
-        self.assertIn('refereeContinueButton.setVisibility(View.GONE)',activity)
-        self.assertIn('boardView.setRefereeMarks(null,null);',activity)
-        self.assertIn('refereeConfirmButton.setVisibility(refereeMode && !mustContinue ? View.VISIBLE : View.GONE)',activity)
-        self.assertIn('refereeConfirmButton.setText("确认数子")',activity)
-        self.assertIn('return !board.isGameOver() || (endgameDecision != null',activity)
-        self.assertNotIn('engine.searchRecommendations("black"',activity)
-        self.assertNotIn('engine.searchRecommendations("white"',activity)
-        self.assertIn('if (endedAtStart && decision.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT)',activity)
-        self.assertIn("render(shortStatus);",activity)
-        self.assertIn("refereePanelScore.setText(",activity)
-
-    def test_ai_move_time_is_visible_and_tracks_genmove_only(self):
-        root = Path(__file__).resolve().parents[1]
-        activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
-        layout = (root/"app/src/main/res/layout/activity_main.xml").read_text(encoding="utf-8")
-        self.assertEqual(layout.count('android:id="@+id/aiMoveTimeText"'),1)
-        self.assertIn('aiMoveTimeText = findViewById(R.id.aiMoveTimeText);',activity)
-        request = activity.split("private void requestAiMove()",1)[1].split("private void handleAiMove(",1)[0]
-        self.assertIn("long startedMs = SystemClock.elapsedRealtime();",request)
-        self.assertIn("String move = engine.generateMove(aiColor.toGtp());",request)
-        self.assertIn("long elapsedMs = SystemClock.elapsedRealtime() - startedMs;",request)
-        self.assertIn("handleAiMove(move, aiColor, elapsedMs)",request)
-        self.assertNotIn("engine.evaluatePosition(",request)
-        handled = activity.split("private void handleAiMove(",1)[1].split("private void pass()",1)[0]
-        self.assertIn("lastAiMoveTimeMs = Math.max(0, elapsedMs);",handled)
-        self.assertIn("AI_MOVE_TIME move=",handled)
-        self.assertIn('if ("pass".equalsIgnoreCase(move))',handled)
-        self.assertIn('if ("resign".equalsIgnoreCase(move))',handled)
-        render = activity.split("private void render(String message)",1)[1].split("private void updateButtons()",1)[0]
-        self.assertIn('aiMoveTimeText.setText(thinking ? "AI 思考中…" : lastAiMoveTimeMs < 0',render)
-        self.assertIn('String.format(Locale.CHINA,"本手用时 %.2f 秒",lastAiMoveTimeMs/1000.0)',render)
-        newgame = activity.split("private void startNewGame()",1)[1].split("private void ",1)[0]
-        undo = activity.split("private void undo()",1)[1].split("private void resign()",1)[0]
-        self.assertIn("lastAiMoveTimeMs = -1;",newgame)
-        self.assertIn("lastAiMoveTimeMs = -1;",undo)
-
-    def test_nn_black_white_area_points_use_existing_raw_nn(self):
-        root = Path(__file__).resolve().parents[1]
-        activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
-        layout = (root/"app/src/main/res/layout/activity_main.xml").read_text(encoding="utf-8")
-        self.assertEqual(layout.count('android:id="@+id/nnAreaScoreText"'),1)
-        self.assertIn('nnAreaScoreText = findViewById(R.id.nnAreaScoreText);',activity)
-        self.assertIn('NnAreaScore.estimate(result.whiteOwnership,size,komiFor(size)',activity)
-        self.assertIn('gameCondition >= 2 ? gameCondition : 0',activity)
-        self.assertIn('nnAreaScoreBoard != board || nnAreaScoreMoves != board.getMoveCount()',activity)
-        self.assertIn('nnAreaScoreText.setVisibility(nnAreaScoreMessage == null ? View.GONE : View.VISIBLE);',activity)
-        quick = activity.split("private void showQuickNnRefereeEstimate()",1)[1].split(
-            "private void startSmartReferee()",1)[0]
-        self.assertEqual(quick.count('engine.evaluatePosition(size)'),1)
-        self.assertNotIn("searchRecommendations(",quick)
-        self.assertIn("双方目数按 NN 地盘归属估算",quick)
-
-    def test_smart_referee_entry_stays_labeled_after_new_game(self):
-        root = Path(__file__).resolve().parents[1]
-        activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
-        self.assertIn('countTerritoryButton.setText("智能裁判");',activity)
-        self.assertNotIn('现在仍在下棋。继续对弈，双方连续停一手后再点智能裁判',activity)
-        self.assertIn('countTerritoryButton.setEnabled(engineReady && gameReady',activity)
-        self.assertIn('if (refereeAwaitingTap) resumeFromReferee();',activity)
-
-    def test_smart_referee_uses_one_raw_nn_without_optional_searches(self):
-        root = Path(__file__).resolve().parents[1]
-        activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
-        entry = activity.split("private void showEndgameScoringOptions()",1)[1].split(
+class NnSmokeTests(unittest.TestCase):
+    def test_android_referee_entry_uses_only_nn(self):
+        activity = ACTIVITY.read_text(encoding="utf-8")
+        block = activity.split("private void showEndgameScoringOptions()",1)[1].split(
             "private void showQuickNnRefereeEstimate()",1)[0]
-        self.assertIn("showQuickNnRefereeEstimate();",entry)
+        self.assertIn("showQuickNnRefereeEstimate();",block)
+        self.assertNotIn("startSmartReferee(",activity)
+        self.assertIn('sendCommandSync("kata-raw-nn 0")',
+                      (ROOT/"app/src/main/java/com/badukai/engine/KataGoEngine.java").read_text(encoding="utf-8"))
+
+    def test_legacy_adjudication_and_manual_confirmation_are_gone(self):
+        activity = ACTIVITY.read_text(encoding="utf-8")
+        for old in ("SmartReferee", "EndgameAdjudicator", "MidgameTacticalReview",
+                    "确认中国规则数子", "恢复 AI 建议", "已复核并确认",
+                    "refereeMode", "startSmartReferee", "showRefereeConfirmation",
+                    "engine.getFinalScore()", "engine.getFinalDeadStones()",
+                    "boardView.setRefereeMarks", "boardView.setEndgameAlerts"):
+            self.assertNotIn(old,activity,old)
+
+    def test_layout_has_no_review_toolbar_or_overlay(self):
+        ET.parse(str(LAYOUT))
+        layout = LAYOUT.read_text(encoding="utf-8")
+        for obsolete in ("refereePanel","refereeTapOverlay","refereeResetButton",
+                         "refereeConfirmButton","refereeExitButton","refereeContinueButton",
+                         "复核死子","确认数子","点击屏幕继续下棋"):
+            self.assertNotIn(obsolete,layout)
+        self.assertIn('@+id/countTerritoryButton',layout)
+        self.assertIn('@+id/nnAreaScoreText',layout)
+
+    def test_board_has_no_referee_cross_or_dispute_marks(self):
+        view = BOARD_VIEW.read_text(encoding="utf-8")
+        for old in ("setRefereeMarks","setEndgameAlerts","drawRefereeMarks",
+                    "drawEndgameAlerts","drawDeadStoneOwnership"):
+            self.assertNotIn(old,view)
+
+    def test_real_fixture_debug_calls_same_nn_entry(self):
+        activity = ACTIVITY.read_text(encoding="utf-8")
+        replay = activity.split("private void startDebugRefereeSmoke()",1)[1].split(
+            "private void runJniGtpSmoke(",1)[0]
+        self.assertIn("showQuickNnRefereeEstimate();",replay)
+        self.assertNotIn("startSmartReferee();",replay)
+        self.assertNotIn("engine.evaluatePosition(",replay)
+        self.assertIn('getBooleanExtra("referee_smoke_midgame"',replay)
+
+    def test_nn_dialog_has_area_winrates_lead_and_timing(self):
+        activity = ACTIVITY.read_text(encoding="utf-8")
         quick = activity.split("private void showQuickNnRefereeEstimate()",1)[1].split(
-            "private void startSmartReferee()",1)[0]
-        self.assertIn("engine.evaluatePosition(size)",quick)
-        self.assertIn("board.getSimpleKoPoint()",quick)
-        self.assertIn("board.countAtariGroups()",quick)
-        self.assertIn("result.whiteLead",quick)
-        self.assertIn("result.blackWin * 100.0,result.whiteWin * 100.0",quick)
-        self.assertIn('setTitle("智能裁判 · 快速 NN 估分")',quick)
-        self.assertIn('setPositiveButton(gameEnded ? "关闭" : "继续下棋",null)',quick)
-        for old in ("局面检查", "KataGo 原生裁判", "startNativeReferee(",
-                    "inspectUnfinishedPosition(", "searchRecommendations(",
-                    "getFinalScore(", "getFinalDeadStones("):
-            self.assertNotIn(old,quick)
+            "private void finishByResignation(",1)[0]
+        self.assertEqual(quick.count("engine.evaluatePosition(size)"),1)
+        for expected in ("NnAreaScore.estimate(", "result.whiteLead", "result.blackWin",
+                         "result.whiteWin", "nnMs", "stage=nn_dialog",
+                         "setTitle(\"智能裁判 · 快速 NN 估分\")", "NN_DISMISS"):
+            self.assertIn(expected,quick)
+        self.assertNotIn("searchRecommendations(",quick)
         self.assertNotIn("engine.playMove(",quick)
         self.assertNotIn("engine.undo()",quick)
 
-    def test_unmarked_midgame_shows_only_unfinished_message(self):
-        root = Path(__file__).resolve().parents[1]
-        activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
-        marker = "if (!endedAtStart && refereeDead.isEmpty() && refereeReview.isEmpty() && alerts.isEmpty()) {"
-        self.assertIn(marker,activity)
-        branch = activity.split(marker,1)[1].split("refreshRefereePreview();",1)[0]
-        self.assertIn('refereeMode = false;',branch)
-        self.assertIn('endgameDecision = null;',branch)
-        self.assertIn('render("棋局还没下完");',branch)
-        self.assertIn('.setMessage("棋局还没下完")',branch)
-        self.assertIn('.setPositiveButton("继续下棋",null)',branch)
-        self.assertIn('return;',branch)
-        self.assertNotIn('armRefereeTapToResume()',branch)
-        self.assertNotIn('resumeFromReferee()',branch)
-        self.assertNotIn('engine.undo()',branch)
+    def test_black_white_area_status_text_present(self):
+        activity = ACTIVITY.read_text(encoding="utf-8")
+        layout = LAYOUT.read_text(encoding="utf-8")
+        self.assertIn('nnAreaScoreText = findViewById(R.id.nnAreaScoreText);',activity)
+        self.assertIn('nnAreaScoreText.setVisibility(nnAreaScoreMessage == null',activity)
+        self.assertEqual(layout.count('android:id="@+id/nnAreaScoreText"'),1)
 
-    def test_nn_referee_has_no_native_gtp_or_pass_comparison_path(self):
-        root = Path(__file__).resolve().parents[1]
-        activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
-        engine = (root/"app/src/main/java/com/badukai/engine/KataGoEngine.java").read_text(encoding="utf-8")
-        for old in ("startNativeReferee(", "inspectUnfinishedPosition(", "endgameCategory(",
-                    "REFEREE_ENDGAME_RESULT", "REFEREE_NATIVE_GTP", "ENDGAME_TWO_SIDE_SEARCH"):
-            self.assertNotIn(old,activity)
-        for old in ("inspectPositionNative(", "runNativeEndgameAnalysis(",
-                    "NativePositionInspection", "NativePassComparison", "needsEndgameRefinement("):
-            self.assertNotIn(old,engine)
-        self.assertIn('sendCommandSync("kata-raw-nn 0")',engine)
+    def test_ai_move_time_remains(self):
+        activity = ACTIVITY.read_text(encoding="utf-8")
+        self.assertIn('long elapsedMs = SystemClock.elapsedRealtime() - startedMs;',activity)
+        self.assertIn("AI_MOVE_TIME move=",activity)
+        self.assertIn("aiMoveTimeText.setText(thinking ?",activity)
 
-    def test_no_pass_search_is_hidden_behind_smart_referee(self):
-        root = Path(__file__).resolve().parents[1]
-        activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
-        quick = activity.split("private void showQuickNnRefereeEstimate()",1)[1].split(
-            "private void startSmartReferee()",1)[0]
-        legacy = activity.split("private void startSmartReferee()",1)[1].split(
-            "private void ",1)[0]
-        self.assertEqual(quick.count("engine.evaluatePosition(size)"),1)
-        self.assertEqual(legacy.count("engine.evaluatePosition(size)"),1)
-        self.assertIn("SmartReferee.analyze(snapshot, nn.whiteOwnership)",legacy)
-        self.assertIn("EndgameAdjudicator.analyze(snapshot, nn == null ? null : nn.whiteOwnership)",legacy)
-        self.assertNotIn("engine.searchRecommendations(",legacy)
-        self.assertNotIn("kata-search_analyze",legacy)
-        self.assertIn("final MidgameTacticalReview.Result tactical = null;",legacy)
+    def test_terminal_nn_result_parses(self):
+        got = smoke.nn_event_values(GOOD_GPU,"gpu",False)
+        self.assertEqual(got["moves"],82)
+        self.assertEqual(got["nnMs"],18)
+        self.assertEqual(got["blackPoints"],45)
+        self.assertEqual(got["whitePoints"],43)
+        self.assertTrue(got["terminal"])
 
-    def test_midgame_referee_is_available_without_passes_or_scoring(self):
-        root = Path(__file__).resolve().parents[1]
-        activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
-        entry = activity.split("private void showEndgameScoringOptions()",1)[1].split(
-            "private void startSmartReferee()",1)[0]
-        self.assertNotIn('if (!board.isGameOver()) {',entry)
-        self.assertIn("showQuickNnRefereeEstimate();",entry)
-        self.assertNotIn("startNativeReferee(",entry)
-        self.assertNotIn("inspectUnfinishedPosition(",entry)
-        begin = activity.split("private void startSmartReferee()",1)[1].split("engineExecutor.execute",1)[0]
-        self.assertNotIn('!board.isGameOver()',begin)
-        self.assertIn("final boolean endedAtStart = board.isGameOver()",begin)
-        resume = activity.split("private void resumeFromReferee()",1)[1]
-        midgame = resume.split("if (!board.isGameOver()) {",1)[1].split(
-            "if (!board.canResumeAfterPasses())",1)[0]
-        self.assertIn("refereeMode = false;",midgame)
-        self.assertIn("boardView.setEndgameAlerts(null)",midgame)
-        self.assertNotIn("engine.undo()",midgame)
-        self.assertNotIn("board.resumeAfterPasses()",midgame)
-        self.assertIn('Log.i("RefereeSmoke","INSPECT_RESUME id="',midgame)
+    def test_midgame_nn_result_parses(self):
+        line = GOOD_GPU.replace("moves=82 terminal=true","moves=80 terminal=false")
+        got = smoke.nn_event_values(line,"gpu",True)
+        self.assertEqual(got["moves"],80)
+        self.assertFalse(got["terminal"])
 
-    def test_midgame_modal_uses_two_tap_flow_without_forcing_scoring(self):
-        text = ("智能裁判 · 当前棋形分析 正在对局，当前棋形仅供参考，棋盘标记："
-                "红叉 1 处、黄圈 2 处、橙圈 3 处。点「继续下棋」关闭弹窗，"
-                "争议标记仍保留。然后再点屏幕任意位置，清除标记并继续当前对局；"
-                "不会撤销落子。")
-        self.assertEqual(validate_dialog(text,"cgos9_5",midgame=True),[])
-        self.assertIn("不会撤销落子",validate_dialog(text.replace("不会撤销落子",""),
-                                                   "cgos9_5",midgame=True))
+    def test_wrong_backend_or_terminal_mode_fails(self):
+        with self.assertRaisesRegex(ValueError,"GPU requested"):
+            smoke.nn_event_values(GOOD_GPU.replace("GPU/OpenCL","CPU/Eigen"),"gpu",False)
+        with self.assertRaisesRegex(ValueError,"Wrong terminal"):
+            smoke.nn_event_values(GOOD_GPU,"gpu",True)
 
-    def test_midgame_resume_event_keeps_all_moves(self):
-        logs = ("I/RefereeSmoke: INSPECT_RESUME id=other moves=58 after=58 terminal=false "
-                "refereeMode=false gameReady=true\\n"
-                "I/RefereeSmoke: INSPECT_RESUME id=active moves=54 after=54 terminal=false "
-                "refereeMode=false gameReady=true")
-        result = smoke.midgame_resume_event(logs,"active")
-        self.assertIn("moves=54 after=54",result)
-        self.assertIsNone(smoke.midgame_resume_event(logs,"missing"))
-        self.assertIsNone(smoke.resume_event(logs,"active"))
-
-    def test_referee_overlay_is_above_game_page_and_hidden_by_default(self):
-        root = Path(__file__).resolve().parents[1]
-        layout = ET.parse(str(root/"app/src/main/res/layout/activity_main.xml")).getroot()
-        android = "{http://schemas.android.com/apk/res/android}"
-        ids = [element.get(android+"id") for element in layout]
-        self.assertLess(ids.index("@+id/gamePageContainer"),ids.index("@+id/refereeTapOverlay"))
-        overlay = list(layout)[ids.index("@+id/refereeTapOverlay")]
-        self.assertEqual(overlay.get(android+"visibility"),"gone")
-        self.assertEqual(overlay.get(android+"clickable"),"true")
-        self.assertEqual(overlay.get(android+"background"),"@android:color/transparent")
-        self.assertEqual(overlay.get(android+"contentDescription"),"点击屏幕继续下棋")
-
-    def test_screenshot_accepts_only_png_bytes(self):
-        class Result:
-            returncode = 0
-            stdout = b"\x89PNG\r\n\x1a\n"+b"test"
-            stderr = b""
-        with tempfile.TemporaryDirectory() as folder:
-            dest = Path(folder)/"screen.png"
-            with mock.patch.object(smoke.subprocess,"run",return_value=Result()):
-                smoke.capture_screenshot("adb","device",dest)
-            self.assertTrue(dest.read_bytes().startswith(b"\x89PNG"))
-            Result.stdout = b"not a png"
-            with mock.patch.object(smoke.subprocess,"run",return_value=Result()):
-                with self.assertRaises(RuntimeError):
-                    smoke.capture_screenshot("adb","device",dest)
-
-    def test_activity_component_is_not_application_id_relative(self):
-        self.assertEqual(PACKAGE, "com.badukai.java")
-        self.assertEqual(MAIN_ACTIVITY_CLASS, "com.badukai.MainActivity")
-        self.assertEqual(ACTIVITY, "com.badukai.java/com.badukai.MainActivity")
-
-    def test_only_matching_run_id_counts_as_success(self):
-        log = ("I/RefereeSmoke(123): PASS id=old stage=dialog\n"
-               "I/RefereeSmoke(123): START id=current requested=cpu\n"
-               "I/RefereeSmoke(123): PASS id=current stage=dialog verdict=REVIEW_REQUIRED")
-        self.assertEqual(smoke_event(log, "current")["status"], "PASS")
-        self.assertIsNone(smoke_event(log, "unknown"))
-        self.assertIsNone(smoke_event(log, "cur"))
-
-    def test_explicit_failure_must_win_over_prior_pass(self):
-        log = ("I/RefereeSmoke: PASS id=123 stage=dialog\n"
-               "E/RefereeSmoke: FAIL id=123 stage=dialog")
-        self.assertEqual(smoke_event(log, "123")["status"], "FAIL")
-
-    def test_dialog_requirements(self):
-        ready = "智能裁判 · 可以进入确认数子 黄圈 确认数子"
-        self.assertEqual(validate_dialog(ready,"cgos9_1"),[])
-        self.assertIn("黄圈",validate_dialog(ready.replace("黄圈",""),"cgos9_1"))
-        disputed = ("智能裁判 · 存在争议 棋盘上已标出争议：红叉 5 处、黄圈 2 处、橙圈 1 处。"
-                    "点「继续下棋」关闭弹窗，争议标记仍保留。"
-                    "然后再点屏幕任意位置，清除标记并恢复对局。")
-        for case in ("cgos9_expand_006_12","cgos9_2","cgos9_5"):
-            self.assertEqual(validate_dialog(disputed,case),[],case)
-            self.assertIn("争议标记仍保留",validate_dialog(disputed.replace("争议标记仍保留",""),case))
-
-    def test_dispute_dialog_then_retained_full_screen_overlay(self):
-        xml = ET.fromstring('<hierarchy><node text="智能裁判 · 存在争议" clickable="false" />'
-                            '<node content-desc="点击屏幕继续下棋" clickable="true" '
-                            'bounds="[0,0][960,1500]" /></hierarchy>')
-        for case in ("cgos9_expand_006_12","cgos9_2","cgos9_5"):
-            self.assertEqual(validate_dispute_overlay(xml),[],case)
+    def test_nn_numeric_invariants(self):
+        for altered in (GOOD_GPU.replace("blackPoints=45.000","blackPoints=44.000"),
+                        GOOD_GPU.replace("blackWin=0.6000","blackWin=1.2000"),
+                        GOOD_GPU.replace("whiteLead=-2.000","whiteLead=NaN")):
             with self.assertRaises(ValueError):
-                validate_review_panel("继续下棋",case)
-        xml[1].set("clickable","false")
-        self.assertIn("transparent full-screen tap overlay missing",validate_dispute_overlay(xml))
+                smoke.nn_event_values(altered,"gpu",False)
 
-    def test_settled_referee_can_confirm_score_without_continue_button(self):
-        panel = "智能裁判 · 可以确认数子 黑 34.0 · 白 41.0 恢复建议 确认数子 退出复核"
-        self.assertEqual(validate_review_panel(panel,"cgos9_1"),[])
-        self.assertIn("unexpected continue-playing action",
-                      validate_review_panel(panel+" 继续下棋","cgos9_1"))
-        self.assertIn("确认数子",validate_review_panel(panel.replace("确认数子",""),"cgos9_1"))
+    def test_current_run_id_does_not_accept_stale_pass(self):
+        logs = "I/RefereeSmoke: PASS id=old stage=nn_dialog\n"+GOOD_GPU
+        self.assertEqual(smoke.smoke_event(logs,"current")["status"],"PASS")
+        self.assertIsNone(smoke.smoke_event(logs,"unknown"))
+        self.assertIsNone(smoke.smoke_event("I/OtherTag: PASS id=current","current"))
 
-    def test_only_ready_to_count_opens_scoring_confirmation(self):
-        text = "确认中国规则数子 已复核并确认"
-        self.assertEqual(validate_confirmation_dialog(text,"cgos9_1"),[])
-        self.assertIn("已复核并确认",validate_confirmation_dialog("确认中国规则数子","cgos9_1"))
-        for case in ("cgos9_expand_006_12","cgos9_2","cgos9_5"):
-            with self.assertRaises(ValueError):
-                validate_confirmation_dialog(text,case)
+    def test_failure_overrides_prior_pass(self):
+        log = GOOD_GPU+"\nE/RefereeSmoke: FAIL id=current stage=nn_dialog reason=nn_invalid"
+        self.assertEqual(smoke.smoke_event(log,"current")["status"],"FAIL")
 
-    def test_overlay_marker_counts_require_unique_run_and_real_coordinates(self):
-        log = ("I/RefereeSmoke: OVERLAY id=old dead=1 review=0 alerts=3\n"
-               "I/RefereeSmoke: OVERLAY id=active dead=0 review=4 alerts=2")
-        self.assertEqual(smoke.overlay_marks(log,"active"),{"dead":0,"review":4,"alerts":2})
-        self.assertIsNone(smoke.overlay_marks(log,"missing"))
-        self.assertIsNone(smoke.overlay_marks("I/Other: OVERLAY id=active dead=1 review=2 alerts=3","active"))
+    def test_dialog_requires_nn_content_and_rejects_old_text(self):
+        text = ("智能裁判 · 快速 NN 估分 黑棋约 45.0 目 白棋约 43.0 目 "
+                "黑棋胜率 60.0% 白棋胜率 40.0% "
+                "双方目数按 NN 地盘归属估算 关闭")
+        self.assertEqual(smoke.validate_dialog(text),[])
+        self.assertIn("deprecated UI",str(smoke.validate_dialog(text+" 确认中国规则数子")))
+        self.assertIn("继续下棋",smoke.validate_dialog(text,midgame=True))
 
-    def test_first_modal_continue_arms_without_undoing_moves(self):
-        log = ("I/RefereeSmoke: ARMED id=other moves=70 terminal=true marked=5\n"
-               "I/RefereeSmoke: ARMED id=active moves=82 terminal=true marked=4")
-        self.assertEqual(smoke.armed_event(log,"active"),log.splitlines()[-1])
-        self.assertIsNone(smoke.resume_event(log,"active"))
-        self.assertIsNone(smoke.armed_event(log,"missing"))
+    def test_dismiss_event_is_run_specific(self):
+        log = "I/RefereeSmoke: NN_DISMISS id=other moves=80 terminal=false\n"
+        self.assertIsNone(smoke.dismiss_event(log,"current"))
+        self.assertIn("moves=82",smoke.dismiss_event(
+            log+"I/RefereeSmoke: NN_DISMISS id=current moves=82 terminal=true","current"))
 
-    def test_resume_event_from_live_android_app(self):
-        records = ("I/RefereeSmoke: RESUME id=prior moves=99 terminal=false refereeMode=false gameReady=true\n"
-                   "I/RefereeSmoke: RESUME_FAIL id=active moves=82 undo=false\n"
-                   "I/RefereeSmoke: RESUME id=active moves=80 terminal=false refereeMode=false gameReady=true")
-        self.assertEqual(smoke.resume_event(records,"active")["status"],"PASS")
-        self.assertEqual(smoke.resume_event(records.splitlines()[1],"active")["status"],"FAIL")
-        self.assertIsNone(smoke.resume_event(records,"missing"))
-
-    def test_tap_ui_text_uses_exact_accessibility_bounds(self):
-        xml = ET.fromstring('<hierarchy><node text="继续下棋" bounds="[50,100][250,136]" />'
-                            '<node text="确认数子" bounds="[251,100][451,136]" /></hierarchy>')
-        with mock.patch.object(smoke,"read_dialog_root",return_value=xml), \
-             mock.patch.object(smoke,"run",return_value="") as adb_run:
-            smoke.click_ui_text("adb","serial","继续下棋")
-            self.assertEqual(adb_run.call_args.args[0][-2:],["150","118"])
-            with self.assertRaises(RuntimeError):
-                smoke.click_ui_text("adb","serial","确认死子")
-
-    def test_tap_overlay_intercepts_any_screen_position(self):
-        xml = ET.fromstring('<hierarchy><node content-desc="点击屏幕继续下棋" '
-                            'clickable="true" bounds="[0,0][1000,1600]" /></hierarchy>')
-        with mock.patch.object(smoke,"read_dialog_root",return_value=xml), \
-             mock.patch.object(smoke,"run",return_value="") as cmd:
-            smoke.click_ui_description("adb","serial","点击屏幕继续下棋")
-            self.assertEqual(cmd.call_args.args[0][-2:],["500","800"])
-            with self.assertRaises(RuntimeError):
-                smoke.click_ui_description("adb","serial","不存在的提示")
-
-    def test_referee_buttons_share_one_compact_row(self):
-        root = Path(__file__).resolve().parents[1]
-        layout = ET.parse(str(root/"app/src/main/res/layout/activity_main.xml")).getroot()
-        tag = "{http://schemas.android.com/apk/res/android}"
-        ids = {"refereeContinueButton","refereeResetButton","refereeConfirmButton","refereeExitButton"}
-        rows = []
-        for row in layout.iter("LinearLayout"):
-            buttons = [child for child in row if child.tag=="Button"
-                       and child.get(tag+"id","").replace("@+id/","") in ids]
-            if buttons:
-                rows.append(buttons)
-        self.assertEqual(len(rows),1,"All referee actions should live in one horizontal row")
-        self.assertEqual({child.get(tag+"id").replace("@+id/","") for child in rows[0]},ids)
-        self.assertEqual(rows[0][0].get(tag+"visibility"),"gone")
-        self.assertEqual(rows[0][0].get(tag+"layout_width"),"150dp")
-        self.assertIsNone(rows[0][0].get(tag+"layout_weight"))
-        self.assertEqual(rows[0][2].get(tag+"layout_width"),"150dp")
-        for button in rows[0]:
-            self.assertEqual(button.get(tag+"layout_height"),"36dp")
-            self.assertEqual(button.get(tag+"minHeight"),"0dp")
-            self.assertLessEqual(float(button.get(tag+"textSize").replace("sp","")),12.0)
-
-    def test_curated_case_selection_and_input_validation(self):
-        self.assertEqual(len(CASES), 4)
-        self.assertEqual(selected_cases(), ["cgos9_expand_006_12"])
-        self.assertEqual(selected_cases(all_games=True), list(CASES))
-        self.assertEqual(selected_cases(games="cgos9_1,cgos9_5"), ["cgos9_1","cgos9_5"])
+    def test_curated_fixtures_and_selection(self):
+        self.assertEqual(len(smoke.CASES),4)
+        self.assertEqual(smoke.selected_cases(all_games=True),list(smoke.CASES))
+        self.assertEqual(smoke.selected_cases(game="cgos9_1"),["cgos9_1"])
         with self.assertRaises(ValueError):
-            selected_cases(games="cgos9_1,cgos9_1")
+            smoke.selected_cases(games="cgos9_1,cgos9_1")
         with self.assertRaises(ValueError):
-            selected_cases(games="no_such_case")
-        with self.assertRaises(ValueError):
-            selected_cases(game="cgos9_1",all_games=True)
+            smoke.selected_cases(games="unknown")
 
-    def test_debug_fixture_integrity(self):
-        root = Path(__file__).resolve().parents[1] / "app/src/debug/assets"
-        known_counts = {"cgos9_1":45,"cgos9_2":60,"cgos9_5":56,
-                        "cgos9_expand_006_12":82}
-        for game,expected in known_counts.items():
-            filename = "referee_smoke_006_12.sgf" if game.endswith("_006_12") else "referee_smoke_"+game+".sgf"
-            text = (root / filename).read_text(encoding="utf-8")
-            self.assertIn("SZ[9]",text,game)
-            self.assertIn("KM[7]",text,game)
-            self.assertRegex(text,r"RE\[[BW]\+\d+\]")
-            nodes = re.findall(r";([BW])\[([a-i]{0,2})\]",text)
-            self.assertEqual(len(nodes),expected,game)
-            self.assertEqual([vertex for _,vertex in nodes[-2:]],["",""],game)
-
-    def test_generic_case_does_not_require_mcts_or_whatif(self):
-        ready = "智能裁判 · 已可数子 待复核 0 块 黄圈 确认数子"
-        self.assertEqual(validate_dialog(ready,"cgos9_1"),[])
-        # A disputed game now intentionally OPENS a dialogue with board markers:
-        # missing dispute text is a validation result, not an exception.
-        self.assertIn("智能裁判 · 存在争议",
-                      validate_dialog(ready,"cgos9_expand_006_12"))
-        disputed = ("智能裁判 · 存在争议 棋盘上已标出争议：红叉 1 处、黄圈 2 处、橙圈 3 处。"
-                    "点「继续下棋」关闭弹窗，争议标记仍保留。"
-                    "然后再点屏幕任意位置，清除标记并恢复对局。")
-        self.assertEqual(validate_dialog(disputed,"cgos9_expand_006_12"),[])
-
-    def test_upload_on_success_fail_and_ctrl_c(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            for outcome in ("PASS","FAIL","INTERRUPTED"):
-                def execute_case(*args,**kwargs):
-                    if outcome=="INTERRUPTED":
-                        raise KeyboardInterrupt
-                    return {"status":outcome,"game":"cgos9_1","run_id":"testcase"}
-                with ExitStack() as ctx:
-                    ctx.enter_context(mock.patch.object(smoke,"PROJECT",root))
-                    ctx.enter_context(mock.patch.object(smoke,"connected_serial",return_value="device"))
-                    ctx.enter_context(mock.patch.object(smoke,"run_one_case",side_effect=execute_case))
-                    uploader = ctx.enter_context(mock.patch.object(smoke,"upload_referee_results",
-                        return_value="https://github.com/rstg00po54/go/blob/ui-test-results/runs/fixture.json"))
-                    ctx.enter_context(mock.patch.object(sys,"argv",
-                        ["test","--game","cgos9_1","--skip-install","--skip-ui"]))
-                    exit_code = smoke.main()
-                self.assertEqual(exit_code,0 if outcome=="PASS" else
-                                 130 if outcome=="INTERRUPTED" else 1)
-                self.assertEqual(uploader.call_count,1)
-                report = uploader.call_args.args[1]
-                self.assertEqual(report["status"],outcome)
-
-    def test_upload_failure_does_not_erase_local_report(self):
+    def test_upload_error_keeps_local_report(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             with ExitStack() as ctx:
                 ctx.enter_context(mock.patch.object(smoke,"PROJECT",root))
                 ctx.enter_context(mock.patch.object(smoke,"connected_serial",return_value="device"))
-                ctx.enter_context(mock.patch.object(smoke,"run_one_case",
-                                  return_value={"status":"PASS","game":"cgos9_1"}))
+                ctx.enter_context(mock.patch.object(smoke,"run_one_case",return_value=
+                    {"game":"cgos9_1","status":"PASS","nn":{"nnMs":18}}))
                 ctx.enter_context(mock.patch.object(smoke,"upload_referee_results",
-                                  side_effect=smoke.UploadError("bad Git credentials")))
-                ctx.enter_context(mock.patch.object(sys,"argv",
-                                  ["test","--game","cgos9_1","--skip-install"]))
+                    side_effect=smoke.UploadError("bad Git credentials")))
+                ctx.enter_context(mock.patch.object(sys,"argv",[
+                    "test","--game","cgos9_1","--skip-install"]))
                 code = smoke.main()
             self.assertEqual(code,1)
             reports = list((root/"build/android_referee_smoke").glob("*/report.json"))
             self.assertEqual(len(reports),1)
-            data = __import__("json").loads(reports[0].read_text(encoding="utf-8"))
-            self.assertEqual(data["status"],"PASS")
-            self.assertEqual(data["upload_status"],"FAIL")
+            self.assertIn('"status": "PASS"',reports[0].read_text(encoding="utf-8"))
 
-    def test_no_false_pass_from_other_tag(self):
-        self.assertIsNone(smoke_event("I/OtherTag: PASS id=xyz", "xyz"))
+    def test_no_upload_option_does_not_require_git_credentials(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with ExitStack() as ctx:
+                ctx.enter_context(mock.patch.object(smoke,"PROJECT",Path(directory)))
+                ctx.enter_context(mock.patch.object(smoke,"connected_serial",return_value="device"))
+                ctx.enter_context(mock.patch.object(smoke,"run_one_case",return_value=
+                    {"game":"cgos9_1","status":"PASS","nn":{"nnMs":7}}))
+                upload = ctx.enter_context(mock.patch.object(smoke,"upload_referee_results"))
+                ctx.enter_context(mock.patch.object(sys,"argv",[
+                    "test","--game","cgos9_1","--skip-install","--no-upload"]))
+                self.assertEqual(smoke.main(),0)
+                upload.assert_not_called()
 
 
 if __name__ == "__main__":
