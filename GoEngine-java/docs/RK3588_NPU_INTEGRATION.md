@@ -185,3 +185,43 @@ failed instead of pretending it succeeded.
 The GitHub Actions offline Python tests verify log parsing and isolated Git
 upload behavior, **not actual NPU inference**. Actual 9/13/19 board hardware
 results can be judged only after this script runs against the RK3588.
+
+## Automatically display crash C++ functions and lines
+
+Android's normal `adb logcat -b crash` records program counters and sometimes
+exported symbol names, but **cannot normally display source file/line numbers**.
+The Ubuntu host has the matching DWARF-enabled ELF and can resolve exact source
+lines without modifying Android's system crash handler or the APK.
+
+To watch **future** crashes while using the board, in a separate Ubuntu terminal:
+
+```bash
+python3 tools/watch_npu_crash.py --serial 8719e18a71a2a66c
+```
+
+On every new `libkatago_npu.so` crash it prints lines like:
+
+```text
+#00 0x00000000000dc798 ScoreValue::expectedWhiteScoreValue(...) @ native/KataGo/cpp/neuralnet/nninputs.cpp:214
+#01 0x000000000013c194 Search::getScoreUtility(...) @ native/KataGo/cpp/search/searchhelpers.cpp:276
+```
+
+It stores `crash.txt` and `native_symbols.txt` together under
+`build/npu_crashes/<timestamp>_pid<id>/`. It does not erase logcat or change
+Android process behavior. To decode the most recent **existing** buffered
+crash and exit:
+
+```bash
+python3 tools/watch_npu_crash.py --serial 8719e18a71a2a66c --include-existing --once
+```
+
+The existing real-game test `bash tools/test_rk3588_npu_game.sh` now also
+starts the watcher automatically, and its failure diagnostics prints the
+symbolized frames and includes them in the GitHub results upload.
+`NPU_CRASH_WATCH=0` disables just the live watcher when necessary.
+
+The exact Build ID of the crash frame **must match** the local ELF produced by
+`tools/build_katago_from_source.sh rknnjni`; if it does not, the symbolizer
+rejects it instead of misleadingly reporting unrelated source lines.
+Override the source ELF path with `KATAGO_NPU_ELF=/path/to/libkatago_npu.so`.
+The ELF must contain DWARF; `??:0` indicates missing debug information.
