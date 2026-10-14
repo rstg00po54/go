@@ -1,0 +1,74 @@
+name: Convert KataGo 10b LiteRT for MediaTek
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/vivo-mediatek-litert]
+    paths:
+      - '.github/workflows/vivo_katago_litert_models.yml'
+      - 'GoEngine-java/tools/convert_katago_litert.py'
+
+permissions:
+  contents: read
+
+jobs:
+  tflite:
+    strategy:
+      fail-fast: false
+      matrix:
+        size: [9, 13, 19]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install converter and CPU validation runtime
+        run: |
+          python -m pip install -U pip
+          python -m pip install 'onnx==1.18.0' 'numpy<2.1' 'onnx2tf[tensorflow]==2.6.9' 'ai-edge-litert==2.3.0'
+          python -c "import onnx; from ai_edge_litert.interpreter import Interpreter; print('Conversion dependencies ready')"
+      - name: Download original weights and official KataGo ONNX dumper
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p models katago-dist
+          curl -fL --retry 3 -o katago-dist.zip \
+            'https://github.com/lightvector/KataGo/releases/download/v1.18.1/katago-v1.18.1-onnx-openvino-linux-x64.zip'
+          unzip -q katago-dist.zip -d katago-dist
+          KATAGO_BIN="$(find "$PWD/katago-dist" -type f -name katago -print -quit)"
+          test -n "$KATAGO_BIN"
+          chmod +x "$KATAGO_BIN"
+          echo "KATAGO_BIN=$KATAGO_BIN" >> "$GITHUB_ENV"
+          LIBPATH="$(find "$PWD/katago-dist" -type f -name '*.so*' -printf '%h\n' | sort -u | paste -sd: -)"
+          echo "LD_LIBRARY_PATH=$LIBPATH" >> "$GITHUB_ENV"
+          curl -fL --retry 3 -o models/10b.bin \
+            'https://raw.githubusercontent.com/rstg00po54/go/rk3588-engine/GoEngine-java/app/src/main/assets/engine/10b.bin'
+          test "$(wc -c < models/10b.bin)" -eq 12003218
+      - name: Export independent ONNX by requested board size
+        run: |
+          "$KATAGO_BIN" dumponnx -model models/10b.bin \
+            -out models/10b_${{ matrix.size }}x${{ matrix.size }}.onnx \
+            -nn-x-len ${{ matrix.size }} -nn-y-len ${{ matrix.size }}
+      - name: Convert to LiteRT and validate float32 inference
+        run: |
+          python -u GoEngine-java/tools/convert_katago_litert.py \
+            --size ${{ matrix.size }} \
+            --onnx models/10b_${{ matrix.size }}x${{ matrix.size }}.onnx \
+            --output models/katago_10b_${{ matrix.size }}x${{ matrix.size }}.tflite \
+            --signature models/katago_10b_${{ matrix.size }}x${{ matrix.size }}.json \
+            2>&1 | tee models/convert_${{ matrix.size }}.log
+          test -s models/katago_10b_${{ matrix.size }}x${{ matrix.size }}.tflite
+          sha256sum models/*.tflite > models/SHA256SUMS
+      - name: Preserve converter results whether successful or not
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vivo-litert-${{ matrix.size }}x${{ matrix.size }}
+          path: |
+            models/*.json
+            models/*.log
+            models/*.tflite
+            models/SHA256SUMS
+          if-no-files-found: warn
