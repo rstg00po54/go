@@ -1338,7 +1338,9 @@ public class MainActivity extends AppCompatActivity {
         final int size = boardSize, kyu = aiKyu, visits = searchVisits;
         final double seconds = searchTime;
         final KataGoEngine.BackendPreference requestedBackend = selectedBackend;
-        boolean reusingHumanEngine = engine.isHumanSLRunning()
+        boolean npuBoardChanged = requestedBackend == KataGoEngine.BackendPreference.NPU
+                && engine.getActiveNpuBoardSize() != size;
+        boolean reusingHumanEngine = engine.isHumanSLRunning() && !npuBoardChanged
                 && engine.getBackendName().startsWith(requestedBackend.name());
         render(reusingHumanEngine ? "正在初始化棋局..." : requestedBackend == KataGoEngine.BackendPreference.NPU
                 ? "NPU/RKNN 初始化中..." : requestedBackend == KataGoEngine.BackendPreference.GPU
@@ -1351,7 +1353,12 @@ public class MainActivity extends AppCompatActivity {
                 engine.setStartupBoardSize(size);
                 engine.setBackendPreference(requestedBackend);
                 advanceGpuStartup(8, "正在准备对弈模型...");
-                if (!engine.isHumanSLRunning()) {
+                boolean restartNpuForBoard = requestedBackend == KataGoEngine.BackendPreference.NPU
+                        && engine.getActiveNpuBoardSize() != size;
+                if (!engine.isHumanSLRunning() || restartNpuForBoard) {
+                    if (restartNpuForBoard)
+                        Log.i(TAG, "NPU_MODEL_SWITCH board=" + engine.getActiveNpuBoardSize() + " -> " + size
+                                + "; restarting native GTP for matching RKNN model");
                     engine.prepareHumanModel((done, total) -> {
                         int percent = (int) (done * 100 / total);
                         mainHandler.post(() -> {
