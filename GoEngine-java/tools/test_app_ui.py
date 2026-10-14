@@ -716,6 +716,18 @@ class AppTest:
             lines = [line for line in data.splitlines() if any(x in line for x in filters)]
             (self.out / (label + "_summary.log")).write_text(
                 "\n".join(lines[-500:]) + "\n", encoding="utf-8")
+            if "Fatal signal" in data and "libkatago_npu.so" in data:
+                # Symbolize exact native BuildID when a local ELF is available.
+                # A mismatch is reported, never silently symbolized as a wrong build.
+                script = Path(__file__).with_name("symbolize_npu_crash.sh")
+                try:
+                    process = subprocess.run(["bash", str(script), self.serial], stdout=subprocess.PIPE,
+                                             stderr=subprocess.STDOUT, timeout=25, check=False)
+                    (self.out / (label + "_native_symbols.log")).write_bytes(process.stdout)
+                    self.log("已保存 native 崩溃符号：%s（exit=%d）" %
+                             (label + "_native_symbols.log", process.returncode))
+                except (OSError, subprocess.TimeoutExpired) as err:
+                    self.log("native 符号化未完成：" + str(err)[:160])
         except TestFailure as exc:
             self.log("无法提取 logcat: " + str(exc))
 
