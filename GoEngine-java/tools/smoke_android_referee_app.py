@@ -128,10 +128,14 @@ def capture_screenshot(adb,serial,target):
 
 
 def validate_dialog(text,game=STRICT_CASE,midgame=False):
-    required = ("智能裁判 · 快速 NN 估分","黑棋约","白棋约","黑棋胜率",
-                "白棋胜率","双方目数按 NN 地盘归属估算","继续下棋" if midgame else "关闭")
+    required = ("智能裁判 · NN预估","黑棋 ","白棋 ","胜率 黑 "," · 白 ",
+                "目","继续下棋" if midgame else "关闭")
     errors = [part for part in required if part not in text]
-    for removed in ("确认中国规则数子","恢复 AI 建议","已复核并确认","复核死子","争议标记仍保留"):
+    if "领先" not in text and "双方持平" not in text:
+        errors.append("missing NN lead")
+    for removed in ("确认中国规则数子","恢复 AI 建议","已复核并确认","复核死子",
+                    "争议标记仍保留","双方目数按 NN 地盘归属估算","建议复核死活",
+                    "不是确认数子结果","不代表已经判定死活"):
         if removed in text:
             errors.append("deprecated UI: "+removed)
     return errors
