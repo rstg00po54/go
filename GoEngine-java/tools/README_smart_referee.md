@@ -24,6 +24,9 @@ python3 tools/test_smoke_android_referee_app.py
 
 先重新构建并安装新的 Debug APK，**仅重新运行旧 APK 会继续出现旧裁判界面**：
 
+`--apk-only` 会保留独立胜率引擎需要的 `libkatago_exec.so`。如果本地只找到 4 KB 对齐的旧版，脚本会自动运行一次 CPU/Eigen PIE 编译（使用 16 KB 链接对齐）。成功后复用缓存，无需每次重新编译；默认原生并发数是 2，必要时可通过 `KATAGO_JOBS` 调整。
+
+
 ```bash
 bash build.sh --apk-only
 python3 tools/smoke_android_referee_app.py --backend gpu --all --no-upload
