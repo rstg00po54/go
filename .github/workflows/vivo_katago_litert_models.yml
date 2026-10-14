@@ -3,7 +3,7 @@ name: Convert KataGo 10b LiteRT for MediaTek
 on:
   workflow_dispatch:
   push:
-    branches: [feature/vivo-mediatek-litert]
+    branches: [feature/rk3588-rknn, feature/vivo-mediatek-litert]
     paths:
       - '.github/workflows/vivo_katago_litert_models.yml'
       - 'GoEngine-java/tools/convert_katago_litert.py'
