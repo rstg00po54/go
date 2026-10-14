@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <mutex>
 #include "../core/global.h"
 #include "../core/commandloop.h"
 #include "../core/config_parser.h"
@@ -2007,8 +2008,21 @@ int MainCmds::gtp(const vector<string>& args) {
 }
 
 int MainCmds::gtpWithIO(const vector<string>& args, std::istream& gtpInput, std::ostream& gtpOutput) {
+#ifdef KATAGO_EMBEDDED_GTP
+  // Android JNI runs sequential GTP sessions within ONE process. Search threads
+  // may still be unwinding during session transitions, so freeing this global
+  // lookup table on every GTP quit can yield a null dereference in
+  // ScoreValue::expectedWhiteScoreValue (nninputs.cpp). Keep these process-wide
+  // globals alive until the shared library/process is unloaded.
+  static std::once_flag initGlobalTablesOnce;
+  std::call_once(initGlobalTablesOnce, []() {
+    Board::initHash();
+    ScoreValue::initTables();
+  });
+#else
   Board::initHash();
   ScoreValue::initTables();
+#endif
   Rand seedRand;
 
   ConfigParser cfg;
@@ -3825,7 +3839,9 @@ int MainCmds::gtpWithIO(const vector<string>& args, std::istream& gtpInput, std:
   delete engine;
   engine = NULL;
   NeuralNet::globalCleanup();
+#ifndef KATAGO_EMBEDDED_GTP
   ScoreValue::freeTables();
+#endif
 
   logger.write("All cleaned up, quitting");
   return 0;
