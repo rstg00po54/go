@@ -193,12 +193,23 @@ public class KataGoEngine {
             File configFile = new File(engineDir, useHumanSL ? "human_gtp.cfg" : "default_gtp.cfg");
             File modelFile = new File(engineDir, model.fileName);
 
+            String rknnModelName = "katago_10b_" + startupBoardSize + "x" + startupBoardSize + ".rknn";
+            String rknnAssetPath = "engine/" + rknnModelName;
+            boolean npuSizeSupported = startupBoardSize == 9 || startupBoardSize == 13 || startupBoardSize == 19;
+            boolean rknnModelAvailable = false;
+            if (npuSizeSupported) {
+                try (InputStream ignored = context.getAssets().open(rknnAssetPath)) {
+                    rknnModelAvailable = true;
+                } catch (IOException ignored) {
+                    // Only enable RKNN for models actually included in this APK.
+                }
+            }
             boolean npuAvailable = new File(nativeLibDir, "libkatago_npu.so").isFile()
-                    && new File(nativeLibDir, "librknnrt.so").isFile();
+                    && new File(nativeLibDir, "librknnrt.so").isFile() && rknnModelAvailable;
             boolean useNpu = preferJni && backendPreference == BackendPreference.NPU
-                    && startupBoardSize == 19 && !npuDisabledForProcess && npuAvailable;
+                    && !npuDisabledForProcess && npuAvailable;
             if (preferJni && backendPreference == BackendPreference.NPU && !useNpu)
-                Log.w(TAG, "NPU/RKNN unavailable or board != 19; falling back to CPU");
+                Log.w(TAG, "NPU/RKNN model unavailable for board=" + startupBoardSize + "; falling back to CPU");
             boolean gpuAvailable = new File(nativeLibDir, "libkatago_gpu.so").isFile();
             boolean useGpu = preferJni && backendPreference == BackendPreference.GPU && !gpuDisabledForProcess && gpuAvailable;
             if (preferJni && backendPreference == BackendPreference.GPU && !gpuAvailable)
@@ -253,9 +264,7 @@ public class KataGoEngine {
                 modelFile = new File(engineDir, "10b.bin");
                 copyAssetToFile(DEFAULT_MODEL_ASSET, modelFile);
             }
-            if (useNpu) {
-                copyAssetToFile("engine/katago_10b_19x19.rknn", new File(engineDir, "katago_10b_19x19.rknn"));
-            }
+            if (useNpu) copyAssetToFile(rknnAssetPath, new File(engineDir, rknnModelName));
             startupTiming("engine_prepare_model_asset", phaseNs);
             phaseNs = System.nanoTime();
 
@@ -276,7 +285,7 @@ public class KataGoEngine {
                 try {
                     phaseNs = System.nanoTime();
                     npuSession = KataGoNpuNative.createSession(modelFile, configFile, humanFile,
-                            new File(engineDir, "katago_10b_19x19.rknn"));
+                            new File(engineDir, rknnModelName));
                     startupTiming("engine_npu_native_create", phaseNs);
                     if (npuSession == null) throw new IOException("NPU JNI createSession returned null");
                     running.set(true);
