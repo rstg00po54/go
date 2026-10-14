@@ -10,6 +10,7 @@ class KataGoRknnRunner {
 public:
     explicit KataGoRknnRunner(const std::string& modelPath, int boardSize);
     ~KataGoRknnRunner();
+    bool ready() const;
     KataGoRknnRunner(const KataGoRknnRunner&) = delete;
     KataGoRknnRunner& operator=(const KataGoRknnRunner&) = delete;
 
