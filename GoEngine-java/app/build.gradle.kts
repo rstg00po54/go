@@ -28,13 +28,18 @@ val rknnModelAsset = file("src/main/assets/engine/katago_10b_19x19.rknn")
 val enableKataGoNpuJni = providers.gradleProperty("enableKataGoNpuJni")
     .map { it.equals("true", ignoreCase = true) }
     .getOrElse(cachedNpuJni.isFile && rknnSdkRuntime.isFile && rknnModelAsset.isFile)
+// Debug-only LiteRT graph probe: skip the unrelated KataGo PIE requirement.
+// The probe is launched by ADB intent and is NOT a full playable game APK.
+val vivoProbeApk = providers.gradleProperty("vivoProbeApk")
+    .map { it.equals("true", ignoreCase = true) }.getOrElse(false)
 val allow4kRknnRuntime = providers.gradleProperty("allow4kRknnRuntime")
     .map { it.equals("true", ignoreCase = true) }
     .getOrElse(System.getenv("ALLOW_4K_RKNN_RUNTIME") == "1")
 
 android {
     namespace = "com.badukai"
-    compileSdk = 34
+    // LiteRT 2.3.0 dependencies require API 35 at compile time.
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.badukai.java"
@@ -87,12 +92,14 @@ android {
     }
 
     androidResources {
-        noCompress += listOf("bin", "gz", "model", "so")
+        noCompress += listOf("bin", "gz", "model", "so", "tflite")
     }
 }
 
 dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.google.ai.edge.litert:litert:2.3.0")
+    implementation("com.google.ai.edge.litert:litert-npu-runtime-mediatek:2.3.0")
 }
 
 configurations.configureEach {
@@ -224,8 +231,8 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
             println(verdict)
             return accepted
         }
-        val executable = pieCandidates.firstOrNull { isAlignedPie(it) }
-        if (executable == null) {
+        val executable = if (vivoProbeApk) null else pieCandidates.firstOrNull { isAlignedPie(it) }
+        if (!vivoProbeApk && executable == null) {
             throw GradleException("No 16 KB-aligned KataGo PIE executable found. The independent " +
                 "win-rate engine requires libkatago_exec.so even when the playing engine uses JNI. " +
                 "Rebuild the PIE with bash tools/build_katago_from_source.sh eigen, " +
@@ -238,9 +245,15 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
             if (!target.isFile || Files.mismatch(source.toPath(), target.toPath()) != -1L)
                 source.copyTo(target, overwrite = true)
         }
-        stageFile(executable, "libkatago_exec.so")
-        val stagedBinaries = mutableListOf(File(abiDir, "libkatago_exec.so"))
-        println("Using 16 KB-aligned KataGo PIE: ${executable.absolutePath}")
+        val stagedBinaries = mutableListOf<File>()
+        if (executable != null) {
+            stageFile(executable, "libkatago_exec.so")
+            stagedBinaries.add(File(abiDir, "libkatago_exec.so"))
+            println("Using 16 KB-aligned KataGo PIE: ${executable.absolutePath}")
+        } else {
+            File(abiDir, "libkatago_exec.so").delete()
+            println("Vivo LiteRT probe APK: omitting unrelated KataGo PIE (no real game support)")
+        }
         if (enableKataGoJniCore) {
             if (!katagoJniCoreFile.isFile) throw GradleException(
                 "JNI core missing: $katagoJniCoreFile. Run bash tools/build_katago_from_source.sh eigenjni first.")
