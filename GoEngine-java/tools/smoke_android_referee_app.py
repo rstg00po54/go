@@ -70,6 +70,25 @@ def smoke_event(log, run_id):
     return final
 
 
+def read_referee_log(adb,serial,run_id):
+    """Fetch app smoke events with short ADB commands, trying both log buffers.
+
+    Keep diagnostic output when Android logcat filters unexpectedly return empty.
+    Every parsed event is still matched against the current unique run ID.
+    """
+    primary = run([adb,"-s",serial,"logcat","-d","-v","brief",
+                   "-s","RefereeSmoke:I","RefereeSmoke:E"],timeout=15)
+    if "id="+run_id in primary:
+        return primary, "tag-filter"
+    fallback = run([adb,"-s",serial,"shell","logcat","-d","-b","all",
+                    "-t","1500","-v","brief"],timeout=15)
+    fallback_events = "\n".join(line for line in fallback.splitlines()
+                                if "RefereeSmoke" in line or "AndroidRuntime" in line)
+    if "id="+run_id in fallback_events:
+        return fallback_events, "buffer-all"
+    return primary+"\n"+fallback_events, "no-current-event"
+
+
 def read_dialog_root(adb,serial):
     target = "/sdcard/referee_smoke_window.xml"
     run([adb,"-s",serial,"shell","uiautomator","dump",target],timeout=35)
@@ -160,7 +179,7 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir,midgame=False):
               "inspection":"midgame" if midgame else "terminal"}
     try:
         print("\n--- %s [%s] ---" % (game,backend),flush=True)
-        print("  [1/7] Starting isolated Android activity...",flush=True)
+        print("  [1/7] Starting isolated Android activity (id=%s)..." % run_id,flush=True)
         run([adb,"-s",serial,"shell","am","force-stop",PACKAGE],timeout=15)
         # Never wait for Activity idle (-W). GPU initialization and NN inference
         # are asynchronous; RefereeSmoke PASS/FAIL is our actual completion event.
@@ -177,13 +196,17 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir,midgame=False):
         log = ""
         last_progress = time.monotonic()
         while time.monotonic()<deadline:
-            log = run([adb,"-s",serial,"logcat","-d","-v","brief",
-                       "-s","RefereeSmoke:I","RefereeSmoke:E","AndroidRuntime:E","*:S"],timeout=20)
+            log, source = read_referee_log(adb,serial,run_id)
             terminal = smoke_event(log,run_id)
             if terminal:
+                print("  RefereeSmoke event found via %s." % source,flush=True)
                 break
-            if time.monotonic()-last_progress>=20:
-                print("  Waiting for NN PASS/FAIL, %.0fs left..." % max(0,deadline-time.monotonic()),flush=True)
+            if time.monotonic()-last_progress>=10:
+                seen = [line.strip() for line in log.splitlines() if "RefereeSmoke" in line]
+                print("  Waiting for NN PASS/FAIL (id=%s, source=%s, events=%d, %.0fs left)..." %
+                      (run_id,source,len(seen),max(0,deadline-time.monotonic())),flush=True)
+                if seen:
+                    print("  Latest device event: "+seen[-1][:250],flush=True)
                 last_progress=time.monotonic()
             time.sleep(2)
         (case_dir/"logcat.txt").write_text(log,encoding="utf-8")
@@ -216,8 +239,7 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir,midgame=False):
             dismiss_log = ""
             deadline = time.monotonic()+20
             while time.monotonic()<deadline:
-                dismiss_log = run([adb,"-s",serial,"logcat","-d","-v","brief",
-                                   "-s","RefereeSmoke:I","*:S"],timeout=20)
+                dismiss_log, _ = read_referee_log(adb,serial,run_id)
                 dismiss = dismiss_event(dismiss_log,run_id)
                 if dismiss:
                     break
