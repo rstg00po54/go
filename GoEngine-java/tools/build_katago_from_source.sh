@@ -192,6 +192,12 @@ else
 fi
 
 cmake -Wno-deprecated -S "$SOURCE_DIR/cpp" -B "$BUILD_DIR" -G Ninja "${ARGS[@]}"
+# When upgrading from a 4 KB PIE, Ninja may report "no work to do"
+# even though the executable does not meet Android's 16 KB requirement.
+# Remove only the obsolete linked output so cached C++ objects can be reused.
+if [[ "$BUILD_VARIANT" == "eigen" || "$BUILD_VARIANT" == "opencl" || "$BUILD_VARIANT" == "openclportable" ]]; then
+    python3 "$PROJECT_DIR/tools/invalidate_unaligned_pie.py" "$BUILD_DIR/katago"
+fi
 cmake --build "$BUILD_DIR" --parallel "${KATAGO_JOBS:-8}"
 if [[ "$BUILD_VARIANT" == "opencljni" ]]; then
     BIN="$BUILD_DIR/libkatago_gpu.so"
@@ -201,6 +207,18 @@ else
     BIN="$BUILD_DIR/katago"
 fi
 [[ -f "$BIN" ]] || { echo "Missing compiled binary $BIN" >&2; exit 1; }
+# Verify PT_LOAD alignment before copying; do not report successful native
+# compilation and then fail only when the APK staging task runs.
+python3 - "$BIN" <<'PY'
+import sys
+from pathlib import Path
+from tools.check_android_16kb import inspect_library
+p = Path(sys.argv[1])
+_, failures = inspect_library(str(p),p.read_bytes())
+if failures:
+    raise SystemExit("ERROR: KataGo native ELF is not 16 KB-aligned: " + "; ".join(failures))
+print("16 KB native ELF alignment OK:",p)
+PY
 HEADER="$(LC_ALL=C "$READELF" -h "$BIN")"
 echo "$HEADER" | grep -E '^[[:space:]]*(Type|Machine):' || true
 if ! grep -Eq '^[[:space:]]*Machine:[[:space:]]*AArch64([[:space:]]|$)' <<< "$HEADER" || \
