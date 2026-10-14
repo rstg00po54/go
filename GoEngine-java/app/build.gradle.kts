@@ -256,13 +256,10 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
         } else {
             stagedCpp.delete()
         }
+        // Reuse the same ARM64 + PIE + 16 KB validator as build.sh.
         for (file in stagedBinaries) {
-            val loads = elfLoadAlignments(file)
-            if (loads.isEmpty() || loads.any { it == null || it < 16384L || it % 16384L != 0L })
-                throw GradleException("16 KB ELF LOAD alignment failed: ${file.absolutePath}. " +
-                    "p_align=${loads.joinToString()}. Rebuild with 16 KB linker flags; " +
-                    "for old prebuilts use a matching 16 KB-aligned replacement.")
-            println("16 KB ELF LOAD alignment OK: ${file.name} p_align=${loads.joinToString()}")
+            if (!isAlignedPie(file))
+                throw GradleException("Invalid or non-16 KB-aligned Android ARM64 native binary: ${file.absolutePath}")
         }
         println("KataGo native libraries ready in: ${abiDir.absolutePath}")
     }
