@@ -14,7 +14,7 @@ ELF_ET_DYN = 3
 ELF_EM_AARCH64 = 183
 
 
-def validate_pie(path):
+def validate_pie(path, page_size=16384):
     path = Path(path)
     try:
         data = path.read_bytes()
@@ -26,19 +26,21 @@ def validate_pie(path):
     if elf_type != ELF_ET_DYN or machine != ELF_EM_AARCH64:
         return False, f"{path}: expected Android AArch64 PIE (ET_DYN=3, EM_AARCH64=183); got type={elf_type}, machine={machine}"
     try:
-        segments, failures = inspect_library(str(path), data)
+        segments, failures = inspect_library(str(path), data, page_size=page_size)
     except ValueError as exc:
         return False, str(exc)
     if failures:
-        return False, f"{path}: 16 KB ELF LOAD alignment failed: {'; '.join(failures)}"
-    return True, f"{path}: AArch64 PIE OK; PT_LOAD p_align={', '.join(hex(x[2]) for x in segments)}"
+        return False, f"{path}: {page_size // 1024} KB ELF LOAD alignment failed: {'; '.join(failures)}"
+    return True, f"{path}: AArch64 PIE OK (page={page_size // 1024} KB); PT_LOAD p_align={', '.join(hex(x[2]) for x in segments)}"
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("executable", type=Path)
+    parser.add_argument("--page-size", type=int, choices=(4096, 16384), default=16384,
+                        help="Minimum PT_LOAD alignment (default: 16 KB)")
     args = parser.parse_args()
-    valid, message = validate_pie(args.executable)
+    valid, message = validate_pie(args.executable, page_size=args.page_size)
     print(("PASS " if valid else "FAIL ") + message, flush=True)
     return 0 if valid else 1
 
