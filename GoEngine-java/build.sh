@@ -36,6 +36,38 @@ elif [[ "$BUILD_GPU_JNI" == true ]]; then
     exit 1
 fi
 
+# The independent win-rate KataGo still starts the PIE/ProcessBuilder backend.
+# An APK-only rebuild needs an aligned executable even when the main game uses JNI.
+# Reuse a 16 KB cache, or rebuild the CPU PIE once if all candidates are 4 KB.
+if [[ "$BUILD_GPU_JNI" == false ]]; then
+    aligned_pie=false
+    for pie in "$PROJECT_DIR/app/src/main/jniLibs/arm64-v8a/libkatago_exec.so" \
+               "${KATAGO_WORKDIR:-$HOME/.cache/goengine_katago}/build_android_arm64_eigen/katago" \
+               "$PROJECT_DIR/build/katago_android_arm64_eigen/libkatago_exec.so"; do
+        [[ -s "$pie" ]] || continue
+        if python3 - "$pie" <<'PY'
+import sys
+from pathlib import Path
+from tools.check_android_16kb import inspect_library
+try:
+    path = Path(sys.argv[1])
+    _, failures = inspect_library(str(path),path.read_bytes())
+    sys.exit(1 if failures else 0)
+except (OSError,ValueError):
+    sys.exit(1)
+PY
+        then
+            aligned_pie=true
+            echo "Reusing 16 KB-aligned KataGo PIE: $pie"
+            break
+        fi
+    done
+    if [[ "$aligned_pie" == false ]]; then
+        echo "Old KataGo PIE is only 4 KB-aligned. Building a 16 KB PIE once for win-rate analysis..."
+        KATAGO_JOBS="${KATAGO_JOBS:-2}" bash "$PROJECT_DIR/tools/build_katago_from_source.sh" eigen
+    fi
+fi
+
 ./gradlew assembleDebug "${GRADLE_ARGS[@]}" "$@"
 
 APK="$PROJECT_DIR/app/build/outputs/apk/debug/app-debug.apk"
