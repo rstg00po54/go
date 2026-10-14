@@ -2,6 +2,7 @@
 // Full KataGo search, inputs, symmetries, and head postprocessing remain upstream.
 #include "rknnbackend.h"
 #include "rknn_api.h"
+#include <android/log.h>
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -32,6 +33,8 @@ int resolveName(const char* candidate, const char* const* names, int count) {
 
 struct KataGoRknnRunner::Impl {
     rknn_context ctx = 0;
+    bool ready = false;
+    std::string failure;
     std::array<int, INPUTS> inputSlots = {{-1, -1, -1}};
     std::array<int, OUTPUTS> outputSlots = {{-1, -1, -1, -1, -1}};
     const int boardSize;
@@ -47,6 +50,7 @@ struct KataGoRknnRunner::Impl {
           mask(static_cast<size_t>(area)) {
         if(board != 9 && board != 13 && board != 19)
             throw std::runtime_error("RKNN model requires 9x9, 13x13 or 19x19");
+        __android_log_print(ANDROID_LOG_INFO, "KataGoRKNN", "RKNN_INIT board=%d path=%s", board, path.c_str());
         std::ifstream file(path, std::ios::binary);
         if(!file) throw std::runtime_error("RKNN model not found: " + path);
         std::vector<char> model((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
@@ -63,8 +67,23 @@ struct KataGoRknnRunner::Impl {
                 attr.index = i;
                 checkRknn(rknn_query(ctx, RKNN_QUERY_INPUT_ATTR, &attr, sizeof(attr)), "RKNN_QUERY_INPUT_ATTR");
                 int key = resolveName(attr.name, inputNames, INPUTS);
-                if(inputSlots[key] >= 0 || attr.n_elems != inputCounts[key])
-                    throw std::runtime_error("Duplicate/mismatched RKNN input: " + std::string(attr.name));
+                std::string dimensions;
+                for(uint32_t d=0;d<attr.n_dims && d<RKNN_MAX_DIMS;d++) {
+                    if(d != 0) dimensions += "x";
+                    dimensions += std::to_string(attr.dims[d]);
+                }
+                __android_log_print(ANDROID_LOG_INFO, "KataGoRKNN",
+                    "RKNN_INPUT board=%d slot=%u name=%s dims=%s elems=%u expected=%u size=%u fmt=%d type=%d",
+                    boardSize, i, attr.name, dimensions.c_str(), attr.n_elems,
+                    inputCounts[key], attr.size, (int)attr.fmt, (int)attr.type);
+                if(inputSlots[key] >= 0 || attr.n_elems != inputCounts[key]) {
+                    failure = "RKNN input mismatch board=" + std::to_string(boardSize) +
+                        " name=" + attr.name + " dims=" + dimensions +
+                        " elements=" + std::to_string(attr.n_elems) +
+                        " expected=" + std::to_string(inputCounts[key]);
+                    __android_log_print(ANDROID_LOG_ERROR, "KataGoRKNN", "RKNN_DISABLED_FALLBACK_EIGEN: %s", failure.c_str());
+                    return;
+                }
                 inputSlots[key] = static_cast<int>(i);
             }
             for(uint32_t i=0;i<io.n_output;i++) {
@@ -72,12 +91,19 @@ struct KataGoRknnRunner::Impl {
                 attr.index = i;
                 checkRknn(rknn_query(ctx, RKNN_QUERY_OUTPUT_ATTR, &attr, sizeof(attr)), "RKNN_QUERY_OUTPUT_ATTR");
                 int key = resolveName(attr.name, outputNames, OUTPUTS);
-                if(outputSlots[key] >= 0 || attr.n_elems != outputCounts[key])
-                    throw std::runtime_error("Duplicate/mismatched RKNN output: " + std::string(attr.name));
+                if(outputSlots[key] >= 0 || attr.n_elems != outputCounts[key]) {
+                    failure = "RKNN output mismatch board=" + std::to_string(boardSize) +
+                        " name=" + attr.name + " elements=" + std::to_string(attr.n_elems) +
+                        " expected=" + std::to_string(outputCounts[key]);
+                    __android_log_print(ANDROID_LOG_ERROR, "KataGoRKNN", "RKNN_DISABLED_FALLBACK_EIGEN: %s", failure.c_str());
+                    return;
+                }
                 outputSlots[key] = static_cast<int>(i);
             }
             for(int index : inputSlots) if(index < 0) throw std::runtime_error("Missing RKNN input");
             for(int index : outputSlots) if(index < 0) throw std::runtime_error("Missing RKNN output");
+            ready = true;
+            __android_log_print(ANDROID_LOG_INFO, "KataGoRKNN", "RKNN_READY board=%d model=%s", boardSize, path.c_str());
         } catch(...) {
             rknn_destroy(ctx);
             ctx = 0;
@@ -132,6 +158,7 @@ struct KataGoRknnRunner::Impl {
 
 KataGoRknnRunner::KataGoRknnRunner(const std::string& path, int boardSize) : impl_(new Impl(path, boardSize)) {}
 KataGoRknnRunner::~KataGoRknnRunner() = default;
+bool KataGoRknnRunner::ready() const { return impl_->ready; }
 void KataGoRknnRunner::infer(const float* s, const float* g, float* p, float* pm,
                             float* v, float* sc, float* o) {
     impl_->infer(s,g,p,pm,v,sc,o);
