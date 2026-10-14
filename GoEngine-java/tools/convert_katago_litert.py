@@ -30,11 +30,17 @@ def validate_onnx(path, size):
     assert meta.get("katago.build.nnXLen") == str(size), "Wrong ONNX board X length"
     assert meta.get("katago.build.nnYLen") == str(size), "Wrong ONNX board Y length"
     got = {x.name: shape(x) for x in model.graph.input}
-    expected = {"InputSpatial": [1, 22, size, size],
-                "InputGlobal": [1, 19, 1, 1],
-                "InputMask": [1, 1, size, size]}
+    expected = {"InputSpatial": [0, 22, size, size],
+                "InputGlobal": [0, 19, 1, 1],
+                "InputMask": [0, 1, size, size]}
     assert got == expected, "Unexpected ONNX shapes: %r" % got
     assert tuple(x.name for x in model.graph.output) == OUTPUT_NAMES, "Unexpected ONNX output heads"
+    # KataGo dumponnx exports a dynamic batch=0; NPU models must be fixed
+    # batch=1. Only this known dimension is made concrete; all 3 input
+    # names, feature channels and size-specific convolution weights remain.
+    for item in model.graph.input:
+        item.type.tensor_type.shape.dim[0].Clear()
+        item.type.tensor_type.shape.dim[0].dim_value = 1
     onnx.checker.check_model(model)
     return model
 
@@ -105,12 +111,15 @@ def main():
     p.add_argument("--output", type=Path, required=True)
     p.add_argument("--signature", type=Path, required=True)
     args = p.parse_args()
-    validate_onnx(args.onnx, args.size)
+    source_model = validate_onnx(args.onnx, args.size)
+    import onnx
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    prepared = args.output.parent / ("katago_10b_" + str(args.size) + "x" + str(args.size) + "_batch1.onnx")
+    onnx.save(source_model, str(prepared))
     args.signature.parent.mkdir(parents=True, exist_ok=True)
     dirname = args.output.parent / ("onnx2tf_" + str(args.size))
     if shutil.which("onnx2tf") is None: raise RuntimeError("Install onnx2tf[tensorflow]")
-    subprocess.run(["onnx2tf", "-i", str(args.onnx.resolve()), "-o", str(dirname),
+    subprocess.run(["onnx2tf", "-i", str(prepared.resolve()), "-o", str(dirname),
                     "-coion"], check=True)
     candidates = list(dirname.rglob("*_float32.tflite"))
     if len(candidates) != 1:
