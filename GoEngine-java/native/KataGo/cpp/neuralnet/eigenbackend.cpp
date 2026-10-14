@@ -1772,8 +1772,9 @@ struct ComputeHandle {
     // The published 19x19 RKNN graph matches the g170 10b network only.
     // Human SL uses its separate b18 network and stays on Eigen.
     if(loadedModel.modelDesc.name == "g170-b10c128-s1141046784-d204142634") {
-      if(context->nnXLen != 19 || context->nnYLen != 19)
-        throw StringError("RKNN 10b requires 19x19 NN shape");
+      if(context->nnXLen != context->nnYLen ||
+         (context->nnXLen != 9 && context->nnXLen != 13 && context->nnXLen != 19))
+        throw StringError("RKNN 10b requires an independently converted 9x9, 13x13 or 19x19 NN graph");
       if(model->numInputChannels != 22 || model->numInputGlobalChannels != 19 ||
          model->numPolicyChannels != 1 || model->numValueChannels != 3 ||
          model->numScoreValueChannels != 4 || model->numOwnershipChannels != 1)
@@ -1781,7 +1782,7 @@ struct ComputeHandle {
       const char* rknnPath = std::getenv("KATAGO_RKNN_MODEL");
       if(rknnPath == nullptr || !*rknnPath)
         throw StringError("KATAGO_RKNN_MODEL must point to the 19x19 RKNN weights");
-      rknn.reset(new KataGoRknnRunner(rknnPath));
+      rknn.reset(new KataGoRknnRunner(rknnPath, context->nnXLen));
     }
     else if(loadedModel.modelDesc.name.find("human") == std::string::npos) {
       throw StringError("RKNN backend does not recognize 10b model: " + loadedModel.modelDesc.name);
