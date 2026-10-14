@@ -12,6 +12,10 @@ on:
       - 'GoEngine-java/tools/watch_npu_crash.py'
       - 'GoEngine-java/tools/test_watch_npu_crash.py'
       - 'GoEngine-java/tools/test_npu_session_lifecycle.py'
+      - 'GoEngine-java/tools/test_android_npu_platform.py'
+      - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoEngine.java'
+      - 'GoEngine-java/app/src/main/java/com/badukai/MainActivity.java'
+      - 'GoEngine-java/native/KataGo/cpp/neuralnet/rknnbackend.cpp'
       - 'GoEngine-java/native/KataGo/cpp/command/gtp.cpp'
       - 'GoEngine-java/app/src/main/cpp/EngineSession.cpp'
       - 'GoEngine-java/native/KataGo/cpp/CMakeLists.txt'
@@ -41,3 +45,4 @@ jobs:
           python3 -m unittest discover -s tools -p 'test_app_ui_units.py' -v
           python3 -m unittest discover -s tools -p 'test_watch_npu_crash.py' -v
           python3 -m unittest discover -s tools -p 'test_npu_session_lifecycle.py' -v
+          python3 -m unittest discover -s tools -p 'test_android_npu_platform.py' -v
