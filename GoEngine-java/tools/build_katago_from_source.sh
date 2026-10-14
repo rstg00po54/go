@@ -249,7 +249,7 @@ if [[ "$BUILD_VARIANT" == "eigenjni" || "$BUILD_VARIANT" == "opencljni" || "$BUI
             echo "ERROR: RKNN JNI library missing librknnrt.so dependency." >&2; exit 1
         fi
         for symbol in nativeCreateSession nativeSendCommand nativeReadOutput nativeIsSessionAlive nativeStopSearch nativeDestroySession; do
-            if ! "$READELF" -W --dyn-syms "$BIN" | grep -Fq "Java_com_badukai_engine_KataGoNpuNative_$symbol"; then
+            if ! "$READELF" -W --dyn-syms "$BIN" | grep -F "Java_com_badukai_engine_KataGoNpuNative_$symbol" >/dev/null; then
                 echo "ERROR: NPU JNI symbol missing: $symbol" >&2; exit 1
             fi
         done
