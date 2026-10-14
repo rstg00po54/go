@@ -66,7 +66,7 @@ def sizes_arg(value):
 
 
 def event(line, tag, name, run_id):
-    return tag in line and re.search(r"\b" + re.escape(name) + r" id=" + re.escape(run_id) + r"(?:\s|$)", line)
+    return tag in line and bool(re.search(r"\b" + re.escape(name) + r" id=" + re.escape(run_id) + r"(?:\s|$)", line))
 
 
 def value(line, name):
