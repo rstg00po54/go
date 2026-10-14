@@ -8,17 +8,14 @@ and JNI libraries are never modified.
 import argparse
 from pathlib import Path
 
-from check_android_16kb import inspect_library
+from check_katago_pie import validate_pie
 
 
 def needs_relink(path):
     if not path.is_file():
         return False
-    try:
-        _, problems = inspect_library(str(path), path.read_bytes())
-        return bool(problems)
-    except (OSError, ValueError):
-        return True
+    valid, _ = validate_pie(path)
+    return not valid
 
 
 def invalidate_if_needed(path):
