@@ -1783,6 +1783,9 @@ struct ComputeHandle {
       if(rknnPath == nullptr || !*rknnPath)
         throw StringError("KATAGO_RKNN_MODEL must point to the 19x19 RKNN weights");
       rknn.reset(new KataGoRknnRunner(rknnPath, context->nnXLen));
+      // A size-specific model may report unexpected tensor metadata on a
+      // particular Rockchip runtime. Avoid SIGABRT; use Eigen until fixed.
+      if(!rknn->ready()) rknn.reset();
     }
     else if(loadedModel.modelDesc.name.find("human") == std::string::npos) {
       throw StringError("RKNN backend does not recognize 10b model: " + loadedModel.modelDesc.name);
