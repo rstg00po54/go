@@ -154,7 +154,7 @@ class AppTest:
         # resolves duplicate tag specs by keeping the last priority; using
         # MainActivity:D alone includes both DEBUG and INFO events.
         raw = self.adb("logcat", "-d", "-s", "MainActivity:D",
-                       "AndroidRuntime:E", "*:S", timeout=15)
+                       "AndroidRuntime:E", "libc:F", "DEBUG:F", "*:S", timeout=15)
         lines = raw.splitlines()
         backend = []
         for line in lines:
@@ -175,7 +175,7 @@ class AppTest:
                                 "render in, message=快速AI预估" in line for line in lines),
             "thinking": sum("render in, message=AI 思考中" in line for line in lines),
             "undo_done": sum("render in, message=已悔棋，轮到你了" in line for line in lines),
-            "fatal": any("FATAL EXCEPTION" in line for line in lines),
+            "fatal": any("FATAL EXCEPTION" in line or "Fatal signal" in line or "SIGSEGV" in line for line in lines),
             "debug_active": any("render in, message=" in line for line in lines),
         }
 
@@ -212,7 +212,7 @@ class AppTest:
         while time.monotonic() < deadline:
             state = self.read_log_state()
             if state["fatal"]:
-                raise TestFailure("APP 发生 Java 崩溃：" + description)
+                raise TestFailure("APP 发生 Java/native 崩溃：" + description)
             result = predicate(state)
             if result is not None and result is not False:
                 return result
