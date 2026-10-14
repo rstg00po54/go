@@ -8,6 +8,8 @@ on:
       - 'GoEngine-java/app/build.gradle.kts'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoMediaTekLiteRt.java'
       - 'GoEngine-java/app/src/main/java/com/badukai/MainActivity.java'
+      - 'GoEngine-java/app/src/main/java/com/badukai/engine/NpuHardware.java'
+      - 'GoEngine-java/tools/test_npu_hardware_selector.py'
   workflow_dispatch:
 
 permissions:
@@ -23,6 +25,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: Verify runtime SoC selection on JVM
+        working-directory: GoEngine-java
+        run: python3 tools/test_npu_hardware_selector.py
       - name: Install Android SDK API 35
         run: |
           SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
