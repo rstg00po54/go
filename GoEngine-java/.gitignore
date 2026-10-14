@@ -62,3 +62,7 @@ __pycache__/
 # Generated RK3588 RKNN runtime and model assets
 app/src/main/assets/engine/katago_10b_*x*.rknn
 build/rknn_sdk/
+
+# Large, generated KataGo MediaTek LiteRT graph assets
+app/src/main/assets/engine/katago_10b_*x*.tflite
+app/src/main/assets/engine/katago_10b_*x*.json
