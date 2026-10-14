@@ -1,26 +1,36 @@
-name: Android referee quick-path smoke
+name: Android NN estimate quick regression
 on:
   push:
     branches: [rk3588-engine]
     paths:
       - GoEngine-java/app/src/main/java/com/badukai/MainActivity.java
+      - GoEngine-java/app/src/main/java/com/badukai/ui/GoBoardView.java
+      - GoEngine-java/app/src/main/java/com/badukai/game/NnAreaScore.java
+      - GoEngine-java/app/src/main/res/layout/activity_main.xml
+      - GoEngine-java/tools/smoke_android_referee_app.py
       - GoEngine-java/tools/test_smoke_android_referee_app.py
+      - GoEngine-java/tools/test_smart_referee.py
       - .github/workflows/referee-quick-smoke.yml
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
-  referee-quick-smoke:
+  nn-quick:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Install Android platform tools for mocked ADB host tests
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y adb
-      - name: Syntax check host tests
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install ADB for mocked host tests
+        run: sudo apt-get update -qq && sudo apt-get install -y adb
+      - name: Syntax-check NN test scripts
         working-directory: GoEngine-java
-        run: python3 -m py_compile tools/test_smoke_android_referee_app.py
-      - name: Run complete host-side referee UI smoke tests
+        run: python3 -m py_compile tools/smoke_android_referee_app.py tools/test_smoke_android_referee_app.py tools/test_smart_referee.py
+      - name: NN area rules JDK-only test
+        working-directory: GoEngine-java
+        run: python3 tools/test_smart_referee.py
+      - name: Host NN UI smoke tests
         working-directory: GoEngine-java
         run: python3 tools/test_smoke_android_referee_app.py
