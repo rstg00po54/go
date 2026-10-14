@@ -100,8 +100,18 @@ def run(argv=None):
         print("FAIL:", err, file=sys.stderr)
     finally:
         try:
-            (folder / "logcat.txt").write_text(adb(args, serial, "logcat", "-d", "-v", "time",
-                "-s", "KataGoMTK:V", "AndroidRuntime:E", "libc:F"), encoding="utf-8")
+            full_logcat = adb(args, serial, "logcat", "-d", "-v", "time", timeout=35)
+            relevant = [line for line in full_logcat.splitlines() if re.search(
+                r"KataGoMTK|LiteRT|litert|MediaTek|neuron|Neuron|Dispatch|compiler.plugin|"
+                r"accelerator|FATAL.EXCEPTION|Fatal.signal|SIGABRT|SIGSEGV", line, re.IGNORECASE)]
+            (folder / "logcat.txt").write_text("\n".join(relevant) + "\n", encoding="utf-8")
+            # This is observational evidence, not a certificate of real NPU use.
+            vendor = [line for line in relevant if re.search(
+                r"Neuron|dispatch|compiler.plugin|delegate|accelerat", line, re.IGNORECASE)]
+            (folder / "vendor_litert.txt").write_text("\n".join(vendor) + "\n", encoding="utf-8")
+            report["vendorLogLineCount"] = len(vendor)
+            report["fallbackWarnings"] = [line.strip()[-220:] for line in vendor
+                if re.search(r"fallback|CPU.instead|No.compiler.plugin|Failed.to.apply", line, re.IGNORECASE)][-12:]
             crash = adb(args, serial, "logcat", "-b", "crash", "-d", "-v", "brief")
             if crash.strip(): (folder / "crash.txt").write_text(crash, encoding="utf-8")
         except Exception as err:
