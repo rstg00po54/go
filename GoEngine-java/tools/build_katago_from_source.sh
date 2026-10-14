@@ -306,7 +306,7 @@ if [[ "$BACKEND" == "opencl" ]]; then
 fi
 echo "No files were changed under app/src/main/jniLibs."
 if [[ "$BUILD_VARIANT" == "rknnjni" ]]; then
-    echo "RKNN JNI library built; 19x19 only. Use -PenableKataGoNpuJni=true to package it."
+    echo "RKNN JNI library built; 9x9, 13x13 and 19x19 models supported when matching assets are bundled."
 elif [[ "$BUILD_VARIANT" == "eigenjni" ]]; then
     echo "CPU/Eigen JNI library built. Use Gradle -PenableKataGoJniCore=true to package it."
 elif [[ "$BUILD_VARIANT" == "opencljni" ]]; then
