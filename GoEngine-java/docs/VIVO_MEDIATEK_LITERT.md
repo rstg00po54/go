@@ -28,16 +28,22 @@ On your existing Ubuntu developer machine with Android SDK API 35:
 cd /mnt/hgfs/D/code/go/GoEngine-java
 git fetch origin
 git switch feature/rk3588-rknn
-bash tools/prepare_vivo_litert.sh
-./gradlew :app:assembleDebug -PskipKataGoNative=true -PvivoProbeApk=true -PenableKataGoNpuJni=false -PenableKataGoGpuJni=false -PenableKataGoJniCore=false
+git pull --ff-only
+KATAGO_JOBS=2 bash tools/build_vivo_npu.sh
 ```
 
-The **probe-only** APK should package three `.tflite` / `.json` model pairs and
-`com.google.ai.edge.litert:litert-npu-runtime-mediatek:2.3.0` vendor runtime.
-It must NOT package `librknnrt.so`. The CI workflow `vivo_litert_android_apk.yml`
-builds and checks this without touching the validated RK3588 branch.
-This probe-only APK deliberately omits the KataGo PIE and CPU/GPU/RKNN JNI GTP
-libraries, so ordinary AI games are **not** yet enabled in this APK.
+This **playable CPU/GPU APK** includes `libkatago_exec.so` (KataGo PIE),
+`libkatago.so` (CPU JNI), and `libkatago_gpu.so` (OpenCL JNI), plus three
+`.tflite` / `.json` model pairs and the MediaTek LiteRT vendor runtime.
+The script downloads and SHA256-checks all six models as part of the Gradle
+build, then checks the APK for every required model and native library.
+It explicitly excludes Rockchip `librknnrt.so` for vivo's 16 KB-page system.
+
+The GitHub workflow `vivo_litert_android_apk.yml` still produces a fast
+**probe-only** APK with `-PvivoProbeApk=true`, for isolated LiteRT smoke tests.
+That special CI build deliberately omits normal KataGo game binaries. Do not
+use `-PvivoProbeApk=true` to build the playable phone app. The full local build
+uses `-PbundleVivoLiteRtModels=true` and includes native game engines.
 
 ## Run the first MediaTek graph inference smoke
 
