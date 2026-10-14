@@ -103,6 +103,27 @@ class CacheAndLogTests(unittest.TestCase):
         state = self.app.read_log_state()
         self.assertEqual(state["backend"], [("NPU", "NPU 10b + CPU Human SL", True)])
 
+    def test_npu_log_parser_matches_actual_rk3588_preload(self):
+        # Lines copied from the published 2026-10-14 RK3588 failed_logcat,
+        # which the original over-escaped regex incorrectly parsed as empty.
+        model = "/data/user/0/com.badukai.java/files/engine/katago_10b_9x9.rknn"
+        raw = ("10-14 16:19:34.421 I/KataGoEngine( 8887): NPU_MODEL_SELECTED board=9 path=" + model + "\\n"
+               "10-14 16:19:34.811 I/KataGoRKNN( 8887): RKNN_INIT board=9 path=" + model + "\\n"
+               "10-14 16:19:34.863 I/KataGoRKNN( 8887): RKNN_READY board=9 model=" + model + "\\n")
+        arguments = []
+        def fake_adb(*args, **kwargs):
+            arguments.append(args)
+            return raw
+        self.app.adb = fake_adb
+        state = self.app.read_npu_state()
+        self.assertEqual(state["selected"], [("9", model)])
+        self.assertEqual(state["init"], [("9", model)])
+        self.assertEqual(state["ready"], [("9", model)])
+        self.assertIn("KataGoRKNN:I", arguments[0])
+        self.app.last_verified_npu_size = None
+        self.app.assert_npu_board(9, state)
+        self.assertEqual(self.app.last_verified_npu_size, 9)
+
     def test_npu_board_verifies_real_model_instead_of_selected_label(self):
         self.app.last_verified_npu_size = 9
         model = "/data/user/0/com.badukai.java/files/engine/katago_10b_13x13.rknn"
