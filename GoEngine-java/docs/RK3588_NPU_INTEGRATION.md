@@ -133,3 +133,55 @@ The vivo smartphone uses its CPU/GPU backend, **not** Rockchip's RKNN runtime.
   not manual tensor reshaping.
 - Compiling the RKNN model happens on Ubuntu/GitHub Actions; running and
   verifying the result happens on the RK3588 Android board.
+
+## Automated Android multi-size switching test with GitHub upload
+
+The debug APK exposes a test-only `npu_switch_smoke` intent. It uses the
+same `KataGoEngine` in one app process, sequentially opens
+**9x9 -> 13x13 -> 19x19 -> 9x9**, and generates one black and one white
+move on every board. It checks the exact board-specific model path and
+`RKNN_READY` native event, not just whether Java requested "NPU".
+Native CPU fallback, wrong old-model reuse, timeout and crash all fail.
+
+After building/installing the multi-size NPU APK on **4 KB page RK3588**:
+
+```bash
+git pull --ff-only
+ALLOW_4K_RKNN_RUNTIME=1 bash build.sh --apk-only
+python3 tools/smoke_android_npu_switch.py --serial 8719e18a71a2a66c
+```
+
+The script installs the APK, force-stops the app and clears its device
+logcat buffers for this isolated test. **By default it automatically
+uploads PASS/FAIL reports and filtered logs to the public GitHub
+`ui-test-results` branch** using the working Git credentials configured
+on the Ubuntu host. It does not modify the source branch or stage other
+working-tree changes. Files stay locally at `build/android_npu_smoke/<UTC run>/`
+even if Git credentials or network prevent uploading.
+
+Common switches:
+
+```bash
+# Test the already installed APK without installation
+python3 tools/smoke_android_npu_switch.py --serial 8719e18a71a2a66c --skip-install
+# Isolate NPU 10b without CPU Human SL setup
+python3 tools/smoke_android_npu_switch.py --serial 8719e18a71a2a66c --no-human-sl
+# Local only; do not publish logs
+python3 tools/smoke_android_npu_switch.py --serial 8719e18a71a2a66c --no-upload
+# Retry failed upload later, without connecting the Android board
+python3 tools/smoke_android_npu_switch.py --upload-existing build/android_npu_smoke/<UTC run>
+# Parser and uploader offline regressions
+python3 tools/test_smoke_android_npu_switch.py
+python3 tools/test_upload_referee_test_results.py
+```
+
+**Privacy**: Results branch is public. Uploads contain the test summary
+(including ADB serial), filtered KataGo/NPU logcat, platform/page-size
+information, and crash diagnostics if present. Use `--no-upload` when
+those details should remain local. Git credentials are never embedded in
+scripts; if the host cannot push to GitHub the upload is reported as
+failed instead of pretending it succeeded.
+
+The GitHub Actions offline Python tests verify log parsing and isolated Git
+upload behavior, **not actual NPU inference**. Actual 9/13/19 board hardware
+results can be judged only after this script runs against the RK3588.
