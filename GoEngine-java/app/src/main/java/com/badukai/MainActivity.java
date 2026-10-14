@@ -1130,23 +1130,9 @@ public class MainActivity extends AppCompatActivity {
                     Log.w(TAG,"KataGo endgame comparison unavailable",ex);
                 }
             }
-            String candidateScore = null, candidateDead = null;
-            boolean scoringAttempted = false;
-            if (inspection != null && simpleKo == null && atariGroups == 0
-                    && inspection.highVariationPoints == 0
-                    && inspection.black.estimatedMoveBenefit <= 0.5
-                    && inspection.white.estimatedMoveBenefit <= 0.5) {
-                // Deeper KataGo queries only run when both PASS comparisons suggest an end.
-                scoringAttempted = true;
-                try {
-                    candidateScore = engine.getFinalScore();
-                    candidateDead = engine.getFinalDeadStones();
-                } catch (RuntimeException ex) {
-                    Log.w(TAG,"KataGo native final score/dead status unavailable",ex);
-                }
-            }
-            final boolean scoreWasRequested = scoringAttempted;
-            final String nativeScore = candidateScore, nativeDead = candidateDead;
+            // Fast position check ends here. Native final_score and dead-stone search
+            // are intentionally opt-in, because those commands added ~7s on RK3588 CPU.
+            final long searchMs = (System.nanoTime() - startedNs) / 1000000L;
             final KataGoEngine.NativePositionInspection nativeInfo = inspection;
             mainHandler.post(() -> {
                 if (board != snapshot || board.getMoveCount() != moves || boardSize != size) {
@@ -1177,18 +1163,13 @@ public class MainActivity extends AppCompatActivity {
                         status = "需要复核";
                         explanation = "KataGo 预测的归属存在明显波动，可能有死活或争议。";
                     } else if (blackGain > 0.5 || whiteGain > 0.5) {
-                        // A small remaining move benefit is NOT a failed native score.
-                        // The expensive final-score commands were not even requested.
                         status = "建议继续下棋";
                         explanation = "KataGo 认为仍可能有小官子或局部攻防。";
-                    } else if (nativeScore != null && !nativeScore.trim().isEmpty() && nativeDead != null) {
-                        status = "裁判完成";
-                        explanation = "KataGo 认为官子基本收完。预测结果：" + nativeScore.trim() + "。死子预测已完成，需核对。";
                     } else {
-                        status = "不能确认";
-                        explanation = scoreWasRequested
-                                ? "已尝试原生计分或死子预测，但没有获得完整结果，请稍后重试。"
-                                : "搜索证据不足，暂不能确认终局，请继续下棋。";
+                        status = "基本收官";
+                        explanation = ended
+                                ? "双方已停棋，KataGo PASS 对照未发现明显的继续落子收益。尚未确认死活与最终目数，可以点「详细数子」复核。"
+                                : "KataGo PASS 对照未发现明显的继续落子收益，但双方还没有正式停棋。可以申请数子或点「详细数子」复核。";
                     }
                 }
                 // Highlight the suggested empty intersection on the actual board.
@@ -1222,40 +1203,29 @@ public class MainActivity extends AppCompatActivity {
                         nativeInfo.black.bestMove,nativeInfo.black.estimatedMoveBenefit,
                         nativeInfo.white.bestMove,nativeInfo.white.estimatedMoveBenefit,
                         nativeInfo.maximumOwnershipStdev,nativeInfo.highVariationPoints);
-                Set<Point> predictedDead = new HashSet<>();
-                if ("裁判完成".equals(status) && nativeDead != null && !nativeDead.trim().isEmpty()) {
-                    for (String vertex : nativeDead.trim().split("\\s+")) {
-                        Point point = Point.fromGtp(vertex,size);
-                        if (point != null && board.get(point) != Intersection.EMPTY) predictedDead.add(point);
-                    }
-                }
-                if ("裁判完成".equals(status)) {
-                    nativeRefereeMarkedBoard = snapshot;
-                    nativeRefereeMarkedMoves = moves;
-                    boardView.setRefereeMarks(predictedDead,null);
-                    explanation += " KataGo 预测死子 " + predictedDead.size() + " 颗，棋盘红叉仅供复核。";
-                }
                 String message = explanation
                         + (showFocus ? "\n\n关闭弹窗后可在棋盘看到橙圈，落下一手后自动清除。" : "")
                         + "\n\n以上为 KataGo 估计，不会自动结束或改动棋谱。";
                 Log.i(TAG,String.format(Locale.US,
-                        "REFEREE_ENDGAME_RESULT status=%s moves=%d terminal=%s ko=%s atari=%d blackGain=%.3f whiteGain=%.3f highVariation=%d scoreRequested=%s focus=%s elapsedMs=%d",
+                        "REFEREE_ENDGAME_RESULT status=%s moves=%d terminal=%s ko=%s atari=%d blackGain=%.3f whiteGain=%.3f highVariation=%d searchMs=%d scoreRequested=false focus=%s elapsedMs=%d",
                         status,moves,ended,simpleKo == null ? "none" : simpleKo.toGtp(size),
                         atariGroups,nativeInfo == null ? Double.NaN : nativeInfo.black.estimatedMoveBenefit,
                         nativeInfo == null ? Double.NaN : nativeInfo.white.estimatedMoveBenefit,
                         nativeInfo == null ? -1 : nativeInfo.highVariationPoints,
-                        scoreWasRequested,showFocus ? focusMove : "none",
+                        searchMs,showFocus ? focusMove : "none",
                         (System.nanoTime()-startedNs)/1000000L));
                 render("局面检查：" + status);
                 AlertDialog.Builder dialog = new AlertDialog.Builder(this)
                         .setTitle("智能裁判 · " + status).setMessage(message)
-                        .setPositiveButton("裁判完成".equals(status) ? "查看棋盘" : "继续下棋", (d,w) -> {
-                            if (!"裁判完成".equals(status) && ended
+                        .setPositiveButton("基本收官".equals(status) ? "关闭" : "继续下棋", (d,w) -> {
+                            if (!"基本收官".equals(status) && ended
                                     && board == snapshot && board.canResumeAfterPasses()) resumeFromReferee();
                         })
                         .setNeutralButton("查看详情", (d,w) -> new AlertDialog.Builder(this)
                                 .setTitle("KataGo 分析依据").setMessage(detail)
                                 .setPositiveButton("关闭",null).show());
+                if ("基本收官".equals(status))
+                    dialog.setNegativeButton("详细数子", (d,w) -> startNativeReferee());
                 dialog.show();
             });
         });
