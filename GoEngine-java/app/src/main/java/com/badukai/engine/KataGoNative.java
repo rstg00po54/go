@@ -88,6 +88,18 @@ public final class KataGoNative {
         }
     }
 
+    /** Conservative KataGo/Benson proof: false also means not provable. */
+    public static boolean isAllPassAlive(int size, byte[] cells) {
+        try {
+            load();
+            return nativeEndgameAllPassAlive(size,cells);
+        } catch (LinkageError | SecurityException e) {
+            Log.w(TAG,"Strict KataGo pass-alive check unavailable",e);
+            return false;
+        }
+    }
+
+    private static native boolean nativeEndgameAllPassAlive(int size, byte[] cells);
     private static native String nativeBuildStatus();
     private static native long nativeCreateSession(String modelPath, String configPath, String humanModelPath);
     private static native boolean nativeSendCommand(long handle, String command);
