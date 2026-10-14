@@ -105,6 +105,9 @@ public class MainActivity extends AppCompatActivity {
     // Native referee overlays survive dialog dismissal until cleared or the position changes.
     private GoBoard nativeRefereeMarkedBoard;
     private int nativeRefereeMarkedMoves = -1;
+    // Keep a single suggested intersection circled until the board changes.
+    private GoBoard endgameInspectionMarkedBoard;
+    private int endgameInspectionMarkedMoves = -1;
     private boolean refereeAwaitingTap;
     private boolean refereeConfirmed;
     private final Set<Point> refereeAccepted = new HashSet<>();
@@ -1004,6 +1007,8 @@ public class MainActivity extends AppCompatActivity {
         final long startedNs = System.nanoTime();
         nativeRefereeMarkedBoard = null;
         boardView.setRefereeMarks(null,null);
+        endgameInspectionMarkedBoard = null;
+        boardView.setEndgameAlerts(null);
         render("智能裁判：KataGo 正在检查形势与死子...");
         engineExecutor.execute(() -> {
             String nativeScore = null, nativeDead = null;
@@ -1126,11 +1131,13 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             String candidateScore = null, candidateDead = null;
+            boolean scoringAttempted = false;
             if (inspection != null && simpleKo == null && atariGroups == 0
                     && inspection.highVariationPoints == 0
                     && inspection.black.estimatedMoveBenefit <= 0.5
                     && inspection.white.estimatedMoveBenefit <= 0.5) {
                 // Deeper KataGo queries only run when both PASS comparisons suggest an end.
+                scoringAttempted = true;
                 try {
                     candidateScore = engine.getFinalScore();
                     candidateDead = engine.getFinalDeadStones();
@@ -1138,6 +1145,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.w(TAG,"KataGo native final score/dead status unavailable",ex);
                 }
             }
+            final boolean scoreWasRequested = scoringAttempted;
             final String nativeScore = candidateScore, nativeDead = candidateDead;
             final KataGoEngine.NativePositionInspection nativeInfo = inspection;
             mainHandler.post(() -> {
@@ -1162,21 +1170,48 @@ public class MainActivity extends AppCompatActivity {
                     if (blackGain >= 1.5 || whiteGain >= 1.5) {
                         status = "官子未收完";
                         explanation = "KataGo 认为继续落子仍有明显收益，可能是官子或局部攻防。建议继续下棋。";
-                    } else if (atariGroups == 0 && nativeInfo.highVariationPoints == 0
-                            && blackGain <= 0.5 && whiteGain <= 0.5
-                            && nativeScore != null && !nativeScore.trim().isEmpty() && nativeDead != null) {
+                    } else if (atariGroups > 0) {
+                        status = "建议继续下棋";
+                        explanation = "存在单气棋块，尚不能确认死活；建议继续下棋或复核。";
+                    } else if (nativeInfo.highVariationPoints > 0) {
+                        status = "需要复核";
+                        explanation = "KataGo 预测的归属存在明显波动，可能有死活或争议。";
+                    } else if (blackGain > 0.5 || whiteGain > 0.5) {
+                        // A small remaining move benefit is NOT a failed native score.
+                        // The expensive final-score commands were not even requested.
+                        status = "建议继续下棋";
+                        explanation = "KataGo 认为仍可能有小官子或局部攻防。";
+                    } else if (nativeScore != null && !nativeScore.trim().isEmpty() && nativeDead != null) {
                         status = "裁判完成";
                         explanation = "KataGo 认为官子基本收完。预测结果：" + nativeScore.trim() + "。死子预测已完成，需核对。";
                     } else {
                         status = "不能确认";
-                        explanation = atariGroups > 0
-                                ? "存在单气棋块，尚不能确认死活，请继续下棋。"
-                                : nativeInfo.highVariationPoints > 0
-                                ? "KataGo 预测的归属存在波动，可能有死活或争议，请继续下棋。"
-                                : nativeScore == null || nativeDead == null
-                                ? "PASS 对照接近，但原生计分或死子预测未完成，请继续下棋或稍后复核。"
+                        explanation = scoreWasRequested
+                                ? "已尝试原生计分或死子预测，但没有获得完整结果，请稍后重试。"
                                 : "搜索证据不足，暂不能确认终局，请继续下棋。";
                     }
+                }
+                // Highlight the suggested empty intersection on the actual board.
+                // Only a hint: KataGo is not placing a move or confirming life/death.
+                KataGoEngine.NativePassComparison focusSide = nativeInfo == null ? null
+                        : nativeInfo.white.estimatedMoveBenefit > nativeInfo.black.estimatedMoveBenefit
+                        ? nativeInfo.white : nativeInfo.black;
+                String focusMove = focusSide == null ? null : focusSide.bestMove;
+                Point focusPoint = Point.fromGtp(focusMove,size);
+                boolean showFocus = ("官子未收完".equals(status) || "建议继续下棋".equals(status)
+                        || "需要复核".equals(status)) && focusPoint != null
+                        && snapshot.get(focusPoint) == Intersection.EMPTY;
+                if (showFocus) {
+                    endgameInspectionMarkedBoard = snapshot;
+                    endgameInspectionMarkedMoves = moves;
+                    boardView.setEndgameAlerts(java.util.Collections.singleton(focusPoint));
+                    explanation += String.format(Locale.CHINA,
+                            "\n%s建议关注 %s（继续落子相对 PASS 约 %.2f 目）。已在棋盘用橙圈标出该点。",
+                            "black".equals(focusSide.player) ? "黑方" : "白方",
+                            focusMove,focusSide.estimatedMoveBenefit);
+                } else {
+                    endgameInspectionMarkedBoard = null;
+                    boardView.setEndgameAlerts(null);
                 }
                 String detail = nativeInfo == null ? "KataGo 原生分析没有返回足够数据。"
                         : String.format(Locale.CHINA,
@@ -1200,13 +1235,16 @@ public class MainActivity extends AppCompatActivity {
                     boardView.setRefereeMarks(predictedDead,null);
                     explanation += " KataGo 预测死子 " + predictedDead.size() + " 颗，棋盘红叉仅供复核。";
                 }
-                String message = explanation + "\n\n以上为 KataGo 估计，不会自动结束或改动棋谱。";
+                String message = explanation
+                        + (showFocus ? "\n\n关闭弹窗后可在棋盘看到橙圈，落下一手后自动清除。" : "")
+                        + "\n\n以上为 KataGo 估计，不会自动结束或改动棋谱。";
                 Log.i(TAG,String.format(Locale.US,
-                        "REFEREE_ENDGAME_RESULT status=%s moves=%d terminal=%s ko=%s atari=%d blackGain=%.3f whiteGain=%.3f highVariation=%d elapsedMs=%d",
+                        "REFEREE_ENDGAME_RESULT status=%s moves=%d terminal=%s ko=%s atari=%d blackGain=%.3f whiteGain=%.3f highVariation=%d scoreRequested=%s focus=%s elapsedMs=%d",
                         status,moves,ended,simpleKo == null ? "none" : simpleKo.toGtp(size),
                         atariGroups,nativeInfo == null ? Double.NaN : nativeInfo.black.estimatedMoveBenefit,
                         nativeInfo == null ? Double.NaN : nativeInfo.white.estimatedMoveBenefit,
                         nativeInfo == null ? -1 : nativeInfo.highVariationPoints,
+                        scoreWasRequested,showFocus ? focusMove : "none",
                         (System.nanoTime()-startedNs)/1000000L));
                 render("局面检查：" + status);
                 AlertDialog.Builder dialog = new AlertDialog.Builder(this)
@@ -2412,6 +2450,11 @@ public class MainActivity extends AppCompatActivity {
                 || board.getMoveCount() != nativeRefereeMarkedMoves)) {
             nativeRefereeMarkedBoard = null;
             boardView.setRefereeMarks(null,null);
+        }
+        if (endgameInspectionMarkedBoard != null && (board != endgameInspectionMarkedBoard
+                || board.getMoveCount() != endgameInspectionMarkedMoves)) {
+            endgameInspectionMarkedBoard = null;
+            boardView.setEndgameAlerts(null);
         }
         statusText.setText(message);
         updateWinRateLabels();
