@@ -4,6 +4,7 @@ on:
     branches: [rk3588-engine]
     paths:
       - .github/workflows/katago-pass-visits-benchmark.yml
+      - GoEngine-java/tools/benchmark_katago_pass_visits.py
   workflow_dispatch:
 permissions:
   contents: read

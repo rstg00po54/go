@@ -67,7 +67,7 @@ def save(out,version,cases,runs):
     lines=["# Actual KataGo PASS comparison, visits 24 / 12 / 8","",
            f"Engine {version}; Linux x86_64 CPU/Eigen AVX2; 19 fixtures, two repeats.",
            "Same four sequential KataGo non-playing searches as Android, maxTime=0.5s.",
-           "Times exclude SGF setup and search-parameter configuration.",
+           "Each visit limit and repeat runs in a fresh KataGo process to avoid cross-limit MCTS tree reuse. Times exclude SGF setup and search-parameter configuration.",
            "Verdict labels compare against 24-visit outputs, not a certified game-ending truth.",
            "","| Fixture | Size | 24 ms | 12 ms | 8 ms | 24 verdict | 12 verdict | 8 verdict |",
            "|---|---:|---:|---:|---:|---|---|---|"]
@@ -105,13 +105,19 @@ def main():
     args=p.parse_args()
     with tempfile.TemporaryDirectory() as tmp:
         cases=make_cases(Path(tmp));assert len(cases)==19
-        g=Gtp(args);rows=[]
-        try:
-            version,_=request(g,"version")
+        rows=[];version=""
+        # Critical: one FRESH KataGo process per visit limit and repeat.
+        # Otherwise a completed 24-visit root can make subsequent 12-visit
+        # queries finish instantly by reusing already accumulated visits.
+        for v in VISITS:
             for repeat in (1,2):
-                for i,case in enumerate(cases):
-                    order=VISITS if (i+repeat)%2 else tuple(reversed(VISITS))
-                    for v in order:
+                g=Gtp(args)
+                try:
+                    version,_=request(g,"version")
+                    # Change fixture order in the second replicate without
+                    # sharing any search cache across visit configurations.
+                    batch=cases if repeat==1 else list(reversed(cases))
+                    for case in batch:
                         try:
                             r=measure(g,case,v,repeat);rows.append(r)
                             print(f"RUN fixture={case['name']} visits={v} repeat={repeat} ms={r['ms']} "
@@ -121,8 +127,9 @@ def main():
                             rows.append(dict(fixture=case["name"],size=case["size"],repeat=repeat,visits=v,
                                 ms=None,black_gain=None,white_gain=None,black_move="",white_move="",
                                 ownership_high=None,ownership_max=None,verdict="ERROR",error=str(ex)))
-                            print(f"ERROR fixture={case['name']} visits={v} error={ex}",flush=True)
-        finally:g.close()
+                            print(f"ERROR fixture={case['name']} visits={v} repeat={repeat} error={ex}",flush=True)
+                finally:
+                    g.close()
         save(Path(args.out),version,cases,rows)
 
 if __name__=="__main__":main()
