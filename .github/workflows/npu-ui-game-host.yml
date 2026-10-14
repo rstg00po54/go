@@ -1,0 +1,30 @@
+name: RK3588 NPU real game UI script checks
+
+on:
+  push:
+    branches: [feature/rk3588-rknn]
+    paths:
+      - '.github/workflows/npu-ui-game-host.yml'
+      - 'GoEngine-java/tools/test_app_ui.py'
+      - 'GoEngine-java/tools/test_app_ui_units.py'
+      - 'GoEngine-java/tools/test_rk3588_npu_game.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  host-tests:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check Bash and Python syntax
+        run: |
+          bash -n GoEngine-java/tools/test_rk3588_npu_game.sh
+          python3 -m py_compile GoEngine-java/tools/test_app_ui.py GoEngine-java/tools/test_app_ui_units.py
+      - name: Verify real-game UI automation and NPU parsing
+        working-directory: GoEngine-java
+        run: python3 -m unittest discover -s tools -p 'test_app_ui_units.py' -v
