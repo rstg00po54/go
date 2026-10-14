@@ -58,33 +58,27 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn('countTerritoryButton.setEnabled(engineReady && gameReady',activity)
         self.assertIn('if (refereeAwaitingTap) resumeFromReferee();',activity)
 
-    def test_smart_referee_uses_one_raw_nn_estimate_before_optional_dead_stone_review(self):
+    def test_smart_referee_uses_one_raw_nn_without_optional_searches(self):
         root = Path(__file__).resolve().parents[1]
         activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
         entry = activity.split("private void showEndgameScoringOptions()",1)[1].split(
             "private void showQuickNnRefereeEstimate()",1)[0]
         self.assertIn("showQuickNnRefereeEstimate();",entry)
-        self.assertNotIn("startSmartReferee();",entry)
-        self.assertNotIn("if (!board.isGameOver())",entry)
         quick = activity.split("private void showQuickNnRefereeEstimate()",1)[1].split(
-            "private static String refereeSearchSummary",1)[0]
-        self.assertIn('engine.evaluatePosition(size)',quick)
-        self.assertIn("final Point immediateKo = board.getSimpleKoPoint()",quick)
-        self.assertIn("final int atariGroups = board.countAtariGroups()",quick)
-        self.assertIn("当前存在劫禁",quick)
-        self.assertIn("不能直接确认终局",quick)
-        self.assertIn("当前有 %d 块单气棋，建议复核死活",quick)
-        self.assertIn("ko=%s atariGroups=%d",quick)
-        self.assertIn('final KataGoEngine.PositionEvaluation cached = gameEnded ? endgameEvaluation : null;',quick)
-        self.assertIn('result.whiteLead',quick)
-        self.assertIn('result.blackWin * 100.0,result.whiteWin * 100.0',quick)
+            "private void startSmartReferee()",1)[0]
+        self.assertIn("engine.evaluatePosition(size)",quick)
+        self.assertIn("board.getSimpleKoPoint()",quick)
+        self.assertIn("board.countAtariGroups()",quick)
+        self.assertIn("result.whiteLead",quick)
+        self.assertIn("result.blackWin * 100.0,result.whiteWin * 100.0",quick)
         self.assertIn('setTitle("智能裁判 · 快速 NN 估分")',quick)
-        self.assertIn('setNeutralButton("KataGo 原生裁判", (dialog,which) -> startNativeReferee())',quick)
         self.assertIn('setPositiveButton(gameEnded ? "关闭" : "继续下棋",null)',quick)
-        self.assertNotIn('searchRecommendations(',quick)
-        self.assertNotIn('engine.undo()',quick)
-        self.assertNotIn('engine.playMove(',quick)
-        self.assertNotIn('render("棋局还没下完")',quick)
+        for old in ("局面检查", "KataGo 原生裁判", "startNativeReferee(",
+                    "inspectUnfinishedPosition(", "searchRecommendations(",
+                    "getFinalScore(", "getFinalDeadStones("):
+            self.assertNotIn(old,quick)
+        self.assertNotIn("engine.playMove(",quick)
+        self.assertNotIn("engine.undo()",quick)
 
     def test_unmarked_midgame_shows_only_unfinished_message(self):
         root = Path(__file__).resolve().parents[1]
@@ -102,124 +96,48 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertNotIn('resumeFromReferee()',branch)
         self.assertNotIn('engine.undo()',branch)
 
-    def test_native_katago_referee_does_not_modify_the_game(self):
+    def test_nn_referee_has_no_native_gtp_or_pass_comparison_path(self):
         root = Path(__file__).resolve().parents[1]
         activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
         engine = (root/"app/src/main/java/com/badukai/engine/KataGoEngine.java").read_text(encoding="utf-8")
-        native = activity.split("private void startNativeReferee()",1)[1].split(
-            "private static String refereeSearchSummary",1)[0]
-        self.assertIn("engine.getFinalScore()",native)
-        self.assertIn("engine.getFinalDeadStones()",native)
-        self.assertIn("final long scoreMs =",native)
-        self.assertIn("final long deadMs =",native)
-        self.assertIn("scoreMs=%d deadMs=%d",native)
-        self.assertIn("正在判断死子",native)
-        self.assertIn("Point.fromGtp(vertex,size)",native)
-        self.assertIn("boardView.setRefereeMarks(predictedDead,null)",native)
-        self.assertIn("boardView.setRefereeMarks(null,null)",native)
-        self.assertIn("nativeRefereeMarkedBoard = snapshot",native)
-        self.assertIn('setPositiveButton("查看棋盘",null)',native)
-        self.assertIn('setNeutralButton("清除标记"',native)
-        self.assertIn("board.getMoveCount() != nativeRefereeMarkedMoves",activity)
-        self.assertIn("board != snapshot || board.getMoveCount() != moves",native)
-        self.assertIn("棋局尚未结束",native)
-        for forbidden in ("board.playMove(", "engine.playMove(", "engine.undo(",
-                          "board.resumeAfterPasses()", "SmartReferee.analyze(",
-                          "EndgameAdjudicator.analyze(", "searchRecommendations("):
-            self.assertNotIn(forbidden,native)
-        self.assertIn('sendCommandSync("final_score")',engine)
-        self.assertIn('sendCommandSync("final_status_list dead")',engine)
-        self.assertIn("parseGtpMultilineResponse(waitForResponse(30000))",engine)
+        for old in ("startNativeReferee(", "inspectUnfinishedPosition(", "endgameCategory(",
+                    "REFEREE_ENDGAME_RESULT", "REFEREE_NATIVE_GTP", "ENDGAME_TWO_SIDE_SEARCH"):
+            self.assertNotIn(old,activity)
+        for old in ("inspectPositionNative(", "runNativeEndgameAnalysis(",
+                    "NativePositionInspection", "NativePassComparison", "needsEndgameRefinement("):
+            self.assertNotIn(old,engine)
+        self.assertIn('sendCommandSync("kata-raw-nn 0")',engine)
 
-    def test_optional_unfinished_check_uses_native_search_and_exact_board_signals(self):
+    def test_no_pass_search_is_hidden_behind_smart_referee(self):
         root = Path(__file__).resolve().parents[1]
         activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
-        board = (root/"app/src/main/java/com/badukai/game/GoBoard.java").read_text(encoding="utf-8")
-        engine = (root/"app/src/main/java/com/badukai/engine/KataGoEngine.java").read_text(encoding="utf-8")
         quick = activity.split("private void showQuickNnRefereeEstimate()",1)[1].split(
-            "private static String refereeSearchSummary",1)[0]
-        self.assertIn('setNegativeButton("局面检查", (dialog,which) -> inspectUnfinishedPosition())',quick)
-        inspection = activity.split("private void inspectUnfinishedPosition()",1)[1].split(
             "private void startSmartReferee()",1)[0]
-        for status in ('"有打劫"', '"官子未收完"', '"建议继续下棋"', '"需要复核"', '"不能确认"', '"基本收官"'):
-            self.assertIn(status,inspection)
-        for symbol in ("snapshot.countAtariGroups()", "snapshot.getSimpleKoPoint()",
-                       "engine.inspectPositionNative(", "size,12,0.5", "size,24,0.5",
-                       "nativeInfo.black.estimatedMoveBenefit", "nativeInfo.white.estimatedMoveBenefit",
-                       "nativeInfo.highVariationPoints", "REFEREE_ENDGAME_RESULT",
-                       "resumeFromReferee()", 'setNegativeButton("详细数子"'):
-            self.assertIn(symbol,inspection)
-        # The fast check must NEVER run native final_score/dead searches implicitly.
-        self.assertNotIn("engine.getFinalScore(",inspection)
-        self.assertNotIn("engine.getFinalDeadStones(",inspection)
-        self.assertIn("final long searchMs =",inspection)
-        self.assertIn("KataGoEngine.needsEndgameRefinement(quickInfo,atariGroups)",inspection)
-        self.assertIn("refinementFailed = refinedInfo == null;",inspection)
-        self.assertIn("verdictChanged = endgameCategory(quickInfo) != endgameCategory(refinedInfo);",inspection)
-        self.assertIn('status = "需要复核";',inspection)
-        self.assertIn("refineMs=%d",inspection)
-        self.assertIn("quickMs=%d",inspection)
-        self.assertIn("visits=%d",inspection)
-        self.assertIn("simpleKo != null ? 0 : didRefine ? 24 : 12",inspection)
-        self.assertIn("final long fastMs = quickMs, reviewedMs = refineMs;",inspection)
-        self.assertIn("final KataGoEngine.NativePositionInspection nativeInfo = refinedInfo != null ? refinedInfo : quickInfo;",inspection)
-        self.assertIn("public static boolean needsEndgameRefinement",engine)
-        self.assertIn("nearEndgameBoundary(blackGain,0.5,0.3)",engine)
-        self.assertIn("nearEndgameBoundary(whiteGain,1.5,0.4)",engine)
-        self.assertIn('scoreRequested=false',inspection)
-        self.assertIn('status = "基本收官";',inspection)
-        self.assertIn('dialog.setNegativeButton("详细数子", (d,w) -> startNativeReferee())',inspection)
-        self.assertIn('KataGo PASS 对照未发现明显的继续落子收益',inspection)
-        self.assertIn('双方还没有正式停棋',inspection)
-        native = activity.split("private void startNativeReferee()",1)[1].split(
-            "private static String refereeSearchSummary",1)[0]
-        self.assertIn("engine.getFinalScore()",native)
-        self.assertIn("engine.getFinalDeadStones()",native)
-        # Screenshot regression: white H9 +1.44 and black H9 -0.29 must enter the
-        # small remaining endgame branch, not incorrectly claim native scoring failed.
-        self.assertIn("else if (blackGain > 0.5 || whiteGain > 0.5)",inspection)
-        self.assertIn('status = "建议继续下棋";',inspection)
-        self.assertNotIn("PASS 对照接近，但原生计分或死子预测未完成",inspection)
-        self.assertIn('Point focusPoint = Point.fromGtp(focusMove,size);',inspection)
-        self.assertIn('boardView.setEndgameAlerts(java.util.Collections.singleton(focusPoint));',inspection)
-        self.assertIn('endgameInspectionMarkedBoard = snapshot;',inspection)
-        self.assertIn('snapshot.get(focusPoint) == Intersection.EMPTY',inspection)
-        self.assertIn('已在棋盘用橙圈标出该点',inspection)
-        self.assertIn('showFocus ? focusMove : "none"',inspection)
-        board_view = (root/"app/src/main/java/com/badukai/ui/GoBoardView.java").read_text(encoding="utf-8")
-        self.assertIn("drawEndgameAlerts(canvas);",board_view)
-        self.assertIn("public void setEndgameAlerts(Set<Point> alerts)",board_view)
-        render = activity.split("private void render(String message)",1)[1]
-        self.assertIn("board.getMoveCount() != endgameInspectionMarkedMoves",render)
-        self.assertIn("endgameInspectionMarkedBoard = null;",render)
-        self.assertIn("boardView.setEndgameAlerts(null);",render)
-        self.assertIn('setNeutralButton("查看详情"',inspection)
-        self.assertNotIn("else if (ended && atariGroups == 0",inspection)
-        self.assertIn("public Point getSimpleKoPoint()",board)
-        self.assertIn("public int countAtariGroups()",board)
-        self.assertIn("countLiberties(group) == 1",board)
-        self.assertIn("public NativePositionInspection inspectPositionNative(",engine)
-        self.assertIn("allow \" + color + \" pass 1",engine)
-        self.assertIn("ownershipStdev true",engine)
-        self.assertIn("parseSearchRecommendations(normal)",engine)
-        self.assertIn("parseSearchRecommendations(forced)",engine)
-        self.assertIn("kata-set-param maxVisits \" + oldVisits",engine)
-        for forbidden in ("engine.playMove(", "board.playMove(", "engine.undo(",
-                          "SmartReferee.analyze(", "EndgameAdjudicator.analyze("):
-            self.assertNotIn(forbidden,inspection)
+        legacy = activity.split("private void startSmartReferee()",1)[1].split(
+            "private void ",1)[0]
+        self.assertEqual(quick.count("engine.evaluatePosition(size)"),1)
+        self.assertEqual(legacy.count("engine.evaluatePosition(size)"),1)
+        self.assertIn("SmartReferee.analyze(snapshot, nn.whiteOwnership)",legacy)
+        self.assertIn("EndgameAdjudicator.analyze(snapshot, nn == null ? null : nn.whiteOwnership)",legacy)
+        self.assertNotIn("engine.searchRecommendations(",legacy)
+        self.assertNotIn("kata-search_analyze",legacy)
+        self.assertIn("final MidgameTacticalReview.Result tactical = null;",legacy)
 
     def test_midgame_referee_is_available_without_passes_or_scoring(self):
         root = Path(__file__).resolve().parents[1]
         activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
-        entry = activity.split("private void showEndgameScoringOptions()",1)[1].split("private static String refereeSearchSummary",1)[0]
+        entry = activity.split("private void showEndgameScoringOptions()",1)[1].split(
+            "private void startSmartReferee()",1)[0]
         self.assertNotIn('if (!board.isGameOver()) {',entry)
-        self.assertIn('showQuickNnRefereeEstimate();',entry)
-        self.assertIn('setNeutralButton("KataGo 原生裁判", (dialog,which) -> startNativeReferee())',entry)
+        self.assertIn("showQuickNnRefereeEstimate();",entry)
+        self.assertNotIn("startNativeReferee(",entry)
+        self.assertNotIn("inspectUnfinishedPosition(",entry)
         begin = activity.split("private void startSmartReferee()",1)[1].split("engineExecutor.execute",1)[0]
         self.assertNotIn('!board.isGameOver()',begin)
-        self.assertIn('final boolean endedAtStart = board.isGameOver()',begin)
+        self.assertIn("final boolean endedAtStart = board.isGameOver()",begin)
         resume = activity.split("private void resumeFromReferee()",1)[1]
-        midgame = resume.split("if (!board.isGameOver()) {",1)[1].split("if (!board.canResumeAfterPasses())",1)[0]
+        midgame = resume.split("if (!board.isGameOver()) {",1)[1].split(
+            "if (!board.canResumeAfterPasses())",1)[0]
         self.assertIn("refereeMode = false;",midgame)
         self.assertIn("boardView.setEndgameAlerts(null)",midgame)
         self.assertNotIn("engine.undo()",midgame)

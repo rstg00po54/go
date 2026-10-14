@@ -928,8 +928,7 @@ public class MainActivity extends AppCompatActivity {
             } else showRefereeConfirmation();
             return;
         }
-        // Fast raw NN estimate first, just like the automatic pass scoring.
-        // Explicit dead-group search remains available as a separate action.
+        // One non-playing raw NN evaluation. No optional MCTS or native GTP referee.
         showQuickNnRefereeEstimate();
     }
 
@@ -987,292 +986,7 @@ public class MainActivity extends AppCompatActivity {
                                 ? "\n\n双方已停棋，以上仍是预估，不是确认数子结果。"
                                 : "\n\n当前棋形估算，仅供参考；不代表已经判定死活。"))
                         .setPositiveButton(gameEnded ? "关闭" : "继续下棋",null)
-                        .setNeutralButton("KataGo 原生裁判", (dialog,which) -> startNativeReferee())
-                        .setNegativeButton("局面检查", (dialog,which) -> inspectUnfinishedPosition())
                         .show();
-            });
-        });
-    }
-
-    /**
-     * Opt-in KataGo GTP final-score and dead-stone estimation.
-     * Does not pass, undo, or alter the board. Midgame results are predictions.
-     */
-    private void startNativeReferee() {
-        if (!engineReady || !gameReady || evaluating || thinking || variationBoard != null) return;
-        evaluating = true;
-        final GoBoard snapshot = board;
-        final int moves = board.getMoveCount(), size = boardSize;
-        final boolean endedAtStart = board.isGameOver();
-        final long startedNs = System.nanoTime();
-        nativeRefereeMarkedBoard = null;
-        boardView.setRefereeMarks(null,null);
-        endgameInspectionMarkedBoard = null;
-        boardView.setEndgameAlerts(null);
-        render("智能裁判：KataGo 正在检查形势与死子...");
-        engineExecutor.execute(() -> {
-            String nativeScore = null, nativeDead = null;
-            final long scoreStartNs = System.nanoTime();
-            try {
-                nativeScore = engine.getFinalScore();
-            } catch (RuntimeException ex) {
-                Log.w(TAG,"Native KataGo final_score failed",ex);
-            }
-            final long scoreMs = (System.nanoTime()-scoreStartNs)/1000000L;
-            final String preliminaryScore = nativeScore;
-            mainHandler.post(() -> {
-                if (board == snapshot && board.getMoveCount() == moves && boardSize == size && evaluating)
-                    render(preliminaryScore == null ? "KataGo 正在判断死子..."
-                            : "KataGo 已估分 " + preliminaryScore.trim() + "，正在判断死子...");
-            });
-            final long deadStartNs = System.nanoTime();
-            try {
-                nativeDead = engine.getFinalDeadStones();
-            } catch (RuntimeException ex) {
-                Log.w(TAG,"Native KataGo final_status_list dead failed",ex);
-            }
-            final long deadMs = (System.nanoTime()-deadStartNs)/1000000L;
-            final String score = nativeScore, deadVertices = nativeDead;
-            mainHandler.post(() -> {
-                if (board != snapshot || board.getMoveCount() != moves || boardSize != size) {
-                    evaluating = false;
-                    return;
-                }
-                evaluating = false;
-                if (score == null && deadVertices == null) {
-                    render("KataGo 原生裁判暂不可用");
-                    new AlertDialog.Builder(this).setTitle("智能裁判")
-                            .setMessage("KataGo 原生计分和死子判断都未返回结果，请稍后重试。")
-                            .setPositiveButton("关闭",null).show();
-                    return;
-                }
-                Set<Point> predictedDead = new HashSet<>();
-                if (deadVertices != null && !deadVertices.trim().isEmpty()) {
-                    for (String vertex : deadVertices.trim().split("\\s+")) {
-                        Point point = Point.fromGtp(vertex,size);
-                        if (point != null && board.get(point) != Intersection.EMPTY) predictedDead.add(point);
-                    }
-                }
-                String estimate = score == null || score.trim().isEmpty()
-                        ? "计分预测暂不可用" : "预测结果：" + score.trim();
-                String deadInfo = deadVertices == null ? "死子预测暂不可用"
-                        : "KataGo 预测死子 " + predictedDead.size() + " 颗";
-                String caution = endedAtStart
-                        ? "双方已停棋；结果仅供复核，正式数子仍需确认。"
-                        : "棋局尚未结束；这是当前局面的预测，不代表对局自动结束。";
-                Log.i(TAG,String.format(Locale.US,
-                        "REFEREE_NATIVE_GTP moves=%d terminal=%s score=%s dead=%d scoreMs=%d deadMs=%d elapsedMs=%d",
-                        moves,endedAtStart,score,predictedDead.size(),scoreMs,deadMs,
-                        (System.nanoTime()-startedNs)/1000000L));
-                nativeRefereeMarkedBoard = snapshot;
-                nativeRefereeMarkedMoves = moves;
-                boardView.setRefereeMarks(predictedDead,null);
-                render("KataGo 原生裁判：" + estimate);
-                new AlertDialog.Builder(this).setTitle("智能裁判 · KataGo 原生预测")
-                        .setMessage(estimate + "\n" + deadInfo
-                                + (predictedDead.isEmpty() ? "" : "\n棋盘红叉为 KataGo 预测死子。")
-                                + "\n\n" + caution)
-                        .setPositiveButton("查看棋盘",null)
-                        .setNeutralButton("清除标记",(dialog,which) -> {
-                            nativeRefereeMarkedBoard = null;
-                            boardView.setRefereeMarks(null,null);
-                        })
-                        .setOnDismissListener(dialog -> {
-                            if (board == snapshot && board.getMoveCount() == moves && !refereeMode)
-                                render(endedAtStart
-                                        ? (finalScoreText == null ? "终局预估" : finalScoreText)
-                                        : (currentPlayer == playerColor ? "轮到你了" : "轮到 AI"));
-                        }).show();
-            });
-        });
-    }
-
-    private static String refereeSearchSummary(String side, List<KataGoEngine.SearchRecommendation> choices) {
-        if (choices.isEmpty()) return side + "先：暂无搜索候选";
-        KataGoEngine.SearchRecommendation best = choices.get(0);
-        String opponent = "黑".equals(side) ? "白" : "黑";
-        String leader = best.scoreLead >= 0 ? side : opponent;
-        StringBuilder result = new StringBuilder(String.format(Locale.CHINA,
-                "%s先：%s（%s方搜索胜率 %.1f%%，预计%s领先 %.1f 目，候选访问 %d）",
-                side,best.move,side,best.winrate*100.0,leader,Math.abs(best.scoreLead),best.visits));
-        if (!best.pvMoves.isEmpty()) {
-            result.append("；变化：");
-            for (int i=0; i<best.pvMoves.size() && i<6; i++) {
-                if (i>0) result.append(' ');
-                result.append(best.pvMoves.get(i));
-            }
-        }
-        return result.toString();
-    }
-
-    /**
-     * Four user-facing results from strict simple-ko state plus native KataGo PASS comparisons.
-     * Not a self-written Go endgame/life-and-death solver. Does not play or pass for either side.
-     */
-    /** Display-only PASS comparison category; intentionally does not determine life/death. */
-    private static int endgameCategory(KataGoEngine.NativePositionInspection info) {
-        double gain = Math.max(info.black.estimatedMoveBenefit,info.white.estimatedMoveBenefit);
-        if (gain >= 1.5) return 3;
-        if (info.highVariationPoints > 0) return 2;
-        if (gain > 0.5) return 1;
-        return 0;
-    }
-
-    private void inspectUnfinishedPosition() {
-        if (!engineReady || !gameReady || evaluating || thinking || variationBoard != null) return;
-        evaluating = true;
-        final GoBoard snapshot = board;
-        final int moves = board.getMoveCount(), size = boardSize;
-        final boolean ended = board.isGameOver();
-        final StoneColor side = currentPlayer;
-        final Point simpleKo = snapshot.getSimpleKoPoint();
-        final int atariGroups = snapshot.countAtariGroups();
-        final long startedNs = System.nanoTime();
-        render("KataGo：正在比较双方继续落子与 PASS...");
-        engineExecutor.execute(() -> {
-            KataGoEngine.NativePositionInspection quickInfo = null, refinedInfo = null;
-            boolean refined = false, refinementFailed = false, verdictChanged = false;
-            long quickMs = 0, refineMs = 0;
-            if (simpleKo == null) {
-                String toPlay = side == StoneColor.BLACK ? "black" : "white";
-                long quickStart = System.nanoTime();
-                try {
-                    quickInfo = engine.inspectPositionNative(toPlay,size,12,0.5);
-                } catch (RuntimeException ex) {
-                    Log.w(TAG,"KataGo 12-visit endgame comparison unavailable",ex);
-                }
-                quickMs = (System.nanoTime()-quickStart)/1000000L;
-                if (KataGoEngine.needsEndgameRefinement(quickInfo,atariGroups)) {
-                    refined = true;
-                    mainHandler.post(() -> {
-                        if (board == snapshot && board.getMoveCount() == moves && boardSize == size)
-                            render("KataGo：发现疑点，正在用 24 次访问复核...");
-                    });
-                    long refineStart = System.nanoTime();
-                    try {
-                        refinedInfo = engine.inspectPositionNative(toPlay,size,24,0.5);
-                    } catch (RuntimeException ex) {
-                        Log.w(TAG,"KataGo 24-visit endgame review unavailable",ex);
-                    }
-                    refineMs = (System.nanoTime()-refineStart)/1000000L;
-                    refinementFailed = refinedInfo == null;
-                    if (quickInfo != null && refinedInfo != null)
-                        verdictChanged = endgameCategory(quickInfo) != endgameCategory(refinedInfo);
-                }
-            }
-            // Detailed final_score/dead-stone commands remain strictly opt-in.
-            final long fastMs = quickMs, reviewedMs = refineMs;
-            final boolean didRefine = refined, reviewFailed = refinementFailed, categoryChanged = verdictChanged;
-            final KataGoEngine.NativePositionInspection nativeInfo = refinedInfo != null ? refinedInfo : quickInfo;
-            final long searchMs = (System.nanoTime()-startedNs)/1000000L;
-            mainHandler.post(() -> {
-                if (board != snapshot || board.getMoveCount() != moves || boardSize != size) {
-                    evaluating = false;
-                    return;
-                }
-                evaluating = false;
-                String status;
-                String explanation;
-                if (simpleKo != null) {
-                    status = "有打劫";
-                    explanation = "当前劫禁点：" + simpleKo.toGtp(size) + "。劫争尚未解决，请继续下棋。";
-                } else if (nativeInfo == null) {
-                    status = "不能确认";
-                    explanation = "KataGo 暂时无法完成双方 PASS 对照分析，请继续下棋或稍后重试。";
-                } else {
-                    double blackGain = nativeInfo.black.estimatedMoveBenefit;
-                    double whiteGain = nativeInfo.white.estimatedMoveBenefit;
-                    // These are conservative DISPLAY thresholds for two KataGo estimates,
-                    // not a locally implemented algorithm for calculating territory or life/death.
-                    if (blackGain >= 1.5 || whiteGain >= 1.5) {
-                        status = "官子未收完";
-                        explanation = "KataGo 认为继续落子仍有明显收益，可能是官子或局部攻防。建议继续下棋。";
-                    } else if (atariGroups > 0) {
-                        status = "建议继续下棋";
-                        explanation = "存在单气棋块，尚不能确认死活；建议继续下棋或复核。";
-                    } else if (nativeInfo.highVariationPoints > 0) {
-                        status = "需要复核";
-                        explanation = "KataGo 预测的归属存在明显波动，可能有死活或争议。";
-                    } else if (blackGain > 0.5 || whiteGain > 0.5) {
-                        status = "建议继续下棋";
-                        explanation = "KataGo 认为仍可能有小官子或局部攻防。";
-                    } else {
-                        status = "基本收官";
-                        explanation = ended
-                                ? "双方已停棋，KataGo PASS 对照未发现明显的继续落子收益。尚未确认死活与最终目数，可以点「详细数子」复核。"
-                                : "KataGo PASS 对照未发现明显的继续落子收益，但双方还没有正式停棋。可以申请数子或点「详细数子」复核。";
-                    }
-                }
-                if (reviewFailed) {
-                    status = "需要复核";
-                    explanation = "12 次访问初检发现疑点，但 24 次复核没有完整返回。当前建议仅供参考，请稍后再试。";
-                } else if (categoryChanged) {
-                    status = "需要复核";
-                    explanation = "12 次与 24 次访问的判断类别不一致，可能靠近官子收益阈值。暂不确认收官，请继续下棋或详细复核。";
-                }
-                // Highlight the suggested empty intersection on the actual board.
-                // Only a hint: KataGo is not placing a move or confirming life/death.
-                KataGoEngine.NativePassComparison focusSide = nativeInfo == null ? null
-                        : nativeInfo.white.estimatedMoveBenefit > nativeInfo.black.estimatedMoveBenefit
-                        ? nativeInfo.white : nativeInfo.black;
-                String focusMove = focusSide == null ? null : focusSide.bestMove;
-                Point focusPoint = Point.fromGtp(focusMove,size);
-                boolean showFocus = ("官子未收完".equals(status) || "建议继续下棋".equals(status)
-                        || "需要复核".equals(status)) && focusPoint != null
-                        && snapshot.get(focusPoint) == Intersection.EMPTY;
-                if (showFocus) {
-                    endgameInspectionMarkedBoard = snapshot;
-                    endgameInspectionMarkedMoves = moves;
-                    boardView.setEndgameAlerts(java.util.Collections.singleton(focusPoint));
-                    explanation += String.format(Locale.CHINA,
-                            "\n%s建议关注 %s（继续落子相对 PASS 约 %.2f 目）。已在棋盘用橙圈标出该点。",
-                            "black".equals(focusSide.player) ? "黑方" : "白方",
-                            focusMove,focusSide.estimatedMoveBenefit);
-                } else {
-                    endgameInspectionMarkedBoard = null;
-                    boardView.setEndgameAlerts(null);
-                }
-                String detail = nativeInfo == null ? "KataGo 原生分析没有返回足够数据。"
-                        : String.format(Locale.CHINA,
-                        "黑方 %s：继续落子相对 PASS 预计收益 %.2f 目。\n"
-                        + "白方 %s：继续落子相对 PASS 预计收益 %.2f 目。\n"
-                        + "归属波动最大 %.3f，明显波动点 %d 个。\n"
-                        + "这些数据不能证明双活、死活或复杂劫争已解决。",
-                        nativeInfo.black.bestMove,nativeInfo.black.estimatedMoveBenefit,
-                        nativeInfo.white.bestMove,nativeInfo.white.estimatedMoveBenefit,
-                        nativeInfo.maximumOwnershipStdev,nativeInfo.highVariationPoints);
-                String reviewDetail = didRefine
-                        ? String.format(Locale.CHINA,
-                        "\n搜索：12 次初检 %d ms，24 次复核 %d ms%s。",fastMs,reviewedMs,
-                        reviewFailed ? "（复核失败）" : categoryChanged ? "（判断有差异）" : "")
-                        : String.format(Locale.CHINA,"\n搜索：12 次初检 %d ms，无需追加复核。",fastMs);
-                final String detailedMessage = detail + reviewDetail;
-                final String dialogStatus = status;
-                String message = explanation
-                        + (showFocus ? "\n\n关闭弹窗后可在棋盘看到橙圈，落下一手后自动清除。" : "")
-                        + "\n\n以上为 KataGo 估计，不会自动结束或改动棋谱。";
-                Log.i(TAG,String.format(Locale.US,
-                        "REFEREE_ENDGAME_RESULT status=%s moves=%d terminal=%s ko=%s atari=%d blackGain=%.3f whiteGain=%.3f highVariation=%d visits=%d refined=%s refineFailed=%s categoryChanged=%s quickMs=%d refineMs=%d searchMs=%d scoreRequested=false focus=%s elapsedMs=%d",
-                        status,moves,ended,simpleKo == null ? "none" : simpleKo.toGtp(size),
-                        atariGroups,nativeInfo == null ? Double.NaN : nativeInfo.black.estimatedMoveBenefit,
-                        nativeInfo == null ? Double.NaN : nativeInfo.white.estimatedMoveBenefit,
-                        nativeInfo == null ? -1 : nativeInfo.highVariationPoints,
-                        simpleKo != null ? 0 : didRefine ? 24 : 12,didRefine,reviewFailed,categoryChanged,
-                        fastMs,reviewedMs,searchMs,showFocus ? focusMove : "none",
-                        (System.nanoTime()-startedNs)/1000000L));
-                render("局面检查：" + status);
-                AlertDialog.Builder dialog = new AlertDialog.Builder(this)
-                        .setTitle("智能裁判 · " + status).setMessage(message)
-                        .setPositiveButton("基本收官".equals(status) ? "关闭" : "继续下棋", (d,w) -> {
-                            if (!"基本收官".equals(dialogStatus) && ended
-                                    && board == snapshot && board.canResumeAfterPasses()) resumeFromReferee();
-                        })
-                        .setNeutralButton("查看详情", (d,w) -> new AlertDialog.Builder(this)
-                                .setTitle("KataGo 分析依据").setMessage(detailedMessage)
-                                .setPositiveButton("关闭",null).show());
-                if ("基本收官".equals(status))
-                    dialog.setNegativeButton("详细数子", (d,w) -> startNativeReferee());
-                dialog.show();
             });
         });
     }
@@ -1315,32 +1029,10 @@ public class MainActivity extends AppCompatActivity {
                 verdict = EndgameAdjudicator.analyze(snapshot, null);
             }
             final EndgameAdjudicator.Result decision = verdict;
-            String searchEvidence = "";
-            List<List<String>> blackVariations = new ArrayList<>(), whiteVariations = new ArrayList<>();
-            if ((!endedAtStart || decision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT) && nn != null) {
-                try {
-                    // Search as both sides, but NEVER treat the suggested moves as a solved life/death proof.
-                    List<KataGoEngine.SearchRecommendation> black = engine.searchRecommendations("black", 48, 1.0);
-                    List<KataGoEngine.SearchRecommendation> white = engine.searchRecommendations("white", 48, 1.0);
-                    for (KataGoEngine.SearchRecommendation move : black) blackVariations.add(move.pvMoves);
-                    for (KataGoEngine.SearchRecommendation move : white) whiteVariations.add(move.pvMoves);
-                    searchEvidence = "\n" + refereeSearchSummary("黑",black)
-                            + "\n" + refereeSearchSummary("白",white)
-                            + "\n以上仅是48次访问上限、每方1秒的短搜索估计；"
-                            + "候选变化可揭示攻防风险，但不是死活证明，仍需逐块复核。";
-                    Log.i(TAG, "ENDGAME_TWO_SIDE_SEARCH black="
-                            + (black.isEmpty() ? "none" : black.get(0).move)
-                            + " white=" + (white.isEmpty() ? "none" : white.get(0).move));
-                } catch (RuntimeException ex) {
-                    Log.w(TAG, "Endgame two-sided search unavailable; keep manual review", ex);
-                    searchEvidence = "\n双方先手搜索不可用，请人工确认；不能凭此认定已经结束。";
-                }
-            }
-            final MidgameTacticalReview.Result tactical = endedAtStart ? null
-                    : MidgameTacticalReview.analyze(snapshot,decision,blackVariations,whiteVariations);
-            if (tactical != null) Log.i(TAG,"MIDGAME_LOCAL_SEARCH candidates=" + tactical.candidates
-                    + " corroborated=" + tactical.searchSupported + " points=" + tactical.tacticalMoves.size());
-            final String mctsInfo = searchEvidence;
+            // Referee analysis is NN-only: no MCTS searches for either color.
+            // Midgame heuristic tactics require search PV corroboration, so omit them.
+            final MidgameTacticalReview.Result tactical = null;
+            final String mctsInfo = "";
             mainHandler.post(() -> {
                 evaluating = false;
                 if (board != snapshot || board.getMoveCount() != moves || boardSize != size) return;
@@ -1367,9 +1059,8 @@ public class MainActivity extends AppCompatActivity {
                 boardView.setRefereeMarks(refereeDead, refereeReview);
                 Set<Point> alerts = new HashSet<>();
                 if (!endedAtStart) {
-                    // Orange: tactical liberty corroborated by a local two-order
-                    // simulation and a short KataGo PV. Yellow: threatened stones.
-                    // No midgame red crosses, generic ownership or seki guesses.
+                    // Never invent a tactical recommendation from a low-confidence NN;
+                    // ongoing games receive only the quick NN estimate in the UI.
                     if (tactical != null) alerts.addAll(tactical.tacticalMoves);
                 } else {
                     for (EndgameAdjudicator.Finding finding : decision.findings) {
@@ -1452,7 +1143,7 @@ public class MainActivity extends AppCompatActivity {
                             prompt.append("· ").append(finding.message).append("\n");
                         }
                     } else {
-                        prompt.append("已经模拟双方在关键点先落一手，并参考短搜索变化；只是攻防提醒，不是死活结论。\n");
+                        prompt.append("仅用 NN 归属估计提示；不能证明死活或终局。\n");
                     }
                     prompt.append("\n点「继续下棋」关闭弹窗，争议标记仍保留。");
                     prompt.append(endedAtStart
