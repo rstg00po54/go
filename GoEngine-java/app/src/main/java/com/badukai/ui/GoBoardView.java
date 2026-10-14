@@ -17,8 +17,6 @@ import com.badukai.game.Point;
 import com.badukai.game.StoneColor;
 import com.badukai.util.DebugLog;
 
-import java.util.HashSet;
-import java.util.Set;
 
 public class GoBoardView extends View {
     private static final String TAG = "GoBoardView";
@@ -43,7 +41,6 @@ public class GoBoardView extends View {
     private GoBoard board = new GoBoard(19);
     private Point lastMove;
     private float[] ownershipWhite;
-    private Set<Point> refereeDead, refereeReview, refereeAlerts;
     private int ownershipMode = OWNERSHIP_OFF;
     private Point[] recommendedPoints;
     private float[] recommendedProbabilities;
@@ -83,19 +80,6 @@ public class GoBoardView extends View {
             ownershipWhite = values.clone();
             ownershipMode = OWNERSHIP_SQUARES;
         }
-        invalidate();
-    }
-
-    /** Red crossed circles = suggested/confirmed dead; amber rings = inspect by hand. */
-    public void setRefereeMarks(Set<Point> dead, Set<Point> review) {
-        refereeDead = dead == null ? null : new HashSet<>(dead);
-        refereeReview = review == null ? null : new HashSet<>(review);
-        invalidate();
-    }
-
-    /** Amber outlined candidate locations for ko or urgent endgame fighting. */
-    public void setEndgameAlerts(Set<Point> alerts) {
-        refereeAlerts = alerts == null ? null : new HashSet<>(alerts);
         invalidate();
     }
 
@@ -188,49 +172,8 @@ public class GoBoardView extends View {
         if (previewBoard == null) drawOwnership(canvas, n);
         drawStones(canvas, n, shown, previewBoard == null ? lastMove : null);
         if (previewBoard == null) {
-            drawDeadStoneOwnership(canvas, n);
             drawRecommendations(canvas);
-            drawRefereeMarks(canvas);
-            drawEndgameAlerts(canvas);
         } else drawPreviewMoveNumbers(canvas);
-    }
-
-    private void drawRefereeMarks(Canvas canvas) {
-        if (refereeDead == null && refereeReview == null) return;
-        paint.setShader(null);
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setStrokeWidth(Math.max(dp(2f), cellSize * 0.065f));
-        if (refereeReview != null) for (Point p : refereeReview) {
-            if (!board.isInside(p.x, p.y) || board.get(p) == Intersection.EMPTY) continue;
-            if (refereeDead != null && refereeDead.contains(p)) continue;
-            paint.setColor(Color.rgb(235, 166, 38));
-            canvas.drawCircle(padding + p.x * cellSize, padding + p.y * cellSize, cellSize * 0.40f, paint);
-        }
-        if (refereeDead != null) for (Point p : refereeDead) {
-            if (!board.isInside(p.x, p.y) || board.get(p) == Intersection.EMPTY) continue;
-            float cx = padding + p.x * cellSize, cy = padding + p.y * cellSize;
-            float r = cellSize * 0.36f;
-            paint.setColor(Color.rgb(218, 51, 51));
-            canvas.drawCircle(cx, cy, r, paint);
-            canvas.drawLine(cx - r * 0.68f, cy - r * 0.68f, cx + r * 0.68f, cy + r * 0.68f, paint);
-            canvas.drawLine(cx + r * 0.68f, cy - r * 0.68f, cx - r * 0.68f, cy + r * 0.68f, paint);
-        }
-        paint.setStyle(Paint.Style.FILL);
-    }
-
-    private void drawEndgameAlerts(Canvas canvas) {
-        if (refereeAlerts == null) return;
-        paint.setShader(null);
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setColor(Color.rgb(227, 110, 16));
-        paint.setStrokeWidth(Math.max(dp(2.5f), cellSize * 0.08f));
-        for (Point p : refereeAlerts) {
-            if (!board.isInside(p.x,p.y) || (refereeDead != null && refereeDead.contains(p))) continue;
-            float cx = padding + p.x * cellSize, cy = padding + p.y * cellSize;
-            float radius = cellSize * 0.47f;
-            canvas.drawCircle(cx,cy,radius,paint);
-        }
-        paint.setStyle(Paint.Style.FILL);
     }
 
     private void drawGrid(Canvas canvas, int n) {
@@ -325,29 +268,6 @@ public class GoBoardView extends View {
                 float cy = padding + y * cellSize;
                 if (ownershipMode == OWNERSHIP_PROBABILITY) drawOwnershipProbability(canvas, cx, cy, strength, white);
                 else drawOwnershipSquare(canvas, cx, cy, strength, white);
-            }
-        }
-        paint.setStyle(Paint.Style.FILL);
-    }
-
-    /** Mark only confidently predicted captured stones, in the opponent's color. */
-    private void drawDeadStoneOwnership(Canvas canvas, int n) {
-        if (ownershipMode == OWNERSHIP_OFF || ownershipWhite == null || ownershipWhite.length != n * n) return;
-        paint.setShader(null);
-        for (int y = 0; y < n; y++) {
-            for (int x = 0; x < n; x++) {
-                Intersection stone = board.get(x, y);
-                if (stone == Intersection.EMPTY) continue;
-                float whiteOwn = ownershipWhite[y * n + x];
-                if (!Float.isFinite(whiteOwn)) continue;
-                // White owns a black stone's point, or black owns a white stone's point.
-                boolean predictedDeadBlack = stone == Intersection.BLACK && whiteOwn >= OWNERSHIP_MARK_THRESHOLD;
-                boolean predictedDeadWhite = stone == Intersection.WHITE && whiteOwn <= -OWNERSHIP_MARK_THRESHOLD;
-                if (!predictedDeadBlack && !predictedDeadWhite) continue;
-                float cx = padding + x * cellSize, cy = padding + y * cellSize;
-                if (ownershipMode == OWNERSHIP_PROBABILITY)
-                    drawOwnershipProbability(canvas, cx, cy, Math.abs(whiteOwn), predictedDeadBlack);
-                else drawOwnershipSquare(canvas, cx, cy, Math.abs(whiteOwn), predictedDeadBlack);
             }
         }
         paint.setStyle(Paint.Style.FILL);
