@@ -1292,12 +1292,9 @@ public class MainActivity extends AppCompatActivity {
         clearRecommendations();
         gameResultText = null;
         finalScoreText = null;
-        finalDeadStones = null;
         lastAiMoveTimeMs = -1;
         nnAreaScoreBoard = null;
         nnAreaScoreMessage = null;
-        preciseScoreReady = false;
-        fastEndgameLead = Double.NaN;
         endgameEvaluation = null;
         boardView.setOwnership(null);
         winRateEpoch++;
