@@ -301,6 +301,10 @@ if(KATAGO_BUILD_JNI_LIBRARY)
     ${CMAKE_CURRENT_LIST_DIR}/../../../app/src/main/cpp/katago_jni.cpp
     ${CMAKE_CURRENT_LIST_DIR}/../../../app/src/main/cpp/EngineSession.cpp
   )
+  # The JNI library runs multiple GTP sessions in one Android process.
+  # Keep process-wide board hashes and ScoreValue lookup tables alive across
+  # session teardown; CLI executable retains ordinary per-run cleanup.
+  target_compile_definitions(katago PRIVATE KATAGO_EMBEDDED_GTP)
   target_include_directories(katago PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
   # Both CPU and GPU JNI libraries may coexist in one process. Keep all
   # internal KataGo C++ symbols local; JNIEXPORT remains publicly visible.
