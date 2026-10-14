@@ -27,7 +27,7 @@ On your existing Ubuntu developer machine with Android SDK API 35:
 ```bash
 cd /mnt/hgfs/D/code/go/GoEngine-java
 git fetch origin
-git switch feature/vivo-mediatek-litert
+git switch feature/rk3588-rknn
 bash tools/prepare_vivo_litert.sh
 ./gradlew :app:assembleDebug -PskipKataGoNative=true -PvivoProbeApk=true -PenableKataGoNpuJni=false -PenableKataGoGpuJni=false -PenableKataGoJniCore=false
 ```
@@ -66,5 +66,10 @@ requested or `MTK_SMOKE_PASS` appeared. LiteRT can fall back to CPU.**
 Check vendor delegate/partition logs and benchmark against CPU; a true
 backend integration also needs CPU-vs-NPU numerical output parity.
 
-The MediaTek runtime is not compatible with RK3588 RKNN graphs; the
-original RK3588 NPU backend remains on `feature/rk3588-rknn`.
+The MediaTek runtime is not compatible with RK3588 RKNN graphs. Both
+backends live in `feature/rk3588-rknn`, with runtime detection via
+`NpuHardware` (`Build.SOC_MODEL`, `Build.SOC_MANUFACTURER`, etc.).
+RK3588 keeps its validated RKNN GTP implementation; MediaTek LiteRT is still
+an independent inference probe and never advertises playable NPU mode.
+The probe APK needs its own build option because Rockchip's 4 KB
+`librknnrt.so` is not suitable for Vivo 16 KB-page devices.
