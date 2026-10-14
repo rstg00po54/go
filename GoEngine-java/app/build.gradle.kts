@@ -158,10 +158,17 @@ val compileKataGoNative = tasks.register<Exec>("compileKataGoNative") {
 
 val stageKataGoNative = tasks.register("stageKataGoNative") {
     group = "build"
-    description = "Stage KataGo executable for APK packaging"
+    description = "Stage 16 KB-aligned KataGo JNI libraries and optional PIE fallback"
     dependsOn(compileKataGoNative)
-    val inputExe = if (skipKataGoNative) File(katagoPrebuiltDir, "libkatago_exec.so") else katagoExecutable
-    inputs.file(inputExe)
+    // --apk-only must not blindly stage the legacy 4 KB-aligned PIE from jniLibs.
+    // Reuse an existing 16 KB-compatible PIE if present. JNI backends remain
+    // usable without PIE, but ProcessBuilder fallback is then unavailable.
+    val pieCandidates = if (skipKataGoNative) listOf(
+        File(katagoPrebuiltDir, "libkatago_exec.so"),
+        katagoExecutable,
+        rootProject.file("build/katago_android_arm64_eigen/libkatago_exec.so")
+    ) else listOf(katagoExecutable)
+    pieCandidates.filter { it.isFile }.forEach { inputs.file(it) }
     val sharedCpp = File(katagoPrebuiltDir, "libc++_shared.so")
     if (sharedCpp.isFile) inputs.file(sharedCpp)
     inputs.property("enableKataGoJniCore", enableKataGoJniCore)
@@ -170,84 +177,89 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
     if (enableKataGoGpuJni) inputs.file(katagoGpuJniFile)
     outputs.dir(katagoGeneratedJniDir)
     doLast {
-        if (!inputExe.isFile) throw GradleException("KataGo native executable missing: $inputExe")
-        if (!skipKataGoNative) {
-            val inspector = ProcessBuilder("readelf", "-h", inputExe.absolutePath).redirectErrorStream(true)
-            inspector.environment()["LC_ALL"] = "C"
-            val process = inspector.start()
-            val header = process.inputStream.bufferedReader().use { it.readText() }
-            val exitCode = process.waitFor()
-            println(header.lineSequence().filter { it.trimStart().startsWith("Type:") ||
-                it.trimStart().startsWith("Machine:") }.joinToString("\n"))
-            if (exitCode != 0 || !Regex("(?m)^\\s*Machine:\\s*AArch64\\b").containsMatchIn(header) ||
-                !Regex("(?m)^\\s*Type:\\s*DYN\\b").containsMatchIn(header)) {
-                throw GradleException("Expected Android AArch64 PIE executable. Actual readelf -h:\n$header")
-            }
-        }
-        val abiDir = File(katagoGeneratedJniDir, "arm64-v8a")
-        abiDir.mkdirs()
-        fun stageFile(source: File, name: String) {
-            val target = File(abiDir, name)
-            if (!target.isFile || Files.mismatch(source.toPath(), target.toPath()) != -1L) {
-                source.copyTo(target, overwrite = true)
-            }
-        }
-        stageFile(inputExe, "libkatago_exec.so")
-        // Only stage C++ shared runtime if the linked ELF really depends on it.
-        // Our native builds use c++_static: shipping the old prebuilt here was
-        // the cause of an unnecessary 4 KB LOAD alignment warning.
-        if (enableKataGoJniCore) {
-            if (!katagoJniCoreFile.isFile) throw GradleException(
-                "JNI core missing: $katagoJniCoreFile. Run bash tools/build_katago_from_source.sh eigenjni first.")
-            stageFile(katagoJniCoreFile, "libkatago.so")
-        } else {
-            // An ordinary APK build must not accidentally retain an earlier
-            // opt-in JNI experiment in the persistent generated output folder.
-            File(abiDir, "libkatago.so").delete()
-        }
-        if (enableKataGoGpuJni) {
-            if (!katagoGpuJniFile.isFile) throw GradleException(
-                "GPU JNI library missing: $katagoGpuJniFile. Run bash tools/build_katago_from_source.sh opencljni first.")
-            // GPU JNI has its own SONAME and symbols, safe alongside the CPU JNI in one process.
-            stageFile(katagoGpuJniFile, "libkatago_gpu.so")
-        } else {
-            File(abiDir, "libkatago_gpu.so").delete()
-        }
-        val stagedBinaries = mutableListOf(File(abiDir, "libkatago_exec.so"))
-        if (enableKataGoJniCore) stagedBinaries.add(File(abiDir, "libkatago.so"))
-        if (enableKataGoGpuJni) stagedBinaries.add(File(abiDir, "libkatago_gpu.so"))
         fun readElf(file: File, option: String): String {
             val process = ProcessBuilder("readelf", "-W", option, file.absolutePath).redirectErrorStream(true).start()
             val output = process.inputStream.bufferedReader().use { it.readText() }
             if (process.waitFor() != 0) throw GradleException("readelf $option failed on ${file.name}: $output")
             return output
         }
+        fun elfLoadAlignments(file: File): List<Long?> {
+            return readElf(file, "-l").lineSequence()
+                .filter { it.trimStart().startsWith("LOAD ") }
+                .map { it.trim().split(Regex("\\s+")).last().removePrefix("0x").toLongOrNull(16) }
+                .toList()
+        }
+        fun isAlignedPie(file: File): Boolean {
+            if (!file.isFile) return false
+            val header = readElf(file, "-h")
+            if (!Regex("(?m)^\\s*Machine:\\s*AArch64\\b").containsMatchIn(header)
+                    || !Regex("(?m)^\\s*Type:\\s*DYN\\b").containsMatchIn(header)) return false
+            val loads = elfLoadAlignments(file)
+            return loads.isNotEmpty() && loads.all { it != null && it >= 16384L && it % 16384L == 0L }
+        }
+        val executable = pieCandidates.firstOrNull { isAlignedPie(it) }
+        if (executable == null && !enableKataGoJniCore) {
+            throw GradleException("No 16 KB-aligned KataGo PIE and CPU JNI is disabled. " +
+                "Run bash tools/build_katago_from_source.sh eigen to build a compatible executable, " +
+                "or build CPU JNI with bash tools/build_katago_from_source.sh eigenjni.")
+        }
+        val abiDir = File(katagoGeneratedJniDir, "arm64-v8a")
+        abiDir.mkdirs()
+        fun stageFile(source: File, name: String) {
+            val target = File(abiDir, name)
+            if (!target.isFile || Files.mismatch(source.toPath(), target.toPath()) != -1L)
+                source.copyTo(target, overwrite = true)
+        }
+        val stagedBinaries = mutableListOf<File>()
+        if (executable != null) {
+            stageFile(executable, "libkatago_exec.so")
+            stagedBinaries.add(File(abiDir, "libkatago_exec.so"))
+            println("Using 16 KB-aligned KataGo PIE: ${executable.absolutePath}")
+        } else {
+            File(abiDir, "libkatago_exec.so").delete()
+            logger.warn("No 16 KB-aligned KataGo PIE found; omitting libkatago_exec.so. " +
+                "CPU/GPU JNI work, but PIE/ProcessBuilder fallback is unavailable in this APK.")
+        }
+        if (enableKataGoJniCore) {
+            if (!katagoJniCoreFile.isFile) throw GradleException(
+                "JNI core missing: $katagoJniCoreFile. Run bash tools/build_katago_from_source.sh eigenjni first.")
+            stageFile(katagoJniCoreFile, "libkatago.so")
+            stagedBinaries.add(File(abiDir, "libkatago.so"))
+        } else {
+            File(abiDir, "libkatago.so").delete()
+        }
+        if (enableKataGoGpuJni) {
+            if (!katagoGpuJniFile.isFile) throw GradleException(
+                "GPU JNI library missing: $katagoGpuJniFile. Run bash tools/build_katago_from_source.sh opencljni first.")
+            stageFile(katagoGpuJniFile, "libkatago_gpu.so")
+            stagedBinaries.add(File(abiDir, "libkatago_gpu.so"))
+        } else {
+            File(abiDir, "libkatago_gpu.so").delete()
+        }
         val needsCppShared = stagedBinaries.any { file ->
-            readElf(file, "-d").lineSequence().any { it.contains("(NEEDED)") && it.contains("[libc++_shared.so]") }
+            readElf(file, "-d").lineSequence().any {
+                it.contains("(NEEDED)") && it.contains("[libc++_shared.so]")
+            }
         }
         val stagedCpp = File(abiDir, "libc++_shared.so")
         if (needsCppShared) {
             if (!sharedCpp.isFile) throw GradleException(
-                "KataGo requires libc++_shared.so but it is missing. Rebuild KataGo with ANDROID_STL=c++_static " +
+                "KataGo requires libc++_shared.so but it is missing. Rebuild with ANDROID_STL=c++_static " +
                 "or supply a 16 KB-aligned runtime from NDK r28+.")
             stageFile(sharedCpp, "libc++_shared.so")
             stagedBinaries.add(stagedCpp)
         } else {
-            // Remove stale copies from earlier incremental Gradle builds.
             stagedCpp.delete()
         }
         for (file in stagedBinaries) {
-            val loads = readElf(file, "-l").lineSequence()
-                .filter { it.trimStart().startsWith("LOAD ") }
-                .map { it.trim().split(Regex("\\s+")).last().removePrefix("0x").toLongOrNull(16) }
-                .toList()
+            val loads = elfLoadAlignments(file)
             if (loads.isEmpty() || loads.any { it == null || it < 16384L || it % 16384L != 0L })
                 throw GradleException("16 KB ELF LOAD alignment failed: ${file.absolutePath}. " +
                     "p_align=${loads.joinToString()}. Rebuild with 16 KB linker flags; " +
                     "for old prebuilts use a matching 16 KB-aligned replacement.")
             println("16 KB ELF LOAD alignment OK: ${file.name} p_align=${loads.joinToString()}")
         }
-        println("KataGo native binary ready: ${File(abiDir, "libkatago_exec.so")}")
+        println("KataGo native libraries ready in: ${abiDir.absolutePath}")
     }
 }
 
