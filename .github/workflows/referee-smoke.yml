@@ -22,6 +22,8 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+      - name: Make adb available to host-side smoke harness tests
+        run: sudo apt-get update -qq && sudo apt-get install -y adb
       - name: Compile and test actual referee Java classes
         run: python3 tools/test_smart_referee.py
       - name: Syntax-check real Android referee benchmark
