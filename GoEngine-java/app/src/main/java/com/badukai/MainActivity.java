@@ -22,6 +22,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.badukai.engine.KataGoEngine;
+import com.badukai.engine.KataGoMediaTekLiteRt;
 import com.badukai.engine.GpuTuneCache;
 import com.badukai.engine.GpuStartupLogProgress;
 import com.badukai.engine.KataGoOpenCLProbe;
@@ -200,10 +201,55 @@ public class MainActivity extends AppCompatActivity {
             startDebugRefereeSmoke();
         } else if (isNpuSmokeIntent()) {
             startDebugNpuSwitchSmoke();
+        } else if (isMtkSmokeIntent()) {
+            startDebugMtkSmoke();
         } else if (!jniGtpSmoke && !jniGtpRepeat) {
             showGpuStartupScreen(boardSize, selectedBackend);
             startEngine();
         }
+    }
+
+    private boolean isMtkSmokeIntent() {
+        return (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+                && getIntent() != null && getIntent().getBooleanExtra("mtk_litert_smoke", false);
+    }
+
+    private void startDebugMtkSmoke() {
+        String id = getIntent().getStringExtra("mtk_smoke_id");
+        if (id == null || !id.matches("[a-zA-Z0-9_-]{1,40}")) {
+            Log.e("KataGoMTK", "MTK_SMOKE_FAIL id=invalid reason=Missing_run_id");
+            return;
+        }
+        final int size = getIntent().getIntExtra("mtk_board_size", 9);
+        Log.i("KataGoMTK", "MTK_SMOKE_BEGIN id=" + id + " board=" + size);
+        render("MediaTek LiteRT NPU 模型检查中...");
+        engineExecutor.execute(() -> {
+            try {
+                if (!KataGoMediaTekLiteRt.isMediaTek()) throw new IllegalStateException("Not a MediaTek phone");
+                if (size != 9 && size != 13 && size != 19) throw new IllegalArgumentException("Unsupported board");
+                String filename = "katago_10b_" + size + "x" + size;
+                File dir = new File(getCacheDir(), "mtk_litert_smoke");
+                if (!dir.exists() && !dir.mkdirs()) throw new java.io.IOException("Failed to create model cache");
+                File graph = new File(dir, filename + ".tflite");
+                File manifest = new File(dir, filename + ".json");
+                try (InputStream input = getAssets().open("engine/" + filename + ".tflite")) {
+                    Files.copy(input, graph.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                }
+                try (InputStream input = getAssets().open("engine/" + filename + ".json")) {
+                    Files.copy(input, manifest.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                }
+                try (KataGoMediaTekLiteRt runner = new KataGoMediaTekLiteRt(this, graph, manifest, size)) {
+                    for (int i=0;i<3;i++) Log.i("KataGoMTK", runner.smokeOnce());
+                }
+                Log.i("KataGoMTK", "MTK_SMOKE_PASS id=" + id + " board=" + size
+                        + " tfliteInference=true hardwareExecution=UNVERIFIED");
+                mainHandler.post(() -> render("LiteRT 模型推理成功；NPU 硬件调用尚待确认"));
+            } catch (Throwable error) {
+                Log.e("KataGoMTK", "MTK_SMOKE_FAIL id=" + id + " board=" + size
+                        + " reason=" + error, error);
+                mainHandler.post(() -> render("手机 NPU 检查失败：" + error.getMessage()));
+            }
+        });
     }
 
     // ADB-only NPU regression: same Java engine, sequential fixed-shape RKNN graphs.
