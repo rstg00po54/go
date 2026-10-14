@@ -28,6 +28,9 @@ val rknnModelAsset = file("src/main/assets/engine/katago_10b_19x19.rknn")
 val enableKataGoNpuJni = providers.gradleProperty("enableKataGoNpuJni")
     .map { it.equals("true", ignoreCase = true) }
     .getOrElse(cachedNpuJni.isFile && rknnSdkRuntime.isFile && rknnModelAsset.isFile)
+val allow4kRknnRuntime = providers.gradleProperty("allow4kRknnRuntime")
+    .map { it.equals("true", ignoreCase = true) }
+    .getOrElse(System.getenv("ALLOW_4K_RKNN_RUNTIME") == "1")
 
 android {
     namespace = "com.badukai"
@@ -189,6 +192,7 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
     inputs.property("enableKataGoJniCore", enableKataGoJniCore)
     inputs.property("enableKataGoGpuJni", enableKataGoGpuJni)
     inputs.property("enableKataGoNpuJni", enableKataGoNpuJni)
+    inputs.property("allow4kRknnRuntime", allow4kRknnRuntime)
     if (enableKataGoJniCore) inputs.file(katagoJniCoreFile)
     if (enableKataGoGpuJni) inputs.file(katagoGpuJniFile)
     if (enableKataGoNpuJni) {
@@ -211,9 +215,9 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
                 .toList()
         }
         val pieInspector = rootProject.file("tools/check_katago_pie.py")
-        fun isAlignedPie(file: File): Boolean {
+        fun isAlignedPie(file: File, pageSize: Int = 16384): Boolean {
             if (!file.isFile) return false
-            val process = ProcessBuilder("python3", pieInspector.absolutePath, file.absolutePath)
+            val process = ProcessBuilder("python3", pieInspector.absolutePath, "--page-size", pageSize.toString(), file.absolutePath)
                 .redirectErrorStream(true).start()
             val verdict = process.inputStream.bufferedReader().use { it.readText() }.trim()
             val accepted = process.waitFor() == 0
@@ -279,10 +283,15 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
         } else {
             stagedCpp.delete()
         }
-        // Reuse the same ARM64 + PIE + 16 KB validator as build.sh.
+        // Our own binaries MUST remain 16 KB aligned. A known Rockchip v2.3.2
+        // runtime is shipped only for opt-in RK3588 Android with 4 KB pages.
+        // This exception does NOT make an APK usable on a 16 KB page-size device.
         for (file in stagedBinaries) {
-            if (!isAlignedPie(file))
-                throw GradleException("Invalid or non-16 KB-aligned Android ARM64 native binary: ${file.absolutePath}")
+            val vendor4kException = allow4kRknnRuntime && enableKataGoNpuJni && file.name == "librknnrt.so"
+            if (!isAlignedPie(file, if (vendor4kException) 4096 else 16384))
+                throw GradleException("Invalid or insufficiently aligned Android ARM64 native binary: ${file.absolutePath}")
+            if (vendor4kException)
+                logger.warn("RK3588 4 KB ONLY: packaged Rockchip librknnrt.so prevents 16 KB page-size compatibility")
         }
         println("KataGo native libraries ready in: ${abiDir.absolutePath}")
     }
