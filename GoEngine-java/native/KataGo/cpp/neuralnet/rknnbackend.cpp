@@ -55,7 +55,16 @@ struct KataGoRknnRunner::Impl {
         if(!file) throw std::runtime_error("RKNN model not found: " + path);
         std::vector<char> model((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
         if(model.empty()) throw std::runtime_error("Empty RKNN model: " + path);
-        checkRknn(rknn_init(&ctx, model.data(), static_cast<uint32_t>(model.size()), 0, nullptr), "rknn_init");
+        const int initRc = rknn_init(&ctx, model.data(), static_cast<uint32_t>(model.size()), 0, nullptr);
+        if(initRc != RKNN_SUCC) {
+            // Unsupported SoC or missing RKNPU driver. Do not throw out of a
+            // neural evaluator thread: an uncaught std::runtime_error aborts
+            // the entire Android app. Continue via the existing Eigen fallback.
+            ctx = 0;
+            failure = "rknn_init failed: " + std::to_string(initRc);
+            __android_log_print(ANDROID_LOG_ERROR, "KataGoRKNN", "RKNN_DISABLED_FALLBACK_EIGEN: %s", failure.c_str());
+            return;
+        }
         try {
             checkRknn(rknn_set_core_mask(ctx, RKNN_NPU_CORE_0), "rknn_set_core_mask");
             rknn_input_output_num io = {};
