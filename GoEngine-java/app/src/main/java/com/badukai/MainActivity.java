@@ -823,6 +823,9 @@ public class MainActivity extends AppCompatActivity {
                 nn = null;
             }
             final long nnMs = SystemClock.elapsedRealtime() - startedMs;
+            // KataGo rules/Benson proof is separate from NN score prediction and
+            // checks a temporary native board without changing the live game.
+            final boolean passAliveCertified = engine.isStrictPassAliveComplete(snapshot);
             final KataGoEngine.PositionEvaluation result = nn;
             mainHandler.post(() -> {
                 if (board != snapshot || board.getMoveCount() != moves || boardSize != size) {
@@ -864,9 +867,10 @@ public class MainActivity extends AppCompatActivity {
                 nnAreaScoreMessage = area == null ? null : String.format(Locale.CHINA,
                         "黑 %.1f · 白 %.1f",area.blackPoints,area.whitePoints);
                 String summary = String.format(Locale.CHINA,
-                        "%s%s\n胜率 黑 %.1f%% · 白 %.1f%%",
+                        "%s%s\n胜率 黑 %.1f%% · 白 %.1f%%\n收官：%s",
                         leader,area == null ? "" : "\n" + areaLine,
-                        result.blackWin * 100.0,result.whiteWin * 100.0);
+                        result.blackWin * 100.0,result.whiteWin * 100.0,
+                        passAliveCertified ? "已完成" : "未确认");
                 render("快速 NN 预估：" + leader);
                 Log.i(TAG,String.format(Locale.US,
                         "REFEREE_FAST_NN moves=%d terminal=%s whiteLead=%.3f blackWin=%.4f whiteWin=%.4f",
@@ -879,11 +883,11 @@ public class MainActivity extends AppCompatActivity {
                         }).show();
                 if (isRefereeSmokeIntent()) Log.i("RefereeSmoke",String.format(Locale.US,
                         "PASS id=%s game=%s stage=nn_dialog backend=%s moves=%d terminal=%s "
-                        + "whiteLead=%.3f blackWin=%.4f whiteWin=%.4f blackPoints=%.3f whitePoints=%.3f nnMs=%d",
+                        + "whiteLead=%.3f blackWin=%.4f whiteWin=%.4f blackPoints=%.3f whitePoints=%.3f nnMs=%d passAlive=%s",
                         refereeSmokeId(),getIntent().getStringExtra("referee_smoke_game"),
                         engine.getBackendName().replace(" ","_"),
                         moves,gameEnded,result.whiteLead,result.blackWin,result.whiteWin,
-                        area.blackPoints,area.whitePoints,nnMs));
+                        area.blackPoints,area.whitePoints,nnMs,passAliveCertified));
             });
         });
     }
