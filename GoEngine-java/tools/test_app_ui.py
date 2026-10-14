@@ -725,7 +725,7 @@ class AppTest:
                                              stderr=subprocess.STDOUT, timeout=25, check=False)
                     (self.out / (label + "_native_symbols.log")).write_bytes(process.stdout)
                     decoded = process.stdout.decode("utf-8", errors="replace")
-                    frames = [line for line in decoded.splitlines() if re.match(r"^#\\d+\\s", line)]
+                    frames = [line for line in decoded.splitlines() if re.match(r"^#\d+\s", line)]
                     if frames:
                         self.log("====== NPU crash C++ 函数与源码行号 ======")
                         for line in frames[:12]: self.log(line)
