@@ -1785,6 +1785,9 @@ struct ComputeHandle {
         throw StringError("KATAGO_RKNN_MODEL must point to the 19x19 RKNN weights");
       rknn.reset(new KataGoRknnRunner(rknnPath));
     }
+    else if(loadedModel.modelDesc.name.find("human") == std::string::npos) {
+      throw StringError("RKNN backend does not recognize 10b model: " + loadedModel.modelDesc.name);
+    }
 #endif
   }
 
