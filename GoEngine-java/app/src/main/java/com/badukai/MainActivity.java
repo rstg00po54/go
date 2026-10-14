@@ -23,6 +23,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.badukai.engine.KataGoEngine;
 import com.badukai.engine.KataGoMediaTekLiteRt;
+import com.badukai.engine.NpuHardware;
 import com.badukai.engine.GpuTuneCache;
 import com.badukai.engine.GpuStartupLogProgress;
 import com.badukai.engine.KataGoOpenCLProbe;
@@ -170,6 +171,8 @@ public class MainActivity extends AppCompatActivity {
         board = new GoBoard(boardSize);
         engine = new KataGoEngine(getApplicationContext(), "engine", !forceLegacy);
         engine.setStartupBoardSize(boardSize);
+        Log.i(TAG, "NPU_PLATFORM detected=" + NpuHardware.summary()
+                + " mediatekGtpReady=false");
         String savedBackend = settings.getString("backend", "CPU");
         selectedBackend = "NPU".equals(savedBackend) && hasBundledNpuModel(boardSize)
                 ? KataGoEngine.BackendPreference.NPU
