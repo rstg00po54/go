@@ -22,6 +22,12 @@ val enableKataGoJniCore = providers.gradleProperty("enableKataGoJniCore")
 val enableKataGoGpuJni = providers.gradleProperty("enableKataGoGpuJni")
     .map { it.equals("true", ignoreCase = true) }
     .getOrElse(cachedGpuJni.isFile && cachedGpuJni.length() > 0L)
+val cachedNpuJni = rootProject.file("build/katago_android_arm64_rknnjni/libkatago_npu.so")
+val rknnSdkRuntime = rootProject.file("build/rknn_sdk/librknnrt.so")
+val rknnModelAsset = file("src/main/assets/engine/katago_10b_19x19.rknn")
+val enableKataGoNpuJni = providers.gradleProperty("enableKataGoNpuJni")
+    .map { it.equals("true", ignoreCase = true) }
+    .getOrElse(cachedNpuJni.isFile && rknnSdkRuntime.isFile && rknnModelAsset.isFile)
 
 android {
     namespace = "com.badukai"
@@ -182,8 +188,14 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
     if (sharedCpp.isFile) inputs.file(sharedCpp)
     inputs.property("enableKataGoJniCore", enableKataGoJniCore)
     inputs.property("enableKataGoGpuJni", enableKataGoGpuJni)
+    inputs.property("enableKataGoNpuJni", enableKataGoNpuJni)
     if (enableKataGoJniCore) inputs.file(katagoJniCoreFile)
     if (enableKataGoGpuJni) inputs.file(katagoGpuJniFile)
+    if (enableKataGoNpuJni) {
+        inputs.file(cachedNpuJni)
+        inputs.file(rknnSdkRuntime)
+        inputs.file(rknnModelAsset)
+    }
     outputs.dir(katagoGeneratedJniDir)
     doLast {
         fun readElf(file: File, option: String): String {
@@ -240,6 +252,17 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
             stagedBinaries.add(File(abiDir, "libkatago_gpu.so"))
         } else {
             File(abiDir, "libkatago_gpu.so").delete()
+        }
+        if (enableKataGoNpuJni) {
+            if (!cachedNpuJni.isFile || !rknnSdkRuntime.isFile || !rknnModelAsset.isFile)
+                throw GradleException("NPU artifacts missing: run bash tools/prepare_rknn.sh and bash tools/build_katago_from_source.sh rknnjni")
+            stageFile(cachedNpuJni, "libkatago_npu.so")
+            stageFile(rknnSdkRuntime, "librknnrt.so")
+            stagedBinaries.add(File(abiDir, "libkatago_npu.so"))
+            stagedBinaries.add(File(abiDir, "librknnrt.so"))
+        } else {
+            File(abiDir, "libkatago_npu.so").delete()
+            File(abiDir, "librknnrt.so").delete()
         }
         val needsCppShared = stagedBinaries.any { file ->
             readElf(file, "-d").lineSequence().any {
