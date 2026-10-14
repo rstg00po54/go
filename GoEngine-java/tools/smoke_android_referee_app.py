@@ -95,6 +95,20 @@ def read_referee_log(adb,serial,run_id):
     return primary+"\n"+fallback_events, "no-current-event"
 
 
+def recover_native_proof_log(adb,serial,run_id):
+    """Recover an early native self-test event hidden by the 1,500-line logcat tail.
+
+    The first OpenCL startup can emit enough logs to evict PASS_ALIVE_SELFTEST
+    from the short fallback, even though the following NN PASS remains visible.
+    Read a larger history only when the proof is absent, not on every poll.
+    """
+    history = run([adb,"-s",serial,"shell","logcat","-d","-b","all",
+                   "-t","12000","-v","brief"],timeout=35)
+    events = "\n".join(line for line in history.splitlines()
+                       if "RefereeSmoke" in line and "id="+run_id in line)
+    return native_proof_event(events,run_id), events
+
+
 def read_dialog_root(adb,serial):
     target = "/sdcard/referee_smoke_window.xml"
     run([adb,"-s",serial,"shell","uiautomator","dump",target],timeout=35)
@@ -230,14 +244,23 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir,midgame=False):
         (case_dir/"logcat.txt").write_text(log,encoding="utf-8")
         if terminal is None:
             raise RuntimeError("Timed out waiting for NN result")
-        proof_test = native_proof_event(log,run_id)
-        if proof_test is None:
-            raise RuntimeError("Native strict pass-alive positive/negative self-test missing; rebuild CPU/GPU JNI and APK")
-        result["native_proof_selftest"] = proof_test
         result["app_result"] = terminal
         print(terminal["line"],flush=True)
         if terminal["status"]!="PASS":
-            raise RuntimeError("Android NN assertion failed (see logcat.txt)")
+            raise RuntimeError("Android app reported FAIL: "+terminal["line"])
+        proof_test = native_proof_event(log,run_id)
+        if proof_test is None:
+            print("  Native self-test log not in recent history; searching a longer logcat window...",flush=True)
+            proof_test, history_events = recover_native_proof_log(adb,serial,run_id)
+            (case_dir/"native_proof_logcat.txt").write_text(history_events+"\n",encoding="utf-8")
+            if proof_test is None:
+                observed = [line for line in (log+"\n"+history_events).splitlines()
+                            if "RefereeSmoke" in line and "id="+run_id in line]
+                result["native_proof_log_missing"] = True
+                raise RuntimeError("NN PASS received but strict native self-test result not found in device logs; "
+                                   "cannot certify native proof. See native_proof_logcat.txt. Events: "
+                                   + " | ".join(observed[-5:])[-1000:])
+        result["native_proof_selftest"] = proof_test
         if "game="+game not in terminal["line"]:
             raise RuntimeError("Wrong SGF in result")
         if "stage=nn_dialog" not in terminal["line"]:
