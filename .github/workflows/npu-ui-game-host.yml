@@ -13,6 +13,12 @@ on:
       - 'GoEngine-java/tools/test_watch_npu_crash.py'
       - 'GoEngine-java/tools/test_npu_session_lifecycle.py'
       - 'GoEngine-java/tools/test_android_npu_platform.py'
+      - 'GoEngine-java/tools/build_vivo_npu.sh'
+      - 'GoEngine-java/tools/verify_vivo_playable_apk.py'
+      - 'GoEngine-java/tools/verify_vivo_litert_apk.py'
+      - 'GoEngine-java/tools/test_vivo_playable_apk.py'
+      - 'GoEngine-java/tools/test_verify_vivo_litert_apk.py'
+      - 'GoEngine-java/app/build.gradle.kts'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoEngine.java'
       - 'GoEngine-java/app/src/main/java/com/badukai/MainActivity.java'
       - 'GoEngine-java/native/KataGo/cpp/neuralnet/rknnbackend.cpp'
@@ -36,6 +42,8 @@ jobs:
         run: |
           bash -n GoEngine-java/tools/test_rk3588_npu_game.sh
           bash -n GoEngine-java/tools/symbolize_npu_crash.sh
+          bash -n GoEngine-java/tools/build_vivo_npu.sh
+          bash -n GoEngine-java/tools/prepare_vivo_litert.sh
           python3 -m py_compile GoEngine-java/tools/test_app_ui.py GoEngine-java/tools/test_app_ui_units.py \
             GoEngine-java/tools/watch_npu_crash.py GoEngine-java/tools/test_watch_npu_crash.py \
             GoEngine-java/tools/test_npu_session_lifecycle.py
@@ -46,3 +54,5 @@ jobs:
           python3 -m unittest discover -s tools -p 'test_watch_npu_crash.py' -v
           python3 -m unittest discover -s tools -p 'test_npu_session_lifecycle.py' -v
           python3 -m unittest discover -s tools -p 'test_android_npu_platform.py' -v
+          python3 -m unittest discover -s tools -p 'test_vivo_playable_apk.py' -v
+          python3 -m unittest discover -s tools -p 'test_verify_vivo_litert_apk.py' -v
