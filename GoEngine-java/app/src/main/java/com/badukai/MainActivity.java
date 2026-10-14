@@ -161,8 +161,10 @@ public class MainActivity extends AppCompatActivity {
         board = new GoBoard(boardSize);
         engine = new KataGoEngine(getApplicationContext(), "engine", !forceLegacy);
         engine.setStartupBoardSize(boardSize);
-        selectedBackend = "GPU".equals(settings.getString("backend", "CPU"))
-                ? KataGoEngine.BackendPreference.GPU : KataGoEngine.BackendPreference.CPU;
+        String savedBackend = settings.getString("backend", "CPU");
+        selectedBackend = "NPU".equals(savedBackend) && boardSize == 19
+                ? KataGoEngine.BackendPreference.NPU
+                : "GPU".equals(savedBackend) ? KataGoEngine.BackendPreference.GPU : KataGoEngine.BackendPreference.CPU;
         if (forceLegacy) selectedBackend = KataGoEngine.BackendPreference.CPU;
         engine.setBackendPreference(selectedBackend);
         winRateEngine = new KataGoEngine(getApplicationContext(), "engine_winrate");
@@ -1199,12 +1201,26 @@ public class MainActivity extends AppCompatActivity {
         conditionSpinner.setSelection(gameCondition);
 
         boolean gpuBundled = new File(getApplicationInfo().nativeLibraryDir, "libkatago_gpu.so").isFile();
-        String[] backendNames = gpuBundled ? new String[]{"CPU / Eigen", "GPU / OpenCL"} : new String[]{"CPU / Eigen（GPU 未打包）"};
+        boolean npuBundled = new File(getApplicationInfo().nativeLibraryDir, "libkatago_npu.so").isFile()
+                && new File(getApplicationInfo().nativeLibraryDir, "librknnrt.so").isFile();
+        List<KataGoEngine.BackendPreference> backendChoices = new ArrayList<>();
+        List<String> backendNames = new ArrayList<>();
+        backendChoices.add(KataGoEngine.BackendPreference.CPU);
+        backendNames.add("CPU / Eigen");
+        if (gpuBundled) {
+            backendChoices.add(KataGoEngine.BackendPreference.GPU);
+            backendNames.add("GPU / OpenCL");
+        }
+        if (npuBundled) {
+            backendChoices.add(KataGoEngine.BackendPreference.NPU);
+            backendNames.add("NPU / RKNN（暂只支持19路）");
+        }
         ArrayAdapter<String> backendAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, backendNames);
         backendAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         backendSpinner.setAdapter(backendAdapter);
-        backendSpinner.setSelection(gpuBundled && selectedBackend == KataGoEngine.BackendPreference.GPU ? 1 : 0);
-        backendSpinner.setEnabled(gpuBundled && !forceLegacyBackend);
+        int backendIndex = backendChoices.indexOf(selectedBackend);
+        backendSpinner.setSelection(Math.max(0, backendIndex));
+        backendSpinner.setEnabled(backendChoices.size() > 1 && !forceLegacyBackend);
 
         colorGroup.check(playerColor == StoneColor.WHITE ? R.id.whiteRadio : R.id.blackRadio);
         String[] kyuLabels = new String[18];
@@ -1226,8 +1242,11 @@ public class MainActivity extends AppCompatActivity {
 
             int selectedKyu = 18 - difficultySpinner.getSelectedItemPosition();
             int selectedCondition = conditionSpinner.getSelectedItemPosition();
-            KataGoEngine.BackendPreference requested = gpuBundled && backendSpinner.getSelectedItemPosition() == 1
-                    ? KataGoEngine.BackendPreference.GPU : KataGoEngine.BackendPreference.CPU;
+            KataGoEngine.BackendPreference requested = backendChoices.get(backendSpinner.getSelectedItemPosition());
+            if (requested == KataGoEngine.BackendPreference.NPU && requestedBoardSize != 19) {
+                Toast.makeText(this, "当前 NPU 模型只支持19路，请选择19路或切回 CPU/GPU", Toast.LENGTH_LONG).show();
+                return;
+            }
             Runnable begin = () -> {
                 boardSize = requestedBoardSize;
                 aiKyu = selectedKyu;
@@ -1313,8 +1332,9 @@ public class MainActivity extends AppCompatActivity {
         final double seconds = searchTime;
         final KataGoEngine.BackendPreference requestedBackend = selectedBackend;
         boolean reusingHumanEngine = engine.isHumanSLRunning()
-                && (selectedBackend == KataGoEngine.BackendPreference.GPU) == engine.getBackendName().startsWith("GPU");
-        render(reusingHumanEngine ? "正在初始化棋局..." : requestedBackend == KataGoEngine.BackendPreference.GPU
+                && engine.getBackendName().startsWith(requestedBackend.name());
+        render(reusingHumanEngine ? "正在初始化棋局..." : requestedBackend == KataGoEngine.BackendPreference.NPU
+                ? "NPU/RKNN 初始化中..." : requestedBackend == KataGoEngine.BackendPreference.GPU
                 ? "GPU 初始化中，首次调优可能需要数分钟..." : "正在准备人类棋力模型...");
         if (!reusingHumanEngine) showGpuStartupScreen(size, requestedBackend);
 
@@ -1372,6 +1392,8 @@ public class MainActivity extends AppCompatActivity {
             String runningBackend = engine.getBackendName();
             boolean gpuFallback = ready && requestedBackend == KataGoEngine.BackendPreference.GPU
                     && !runningBackend.startsWith("GPU");
+            boolean npuFallback = ready && requestedBackend == KataGoEngine.BackendPreference.NPU
+                    && !runningBackend.startsWith("NPU");
             Log.i(TAG, "Game backend requested=" + requestedBackend + " actual=" + runningBackend + " ready=" + ready);
             String failure = error;
             mainHandler.post(() -> {
