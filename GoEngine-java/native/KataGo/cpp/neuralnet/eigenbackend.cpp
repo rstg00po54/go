@@ -1774,8 +1774,6 @@ struct ComputeHandle {
     if(loadedModel.modelDesc.name == "g170-b10c128-s1141046784-d204142634") {
       if(context->nnXLen != 19 || context->nnYLen != 19)
         throw StringError("RKNN 10b requires 19x19 NN shape");
-      if(maxBatchSize != 1)
-        throw StringError("RKNN 10b is batch=1 only; set nnMaxBatchSize = 1");
       if(model->numInputChannels != 22 || model->numInputGlobalChannels != 19 ||
          model->numPolicyChannels != 1 || model->numValueChannels != 3 ||
          model->numScoreValueChannels != 4 || model->numOwnershipChannels != 1)
@@ -1905,10 +1903,20 @@ void NeuralNet::getOutput(
 
 #ifdef USE_RKNN_BACKEND
   if(computeHandle->rknn) {
-    if(batchSize != 1) throw StringError("RKNN inference only supports batch 1");
-    computeHandle->rknn->infer(inputBuffers->spatialInput.data(), inputBuffers->globalInput.data(),
-                              policyPass.data(), policy.data(), value.data(),
-                              scoreValue.data(), ownership.data());
+    // RKNN 10b is a batch=1 graph; KataGo may request a larger batch.
+    // Run each input separately and write every head at the corresponding
+    // sample offset. Keep KataGo's normal symmetries/postprocessing below.
+    for(int row = 0; row < batchSize; row++) {
+      computeHandle->rknn->infer(
+        inputBuffers->spatialInput.data() + (size_t)row * inputBuffers->singleInputElts,
+        inputBuffers->globalInput.data() + (size_t)row * inputBuffers->singleInputGlobalElts,
+        policyPass.data() + (size_t)row * computeHandle->model->numPolicyChannels,
+        policy.data() + (size_t)row * computeHandle->model->numPolicyChannels * nnXLen * nnYLen,
+        value.data() + (size_t)row * computeHandle->model->numValueChannels,
+        scoreValue.data() + (size_t)row * computeHandle->model->numScoreValueChannels,
+        ownership.data() + (size_t)row * computeHandle->model->numOwnershipChannels * nnXLen * nnYLen
+      );
+    }
   }
   else
 #endif
