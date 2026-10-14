@@ -17,7 +17,10 @@ if [[ -n "$LOG_FILE" ]]; then
 else
     CRASH="$(adb -s "$SERIAL" logcat -b crash -d -v threadtime)"
 fi
-[[ "$CRASH" == *libkatago_npu.so* ]] || { echo "No libkatago_npu.so frames in Android crash buffer / log file" >&2; exit 2; }
+# Isolate the most recent native crash so an older APK's BuildId cannot be mistaken
+# for the installed binary when the log buffer holds multiple tombstones.
+CRASH="$(printf '%s\\n' "$CRASH" | awk '/Fatal signal [0-9]+/ { block="" } { block=block $0 "\\n" } END { printf "%s", block }')"
+[[ "$CRASH" == *libkatago_npu.so* ]] || { echo "No libkatago_npu.so frames in latest Android crash / provided log file" >&2; exit 2; }
 CRASH_BUILD_ID="$(printf '%s\n' "$CRASH" | grep 'libkatago_npu.so' | sed -nE 's/.*BuildId: ([[:xdigit:]]+).*/\1/p' | head -1)"
 ELF_BUILD_ID="$(readelf -n "$ELF" | sed -nE 's/.*Build ID: ([[:xdigit:]]+).*/\1/p' | head -1)"
 echo "Crash Build ID: ${CRASH_BUILD_ID:-unknown}"
