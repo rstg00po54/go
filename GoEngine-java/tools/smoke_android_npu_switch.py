@@ -122,6 +122,14 @@ def parse_log(log, run_id, sizes):
             problems.append("Missing/mismatched STEP_PASS")
         if passed and value(passed[0], "active") != str(expected):
             problems.append("Active model does not match requested board")
+        if passed:
+            for key in ("blackMs", "whiteMs"):
+                raw = value(passed[0], key)
+                if raw is None or not raw.isdigit():
+                    problems.append("Missing/invalid NN+GTP move timing: " + key)
+            for key in ("black", "white"):
+                if not value(passed[0], key):
+                    problems.append("Missing AI move: " + key)
         detail = {"index": at, "board": expected, "status": "PASS" if not problems else "FAIL",
                   "npu_initialized": bool(inits), "npu_ready": bool(readies),
                   "model": model_name, "errors": problems}
@@ -234,6 +242,8 @@ def main(argv=None):
         else:
             report["errors"].append("Timed out after %.1f seconds" % args.timeout)
         parsed = parse_log(read_log(args.adb, serial), run_id, args.sizes)
+        parsed["errors"] = report["errors"] + parsed["errors"]
+        if parsed["errors"]: parsed["status"] = "FAIL"
         report.update(parsed)
         code = 0 if report["status"] == "PASS" else 1
     except KeyboardInterrupt:
