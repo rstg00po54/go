@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Run the REAL Android smart-referee dialog against curated scored SGFs.
+"""Replay real 9x9 SGFs on Android and validate read-only KataGo NN estimates.
 
-Debug-only intent, no screen taps. Builds/installs once, then starts an isolated
-app session per case; checks Kotlin-free Java referee, KataGo GTP and UI dialog.
-Official SGF RE is NOT treated as ground-truth for dead-stone adjudication.
+Each debug session verifies backend, NN area points, win rates, dialog and unchanged game.
+No adjudication, death marking, manual scoring, MCTS or confirmation workflow.
 """
 import argparse
 from datetime import datetime, timezone
@@ -71,50 +70,6 @@ def smoke_event(log, run_id):
     return final
 
 
-def resume_event(log,run_id):
-    """Last matching RESUME / RESUME_FAIL event after tapping Continue."""
-    result = None
-    for line in log.splitlines():
-        if "RefereeSmoke" not in line:
-            continue
-        if re.search(r"\bRESUME_FAIL id="+re.escape(run_id)+r"\b",line):
-            result = {"status":"FAIL","line":line.strip()}
-        elif re.search(r"\bRESUME id="+re.escape(run_id)+r"\b",line):
-            result = {"status":"PASS","line":line.strip()}
-    return result
-
-
-def midgame_resume_event(log,run_id):
-    """Midgame dismiss keeps every move, unlike terminal-pass undo."""
-    for line in reversed(log.splitlines()):
-        if "RefereeSmoke" in line and re.search(r"\bINSPECT_RESUME id="+re.escape(run_id)+r"\b",line):
-            return line.strip()
-    return None
-
-
-def armed_event(log,run_id):
-    """Ensure dialog Continue only ARMS a future tap; it must not undo passes."""
-    result = None
-    for line in log.splitlines():
-        if "RefereeSmoke" in line and re.search(r"\bARMED id="+re.escape(run_id)+r"\b",line):
-            result = line.strip()
-    return result
-
-
-def overlay_marks(log,run_id):
-    # Ground highlighted positions in the real Java board, not only UI labels.
-    result = None
-    for line in log.splitlines():
-        if "RefereeSmoke" not in line:
-            continue
-        match = re.search(r"\bOVERLAY id="+re.escape(run_id)
-                          +r"\b dead=(\d+) review=(\d+) alerts=(\d+)\b",line)
-        if match:
-            result = {"dead":int(match.group(1)),"review":int(match.group(2)),
-                      "alerts":int(match.group(3))}
-    return result
-
-
 def read_dialog_root(adb,serial):
     target = "/sdcard/referee_smoke_window.xml"
     run([adb,"-s",serial,"shell","uiautomator","dump",target],timeout=35)
@@ -130,85 +85,70 @@ def read_dialog_xml(adb,serial):
 
 
 def click_ui_text(adb,serial,label):
-    # Click the exact visible action rather than relying on screen resolution.
     root = read_dialog_root(adb,serial)
     for node in root.iter():
         if node.attrib.get("text") != label:
             continue
         bounds = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",node.attrib.get("bounds",""))
-        if not bounds:
-            break
-        x1,y1,x2,y2 = map(int,bounds.groups())
-        if x1>=x2 or y1>=y2:
-            break
-        run([adb,"-s",serial,"shell","input","tap",
-             str((x1+x2)//2),str((y1+y2)//2)],timeout=12)
-        return
-    raise RuntimeError("Cannot find clickable visible UI label: "+label)
-
-
-def click_ui_description(adb,serial,description):
-    # This is a full-screen transparent tap target, not a Go intersection.
-    root = read_dialog_root(adb,serial)
-    for node in root.iter():
-        if node.attrib.get("content-desc") != description:
-            continue
-        bounds = re.fullmatch(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]",node.attrib.get("bounds",""))
-        if bounds and node.attrib.get("clickable") == "true":
+        if bounds:
             x1,y1,x2,y2 = map(int,bounds.groups())
             if x2>x1 and y2>y1:
                 run([adb,"-s",serial,"shell","input","tap",
                      str((x1+x2)//2),str((y1+y2)//2)],timeout=12)
                 return
-    raise RuntimeError("Missing clickable full-screen referee overlay: "+description)
-
-
-def validate_dialog(text,game=STRICT_CASE,midgame=False):
-    # Both stages: popup with live board marks, then tap-to-dismiss.
-    if midgame:
-        required = ("智能裁判 · 当前棋形分析","正在对局","红叉","黄圈","橙圈",
-                    "继续下棋","争议标记仍保留","不会撤销落子")
-    elif game != "cgos9_1":
-        required = ("智能裁判 · 存在争议","棋盘上已标出争议","红叉","黄圈","橙圈",
-                    "继续下棋","争议标记仍保留","再点屏幕任意位置")
-    else:
-        required = ("智能裁判","黄圈","确认数子")
-    return [part for part in required if part not in text]
+    raise RuntimeError("Cannot find visible UI button: "+label)
 
 
 def capture_screenshot(adb,serial,target):
-    """Grab original Android framebuffer bytes; no cropping or conversion."""
     proc = subprocess.run([adb,"-s",serial,"exec-out","screencap","-p"],
                           stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=25)
     if proc.returncode or not proc.stdout.startswith(b"\x89PNG\r\n\x1a\n"):
-        raise RuntimeError("ADB screenshot failed: " + proc.stderr.decode("utf-8","replace")[-300:])
+        raise RuntimeError("ADB screenshot failed")
     target.write_bytes(proc.stdout)
 
 
-def validate_review_panel(text,game=STRICT_CASE):
-    if game != "cgos9_1":
-        raise ValueError("Disputed endgames use the board overlay, not a scoring toolbar")
-    required = ("智能裁判 ·","黑","白","恢复建议","确认数子","退出复核")
-    missing = [part for part in required if part not in text]
-    if "继续下棋" in text:
-        missing.append("unexpected continue-playing action")
-    return missing
+def validate_dialog(text,game=STRICT_CASE,midgame=False):
+    required = ("智能裁判 · 快速 NN 估分","黑棋约","白棋约","黑棋胜率",
+                "白棋胜率","双方目数按 NN 地盘归属估算","继续下棋" if midgame else "关闭")
+    errors = [part for part in required if part not in text]
+    for removed in ("确认中国规则数子","恢复 AI 建议","已复核并确认","复核死子","争议标记仍保留"):
+        if removed in text:
+            errors.append("deprecated UI: "+removed)
+    return errors
 
 
-def validate_dispute_overlay(root):
-    # A full-screen hit target must sit above the board. No dialog should
-    # prevent the player from seeing the marked stones.
-    buttons = [node for node in root.iter()
-               if node.attrib.get("content-desc") == "点击屏幕继续下棋"
-               and node.attrib.get("clickable") == "true"]
-    return [] if buttons else ["transparent full-screen tap overlay missing"]
+def nn_event_values(line,backend,midgame):
+    match = re.search(r"\bstage=nn_dialog\b.*\bbackend=(\S+) moves=(\d+) terminal=(true|false)"
+                      r" whiteLead=([-+0-9.eE]+) blackWin=([-+0-9.eE]+) whiteWin=([-+0-9.eE]+)"
+                      r" blackPoints=([-+0-9.eE]+) whitePoints=([-+0-9.eE]+) nnMs=(\d+)",line)
+    if not match:
+        raise ValueError("Missing validated NN result fields")
+    actual,moves,terminal,lead,bwin,wwin,black,white,ms = match.groups()
+    if backend=="gpu" and not actual.upper().startswith("GPU"):
+        raise ValueError("GPU requested but backend was "+actual)
+    if backend=="cpu" and not actual.upper().startswith("CPU"):
+        raise ValueError("CPU requested but backend was "+actual)
+    if (terminal=="true") == midgame:
+        raise ValueError("Wrong terminal/midgame state")
+    values = [float(value) for value in (lead,bwin,wwin,black,white)]
+    if not all(__import__("math").isfinite(value) for value in values):
+        raise ValueError("Nonfinite NN values")
+    if not (0<=values[1]<=1 and 0<=values[2]<=1 and 0<=values[3]<=81 and 0<=values[4]<=88):
+        raise ValueError("NN values out of range")
+    if abs(values[3]+values[4]-88)>0.025:
+        raise ValueError("Area points must sum to 81+7 (9x9 Chinese komi)")
+    if int(moves)<4:
+        raise ValueError("SGF replay was too short")
+    return {"backend":actual,"moves":int(moves),"terminal":terminal=="true",
+            "whiteLead":values[0],"blackWin":values[1],"whiteWin":values[2],
+            "blackPoints":values[3],"whitePoints":values[4],"nnMs":int(ms)}
 
 
-def validate_confirmation_dialog(text,game):
-    if game != "cgos9_1":
-        raise ValueError("Only READY_TO_COUNT games open a scoring confirmation dialog")
-    required = ("确认中国规则数子","已复核并确认")
-    return [part for part in required if part not in text]
+def dismiss_event(log,run_id):
+    for line in reversed(log.splitlines()):
+        if "RefereeSmoke" in line and re.search(r"\bNN_DISMISS id="+re.escape(run_id)+r"\b",line):
+            return line.strip()
+    return None
 
 
 def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir,midgame=False):
@@ -220,140 +160,63 @@ def run_one_case(adb,serial,backend,game,timeout,skip_ui,out_dir,midgame=False):
     try:
         print("\n--- %s [%s] ---" % (game,backend),flush=True)
         run([adb,"-s",serial,"shell","am","force-stop",PACKAGE])
-        start = run([adb,"-s",serial,"shell","am","start","-W","-n",ACTIVITY,
-                     "--ez","referee_smoke","true",
-                     "--es","referee_smoke_id",run_id,
-                     "--es","referee_smoke_game",game,
-                     "--es","referee_smoke_backend",backend,
-                     "--ez","referee_smoke_midgame",str(midgame).lower()],timeout=35)
-        (case_dir/"activity.txt").write_text(start,encoding="utf-8")
-        if "Error:" in start or "Exception" in start:
-            raise RuntimeError("Failed to start Activity: " + start)
+        activity = run([adb,"-s",serial,"shell","am","start","-W","-n",ACTIVITY,
+                        "--ez","referee_smoke","true","--es","referee_smoke_id",run_id,
+                        "--es","referee_smoke_game",game,"--es","referee_smoke_backend",backend,
+                        "--ez","referee_smoke_midgame",str(midgame).lower()],timeout=35)
+        (case_dir/"activity.txt").write_text(activity,encoding="utf-8")
+        if "Error:" in activity or "Exception" in activity:
+            raise RuntimeError("Could not launch debug activity: "+activity)
         deadline = time.monotonic()+timeout
-        log = ""
         terminal = None
+        log = ""
         while time.monotonic()<deadline:
             log = run([adb,"-s",serial,"logcat","-d","-v","brief",
-                       "-s","RefereeSmoke:I","AndroidRuntime:E","*:S"],timeout=20)
+                       "-s","RefereeSmoke:I","RefereeSmoke:E","AndroidRuntime:E","*:S"],timeout=20)
             terminal = smoke_event(log,run_id)
             if terminal:
                 break
             time.sleep(2)
         (case_dir/"logcat.txt").write_text(log,encoding="utf-8")
         if terminal is None:
-            raise RuntimeError("Timed out waiting for referee terminal event; inspect logcat.txt")
+            raise RuntimeError("Timed out waiting for NN result")
         result["app_result"] = terminal
         print(terminal["line"],flush=True)
-        if terminal["status"] != "PASS":
-            raise RuntimeError("Android referee assertion failed (see logcat.txt)")
+        if terminal["status"]!="PASS":
+            raise RuntimeError("Android NN assertion failed (see logcat.txt)")
         if "game="+game not in terminal["line"]:
-            raise RuntimeError("Incorrect SGF in terminal event")
+            raise RuntimeError("Wrong SGF in result")
+        if "stage=nn_dialog" not in terminal["line"]:
+            raise RuntimeError("Old referee flow used instead of NN dialog")
+        result["nn"] = nn_event_values(terminal["line"],backend,midgame)
         if not skip_ui:
-            if game=="cgos9_1" and not midgame:
-                dialog = read_dialog_xml(adb,serial)
-                (case_dir/"dialog.txt").write_text(dialog+"\n",encoding="utf-8")
-                missing = validate_dialog(dialog,game)
-                if missing:
-                    raise RuntimeError("Ready-to-count dialog missing: %s" % missing)
-                capture_screenshot(adb,serial,case_dir/"analysis_dialog.png")
-                run([adb,"-s",serial,"shell","input","keyevent","4"],timeout=10)
-                panel = read_dialog_xml(adb,serial)
-                (case_dir/"review_panel.txt").write_text(panel+"\n",encoding="utf-8")
-                missing_panel = validate_review_panel(panel,game)
-                if missing_panel:
-                    raise RuntimeError("Ready-to-count toolbar missing: %s" % missing_panel)
-                capture_screenshot(adb,serial,case_dir/"review_screen.png")
-                click_ui_text(adb,serial,"确认数子")
-                confirmation = read_dialog_xml(adb,serial)
-                (case_dir/"confirmation_dialog.txt").write_text(confirmation+"\n",encoding="utf-8")
-                missing_confirmation = validate_confirmation_dialog(confirmation,game)
-                if missing_confirmation:
-                    raise RuntimeError("Final scoring confirmation missing: %s" % missing_confirmation)
-                capture_screenshot(adb,serial,case_dir/"confirmation_dialog.png")
-                print("Ready-to-count UI PASS: scoring dialog opens.",flush=True)
-            else:
-                expected_stage = "midgame_dialog" if midgame else "dispute_dialog"
-                if "stage="+expected_stage not in terminal["line"]:
-                    raise RuntimeError("Expected referee "+expected_stage+" before screen touch")
-                marks = overlay_marks(log,run_id)
-                if marks is None or (not midgame and sum(marks.values())==0):
-                    raise RuntimeError("Referee dispute mark log missing or terminal marks empty")
-                result["marks"] = marks
-                first = read_dialog_xml(adb,serial)
-                (case_dir/"dialog.txt").write_text(first+"\n",encoding="utf-8")
-                missing = validate_dialog(first,game,midgame=midgame)
-                if missing:
-                    raise RuntimeError("Initial dispute dialog missing: %s" % missing)
-                capture_screenshot(adb,serial,case_dir/"analysis_dialog.png")
-                if not validate_dispute_overlay(read_dialog_root(adb,serial)):
-                    raise RuntimeError("Tap-to-dismiss unexpectedly armed before Continue")
-                # Stage one: the modal disappears, BUT the game and marks remain.
-                click_ui_text(adb,serial,"继续下棋")
-                armed = None
-                arm_log = ""
-                deadline = time.monotonic()+20
-                while time.monotonic()<deadline:
-                    arm_log = run([adb,"-s",serial,"logcat","-d","-v","brief",
-                                   "-s","RefereeSmoke:I","AndroidRuntime:E","*:S"],timeout=20)
-                    armed = armed_event(arm_log,run_id)
-                    if armed:
-                        break
-                    time.sleep(1)
-                (case_dir/"armed_logcat.txt").write_text(arm_log,encoding="utf-8")
-                before = int(re.search(r"\bmoves=(\d+)\b",terminal["line"]).group(1))
-                original_terminal = "false" if midgame else "true"
-                if armed is None or "moves="+str(before) not in armed or ("terminal="+original_terminal) not in armed:
-                    raise RuntimeError("First Continue incorrectly changed the current game: "+str(armed))
-                if resume_event(arm_log,run_id):
-                    raise RuntimeError("First Continue resumed before the required screen tap")
-                root = read_dialog_root(adb,serial)
-                missing = validate_dispute_overlay(root)
-                if missing:
-                    raise RuntimeError("Marks and screen tap target not retained: %s" % missing)
-                panel = " ".join(node.attrib.get("text","") for node in root.iter())
-                (case_dir/"review_panel.txt").write_text(panel+"\n",encoding="utf-8")
-                capture_screenshot(adb,serial,case_dir/"review_screen.png")
-                print("First Continue PASS: popup closed, dispute marks retained, game unchanged.",flush=True)
-                # Stage two: tap the full-screen overlay. This gesture is never
-                # forwarded to the Go board as a move.
-                click_ui_description(adb,serial,"点击屏幕继续下棋")
-                expected_moves = before if midgame else before-2
-                event = None
-                logs = ""
-                deadline = time.monotonic()+40
-                while time.monotonic()<deadline:
-                    logs = run([adb,"-s",serial,"logcat","-d","-v","brief",
-                                "-s","RefereeSmoke:I","AndroidRuntime:E","*:S"],timeout=20)
-                    event = midgame_resume_event(logs,run_id) if midgame else resume_event(logs,run_id)
-                    if event:
-                        break
-                    time.sleep(2)
-                (case_dir/"resume_logcat.txt").write_text(logs,encoding="utf-8")
-                if not event:
-                    raise RuntimeError("Second-tap resume event missing")
-                if midgame:
-                    if ("moves="+str(expected_moves)) not in event or (
-                            "after="+str(expected_moves)) not in event or "terminal=false" not in event or (
-                            "refereeMode=false") not in event or "gameReady=true" not in event:
-                        raise RuntimeError("Midgame inspection changed moves or active game: "+event)
-                    if resume_event(logs,run_id):
-                        raise RuntimeError("Midgame inspection unexpectedly undid terminal passes")
-                    result["resumed"] = {"status":"PASS","line":event}
-                else:
-                    if event["status"]!="PASS":
-                        raise RuntimeError("Terminal resume failed: "+str(event))
-                    line = event["line"]
-                    if ("moves="+str(expected_moves)) not in line or "terminal=false" not in line or (
-                            "refereeMode=false") not in line or "gameReady=true" not in line:
-                        raise RuntimeError("Terminal resume changed the board incorrectly: "+line)
-                    result["resumed"] = event
-                capture_screenshot(adb,serial,case_dir/"resumed_screen.png")
-                print("Second screen tap PASS: %s, no accidental move." %
-                      ("midgame moves preserved" if midgame else "terminal passes undone"),flush=True)
-        else:
-            print("UI check skipped (engine + referee assertions still checked).",flush=True)
+            dialog = read_dialog_xml(adb,serial)
+            (case_dir/"dialog.txt").write_text(dialog+"\n",encoding="utf-8")
+            errors = validate_dialog(dialog,game,midgame=midgame)
+            if errors:
+                raise RuntimeError("NN dialog UI mismatch: %s" % errors)
+            capture_screenshot(adb,serial,case_dir/"nn_dialog.png")
+            click_ui_text(adb,serial,"继续下棋" if midgame else "关闭")
+            dismiss = None
+            dismiss_log = ""
+            deadline = time.monotonic()+20
+            while time.monotonic()<deadline:
+                dismiss_log = run([adb,"-s",serial,"logcat","-d","-v","brief",
+                                   "-s","RefereeSmoke:I","*:S"],timeout=20)
+                dismiss = dismiss_event(dismiss_log,run_id)
+                if dismiss:
+                    break
+                time.sleep(1)
+            (case_dir/"dismiss_logcat.txt").write_text(dismiss_log,encoding="utf-8")
+            count = result["nn"]["moves"]
+            state = "false" if midgame else "true"
+            if dismiss is None or "moves="+str(count) not in dismiss or "terminal="+state not in dismiss:
+                raise RuntimeError("Dismissing NN dialog changed the game: "+str(dismiss))
+            capture_screenshot(adb,serial,case_dir/"dismissed.png")
+            result["dismiss"] = dismiss
+            print("NN UI PASS: metrics shown; dialog dismissed; board unchanged.",flush=True)
         result["status"] = "PASS"
-    except (OSError,RuntimeError,subprocess.TimeoutExpired,ET.ParseError) as exc:
+    except (OSError,RuntimeError,ValueError,subprocess.TimeoutExpired,ET.ParseError) as exc:
         result["status"] = "FAIL"
         result["error"] = str(exc)
         print("FAIL %s: %s" % (game,exc),file=sys.stderr,flush=True)
