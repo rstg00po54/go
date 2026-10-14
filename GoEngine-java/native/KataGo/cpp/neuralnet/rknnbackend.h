@@ -8,7 +8,7 @@
 // KataGo input encoding and NNOutput postprocessing from eigenbackend.cpp.
 class KataGoRknnRunner {
 public:
-    explicit KataGoRknnRunner(const std::string& modelPath);
+    explicit KataGoRknnRunner(const std::string& modelPath, int boardSize);
     ~KataGoRknnRunner();
     KataGoRknnRunner(const KataGoRknnRunner&) = delete;
     KataGoRknnRunner& operator=(const KataGoRknnRunner&) = delete;
