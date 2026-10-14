@@ -41,5 +41,24 @@ if [[ ! -s "$SDK/include/rknn_api.h" ]]; then
     else fetch "$BASE/include/rknn_api.h" "$SDK/include/rknn_api.h"
     fi
 fi
+# Opt in to download the size-specific models once. Normal builds remain
+# usable offline with the previously validated 19x19 model.
+if [[ "${RKNN_MULTISIZE:-0}" == 1 || "${1:-}" == "--multisize" ]]; then
+    MULTI_URL="https://github.com/rstg00po54/MiniGoCpp/releases/download/katago-10b-rknn-multisize-v1"
+    for size in 9 13; do
+        filename="katago_10b_${size}x${size}.rknn"
+        target="$ROOT/app/src/main/assets/engine/$filename"
+        fetch "$MULTI_URL/$filename" "$target"
+        fetch "$MULTI_URL/$filename.sha256" "$target.sha256"
+        expected="$(awk 'NR==1 {print $1}' "$target.sha256")"
+        actual="$(sha256sum "$target" | awk '{print $1}')"
+        if [[ -z "$expected" || "$actual" != "$expected" ]]; then
+            echo "ERROR: checksum mismatch for $filename; discarding invalid file" >&2
+            rm -f "$target" "$target.sha256"
+            exit 1
+        fi
+        echo "Verified RKNN ${size}x${size}: $(wc -c < "$target") bytes"
+    done
+fi
 echo "RKNN staged: model=$(wc -c < "$MODEL_TARGET") bytes; runtime=$SDK/librknnrt.so"
 echo "Use: bash tools/build_katago_from_source.sh rknnjni"
