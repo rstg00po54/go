@@ -18,7 +18,7 @@ BOARD_VIEW = ROOT/"app/src/main/java/com/badukai/ui/GoBoardView.java"
 
 GOOD_GPU = ("I/RefereeSmoke: PASS id=current game=cgos9_expand_006_12 stage=nn_dialog "
             "backend=GPU/OpenCL moves=82 terminal=true whiteLead=-2.000 blackWin=0.6000 "
-            "whiteWin=0.4000 blackPoints=45.000 whitePoints=43.000 nnMs=18")
+            "whiteWin=0.4000 blackPoints=45.000 whitePoints=43.000 nnMs=18 passAlive=false")
 
 
 class NnSmokeTests(unittest.TestCase):
@@ -102,6 +102,7 @@ class NnSmokeTests(unittest.TestCase):
         self.assertEqual(got["blackPoints"],45)
         self.assertEqual(got["whitePoints"],43)
         self.assertTrue(got["terminal"])
+        self.assertFalse(got["passAlive"])
 
     def test_midgame_nn_result_parses(self):
         line = GOOD_GPU.replace("moves=82 terminal=true","moves=80 terminal=false")
@@ -134,13 +135,39 @@ class NnSmokeTests(unittest.TestCase):
 
     def test_dialog_requires_nn_content_and_rejects_old_text(self):
         text = ("智能裁判 · NN预估 黑棋领先 2.0目 黑棋 45.0目 · 白棋 43.0目 "
-                "胜率 黑 60.0% · 白 40.0% 关闭")
+                "胜率 黑 60.0% · 白 40.0% 收官：未确认 关闭")
         self.assertEqual(smoke.validate_dialog(text),[])
+        self.assertEqual(smoke.validate_dialog(text,certified=False),[])
+        self.assertIn("strict endgame status disagrees",smoke.validate_dialog(text,certified=True))
+        self.assertEqual(smoke.validate_dialog(text.replace("收官：未确认","收官：已完成"),certified=True),[])
         self.assertIn("deprecated UI",str(smoke.validate_dialog(text+" 确认中国规则数子")))
         self.assertIn("继续下棋",smoke.validate_dialog(text,midgame=True))
         self.assertEqual(smoke.validate_dialog(text.replace("关闭","继续下棋"),midgame=True),[])
         self.assertEqual(smoke.validate_dialog(text.replace("黑棋领先 2.0目","双方持平")),[])
         self.assertIn("deprecated UI",str(smoke.validate_dialog(text+" 建议复核死活")))
+
+    def test_status_log_required_and_independent_from_game_over_or_winrate(self):
+        with self.assertRaisesRegex(ValueError,"Missing strict KataGo pass-alive"):
+            smoke.nn_event_values(GOOD_GPU.replace(" passAlive=false",""),"gpu",False)
+        completed = smoke.nn_event_values(GOOD_GPU.replace("passAlive=false","passAlive=true"),"gpu",False)
+        self.assertTrue(completed["passAlive"])
+        ongoing = smoke.nn_event_values(GOOD_GPU.replace("moves=82 terminal=true","moves=80 terminal=false")
+                                            .replace("passAlive=false","passAlive=true"),"gpu",True)
+        self.assertTrue(ongoing["passAlive"])
+        self.assertFalse(ongoing["terminal"])
+
+    def test_native_pass_alive_wiring_is_fail_closed(self):
+        activity = ACTIVITY.read_text(encoding="utf-8")
+        engine = (ROOT/"app/src/main/java/com/badukai/engine/KataGoEngine.java").read_text(encoding="utf-8")
+        native = (ROOT/"app/src/main/cpp/EngineSession.cpp").read_text(encoding="utf-8")
+        assert 'final boolean passAliveCertified = engine.isStrictPassAliveComplete(snapshot);' in activity
+        self.assertIn('passAliveCertified ? "已完成" : "未确认"',activity)
+        self.assertIn("position.getSimpleKoPoint() != null",engine)
+        self.assertIn("KataGoGpuNative.isAllPassAlive(size,colors)",engine)
+        self.assertIn("KataGoNative.isAllPassAlive(size,colors)",engine)
+        self.assertIn("history.endGameIfAllPassAlive(snapshot);",native)
+        self.assertIn("history.isGameFinished && history.isScored",native)
+        self.assertNotIn("passAliveCertified = gameEnded",activity)
 
     def test_dismiss_event_is_run_specific(self):
         log = "I/RefereeSmoke: NN_DISMISS id=other moves=80 terminal=false\n"
@@ -207,7 +234,7 @@ class NnSmokeTests(unittest.TestCase):
         state = {"clicked":False}
         ui = ET.fromstring("""<hierarchy>
             <node text="智能裁判 · NN预估" />
-            <node text="黑棋领先 2.0目 黑棋 45.0目 · 白棋 43.0目 胜率 黑 60.0% · 白 40.0%" />
+            <node text="黑棋领先 2.0目 黑棋 45.0目 · 白棋 43.0目 胜率 黑 60.0% · 白 40.0% 收官：未确认" />
             <node text="关闭" bounds="[100,500][300,570]" />
         </hierarchy>""")
         def fake_run(argv,timeout=30,check=True):
