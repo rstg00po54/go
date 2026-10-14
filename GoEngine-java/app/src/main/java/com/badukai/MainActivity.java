@@ -811,8 +811,6 @@ public class MainActivity extends AppCompatActivity {
         final GoBoard snapshot = board;
         final int moves = board.getMoveCount(), size = boardSize;
         final boolean gameEnded = board.isGameOver();
-        final Point immediateKo = board.getSimpleKoPoint();
-        final int atariGroups = board.countAtariGroups();
         final KataGoEngine.PositionEvaluation cached = gameEnded ? endgameEvaluation : null;
         render("智能裁判：正在快速 NN 估分...");
         engineExecutor.execute(() -> {
@@ -840,8 +838,8 @@ public class MainActivity extends AppCompatActivity {
                             + " stage=nn_dialog reason=nn_invalid");
                     return;
                 }
-                String leader = Math.abs(result.whiteLead) < 0.05 ? "双方接近持平"
-                        : String.format(Locale.CHINA,"%s领先约 %.1f 目",
+                String leader = Math.abs(result.whiteLead) < 0.05 ? "双方持平"
+                        : String.format(Locale.CHINA,"%s领先 %.1f目",
                                 result.whiteLead > 0 ? "白棋" : "黑棋",Math.abs(result.whiteLead));
                 NnAreaScore area = null;
                 try {
@@ -860,30 +858,21 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
                 String areaLine = area == null ? "" : String.format(Locale.CHINA,
-                        "黑棋约 %.1f 目 · 白棋约 %.1f 目",area.blackPoints,area.whitePoints);
+                        "黑棋 %.1f目 · 白棋 %.1f目",area.blackPoints,area.whitePoints);
                 nnAreaScoreBoard = area == null ? null : snapshot;
                 nnAreaScoreMoves = moves;
                 nnAreaScoreMessage = area == null ? null : String.format(Locale.CHINA,
                         "黑 %.1f · 白 %.1f",area.blackPoints,area.whitePoints);
                 String summary = String.format(Locale.CHINA,
-                        "%s%s\n黑棋胜率 %.1f%% · 白棋胜率 %.1f%%",
+                        "%s%s\n胜率 黑 %.1f%% · 白 %.1f%%",
                         leader,area == null ? "" : "\n" + areaLine,
                         result.blackWin * 100.0,result.whiteWin * 100.0);
                 render("快速 NN 预估：" + leader);
-                String positionWarning = immediateKo != null
-                        ? "\n\n当前存在劫禁（" + immediateKo.toGtp(size) + "），不能直接确认终局。"
-                        : atariGroups > 0 ? String.format(Locale.CHINA,
-                                "\n\n当前有 %d 块单气棋，建议复核死活。",atariGroups) : "";
                 Log.i(TAG,String.format(Locale.US,
-                        "REFEREE_FAST_NN moves=%d terminal=%s whiteLead=%.3f blackWin=%.4f whiteWin=%.4f ko=%s atariGroups=%d",
-                        moves,gameEnded,result.whiteLead,result.blackWin,result.whiteWin,
-                        immediateKo == null ? "none" : immediateKo.toGtp(size),atariGroups));
-                new AlertDialog.Builder(this).setTitle("智能裁判 · 快速 NN 估分")
-                        .setMessage(summary + positionWarning + (area == null ? "" :
-                                "\n\n双方目数按 NN 地盘归属估算（棋子和围空；白方含贴目或让子补偿），"
-                                + "可能与 NN 单独预测的领先目数略有差异。") + (gameEnded
-                                ? "\n\n双方已停棋，以上仍是预估，不是确认数子结果。"
-                                : "\n\n当前棋形估算，仅供参考；不代表已经判定死活。"))
+                        "REFEREE_FAST_NN moves=%d terminal=%s whiteLead=%.3f blackWin=%.4f whiteWin=%.4f",
+                        moves,gameEnded,result.whiteLead,result.blackWin,result.whiteWin));
+                new AlertDialog.Builder(this).setTitle("智能裁判 · NN预估")
+                        .setMessage(summary)
                         .setPositiveButton(gameEnded ? "关闭" : "继续下棋",(dialog,which) -> {
                             if (isRefereeSmokeIntent()) Log.i("RefereeSmoke","NN_DISMISS id=" + refereeSmokeId()
                                     + " moves=" + board.getMoveCount() + " terminal=" + board.isGameOver());
