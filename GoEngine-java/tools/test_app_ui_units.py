@@ -143,6 +143,17 @@ class CacheAndLogTests(unittest.TestCase):
         with self.assertRaises(TestFailure):
             self.app.assert_npu_board(13, before)
 
+    def test_native_sigsegv_is_fatal_in_ui_game_log(self):
+        example = ("D/MainActivity( 9108): render in, message=AI 思考中...\\n"
+                   "F/libc( 9108): Fatal signal 11 (SIGSEGV) code 1 in tid 10010\\n")
+        received = []
+        self.app.adb = lambda *args, **kwargs: (received.append(args), example)[1]
+        self.assertTrue(self.app.read_log_state()["fatal"])
+        self.assertIn("libc:F", received[-1])
+        self.app.args = SimpleNamespace(think_timeout=2)
+        with self.assertRaisesRegex(TestFailure, "native"):
+            self.app.wait_log(lambda state: False, 2, "第4局")
+
     def test_fast_wait_detects_new_backend_and_turn(self):
         self.app.use_log_wait = True
         self.app.args = SimpleNamespace(think_timeout=5)
