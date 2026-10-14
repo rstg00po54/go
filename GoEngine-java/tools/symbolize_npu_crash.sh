@@ -51,8 +51,16 @@ else
 fi
 echo "Crash PCs: ${ADDRESSES[*]}"
 echo "Symbolizer: $SYM"
+echo "===== Symbolized C++ crash stack (function @ source:line) ====="
+frame=0
 for addr in "${ADDRESSES[@]}"; do
-    echo "--- $addr ---"
-    "$SYM" -C -f -i -e "$ELF" "$addr"
+    "$SYM" -C -f -i -e "$ELF" "$addr" | awk -v number="$frame" -v pc="$addr" '
+      NR % 2 == 1 { func=$0 }
+      NR % 2 == 0 {
+        if (NR == 2) printf("#%02d %s  %s  @  %s\\n", number, pc, func, $0);
+        else printf("       [inline] %s  @  %s\\n", func, $0);
+      }
+    '
+    frame=$((frame+1))
 done
-echo "If output is ??:0, this Release ELF lacks DWARF; recompile a symbol-rich NPU .so, reproduce, then run again."
+echo "If a frame shows ??:0, its matching ELF lacks debug information for that location."
