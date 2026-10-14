@@ -9,7 +9,7 @@ on:
       - 'GoEngine-java/tools/convert_katago_litert.py'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   tflite:
@@ -72,3 +72,29 @@ jobs:
             models/*.tflite
             models/SHA256SUMS
           if-no-files-found: warn
+
+  publish-models:
+    needs: [tflite]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: vivo-litert-*
+          path: verified-models
+          merge-multiple: true
+      - name: Publish only after all 3 independently validated models exist
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          for size in 9 13 19; do
+            test -s "verified-models/katago_10b_${size}x${size}.tflite"
+            test -s "verified-models/katago_10b_${size}x${size}.json"
+          done
+          TAG="vivo-litert-10b-9-13-19-v1"
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --title "Experimental KataGo LiteRT 10b model set for MediaTek" \
+              --notes "9/13/19 per-board KataGo g170 weights converted from official ONNX. CPU graph smoke validated. NPU hardware execution and head parity still require Vivo device tests."
+          fi
+          gh release upload "$TAG" verified-models/*.tflite verified-models/*.json --clobber
