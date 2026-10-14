@@ -8,6 +8,7 @@ on:
       - 'GoEngine-java/tools/test_app_ui.py'
       - 'GoEngine-java/tools/test_app_ui_units.py'
       - 'GoEngine-java/tools/test_rk3588_npu_game.sh'
+      - 'GoEngine-java/tools/symbolize_npu_crash.sh'
   workflow_dispatch:
 
 permissions:
@@ -24,6 +25,7 @@ jobs:
       - name: Check Bash and Python syntax
         run: |
           bash -n GoEngine-java/tools/test_rk3588_npu_game.sh
+          bash -n GoEngine-java/tools/symbolize_npu_crash.sh
           python3 -m py_compile GoEngine-java/tools/test_app_ui.py GoEngine-java/tools/test_app_ui_units.py
       - name: Verify real-game UI automation and NPU parsing
         working-directory: GoEngine-java
