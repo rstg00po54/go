@@ -64,7 +64,7 @@ class NpuLogTests(unittest.TestCase):
 
     def test_partial_crash_keeps_previous_successful_steps(self):
         full = fixture()
-        truncated = full.split("I/NpuSmoke( 100): STEP_BEGIN id=unique index=3")[0]
+        truncated = full.split("I/NpuSmoke( 100): STEP_BEGIN id=unique index=2")[0]
         truncated += "I/NpuSmoke( 100): STEP_BEGIN id=unique index=2 board=19\\n"
         truncated += "F/libc( 100): Fatal signal 11 (SIGSEGV) in com.badukai.java\\n"
         result = smoke.parse_log(truncated, "unique", (9, 13, 19, 9))
