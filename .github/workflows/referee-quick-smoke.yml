@@ -3,6 +3,7 @@ on:
   push:
     branches: [rk3588-engine]
     paths:
+      - GoEngine-java/build.sh
       - GoEngine-java/app/build.gradle.kts
       - GoEngine-java/app/src/main/java/com/badukai/MainActivity.java
       - GoEngine-java/app/src/main/java/com/badukai/ui/GoBoardView.java
@@ -31,6 +32,9 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew --no-daemon help -PskipKataGoNative=true -PenableKataGoJniCore=false -PenableKataGoGpuJni=false
+      - name: Syntax-check app build wrapper
+        working-directory: GoEngine-java
+        run: bash -n build.sh
       - name: Syntax-check NN test scripts
         working-directory: GoEngine-java
         run: python3 -m py_compile tools/smoke_android_referee_app.py tools/test_smoke_android_referee_app.py tools/test_smart_referee.py
