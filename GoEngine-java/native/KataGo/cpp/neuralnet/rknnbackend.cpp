@@ -1,4 +1,4 @@
-// RK3588 RKNPU2 adapter for the fixed 19x19 KataGo 10b ONNX/RKNN graph.
+// RK3588 RKNPU2 adapter for independently compiled 9x9, 13x13, and 19x19 KataGo 10b graphs.
 // Full KataGo search, inputs, symmetries, and head postprocessing remain upstream.
 #include "rknnbackend.h"
 #include "rknn_api.h"
@@ -17,16 +17,12 @@ namespace {
 void checkRknn(int rc, const char* api) {
     if(rc != RKNN_SUCC) throw std::runtime_error(std::string(api) + " failed: " + std::to_string(rc));
 }
-constexpr int BOARD = 19;
 constexpr int SPATIAL = 22;
 constexpr int GLOBAL = 19;
-constexpr int AREA = BOARD * BOARD;
 constexpr int INPUTS = 3;
 constexpr int OUTPUTS = 5;
 const char* inputNames[INPUTS] = {"InputSpatial", "InputGlobal", "InputMask"};
 const char* outputNames[OUTPUTS] = {"OutputPolicyPass", "OutputPolicy", "OutputValue", "OutputScoreValue", "OutputOwnership"};
-const uint32_t inputCounts[INPUTS] = {SPATIAL * AREA, GLOBAL, AREA};
-const uint32_t outputCounts[OUTPUTS] = {1, AREA, 3, 4, AREA};
 
 int resolveName(const char* candidate, const char* const* names, int count) {
     for(int i=0;i<count;i++) if(std::string(candidate).find(names[i]) != std::string::npos) return i;
@@ -38,9 +34,19 @@ struct KataGoRknnRunner::Impl {
     rknn_context ctx = 0;
     std::array<int, INPUTS> inputSlots = {{-1, -1, -1}};
     std::array<int, OUTPUTS> outputSlots = {{-1, -1, -1, -1, -1}};
-    std::vector<float> mask = std::vector<float>(AREA);
+    const int boardSize;
+    const int area;
+    const std::array<uint32_t, INPUTS> inputCounts;
+    const std::array<uint32_t, OUTPUTS> outputCounts;
+    std::vector<float> mask;
 
-    explicit Impl(const std::string& path) {
+    explicit Impl(const std::string& path, int board)
+        : boardSize(board), area(board * board),
+          inputCounts{{static_cast<uint32_t>(SPATIAL * area), GLOBAL, static_cast<uint32_t>(area)}},
+          outputCounts{{1, static_cast<uint32_t>(area), 3, 4, static_cast<uint32_t>(area)}},
+          mask(static_cast<size_t>(area)) {
+        if(board != 9 && board != 13 && board != 19)
+            throw std::runtime_error("RKNN model requires 9x9, 13x13 or 19x19");
         std::ifstream file(path, std::ios::binary);
         if(!file) throw std::runtime_error("RKNN model not found: " + path);
         std::vector<char> model((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
@@ -82,10 +88,10 @@ struct KataGoRknnRunner::Impl {
 
     void infer(const float* spatial, const float* global, float* pass, float* policy,
                float* value, float* score, float* owner) {
-        // KataGo spatial plane 0 is the board mask. On 19x19 it is all ones.
+        // KataGo spatial plane 0 is the board mask for this NN buffer.
         // InputSpatial is already NHWC: it is transformed by KataGo's symmetry
         // code before reaching this function. No NCHW transpose is necessary.
-        for(int i=0;i<AREA;i++) mask[i] = spatial[i * SPATIAL];
+        for(int i=0;i<area;i++) mask[i] = spatial[i * SPATIAL];
         std::array<const float*, INPUTS> sources = {{spatial, global, mask.data()}};
         std::array<rknn_input, INPUTS> inputs = {};
         for(int key=0;key<INPUTS;key++) {
@@ -113,7 +119,7 @@ struct KataGoRknnRunner::Impl {
                     if(!std::isfinite(floats[k])) throw std::runtime_error("RKNN produced NaN/Inf");
                 }
                 // This particular g170 10b has a single spatial policy/owner
-                // channel. Its NCHW and NHWC flattened 19x19 maps are identical.
+                // channel. Its NCHW and NHWC flattened board maps are identical.
                 std::copy(floats, floats + outputCounts[key], destinations[key]);
             }
         } catch(...) {
@@ -124,7 +130,7 @@ struct KataGoRknnRunner::Impl {
     }
 };
 
-KataGoRknnRunner::KataGoRknnRunner(const std::string& path) : impl_(new Impl(path)) {}
+KataGoRknnRunner::KataGoRknnRunner(const std::string& path, int boardSize) : impl_(new Impl(path, boardSize)) {}
 KataGoRknnRunner::~KataGoRknnRunner() = default;
 void KataGoRknnRunner::infer(const float* s, const float* g, float* p, float* pm,
                             float* v, float* sc, float* o) {
