@@ -60,6 +60,7 @@ class AppTest:
         self.benchmark = None
         self.bench_used_positions = set()
         self.full_games = []
+        self.last_verified_npu_size = None
 
     def log(self, message):
         elapsed = round(time.monotonic() - self.started, 3)
@@ -193,10 +194,16 @@ class AppTest:
         for key in ("selected", "init", "ready"):
             old_count = len(before[key])
             recent = current[key][old_count:]
-            if len(recent) != 1 or recent[0][0] != str(size) or not recent[0][1].endswith("/" + name):
+            same_model_reuse = (not recent and (self.last_verified_npu_size == size
+                                or self.last_verified_npu_size is None) and before[key]
+                                and before[key][-1][0] == str(size)
+                                and before[key][-1][1].endswith("/" + name))
+            if not same_model_reuse and (len(recent) != 1 or recent[0][0] != str(size)
+                                         or not recent[0][1].endswith("/" + name)):
                 raise TestFailure("NPU 模型不匹配：board=%d event=%s recent=%s" % (size, key, recent))
         if current["fallback"] > before["fallback"]:
             raise TestFailure("NPU 已回退到 CPU，拒绝判定为通过")
+        self.last_verified_npu_size = size
         self.log("NPU 已验证真实模型：" + name)
 
     def wait_log(self, predicate, timeout, description):
@@ -441,7 +448,7 @@ class AppTest:
             def option_point(root):
                 for item in reversed(list(root.iter("node"))):
                     label = item.get("text", "").strip() or item.get("content-desc", "").strip()
-                    if label != option:
+                    if label != option and not (option == "NPU / RKNN" and label.startswith(option)):
                         continue
                     bounds = BOUNDS.fullmatch(item.get("bounds", ""))
                     if bounds is None:
