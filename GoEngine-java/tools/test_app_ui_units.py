@@ -107,9 +107,9 @@ class CacheAndLogTests(unittest.TestCase):
         # Lines copied from the published 2026-10-14 RK3588 failed_logcat,
         # which the original over-escaped regex incorrectly parsed as empty.
         model = "/data/user/0/com.badukai.java/files/engine/katago_10b_9x9.rknn"
-        raw = ("10-14 16:19:34.421 I/KataGoEngine( 8887): NPU_MODEL_SELECTED board=9 path=" + model + "\\n"
-               "10-14 16:19:34.811 I/KataGoRKNN( 8887): RKNN_INIT board=9 path=" + model + "\\n"
-               "10-14 16:19:34.863 I/KataGoRKNN( 8887): RKNN_READY board=9 model=" + model + "\\n")
+        raw = ("10-14 16:19:34.421 I/KataGoEngine( 8887): NPU_MODEL_SELECTED board=9 path=" + model + "\n"
+               "10-14 16:19:34.811 I/KataGoRKNN( 8887): RKNN_INIT board=9 path=" + model + "\n"
+               "10-14 16:19:34.863 I/KataGoRKNN( 8887): RKNN_READY board=9 model=" + model + "\n")
         arguments = []
         def fake_adb(*args, **kwargs):
             arguments.append(args)
