@@ -967,6 +967,21 @@ public class KataGoEngine {
         }
     }
 
+    /** Return true only for uncertain 12-visit endgame results requiring 24-visit review. */
+    public static boolean needsEndgameRefinement(NativePositionInspection result, int atariGroups) {
+        if (result == null || atariGroups > 0 || result.highVariationPoints > 0
+                || result.maximumOwnershipStdev >= 0.20) return true;
+        double blackGain = result.black.estimatedMoveBenefit;
+        double whiteGain = result.white.estimatedMoveBenefit;
+        if (!Double.isFinite(blackGain) || !Double.isFinite(whiteGain)) return true;
+        return nearEndgameBoundary(blackGain,0.5,0.3) || nearEndgameBoundary(whiteGain,0.5,0.3)
+                || nearEndgameBoundary(blackGain,1.5,0.4) || nearEndgameBoundary(whiteGain,1.5,0.4);
+    }
+
+    private static boolean nearEndgameBoundary(double benefit, double threshold, double margin) {
+        return Math.abs(benefit-threshold) <= margin;
+    }
+
     /**
      * Compare native KataGo normal search and "allow PLAYER pass 1" for both players.
      * Every command is non-playing, and the original Human SL search limits are restored.

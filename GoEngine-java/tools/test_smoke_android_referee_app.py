@@ -144,7 +144,7 @@ class RefereeSmokeHostTests(unittest.TestCase):
         for status in ('"有打劫"', '"官子未收完"', '"建议继续下棋"', '"需要复核"', '"不能确认"', '"基本收官"'):
             self.assertIn(status,inspection)
         for symbol in ("snapshot.countAtariGroups()", "snapshot.getSimpleKoPoint()",
-                       "engine.inspectPositionNative(", "size,24,0.5",
+                       "engine.inspectPositionNative(", "size,12,0.5", "size,24,0.5",
                        "nativeInfo.black.estimatedMoveBenefit", "nativeInfo.white.estimatedMoveBenefit",
                        "nativeInfo.highVariationPoints", "REFEREE_ENDGAME_RESULT",
                        "resumeFromReferee()", 'setNegativeButton("详细数子"'):
@@ -153,6 +153,19 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertNotIn("engine.getFinalScore(",inspection)
         self.assertNotIn("engine.getFinalDeadStones(",inspection)
         self.assertIn("final long searchMs =",inspection)
+        self.assertIn("KataGoEngine.needsEndgameRefinement(quickInfo,atariGroups)",inspection)
+        self.assertIn("reviewFailed = refinedInfo == null;",inspection)
+        self.assertIn("verdictChanged = endgameCategory(quickInfo) != endgameCategory(refinedInfo);",inspection)
+        self.assertIn('status = "需要复核";',inspection)
+        self.assertIn("refineMs=%d",inspection)
+        self.assertIn("quickMs=%d",inspection)
+        self.assertIn("visits=%d",inspection)
+        self.assertIn("didRefine ? 24 : 12",inspection)
+        self.assertIn("final long fastMs = quickMs, reviewedMs = refineMs;",inspection)
+        self.assertIn("final KataGoEngine.NativePositionInspection nativeInfo = refinedInfo != null ? refinedInfo : quickInfo;",inspection)
+        self.assertIn("public static boolean needsEndgameRefinement",engine)
+        self.assertIn("nearEndgameBoundary(blackGain,0.5,0.3)",engine)
+        self.assertIn("nearEndgameBoundary(whiteGain,1.5,0.4)",engine)
         self.assertIn('scoreRequested=false',inspection)
         self.assertIn('status = "基本收官";',inspection)
         self.assertIn('dialog.setNegativeButton("详细数子", (d,w) -> startNativeReferee())',inspection)

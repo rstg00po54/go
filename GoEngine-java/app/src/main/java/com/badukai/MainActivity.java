@@ -1109,6 +1109,15 @@ public class MainActivity extends AppCompatActivity {
      * Four user-facing results from strict simple-ko state plus native KataGo PASS comparisons.
      * Not a self-written Go endgame/life-and-death solver. Does not play or pass for either side.
      */
+    /** Display-only PASS comparison category; intentionally does not determine life/death. */
+    private static int endgameCategory(KataGoEngine.NativePositionInspection info) {
+        double gain = Math.max(info.black.estimatedMoveBenefit,info.white.estimatedMoveBenefit);
+        if (gain >= 1.5) return 3;
+        if (info.highVariationPoints > 0) return 2;
+        if (gain > 0.5) return 1;
+        return 0;
+    }
+
     private void inspectUnfinishedPosition() {
         if (!engineReady || !gameReady || evaluating || thinking || variationBoard != null) return;
         evaluating = true;
@@ -1121,19 +1130,41 @@ public class MainActivity extends AppCompatActivity {
         final long startedNs = System.nanoTime();
         render("KataGo：正在比较双方继续落子与 PASS...");
         engineExecutor.execute(() -> {
-            KataGoEngine.NativePositionInspection inspection = null;
+            KataGoEngine.NativePositionInspection quickInfo = null, refinedInfo = null;
+            boolean refined = false, refinementFailed = false, verdictChanged = false;
+            long quickMs = 0, refineMs = 0;
             if (simpleKo == null) {
+                String toPlay = side == StoneColor.BLACK ? "black" : "white";
+                long quickStart = System.nanoTime();
                 try {
-                    inspection = engine.inspectPositionNative(
-                            side == StoneColor.BLACK ? "black" : "white",size,24,0.5);
+                    quickInfo = engine.inspectPositionNative(toPlay,size,12,0.5);
                 } catch (RuntimeException ex) {
-                    Log.w(TAG,"KataGo endgame comparison unavailable",ex);
+                    Log.w(TAG,"KataGo 12-visit endgame comparison unavailable",ex);
+                }
+                quickMs = (System.nanoTime()-quickStart)/1000000L;
+                if (KataGoEngine.needsEndgameRefinement(quickInfo,atariGroups)) {
+                    refined = true;
+                    mainHandler.post(() -> {
+                        if (board == snapshot && board.getMoveCount() == moves && boardSize == size)
+                            render("KataGo：发现疑点，正在用 24 次访问复核...");
+                    });
+                    long refineStart = System.nanoTime();
+                    try {
+                        refinedInfo = engine.inspectPositionNative(toPlay,size,24,0.5);
+                    } catch (RuntimeException ex) {
+                        Log.w(TAG,"KataGo 24-visit endgame review unavailable",ex);
+                    }
+                    refineMs = (System.nanoTime()-refineStart)/1000000L;
+                    refinementFailed = refinedInfo == null;
+                    if (quickInfo != null && refinedInfo != null)
+                        verdictChanged = endgameCategory(quickInfo) != endgameCategory(refinedInfo);
                 }
             }
-            // Fast position check ends here. Native final_score and dead-stone search
-            // are intentionally opt-in, because those commands added ~7s on RK3588 CPU.
-            final long searchMs = (System.nanoTime() - startedNs) / 1000000L;
-            final KataGoEngine.NativePositionInspection nativeInfo = inspection;
+            // Detailed final_score/dead-stone commands remain strictly opt-in.
+            final long fastMs = quickMs, reviewedMs = refineMs;
+            final boolean didRefine = refined, reviewFailed = refinementFailed, categoryChanged = verdictChanged;
+            final KataGoEngine.NativePositionInspection nativeInfo = refinedInfo != null ? refinedInfo : quickInfo;
+            final long searchMs = (System.nanoTime()-startedNs)/1000000L;
             mainHandler.post(() -> {
                 if (board != snapshot || board.getMoveCount() != moves || boardSize != size) {
                     evaluating = false;
@@ -1172,6 +1203,13 @@ public class MainActivity extends AppCompatActivity {
                                 : "KataGo PASS 对照未发现明显的继续落子收益，但双方还没有正式停棋。可以申请数子或点「详细数子」复核。";
                     }
                 }
+                if (reviewFailed) {
+                    status = "需要复核";
+                    explanation = "12 次访问初检发现疑点，但 24 次复核没有完整返回。当前建议仅供参考，请稍后再试。";
+                } else if (categoryChanged) {
+                    status = "需要复核";
+                    explanation = "12 次与 24 次访问的判断类别不一致，可能靠近官子收益阈值。暂不确认收官，请继续下棋或详细复核。";
+                }
                 // Highlight the suggested empty intersection on the actual board.
                 // Only a hint: KataGo is not placing a move or confirming life/death.
                 KataGoEngine.NativePassComparison focusSide = nativeInfo == null ? null
@@ -1203,16 +1241,23 @@ public class MainActivity extends AppCompatActivity {
                         nativeInfo.black.bestMove,nativeInfo.black.estimatedMoveBenefit,
                         nativeInfo.white.bestMove,nativeInfo.white.estimatedMoveBenefit,
                         nativeInfo.maximumOwnershipStdev,nativeInfo.highVariationPoints);
+                String reviewDetail = didRefine
+                        ? String.format(Locale.CHINA,
+                        "\n搜索：12 次初检 %d ms，24 次复核 %d ms%s。",fastMs,reviewedMs,
+                        reviewFailed ? "（复核失败）" : categoryChanged ? "（判断有差异）" : "")
+                        : String.format(Locale.CHINA,"\n搜索：12 次初检 %d ms，无需追加复核。",fastMs);
+                detail += reviewDetail;
                 String message = explanation
                         + (showFocus ? "\n\n关闭弹窗后可在棋盘看到橙圈，落下一手后自动清除。" : "")
                         + "\n\n以上为 KataGo 估计，不会自动结束或改动棋谱。";
                 Log.i(TAG,String.format(Locale.US,
-                        "REFEREE_ENDGAME_RESULT status=%s moves=%d terminal=%s ko=%s atari=%d blackGain=%.3f whiteGain=%.3f highVariation=%d searchMs=%d scoreRequested=false focus=%s elapsedMs=%d",
+                        "REFEREE_ENDGAME_RESULT status=%s moves=%d terminal=%s ko=%s atari=%d blackGain=%.3f whiteGain=%.3f highVariation=%d visits=%d refined=%s refineFailed=%s categoryChanged=%s quickMs=%d refineMs=%d searchMs=%d scoreRequested=false focus=%s elapsedMs=%d",
                         status,moves,ended,simpleKo == null ? "none" : simpleKo.toGtp(size),
                         atariGroups,nativeInfo == null ? Double.NaN : nativeInfo.black.estimatedMoveBenefit,
                         nativeInfo == null ? Double.NaN : nativeInfo.white.estimatedMoveBenefit,
                         nativeInfo == null ? -1 : nativeInfo.highVariationPoints,
-                        searchMs,showFocus ? focusMove : "none",
+                        didRefine ? 24 : 12,didRefine,reviewFailed,categoryChanged,
+                        fastMs,reviewedMs,searchMs,showFocus ? focusMove : "none",
                         (System.nanoTime()-startedNs)/1000000L));
                 render("局面检查：" + status);
                 AlertDialog.Builder dialog = new AlertDialog.Builder(this)

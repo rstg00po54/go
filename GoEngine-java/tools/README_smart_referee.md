@@ -45,6 +45,12 @@ KataGo v1.15.0 原生源码中，final_score 采用至少 50 次访问、final_s
 - **v1.18.1**: 计分和死子预测仍然返回；GTP `play` 的宽松合法性已移除简单劫禁检查，立即回提返回 `=`。KataGo 搜索和对局规则的严格合法性不可与宽松 GTP `play` 混同。
 - 因此不能用 `final_score` 是否返回、也不能跨版本用 GTP `play` 成功与否，判断棋局已结束。智能裁判应以本地 `GoBoard` 的严格劫禁及可用搜索证据作独立检查。
 
+## 2026-10-14：局面检查改用自适应 PASS 搜索
+
+先执行 KataGo v1.15.0 **12 visits** 的黑白双方正常/强制 PASS 对照；只有在存在单气棋块、明显归属波动（任一点 ownershipStdev >= 0.20）、或继续落子收益靠近 0.5（±0.3）/1.5（±0.4）目阈值、或初检失败时，才追加一次 **24 visits** 的四次对照搜索。劫禁继续在搜索之前硬拦截。
+
+复核失败不再声称收官成功；两轮判断类别不一致时显示「需要复核」。日志 `REFEREE_ENDGAME_RESULT` 增加 `visits`、`refined`、`refineFailed`、`categoryChanged`、`quickMs`、`refineMs`。原有 `KATAGO_NATIVE_ENDGAME` 继续输出每轮实际访次数与估计收益。未自动运行 `final_score`、`final_status_list dead`，仍由用户主动选择「详细数子」。无本次设备实测时不能承诺具体耗时。
+
 ## 可选的局面检查（官子、打吃、劫）
 
 快速 NN 估分弹窗增加「局面检查」按钮；不改变已有快速估分速度。仅点击时执行一次有限的原生 KataGo `kata-search_analyze` 搜索（12 次访问上限、0.5 秒搜索时间上限），不会落子。棋盘规则层仅复用现有的棋块/气计算，显示当前单气棋块数量和简单劫禁点。日志：`REFEREE_UNFINISHED_CHECK`。
