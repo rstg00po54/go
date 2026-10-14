@@ -213,6 +213,45 @@ class NnSmokeTests(unittest.TestCase):
         self.assertEqual(smoke.smoke_event(log,"current")["status"],"PASS")
         adb.assert_called_once()
 
+    def test_recovers_early_proof_missing_from_short_logcat_tail(self):
+        class Id:
+            hex = "current"
+        calls = []
+        def fake_run(argv,timeout=30,check=True):
+            calls.append(argv)
+            if "logcat" in argv:
+                if "-t" in argv and argv[argv.index("-t")+1]=="12000":
+                    return GOOD_NATIVE+"\\n"+GOOD_GPU
+                if "shell" in argv:
+                    return GOOD_GPU
+                return ""
+            return "Starting: Intent { ... }"
+        with tempfile.TemporaryDirectory() as folder:
+            with mock.patch.object(smoke,"uuid4",return_value=Id()):
+                with mock.patch.object(smoke,"run",side_effect=fake_run):
+                    result=smoke.run_one_case("adb","device","gpu","cgos9_expand_006_12",
+                                              15,True,Path(folder))
+            events=(Path(folder)/"cgos9_expand_006_12"/"native_proof_logcat.txt").read_text()
+        self.assertEqual(result["status"],"PASS",result.get("error"))
+        self.assertIn("PASS_ALIVE_SELFTEST",result["native_proof_selftest"])
+        self.assertIn("PASS_ALIVE_SELFTEST",events)
+        self.assertTrue(any("-t" in v and "12000" in v for v in calls))
+
+    def test_native_selftest_fail_preserves_actual_android_error(self):
+        class Id:
+            hex = "current"
+        failure = "E/RefereeSmoke: FAIL id=current stage=replay reason=Strict KataGo pass-alive native self-test failed"
+        with tempfile.TemporaryDirectory() as folder:
+            with mock.patch.object(smoke,"uuid4",return_value=Id()):
+                with mock.patch.object(smoke,"run",side_effect=lambda argv,**kwargs:
+                                       failure if "logcat" in argv else "Starting: Intent { ... }"):
+                    result=smoke.run_one_case("adb","device","gpu","cgos9_expand_006_12",
+                                              15,True,Path(folder))
+        self.assertEqual(result["status"],"FAIL")
+        self.assertIn("Android app reported FAIL",result["error"])
+        self.assertIn("stage=replay",result["error"])
+        self.assertNotIn("self-test result not found",result["error"])
+
     def test_launch_does_not_block_on_android_activity_idle(self):
         class Id:
             hex = "current"
