@@ -724,6 +724,13 @@ class AppTest:
                     process = subprocess.run(["bash", str(script), self.serial], stdout=subprocess.PIPE,
                                              stderr=subprocess.STDOUT, timeout=25, check=False)
                     (self.out / (label + "_native_symbols.log")).write_bytes(process.stdout)
+                    decoded = process.stdout.decode("utf-8", errors="replace")
+                    frames = [line for line in decoded.splitlines() if re.match(r"^#\\d+\\s", line)]
+                    if frames:
+                        self.log("====== NPU crash C++ 函数与源码行号 ======")
+                        for line in frames[:12]: self.log(line)
+                    elif process.returncode:
+                        self.log("NPU crash 符号解析失败：" + decoded[-350:])
                     self.log("已保存 native 崩溃符号：%s（exit=%d）" %
                              (label + "_native_symbols.log", process.returncode))
                 except (OSError, subprocess.TimeoutExpired) as err:
