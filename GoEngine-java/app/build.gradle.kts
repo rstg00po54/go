@@ -32,6 +32,12 @@ val enableKataGoNpuJni = providers.gradleProperty("enableKataGoNpuJni")
 // The probe is launched by ADB intent and is NOT a full playable game APK.
 val vivoProbeApk = providers.gradleProperty("vivoProbeApk")
     .map { it.equals("true", ignoreCase = true) }.getOrElse(false)
+// Normal, playable Vivo APK: include KataGo PIE + CPU/GPU JNI alongside the
+// experimental MediaTek LiteRT test models. Unlike vivoProbeApk, this does
+// NOT omit the native game engine. RK3588 default builds remain unchanged.
+val bundleVivoLiteRtModels = providers.gradleProperty("bundleVivoLiteRtModels")
+    .map { it.equals("true", ignoreCase = true) }.getOrElse(false)
+val prepareVivoModels = vivoProbeApk || bundleVivoLiteRtModels
 val allow4kRknnRuntime = providers.gradleProperty("allow4kRknnRuntime")
     .map { it.equals("true", ignoreCase = true) }
     .getOrElse(System.getenv("ALLOW_4K_RKNN_RUNTIME") == "1")
@@ -317,7 +323,7 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
 val prepareVivoLiteRtModels = tasks.register<Exec>("prepareVivoLiteRtModels") {
     group = "build"
     description = "Fetch and SHA256-check 9/13/19 LiteRT model assets before packaging"
-    onlyIf { vivoProbeApk }
+    onlyIf { prepareVivoModels }
     workingDir(rootProject.projectDir)
     commandLine("bash", "tools/prepare_vivo_litert.sh")
 }
@@ -325,16 +331,16 @@ val prepareVivoLiteRtModels = tasks.register<Exec>("prepareVivoLiteRtModels") {
 val verifyVivoLiteRtApk = tasks.register<Exec>("verifyVivoLiteRtApk") {
     group = "verification"
     description = "Reject APKs missing any of the six pinned Vivo LiteRT assets"
-    onlyIf { vivoProbeApk }
+    onlyIf { prepareVivoModels }
     workingDir(rootProject.projectDir)
     commandLine("python3", "tools/verify_vivo_litert_apk.py",
         "app/build/outputs/apk/debug/app-debug.apk")
 }
 
 tasks.configureEach {
-    if (vivoProbeApk && name.startsWith("merge") && name.endsWith("Assets"))
+    if (prepareVivoModels && name.startsWith("merge") && name.endsWith("Assets"))
         dependsOn(prepareVivoLiteRtModels)
-    if (vivoProbeApk && name == "assembleDebug")
+    if (prepareVivoModels && name == "assembleDebug")
         finalizedBy(verifyVivoLiteRtApk)
 }
 
