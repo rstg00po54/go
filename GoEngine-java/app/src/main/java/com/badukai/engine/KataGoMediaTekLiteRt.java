@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
+import org.json.JSONArray;
 import java.util.List;
 import java.util.Locale;
 
@@ -45,6 +46,9 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
     private final String[] outputNames;
     private final int[] inputCounts;
     private final int[] outputCounts;
+    private final int[] inputPositions;
+    private final int[] outputPositions;
+    private final boolean spatialIsNchw;
     private final int size;
 
     public static boolean isMediaTek() {
@@ -71,6 +75,24 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
         outputNames = new String[OUTPUT.length];
         inputCounts = new int[INPUT.length];
         outputCounts = new int[OUTPUT.length];
+        inputPositions = new int[INPUT.length];
+        outputPositions = new int[OUTPUT.length];
+        JSONArray inputOrder = metadata.getJSONArray("inputOrder");
+        JSONArray outputOrder = metadata.getJSONArray("outputOrder");
+        if (inputOrder.length() != 3 || outputOrder.length() != 5)
+            throw new IllegalArgumentException("Invalid LiteRT buffer order in manifest");
+        for (int i=0;i<INPUT.length;i++) {
+            inputPositions[i] = -1;
+            for (int pos=0;pos<3;pos++)
+                if (INPUT[i].equals(inputOrder.getString(pos))) inputPositions[i] = pos;
+            if (inputPositions[i] < 0) throw new IllegalArgumentException("Missing LiteRT input " + INPUT[i]);
+        }
+        for (int i=0;i<OUTPUT.length;i++) {
+            outputPositions[i] = -1;
+            for (int pos=0;pos<5;pos++)
+                if (OUTPUT[i].equals(outputOrder.getString(pos))) outputPositions[i] = pos;
+            if (outputPositions[i] < 0) throw new IllegalArgumentException("Missing LiteRT output " + OUTPUT[i]);
+        }
         JSONObject rawInputs = metadata.getJSONObject("inputs");
         JSONObject rawOutputs = metadata.getJSONObject("outputs");
         for (int i=0;i<INPUT.length;i++) {
@@ -83,6 +105,8 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
             outputNames[i] = item.getString("name");
             outputCounts[i] = item.getInt("count");
         }
+        JSONArray spatialShape = rawInputs.getJSONObject("InputSpatial").getJSONArray("shape");
+        spatialIsNchw = spatialShape.getInt(1) == 22 && spatialShape.getInt(2) == board;
         if (inputCounts[0] != board * board * CHANNELS[0] || inputCounts[1] != 19 ||
                 inputCounts[2] != board * board ||
                 outputCounts[0] != 1 || outputCounts[1] != board * board ||
@@ -128,13 +152,19 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
         for (int i=0;i<3;i++) {
             if (values[i].length != inputCounts[i])
                 throw new IllegalArgumentException("Incorrect tensor length for " + INPUT[i]);
-            inputs.get(i).writeFloat(values[i]);
+            float[] input = values[i];
+            if (i == 0 && spatialIsNchw) {
+                input = new float[spatial.length];
+                for (int c=0;c<22;c++)
+                    for (int p=0;p<size*size;p++) input[c*size*size+p] = spatial[p*22+c];
+            }
+            inputs.get(inputPositions[i]).writeFloat(input);
         }
         long start = SystemClock.elapsedRealtimeNanos();
         model.run(inputs, outputs);
         float[][] result = new float[5][];
         for (int i=0;i<5;i++) {
-            result[i] = outputs.get(i).readFloat();
+            result[i] = outputs.get(outputPositions[i]).readFloat();
             if (result[i].length != outputCounts[i])
                 throw new IllegalStateException("Unexpected output shape for " + OUTPUT[i]);
             for (float v : result[i])
