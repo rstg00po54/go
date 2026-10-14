@@ -197,10 +197,101 @@ public class MainActivity extends AppCompatActivity {
         showMainPage();
         if (isRefereeSmokeIntent()) {
             startDebugRefereeSmoke();
+        } else if (isNpuSmokeIntent()) {
+            startDebugNpuSwitchSmoke();
         } else if (!jniGtpSmoke && !jniGtpRepeat) {
             showGpuStartupScreen(boardSize, selectedBackend);
             startEngine();
         }
+    }
+
+    // ADB-only NPU regression: same Java engine, sequential fixed-shape RKNN graphs.
+    // Does not touch the user's saved board/backend preferences or simulate UI taps.
+    private boolean isNpuSmokeIntent() {
+        return (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+                && getIntent() != null && getIntent().getBooleanExtra("npu_switch_smoke", false);
+    }
+
+    private void startDebugNpuSwitchSmoke() {
+        String rawId = getIntent().getStringExtra("npu_smoke_id");
+        final String id = (rawId == null ? "" : rawId.replaceAll("[^A-Za-z0-9_-]", ""));
+        if (id.isEmpty() || id.length() > 40) {
+            Log.e("NpuSmoke", "FAIL id=invalid stage=args reason=Invalid_run_id");
+            return;
+        }
+        String sizesArg = getIntent().getStringExtra("npu_smoke_sizes");
+        if (sizesArg == null) sizesArg = "9,13,19,9";
+        final boolean humanSL = getIntent().getBooleanExtra("npu_smoke_human", true);
+        final int[] sizes;
+        try {
+            String[] values = sizesArg.split(",", -1);
+            if (values.length < 1 || values.length > 12) throw new IllegalArgumentException("Invalid_step_count");
+            sizes = new int[values.length];
+            for (int i=0; i<values.length; i++) {
+                sizes[i] = Integer.parseInt(values[i]);
+                if (sizes[i] != 9 && sizes[i] != 13 && sizes[i] != 19)
+                    throw new IllegalArgumentException("Unsupported_board_" + sizes[i]);
+                if (!hasBundledNpuModel(sizes[i])) throw new IllegalArgumentException("RKNN_asset_missing_" + sizes[i]);
+            }
+        } catch (RuntimeException ex) {
+            Log.e("NpuSmoke", "FAIL id=" + id + " stage=args reason=" + ex, ex);
+            return;
+        }
+        final String requested = sizesArg;
+        Log.i("NpuSmoke", "START id=" + id + " sizes=" + requested + " humanSL=" + humanSL);
+        render("NPU 自动测试进行中（" + requested + "）");
+        engineExecutor.execute(() -> {
+            try {
+                if (humanSL) engine.prepareHumanModel((done, total) -> {});
+                for (int i=0; i<sizes.length; i++) {
+                    int size = sizes[i];
+                    Log.i("NpuSmoke", "STEP_BEGIN id=" + id + " index=" + i + " board=" + size);
+                    long startupNs = System.nanoTime();
+                    engine.setStartupBoardSize(size);
+                    engine.setBackendPreference(KataGoEngine.BackendPreference.NPU);
+                    if (!engine.start(KataGoEngine.Model.HUMAN, humanSL))
+                        throw new IllegalStateException("engine_start_failed");
+                    long startupMs = (System.nanoTime() - startupNs) / 1000000L;
+                    if (!engine.getBackendName().startsWith("NPU") || engine.getActiveNpuBoardSize() != size)
+                        throw new IllegalStateException("wrong_backend_or_model_" + engine.getBackendName()
+                                + "_active_" + engine.getActiveNpuBoardSize());
+                    if (!engine.setBoardSize(size) || !engine.clearBoard() || !engine.setChineseRules()
+                            || !engine.setKomi(7.5f) || !engine.setSearchLimits(32, 2.0))
+                        throw new IllegalStateException("gtp_setup_failed_board_" + size);
+                    if (humanSL && !engine.setHumanRank(12))
+                        throw new IllegalStateException("human_rank_setup_failed");
+                    long firstNs = System.nanoTime();
+                    String black = engine.generateMove("black");
+                    long blackMs = (System.nanoTime() - firstNs) / 1000000L;
+                    long secondNs = System.nanoTime();
+                    String white = engine.generateMove("white");
+                    long whiteMs = (System.nanoTime() - secondNs) / 1000000L;
+                    if (!isValidNpuSmokeMove(black, size) || !isValidNpuSmokeMove(white, size))
+                        throw new IllegalStateException("invalid_moves_" + black + "_" + white);
+                    Log.i("NpuSmoke", "STEP_PASS id=" + id + " index=" + i + " board=" + size
+                            + " active=" + engine.getActiveNpuBoardSize() + " startupMs=" + startupMs
+                            + " black=" + black + " blackMs=" + blackMs
+                            + " white=" + white + " whiteMs=" + whiteMs);
+                }
+                Log.i("NpuSmoke", "PASS id=" + id + " steps=" + sizes.length + " sizes=" + requested);
+            } catch (Exception ex) {
+                Log.e("NpuSmoke", "FAIL id=" + id + " stage=run reason=" + ex, ex);
+            } finally {
+                engine.stop();
+                mainHandler.post(() -> render("NPU 自动测试结束，查看 NpuSmoke 日志"));
+            }
+        });
+    }
+
+    private boolean isValidNpuSmokeMove(String move, int size) {
+        if (move == null) return false;
+        String vertex = move.trim().toUpperCase(java.util.Locale.US);
+        if ("PASS".equals(vertex)) return true;
+        if (!vertex.matches("[A-HJ-T]([1-9]|1[0-9])")) return false;
+        char col = vertex.charAt(0);
+        int x = col - 'A' - (col > 'I' ? 1 : 0);
+        int y = Integer.parseInt(vertex.substring(1));
+        return x >= 0 && x < size && y <= size;
     }
 
     // Explicit Debug-APK-only ADB smoke. Production APKs cannot enter this path.
