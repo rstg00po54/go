@@ -33,6 +33,29 @@ public final class SmartRefereeSmoke {
     public static void main(String[] args) {
         GoBoard board = twoBlackChain();
         float[] owner = new float[81];
+        NnAreaScore even = NnAreaScore.estimate(owner,9,5.5,0);
+        ok(Math.abs(even.blackPoints-40.5) < 0.001 && Math.abs(even.whitePoints-46.0) < 0.001,
+                "uncertain ownership splits 81 intersections with komi");
+        float[] allWhite = new float[81];
+        java.util.Arrays.fill(allWhite,1f);
+        NnAreaScore all = NnAreaScore.estimate(allWhite,9,0.0,2);
+        ok(all.blackPoints == 0 && all.whitePoints == 83,
+                "Chinese area handicap compensation");
+        float[] oneBlack = new float[81];
+        oneBlack[0] = -1f;
+        NnAreaScore mixed = NnAreaScore.estimate(oneBlack,9,0.0,0);
+        ok(Math.abs(mixed.blackPoints-41.0)<0.001 && Math.abs(mixed.whitePoints-40.0)<0.001,
+                "fully black-owned intersection");
+        try {
+            NnAreaScore.estimate(new float[80],9,5.5,0);
+            throw new AssertionError("ownership dimensions must be validated");
+        } catch (IllegalArgumentException expected) {}
+        try {
+            float[] bad = new float[81];
+            bad[0] = Float.NaN;
+            NnAreaScore.estimate(bad,9,5.5,0);
+            throw new AssertionError("invalid probabilities rejected");
+        } catch (IllegalArgumentException expected) {}
         owner[0] = 0.95f; owner[1] = 0.94f;
         SmartReferee.Analysis strong = SmartReferee.analyze(board, owner);
         ok(strong.groups == 1, "connected two stones must be one group");
@@ -328,7 +351,7 @@ def main():
         paths = [GAME / name for name in (
             "GoBoard.java", "Intersection.java", "Move.java", "Point.java",
             "StoneColor.java", "SmartReferee.java", "EndgameAdjudicator.java",
-            "MidgameTacticalReview.java",
+            "MidgameTacticalReview.java", "NnAreaScore.java",
         )]
         subprocess.run(["javac", "-encoding", "UTF-8", "-d", str(dest),
                         str(source), str(stub)] + [str(x) for x in paths], check=True)

@@ -28,6 +28,7 @@ import com.badukai.engine.KataGoOpenCLProbe;
 import com.badukai.engine.KataGoNative;
 import com.badukai.game.GoBoard;
 import com.badukai.game.FastEndgameScorer;
+import com.badukai.game.NnAreaScore;
 import com.badukai.game.SmartReferee;
 import com.badukai.game.EndgameAdjudicator;
 import com.badukai.game.MidgameTacticalReview;
@@ -100,6 +101,9 @@ public class MainActivity extends AppCompatActivity {
     private boolean preciseScoreReady;
     private double fastEndgameLead = Double.NaN;
     private KataGoEngine.PositionEvaluation endgameEvaluation;
+    private GoBoard nnAreaScoreBoard;
+    private int nnAreaScoreMoves = -1;
+    private String nnAreaScoreMessage;
     private EndgameAdjudicator.Result endgameDecision;
     // Experimental referee is a local, explicitly confirmed dead-chain overlay.
     private boolean refereeMode;
@@ -130,6 +134,7 @@ public class MainActivity extends AppCompatActivity {
     private View gamePageContainer;
     private GoBoardView boardView;
     private TextView statusText;
+    private TextView nnAreaScoreText;
     private InkLoadingView gpuStartupScreen;
     private GpuStartupLogProgress gpuProgressTracker;
     private int gpuStartupGeneration;
@@ -417,6 +422,7 @@ public class MainActivity extends AppCompatActivity {
         gamePageContainer = findViewById(R.id.gamePageContainer);
         boardView = findViewById(R.id.boardView);
         statusText = findViewById(R.id.statusText);
+        nnAreaScoreText = findViewById(R.id.nnAreaScoreText);
         aiWinRateText = findViewById(R.id.aiWinRateText);
         aiMoveTimeText = findViewById(R.id.aiMoveTimeText);
         playerWinRateText = findViewById(R.id.playerWinRateText);
@@ -977,9 +983,23 @@ public class MainActivity extends AppCompatActivity {
                 String leader = Math.abs(result.whiteLead) < 0.05 ? "双方接近持平"
                         : String.format(Locale.CHINA,"%s领先约 %.1f 目",
                                 result.whiteLead > 0 ? "白棋" : "黑棋",Math.abs(result.whiteLead));
+                NnAreaScore area = null;
+                try {
+                    area = NnAreaScore.estimate(result.whiteOwnership,size,komiFor(size),
+                            gameCondition >= 2 ? gameCondition : 0);
+                } catch (IllegalArgumentException ex) {
+                    Log.w(TAG,"NN area totals unavailable",ex);
+                }
+                String areaLine = area == null ? "" : String.format(Locale.CHINA,
+                        "黑棋约 %.1f 目 · 白棋约 %.1f 目",area.blackPoints,area.whitePoints);
+                nnAreaScoreBoard = area == null ? null : snapshot;
+                nnAreaScoreMoves = moves;
+                nnAreaScoreMessage = area == null ? null : String.format(Locale.CHINA,
+                        "黑 %.1f · 白 %.1f",area.blackPoints,area.whitePoints);
                 String summary = String.format(Locale.CHINA,
-                        "%s\n黑棋胜率 %.1f%% · 白棋胜率 %.1f%%",
-                        leader,result.blackWin * 100.0,result.whiteWin * 100.0);
+                        "%s%s\n黑棋胜率 %.1f%% · 白棋胜率 %.1f%%",
+                        leader,area == null ? "" : "\n" + areaLine,
+                        result.blackWin * 100.0,result.whiteWin * 100.0);
                 render("快速 NN 预估：" + leader);
                 String positionWarning = immediateKo != null
                         ? "\n\n当前存在劫禁（" + immediateKo.toGtp(size) + "），不能直接确认终局。"
@@ -990,7 +1010,9 @@ public class MainActivity extends AppCompatActivity {
                         moves,gameEnded,result.whiteLead,result.blackWin,result.whiteWin,
                         immediateKo == null ? "none" : immediateKo.toGtp(size),atariGroups));
                 new AlertDialog.Builder(this).setTitle("智能裁判 · 快速 NN 估分")
-                        .setMessage(summary + positionWarning + (gameEnded
+                        .setMessage(summary + positionWarning + (area == null ? "" :
+                                "\n\n双方目数按 NN 地盘归属估算（棋子和围空；白方含贴目或让子补偿），"
+                                + "可能与 NN 单独预测的领先目数略有差异。") + (gameEnded
                                 ? "\n\n双方已停棋，以上仍是预估，不是确认数子结果。"
                                 : "\n\n当前棋形估算，仅供参考；不代表已经判定死活。"))
                         .setPositiveButton(gameEnded ? "关闭" : "继续下棋",null)
@@ -1971,6 +1993,8 @@ public class MainActivity extends AppCompatActivity {
         finalScoreText = null;
         finalDeadStones = null;
         lastAiMoveTimeMs = -1;
+        nnAreaScoreBoard = null;
+        nnAreaScoreMessage = null;
         preciseScoreReady = false;
         fastEndgameLead = Double.NaN;
         endgameEvaluation = null;
@@ -2173,6 +2197,12 @@ public class MainActivity extends AppCompatActivity {
             boardView.setEndgameAlerts(null);
         }
         statusText.setText(message);
+        if (nnAreaScoreBoard != board || nnAreaScoreMoves != board.getMoveCount()) {
+            nnAreaScoreBoard = null;
+            nnAreaScoreMessage = null;
+        }
+        nnAreaScoreText.setVisibility(nnAreaScoreMessage == null ? View.GONE : View.VISIBLE);
+        if (nnAreaScoreMessage != null) nnAreaScoreText.setText(nnAreaScoreMessage);
         aiMoveTimeText.setText(thinking ? "AI 思考中…" : lastAiMoveTimeMs < 0
                 ? "本手用时 --" : String.format(Locale.CHINA,"本手用时 %.2f 秒",lastAiMoveTimeMs/1000.0));
         updateWinRateLabels();

@@ -76,6 +76,22 @@ class RefereeSmokeHostTests(unittest.TestCase):
         self.assertIn("lastAiMoveTimeMs = -1;",newgame)
         self.assertIn("lastAiMoveTimeMs = -1;",undo)
 
+    def test_nn_black_white_area_points_use_existing_raw_nn(self):
+        root = Path(__file__).resolve().parents[1]
+        activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
+        layout = (root/"app/src/main/res/layout/activity_main.xml").read_text(encoding="utf-8")
+        self.assertEqual(layout.count('android:id="@+id/nnAreaScoreText"'),1)
+        self.assertIn('nnAreaScoreText = findViewById(R.id.nnAreaScoreText);',activity)
+        self.assertIn('NnAreaScore.estimate(result.whiteOwnership,size,komiFor(size)',activity)
+        self.assertIn('gameCondition >= 2 ? gameCondition : 0',activity)
+        self.assertIn('nnAreaScoreBoard != board || nnAreaScoreMoves != board.getMoveCount()',activity)
+        self.assertIn('nnAreaScoreText.setVisibility(nnAreaScoreMessage == null ? View.GONE : View.VISIBLE);',activity)
+        quick = activity.split("private void showQuickNnRefereeEstimate()",1)[1].split(
+            "private void startSmartReferee()",1)[0]
+        self.assertEqual(quick.count('engine.evaluatePosition(size)'),1)
+        self.assertNotIn("searchRecommendations(",quick)
+        self.assertIn("双方目数按 NN 地盘归属估算",quick)
+
     def test_smart_referee_entry_stays_labeled_after_new_game(self):
         root = Path(__file__).resolve().parents[1]
         activity = (root/"app/src/main/java/com/badukai/MainActivity.java").read_text(encoding="utf-8")
