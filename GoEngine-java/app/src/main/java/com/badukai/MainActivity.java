@@ -27,11 +27,7 @@ import com.badukai.engine.GpuStartupLogProgress;
 import com.badukai.engine.KataGoOpenCLProbe;
 import com.badukai.engine.KataGoNative;
 import com.badukai.game.GoBoard;
-import com.badukai.game.FastEndgameScorer;
 import com.badukai.game.NnAreaScore;
-import com.badukai.game.SmartReferee;
-import com.badukai.game.EndgameAdjudicator;
-import com.badukai.game.MidgameTacticalReview;
 import com.badukai.game.Intersection;
 import com.badukai.game.Move;
 import com.badukai.game.Point;
@@ -49,9 +45,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.HashSet;
 import java.util.Locale;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -97,29 +91,10 @@ public class MainActivity extends AppCompatActivity {
     private boolean gameReady;
     private String gameResultText;
     private String finalScoreText;
-    private String finalDeadStones;
-    private boolean preciseScoreReady;
-    private double fastEndgameLead = Double.NaN;
     private KataGoEngine.PositionEvaluation endgameEvaluation;
     private GoBoard nnAreaScoreBoard;
     private int nnAreaScoreMoves = -1;
     private String nnAreaScoreMessage;
-    private EndgameAdjudicator.Result endgameDecision;
-    // Experimental referee is a local, explicitly confirmed dead-chain overlay.
-    private boolean refereeMode;
-    // Native referee overlays survive dialog dismissal until cleared or the position changes.
-    private GoBoard nativeRefereeMarkedBoard;
-    private int nativeRefereeMarkedMoves = -1;
-    // Keep a single suggested intersection circled until the board changes.
-    private GoBoard endgameInspectionMarkedBoard;
-    private int endgameInspectionMarkedMoves = -1;
-    private boolean refereeAwaitingTap;
-    private boolean refereeConfirmed;
-    private final Set<Point> refereeAccepted = new HashSet<>();
-    private final Set<Point> refereeDead = new HashSet<>();
-    private final Set<Point> refereeSuggested = new HashSet<>();
-    private final Set<Point> refereeReview = new HashSet<>();
-    private final Set<Point> refereeInitialReview = new HashSet<>();
     private Point lastMove;
     private final List<KataGoEngine.SearchRecommendation> recommendationChoices = new ArrayList<>();
     private Point[] recommendationPoints;
@@ -159,10 +134,6 @@ public class MainActivity extends AppCompatActivity {
     private Button situationButton;
     private Button aiSuggestionButton;
     private Button countTerritoryButton;
-    private View refereePanel, gameActionPanel, refereeTapOverlay;
-    private TextView refereePanelTitle, refereePanelScore, refereePanelHint;
-    private Button refereeResetButton, refereeConfirmButton, refereeExitButton, refereeContinueButton;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         DebugLog.enter(TAG, "onCreate in, savedInstanceState=" + savedInstanceState);
@@ -309,14 +280,6 @@ public class MainActivity extends AppCompatActivity {
                     if (!first || !engine.undo() || !replay.resumeAfterPasses())
                         throw new IllegalStateException("Cannot prepare ongoing midgame SGF");
                 }
-                KataGoEngine.PositionEvaluation nn = engine.evaluatePosition(9);
-                if (nn == null || nn.whiteOwnership == null || nn.whiteOwnership.length != 81)
-                    throw new IllegalStateException("10b raw NN ownership unavailable");
-                SmartReferee.Analysis analysis = SmartReferee.analyze(replay,nn.whiteOwnership);
-                Log.i("RefereeSmoke",String.format(Locale.US,
-                        "REPLAY id=%s game=%s moves=%d terminal=%s backend=%s lead=%+.2f dead=%d review=%d vulnerable=%d",
-                        id,game,replay.getMoveCount(),replay.isGameOver(),engine.getBackendName(),nn.whiteLead,
-                        analysis.suggestedGroups,analysis.reviewGroups,analysis.vulnerableGroups));
                 mainHandler.post(() -> {
                     board = replay;
                     boardSize = 9;
@@ -328,13 +291,13 @@ public class MainActivity extends AppCompatActivity {
                     gameReady = true;
                     thinking = false;
                     evaluating = false;
-                    endgameEvaluation = midgame ? null : nn;
-                    preciseScoreReady = false;
-                    refereeMode = false;
-                    finalDeadStones = null;
+                    gameResultText = null;
+                    endgameEvaluation = null;
+                    nnAreaScoreBoard = null;
+                    nnAreaScoreMessage = null;
                     showGamePage();
-                    render("自动测试：真实9路SGF终局已加载，正在打开智能裁判...");
-                    startSmartReferee();
+                    render("自动测试：SGF 已加载，正在快速 NN 估分...");
+                    showQuickNnRefereeEstimate();
                 });
             } catch (Exception ex) {
                 Log.e("RefereeSmoke","FAIL id=" + id + " stage=replay reason=" + ex,ex);
@@ -443,23 +406,6 @@ public class MainActivity extends AppCompatActivity {
         situationButton = findViewById(R.id.situationButton);
         aiSuggestionButton = findViewById(R.id.aiSuggestionButton);
         countTerritoryButton = findViewById(R.id.countTerritoryButton);
-        refereePanel = findViewById(R.id.refereePanel);
-        gameActionPanel = findViewById(R.id.gameActionPanel);
-        refereeTapOverlay = findViewById(R.id.refereeTapOverlay);
-        refereeTapOverlay.setOnClickListener(v -> {
-            if (refereeMode && refereeRequiresContinuation() && refereeAwaitingTap) resumeFromReferee();
-        });
-        refereePanelTitle = findViewById(R.id.refereePanelTitle);
-        refereePanelScore = findViewById(R.id.refereePanelScore);
-        refereePanelHint = findViewById(R.id.refereePanelHint);
-        refereeResetButton = findViewById(R.id.refereeResetButton);
-        refereeConfirmButton = findViewById(R.id.refereeConfirmButton);
-        refereeExitButton = findViewById(R.id.refereeExitButton);
-        refereeContinueButton = findViewById(R.id.refereeContinueButton);
-        refereeResetButton.setOnClickListener(v -> resetRefereeSuggestions());
-        refereeConfirmButton.setOnClickListener(v -> showRefereeConfirmation());
-        refereeExitButton.setOnClickListener(v -> leaveRefereeReview());
-        refereeContinueButton.setOnClickListener(v -> resumeFromReferee());
     }
 
     private void startEngine() {
@@ -623,42 +569,8 @@ public class MainActivity extends AppCompatActivity {
                 .setView(chart).setPositiveButton("关闭", null).show();
     }
 
-    /** Midgame inspections never count as completed games, even when NN looks stable. */
-    private boolean refereeRequiresContinuation() {
-        return !board.isGameOver() || (endgameDecision != null
-                && endgameDecision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT);
-    }
-
     private void onBoardTap(int x, int y) {
         DebugLog.enter(TAG, "onBoardTap in, x=" + x + ", y=" + y + ", engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer + ", playerColor=" + playerColor);
-        if (refereeMode) {
-            // Fallback if a board touch bypasses the transparent full-screen overlay:
-            // consume the entire gesture to continue, NEVER also place a stone.
-            if (refereeRequiresContinuation()) {
-                if (refereeAwaitingTap) resumeFromReferee();
-                return;
-            }
-            if (board.isInside(x, y) && board.get(x, y) != Intersection.EMPTY) {
-                Point tapped = new Point(x, y);
-                if (refereeReview.contains(tapped)) {
-                    new AlertDialog.Builder(this).setTitle("复核这块棋")
-                            .setMessage("AI 对整块棋的死活判断不确定。请选择最终处理方式。")
-                            .setPositiveButton("判活（保留）", (dialog, which) -> {
-                                SmartReferee.decideGroup(board, refereeDead, refereeReview, tapped, false);
-                                refreshRefereePreview();
-                            })
-                            .setNeutralButton("判死（移除）", (dialog, which) -> {
-                                SmartReferee.decideGroup(board, refereeDead, refereeReview, tapped, true);
-                                refreshRefereePreview();
-                            })
-                            .setNegativeButton("暂不处理", null).show();
-                } else {
-                    SmartReferee.toggleGroup(board, refereeDead, tapped);
-                    refreshRefereePreview();
-                }
-            }
-            return;
-        }
         if (!engineReady || !gameReady || thinking || currentPlayer != playerColor || board.isGameOver()) return;
         if (!board.isInside(x, y)) return;
         Point point = new Point(x, y);
@@ -823,104 +735,57 @@ public class MainActivity extends AppCompatActivity {
         finishByResignation("你认输了 · " + winner + "胜");
     }
 
-    /**
-     * Experimental fast path: one raw NN pass (no MCTS), conservative
-     * chain-level dead suggestions and immediate display of raw whiteLead.
-     * Original KataGo final_score remains available via the Deep Compare button.
-     * If raw NN cannot be evaluated, fall back to the original slow pipeline.
-     */
+    /** Double pass triggers one raw NN evaluation, with no manual death adjudication. */
     private void finishByScore(String pendingPassColor) {
         DebugLog.enter(TAG, "finishByScore in, pendingPassColor=" + pendingPassColor);
         if (evaluating) return;
         evaluating = true;
         endgameEvaluation = null;
-        endgameDecision = null;
         winRateEpoch++;
         winRateSession++;
         final GoBoard snapshot = board;
         final int size = boardSize, moves = board.getMoveCount();
-        final long epoch = winRateEpoch, startedNs = System.nanoTime();
-        render(EXPERIMENTAL_FAST_ENDGAME ? "正在快速AI估算..." : "正在搜索计算最终目差...");
+        final long epoch = winRateEpoch;
+        render("正在快速 NN 估分...");
         engineExecutor.execute(() -> {
             boolean synced = pendingPassColor == null || engine.playMove(pendingPassColor, "pass");
-            if (EXPERIMENTAL_FAST_ENDGAME && synced) {
-                long evalStartedNs = System.nanoTime();
-                KataGoEngine.PositionEvaluation quick = engine.evaluatePosition(size);
-                long evalMs = (System.nanoTime() - evalStartedNs) / 1000000L;
-                if (quick != null && Double.isFinite(quick.whiteLead)) {
-                    try {
-                        FastEndgameScorer.Result suggested = FastEndgameScorer.suggest(snapshot, quick.whiteOwnership);
-                        GoBoard.FinalScore local = snapshot.countChineseScore(suggested.deadStones,
-                                komiFor(size), gameCondition >= 2 ? gameCondition : 0);
-                        String estimatedDead = suggested.deadVertices(size);
-                        double lead = quick.whiteLead;
-                        long elapsedMs = (System.nanoTime() - startedNs) / 1000000L;
-                        Log.i(TAG, String.format(Locale.US,
-                                "Chinese area score B stones=%d territory=%d, W stones=%d territory=%d, "
-                                + "dead B=%d W=%d, total B=%.1f W=%.1f, lead local=%.1f mode=fast_nn",
-                                local.blackStones, local.blackTerritory, local.whiteStones, local.whiteTerritory,
-                                local.deadBlack, local.deadWhite, local.blackPoints, local.whitePoints,
-                                local.whitePoints - local.blackPoints));
-                        Log.i(TAG, String.format(Locale.US,
-                                "ENDGAME_TIMING phase=fast_nn_done elapsedMs=%d evalMs=%d "
-                                + "nnWhiteLead=%.3f localWhiteLead=%.3f suggestedDead=%d groups=%d",
-                                elapsedMs, evalMs, lead, local.whitePoints - local.blackPoints,
-                                suggested.deadStones.size(), suggested.scannedGroups));
-                        mainHandler.post(() -> {
-                            if (board != snapshot || board.getMoveCount() != moves || winRateEpoch != epoch) return;
-                            evaluating = false;
-                            preciseScoreReady = false;
-                            endgameEvaluation = quick;
-                            finalDeadStones = estimatedDead;
-                            fastEndgameLead = lead;
-                            gameResultText = formatFastEndgameResult(lead);
-                            finalScoreText = String.format(Locale.CHINA, "快速AI预估\n%s",
-                                    Math.abs(lead) < 0.05 ? "接近平局" : String.format(Locale.CHINA, "%s领先约%.1f目",
-                                    lead > 0 ? "白" : "黑", Math.abs(lead)));
-                            territorySummary(quick);
-                            recordWinRate(snapshot, moves, epoch,
-                                    new KataGoEngine.WinRate((float) quick.blackWin, (float) quick.whiteWin));
-                            render(finalScoreText);
-                        });
-                        return;
-                    } catch (RuntimeException e) {
-                        Log.w(TAG, "Fast NN endgame failed; using unchanged KataGo final_score", e);
-                    }
-                } else {
-                    Log.w(TAG, "Fast NN endgame unavailable; using unchanged KataGo final_score");
-                }
-            }
-
-            long scoreStartedNs = System.nanoTime();
-            String score = synced ? engine.getFinalScore() : null;
-            long scoreMs = (System.nanoTime() - scoreStartedNs) / 1000000L;
-            Log.i(TAG, "ENDGAME_TIMING phase=score_done elapsedMs="
-                    + (System.nanoTime() - startedNs) / 1000000L + " scoreMs=" + scoreMs
-                    + " valid=" + (score != null) + " score=" + (score == null ? "null" : score.trim()));
-            if (score != null) {
-                mainHandler.post(() -> {
-                    if (board != snapshot || board.getMoveCount() != moves || winRateEpoch != epoch) return;
-                    gameResultText = formatFinalResult(score);
-                    render("正在确认死子和地盘...");
-                });
-            }
-            long deadStartedNs = System.nanoTime();
-            String deadStones = synced ? engine.getFinalDeadStones() : null;
-            long deadMs = (System.nanoTime() - deadStartedNs) / 1000000L;
-            KataGoEngine.PositionEvaluation result = synced ? engine.evaluatePosition(size) : null;
-            Log.i(TAG, "ENDGAME_TIMING phase=full_done elapsedMs="
-                    + (System.nanoTime() - startedNs) / 1000000L + " scoreMs=" + scoreMs
-                    + " deadMs=" + deadMs + " synced=" + synced);
+            long startedMs = SystemClock.elapsedRealtime();
+            KataGoEngine.PositionEvaluation nn = synced ? engine.evaluatePosition(size) : null;
+            long nnMs = SystemClock.elapsedRealtime() - startedMs;
+            final KataGoEngine.PositionEvaluation result = nn;
             mainHandler.post(() -> {
                 if (board != snapshot || board.getMoveCount() != moves || winRateEpoch != epoch) return;
                 evaluating = false;
-                finalDeadStones = deadStones;
-                preciseScoreReady = score != null;
-                fastEndgameLead = Double.NaN;
-                gameResultText = synced ? formatFinalResult(score) : "对局结束 · 同步失败";
-                if (result != null) territorySummary(result);
-                recordFinalWinRate(snapshot, moves, epoch, score);
-                finalScoreText = synced ? finalPointsSummary(score, deadStones) : "终局数子\n同步失败";
+                if (result == null || result.whiteOwnership == null || result.whiteOwnership.length != size*size
+                        || !Double.isFinite(result.whiteLead) || !Double.isFinite(result.blackWin)
+                        || !Double.isFinite(result.whiteWin)) {
+                    finalScoreText = "快速 NN 估分失败，请重试";
+                    Log.w(TAG, "ENDGAME_NN_FAILED synced=" + synced + " elapsedMs=" + nnMs);
+                    render(finalScoreText);
+                    return;
+                }
+                endgameEvaluation = result;
+                gameResultText = formatFastEndgameResult(result.whiteLead);
+                finalScoreText = String.format(Locale.CHINA, "快速 NN 预估\n%s",
+                        Math.abs(result.whiteLead) < 0.05 ? "接近平局"
+                        : String.format(Locale.CHINA, "%s领先约%.1f目",
+                                result.whiteLead > 0 ? "白" : "黑",Math.abs(result.whiteLead)));
+                try {
+                    NnAreaScore area = NnAreaScore.estimate(result.whiteOwnership,size,komiFor(size),
+                            gameCondition >= 2 ? gameCondition : 0);
+                    nnAreaScoreBoard = snapshot;
+                    nnAreaScoreMoves = moves;
+                    nnAreaScoreMessage = String.format(Locale.CHINA,"黑 %.1f · 白 %.1f",
+                            area.blackPoints,area.whitePoints);
+                } catch (IllegalArgumentException ex) {
+                    nnAreaScoreBoard = null;
+                    nnAreaScoreMessage = null;
+                    Log.w(TAG,"Endgame NN area unavailable",ex);
+                }
+                recordWinRate(snapshot,moves,epoch,
+                        new KataGoEngine.WinRate((float)result.blackWin,(float)result.whiteWin));
+                Log.i(TAG,String.format(Locale.US,"ENDGAME_NN_RESULT moves=%d lead=%.3f elapsedMs=%d",
+                        moves,result.whiteLead,nnMs));
                 render(finalScoreText);
             });
         });
@@ -932,17 +797,10 @@ public class MainActivity extends AppCompatActivity {
                 lead > 0 ? "白" : "黑", Math.abs(lead));
     }
 
-    /** Explicit, reversible referee review. Keeps original NN outcome untouched until user confirmation. */
+    /** Smart referee is read-only NN inference, never manual scoring. */
     private void showEndgameScoringOptions() {
         if (!engineReady || !gameReady || evaluating || thinking
                 || board.getLastMove() instanceof Move.Resign) return;
-        if (refereeMode) {
-            if (refereeRequiresContinuation()) {
-                if (refereeAwaitingTap) resumeFromReferee();
-            } else showRefereeConfirmation();
-            return;
-        }
-        // One non-playing raw NN evaluation. No optional MCTS or native GTP referee.
         showQuickNnRefereeEstimate();
     }
 
@@ -962,12 +820,14 @@ public class MainActivity extends AppCompatActivity {
         render("智能裁判：正在快速 NN 估分...");
         engineExecutor.execute(() -> {
             KataGoEngine.PositionEvaluation nn = cached;
+            long startedMs = SystemClock.elapsedRealtime();
             try {
                 if (nn == null || nn.size != size) nn = engine.evaluatePosition(size);
             } catch (RuntimeException e) {
                 Log.w(TAG,"Quick referee NN evaluation failed",e);
                 nn = null;
             }
+            final long nnMs = SystemClock.elapsedRealtime() - startedMs;
             final KataGoEngine.PositionEvaluation result = nn;
             mainHandler.post(() -> {
                 if (board != snapshot || board.getMoveCount() != moves || boardSize != size) {
@@ -978,6 +838,9 @@ public class MainActivity extends AppCompatActivity {
                 if (result == null || !Double.isFinite(result.whiteLead)
                         || !Double.isFinite(result.blackWin) || !Double.isFinite(result.whiteWin)) {
                     render("快速 NN 估分失败，请重试");
+                    if (isRefereeSmokeIntent()) Log.e("RefereeSmoke","FAIL id=" + refereeSmokeId()
+                            + " game=" + getIntent().getStringExtra("referee_smoke_game")
+                            + " stage=nn_dialog reason=nn_invalid");
                     return;
                 }
                 String leader = Math.abs(result.whiteLead) < 0.05 ? "双方接近持平"
@@ -989,6 +852,15 @@ public class MainActivity extends AppCompatActivity {
                             gameCondition >= 2 ? gameCondition : 0);
                 } catch (IllegalArgumentException ex) {
                     Log.w(TAG,"NN area totals unavailable",ex);
+                }
+                if (isRefereeSmokeIntent() && (area == null || result.whiteOwnership == null
+                        || result.whiteOwnership.length != size*size || !Double.isFinite(area.blackPoints)
+                        || !Double.isFinite(area.whitePoints) || result.blackWin < 0 || result.blackWin > 1
+                        || result.whiteWin < 0 || result.whiteWin > 1)) {
+                    Log.e("RefereeSmoke","FAIL id=" + refereeSmokeId() + " game="
+                            + getIntent().getStringExtra("referee_smoke_game") + " stage=nn_dialog reason=nn_values");
+                    render("自动测试：NN 数值不合法");
+                    return;
                 }
                 String areaLine = area == null ? "" : String.format(Locale.CHINA,
                         "黑棋约 %.1f 目 · 白棋约 %.1f 目",area.blackPoints,area.whitePoints);
@@ -1015,524 +887,16 @@ public class MainActivity extends AppCompatActivity {
                                 + "可能与 NN 单独预测的领先目数略有差异。") + (gameEnded
                                 ? "\n\n双方已停棋，以上仍是预估，不是确认数子结果。"
                                 : "\n\n当前棋形估算，仅供参考；不代表已经判定死活。"))
-                        .setPositiveButton(gameEnded ? "关闭" : "继续下棋",null)
-                        .show();
-            });
-        });
-    }
-
-    private void startSmartReferee() {
-        if (!engineReady || !gameReady || evaluating || thinking || variationBoard != null) return;
-        evaluating = true;
-        final GoBoard snapshot = board;
-        final int moves = board.getMoveCount(), size = boardSize;
-        final boolean endedAtStart = board.isGameOver();
-        // Endgame ownership caches do not describe an ongoing, changing game.
-        final KataGoEngine.PositionEvaluation cached = endedAtStart ? endgameEvaluation : null;
-        render(endedAtStart ? "智能裁判：正在检查终局争议..." : "智能裁判：正在检查当前棋形...");
-        engineExecutor.execute(() -> {
-            SmartReferee.Analysis analysis = null;
-            KataGoEngine.PositionEvaluation nn = cached;
-            try {
-                if (nn == null || nn.size != size) nn = engine.evaluatePosition(size);
-                if (nn != null) analysis = SmartReferee.analyze(snapshot, nn.whiteOwnership);
-            } catch (RuntimeException ex) {
-                Log.w(TAG, "Smart referee NN dead-chain suggestion unavailable", ex);
-            }
-            final SmartReferee.Analysis suggestion = analysis;
-            final KataGoEngine.PositionEvaluation evaluated = nn;
-            SmartReferee.ScoreWhatIf range = null;
-            if (analysis != null && analysis.reviewGroups > 0) {
-                try {
-                    range = SmartReferee.scoreWhatIf(snapshot,analysis.suggestedDead,analysis.needsReview,
-                            komiFor(size),gameCondition >= 2 ? gameCondition : 0);
-                } catch (RuntimeException ex) {
-                    Log.w(TAG, "Endgame hypothetical score range unavailable", ex);
-                }
-            }
-            final SmartReferee.ScoreWhatIf sensitivity = range;
-            EndgameAdjudicator.Result verdict;
-            try {
-                verdict = EndgameAdjudicator.analyze(snapshot, nn == null ? null : nn.whiteOwnership);
-            } catch (RuntimeException ex) {
-                Log.w(TAG, "Endgame triage failed; request manual review", ex);
-                verdict = EndgameAdjudicator.analyze(snapshot, null);
-            }
-            final EndgameAdjudicator.Result decision = verdict;
-            // Referee analysis is NN-only: no MCTS searches for either color.
-            // Midgame heuristic tactics require search PV corroboration, so omit them.
-            final MidgameTacticalReview.Result tactical = null;
-            final String mctsInfo = "";
-            mainHandler.post(() -> {
-                evaluating = false;
-                if (board != snapshot || board.getMoveCount() != moves || boardSize != size) return;
-                if (evaluated != null && evaluated.size == size && endedAtStart) endgameEvaluation = evaluated;
-                endgameDecision = decision;
-                refereeMode = true;
-                refereeAwaitingTap = false;
-                refereeDead.clear();
-                refereeSuggested.clear();
-                refereeReview.clear();
-                refereeInitialReview.clear();
-                if (endedAtStart && suggestion != null) {
-                    // NN ownership is acceptable as a tentative ENDGAME scoring
-                    // suggestion, but never declare a midgame string dead.
-                    refereeDead.addAll(suggestion.suggestedDead);
-                    refereeSuggested.addAll(suggestion.suggestedDead);
-                    refereeReview.addAll(suggestion.needsReview);
-                    refereeInitialReview.addAll(suggestion.needsReview);
-                } else if (!endedAtStart && tactical != null) {
-                    refereeReview.addAll(tactical.threatenedStones);
-                    refereeInitialReview.addAll(tactical.threatenedStones);
-                }
-                boardView.setOwnership(null);
-                boardView.setRefereeMarks(refereeDead, refereeReview);
-                Set<Point> alerts = new HashSet<>();
-                if (!endedAtStart) {
-                    // Never invent a tactical recommendation from a low-confidence NN;
-                    // ongoing games receive only the quick NN estimate in the UI.
-                    if (tactical != null) alerts.addAll(tactical.tacticalMoves);
-                } else {
-                    for (EndgameAdjudicator.Finding finding : decision.findings) {
-                        if (finding.reason == EndgameAdjudicator.Reason.FIRST_MOVE_TACTIC
-                                || finding.reason == EndgameAdjudicator.Reason.POSSIBLE_KO
-                                || finding.reason == EndgameAdjudicator.Reason.POSSIBLE_SEKI) {
-                            if (finding.suggestedMove != null) alerts.add(finding.suggestedMove);
-                            else alerts.addAll(finding.points);
-                        }
-                    }
-                    if (decision.verdict != EndgameAdjudicator.Verdict.READY_TO_COUNT
-                            && alerts.isEmpty() && refereeDead.isEmpty() && refereeReview.isEmpty())
-                        alerts.addAll(decision.highlights);
-                }
-                boardView.setEndgameAlerts(alerts);
-                // No marked dispute in an ongoing game is not an endgame
-                // controversy. Show a single, short informational dialog and
-                // immediately return to normal play, without a second tap.
-                if (!endedAtStart && refereeDead.isEmpty() && refereeReview.isEmpty() && alerts.isEmpty()) {
-                    refereeMode = false;
-                    endgameDecision = null;
-                    boardView.setRefereeMarks(null,null);
-                    boardView.setEndgameAlerts(null);
-                    render("棋局还没下完");
-                    new AlertDialog.Builder(this).setTitle("智能裁判")
-                            .setMessage("棋局还没下完")
-                            .setPositiveButton("继续下棋",null).show();
-                    if (isRefereeSmokeIntent()) Log.i("RefereeSmoke","NO_DISPUTE id=" + refereeSmokeId()
-                            + " moves=" + board.getMoveCount() + " terminal=" + board.isGameOver());
-                    return;
-                }
-                refreshRefereePreview();
-                String info = suggestion == null
-                        ? "AI 建议不可用。可手动点击整块棋标记死子。"
-                        : String.format(Locale.CHINA, "AI 建议死子 %d 块，需关注 %d 块；仅供参考。",
-                                suggestion.suggestedGroups, suggestion.reviewGroups);
-                StringBuilder reasons = new StringBuilder(info).append("\n\n终局判断：")
-                        .append(decision.summary()).append("\n");
-                int shown = 0;
-                for (EndgameAdjudicator.Finding finding : decision.findings) {
-                    if (shown++ == 6) { reasons.append("还有其他提示，请查看日志。\n"); break; }
-                    reasons.append("· ").append(finding.message);
-                    if (finding.suggestedMove != null)
-                        reasons.append("（建议关注 ").append(finding.suggestedMove.toGtp(size)).append("）");
-                    reasons.append("\n");
-                    Log.i(TAG, "ENDGAME_REASON reason=" + finding.reason + " message=" + finding.message
-                            + " point=" + finding.suggestedMove);
-                }
-                reasons.append(mctsInfo);
-                if (sensitivity != null && sensitivity.winnerCanChange()) {
-                    reasons.append(String.format(Locale.CHINA,
-                            "\n不同死子组合可能改变胜负：白方净胜目试算范围 %+.1f 至 %+.1f（负数为黑方领先）。",
-                            sensitivity.minWhiteLead,sensitivity.maxWhiteLead));
-                    if (!sensitivity.exhaustive()) reasons.append("仅分析前8块待复核棋，范围不完整。");
-                    reasons.append("\n这是极端假设，不表示任何棋块已死，必须人工复核。\n");
-                }
-                reasons.append("\n红叉：AI 建议判死；黄圈：需明确复核；橙圈：需要关注的争议位置。\n"
-                        + "以上均为辅助判断，不能代替双方确认。");
-                // Ongoing games can NEVER enter formal scoring, regardless of
-                // how confident a future adjudicator version may become.
-                if (endedAtStart && decision.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT) {
-                    new AlertDialog.Builder(this).setTitle("智能裁判 · " + decision.summary())
-                            .setMessage(reasons.toString())
-                            .setPositiveButton("确认数子", null)
-                            .setNegativeButton("稍后确认", null).show();
-                } else {
-                    // Dialog first, with marked stones already drawn on the board.
-                    // Continue only dismisses the modal; the following screen
-                    // tap clears the annotations and resumes the game.
-                    StringBuilder prompt = new StringBuilder(String.format(Locale.CHINA,
-                            endedAtStart ? "棋盘上已标出争议：红叉 %d 处、黄圈 %d 处、橙圈 %d 处。\n"
-                                    : "正在对局：黄圈 %d 颗棋子、橙圈 %d 个攻防点；中盘不判死（红叉 0 处）。\n",
-                            endedAtStart ? refereeDead.size() : refereeReview.size(),
-                            endedAtStart ? refereeReview.size() : alerts.size(),
-                            endedAtStart ? alerts.size() : 0));
-                    if (endedAtStart) {
-                        int described = 0;
-                        for (EndgameAdjudicator.Finding finding : decision.findings) {
-                            if (described++ >= 2) break;
-                            prompt.append("· ").append(finding.message).append("\n");
-                        }
-                    } else {
-                        prompt.append("仅用 NN 归属估计提示；不能证明死活或终局。\n");
-                    }
-                    prompt.append("\n点「继续下棋」关闭弹窗，争议标记仍保留。");
-                    prompt.append(endedAtStart
-                            ? "\n然后再点屏幕任意位置，清除标记并恢复对局。"
-                            : "\n然后再点屏幕任意位置，清除标记并继续当前对局；不会撤销落子。");
-                    new AlertDialog.Builder(this).setTitle(endedAtStart
-                            ? "智能裁判 · 存在争议" : "智能裁判 · 当前棋形分析")
-                            .setMessage(prompt.toString()).setCancelable(false)
-                            .setPositiveButton("继续下棋", (dialog, which) -> armRefereeTapToResume())
-                            .show();
-                    Log.i(TAG,"REFEREE_BOARD_DISPUTE dead=" + refereeDead.size()
-                            + " review=" + refereeReview.size() + " alerts=" + alerts.size());
-                    if (isRefereeSmokeIntent()) Log.i("RefereeSmoke","OVERLAY id=" + refereeSmokeId()
-                            + " dead=" + refereeDead.size() + " review=" + refereeReview.size()
-                            + " alerts=" + alerts.size());
-                }
-                if (isRefereeSmokeIntent()) {
-                    SmartReferee.ScoreWhatIf actualRange = sensitivity;
-                    String game = getIntent().getStringExtra("referee_smoke_game");
-                    if (game == null) game = "cgos9_expand_006_12";
-                    boolean knownCase = endedAtStart && "cgos9_expand_006_12".equals(game);
-                    boolean hasSearch = decision.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT
-                            || (mctsInfo.contains("黑先：") && mctsInfo.contains("白先："));
-                    boolean genericGood = suggestion != null
-                            && (endedAtStart == board.isGameOver()) && (!endedAtStart || hasSearch)
-                            && reasons.toString().contains("黄圈");
-                    boolean strictGood = !knownCase || (suggestion.suggestedGroups == 1
-                            && suggestion.reviewGroups == 2 && suggestion.vulnerableGroups == 1
-                            && actualRange != null && actualRange.exhaustive()
-                            && Math.abs(actualRange.minWhiteLead + 20.0) < 0.01
-                            && Math.abs(actualRange.maxWhiteLead - 8.0) < 0.01
-                            && decision.verdict == EndgameAdjudicator.Verdict.REVIEW_REQUIRED
-                            && mctsInfo.contains("搜索胜率") && mctsInfo.contains("变化：")
-                            && reasons.toString().contains("不同死子组合可能改变胜负"));
-                    boolean good = genericGood && strictGood;
-                    Log.i("RefereeSmoke",String.format(Locale.US,
-                            "%s id=%s game=%s stage=%s verdict=%s moves=%d dead=%d review=%d vulnerable=%d "
-                            + "minLead=%.1f maxLead=%.1f hasBlack=%s hasWhite=%s hasPV=%s",
-                            good ? "PASS" : "FAIL",refereeSmokeId(),game,
-                            !endedAtStart ? "midgame_dialog"
-                                    : decision.verdict == EndgameAdjudicator.Verdict.READY_TO_COUNT ? "dialog" : "dispute_dialog",
-                            decision.verdict,moves,
-                            suggestion == null ? -1 : suggestion.suggestedGroups,
-                            suggestion == null ? -1 : suggestion.reviewGroups,
-                            suggestion == null ? -1 : suggestion.vulnerableGroups,
-                            actualRange == null ? Double.NaN : actualRange.minWhiteLead,
-                            actualRange == null ? Double.NaN : actualRange.maxWhiteLead,
-                            mctsInfo.contains("黑先："),mctsInfo.contains("白先："),mctsInfo.contains("变化：")));
-                }
-            });
-        });
-    }
-
-    /** The modal's Continue action only arms the next screen tap; it never plays a move. */
-    private void armRefereeTapToResume() {
-        if (!refereeMode || !refereeRequiresContinuation()
-                || (board.isGameOver() && !board.canResumeAfterPasses())) {
-            Toast.makeText(this,"当前不能继续对局",Toast.LENGTH_LONG).show();
-            return;
-        }
-        refereeAwaitingTap = true;
-        render("争议已标记，点屏幕清除标记并继续下棋");
-        if (isRefereeSmokeIntent()) Log.i("RefereeSmoke","ARMED id=" + refereeSmokeId()
-                + " moves=" + board.getMoveCount() + " terminal=" + board.isGameOver()
-                + " marked=" + (refereeDead.size()+refereeReview.size()));
-    }
-
-    /** Review toolbar always operates on temporary stone marks, never on the live board. */
-    private void resetRefereeSuggestions() {
-        if (!refereeMode) return;
-        refereeDead.clear();
-        refereeDead.addAll(refereeSuggested);
-        refereeReview.clear();
-        refereeReview.addAll(refereeInitialReview);
-        refreshRefereePreview();
-    }
-
-    private void leaveRefereeReview() {
-        if (!refereeMode) return;
-        refereeMode = false;
-        refereeDead.clear();
-        refereeReview.clear();
-        if (refereeConfirmed) {
-            refereeDead.addAll(refereeAccepted);
-            boardView.setRefereeMarks(refereeAccepted,null);
-        } else boardView.setRefereeMarks(null,null);
-        boardView.setEndgameAlerts(null);
-        render(finalScoreText == null ? "快速 AI 预估" : finalScoreText);
-    }
-
-    private void refreshRefereePreview() {
-        double nnLead = endgameEvaluation == null ? fastEndgameLead : endgameEvaluation.whiteLead;
-        SmartReferee.ScoreAudit audit = SmartReferee.audit(board, refereeDead, nnLead, komiFor(boardSize),
-                gameCondition >= 2 ? gameCondition : 0);
-        double lead = audit.whiteLead;
-        int pending = SmartReferee.countGroups(board, refereeReview);
-        boardView.setRefereeMarks(refereeDead, refereeReview);
-        boolean mustContinue = refereeRequiresContinuation();
-        String shortStatus = mustContinue ? "智能裁判\n建议继续下" : "智能裁判\n确认数子";
-        refereePanelTitle.setText(!board.isGameOver() ? "智能裁判 · 当前棋形"
-                : mustContinue ? "智能裁判 · 存在争议" : "智能裁判 · 可以确认数子");
-        refereePanelScore.setText(!board.isGameOver()
-                ? "黄圈：局部有危险的棋块  ·  橙圈：关键攻防点"
-                : mustContinue ? "红叉：疑似死棋  ·  黄圈：待确认  ·  橙圈：争议点"
-                : String.format(Locale.CHINA,"黑 %.1f · 白 %.1f · %s",
-                        audit.score.blackPoints,audit.score.whitePoints,
-                        Math.abs(lead) < 0.001 ? "平局" :
-                                String.format(Locale.CHINA,"%s领先 %.1f 目",lead > 0 ? "白" : "黑",Math.abs(lead))));
-        refereePanelHint.setText(mustContinue
-                ? "轻触屏幕任意位置：清除标记，继续下棋"
-                : "双方已停棋且无明显争议；确认死子后即可数子。");
-        render(shortStatus);
-    }
-
-    private void showRefereeConfirmation() { showRefereeConfirmation(false); }
-
-    private void showRefereeConfirmation(boolean ignoreContinueAdvice) {
-        // Unresolved disputes always return to play, never manual scoring.
-        if (refereeRequiresContinuation()) {
-            resumeFromReferee();
-            return;
-        }
-        if (!refereeReview.isEmpty()) {
-            int pending = SmartReferee.countGroups(board, refereeReview);
-            AlertDialog.Builder reviewPrompt = new AlertDialog.Builder(this)
-                    .setTitle("还有 " + pending + " 块死子需要确认")
-                    .setMessage("双方已经停棋。请点棋盘上的黄圈逐块确认判活或判死；也可以明确将所有黄圈判活。")
-                    .setPositiveButton("返回棋盘确认", null)
-                    .setNeutralButton("黄圈全部判活", (dialog, which) -> {
-                        refereeDead.removeAll(refereeReview);
-                        refereeReview.clear();
-                        refreshRefereePreview();
-                        showRefereeConfirmation();
-                    });
-            reviewPrompt.show();
-            return;
-        }
-        if (!ignoreContinueAdvice && endgameDecision != null
-                && endgameDecision.verdict == EndgameAdjudicator.Verdict.REVIEW_REQUIRED) {
-            boolean sekiOrKo = false;
-            for (EndgameAdjudicator.Finding item : endgameDecision.findings)
-                if (item.reason == EndgameAdjudicator.Reason.POSSIBLE_SEKI
-                        || item.reason == EndgameAdjudicator.Reason.POSSIBLE_KO) sekiOrKo = true;
-            if (sekiOrKo) {
-                AlertDialog.Builder warning = new AlertDialog.Builder(this).setTitle("疑似双活或劫争尚未证明")
-                        .setMessage("AI 只发现了类似双活或劫形的结构，无法保证争议已经解决。"
-                                + "双方既已停棋，请核对棋形后再确认数子。")
-                        .setPositiveButton("人工确认并数子", (dialog, which) -> showRefereeConfirmation(true))
-                        .setNegativeButton("返回棋盘检查", null);
-                warning.show();
-                return;
-            }
-        }
-        double nnLead = endgameEvaluation == null ? fastEndgameLead : endgameEvaluation.whiteLead;
-        SmartReferee.ScoreAudit audit = SmartReferee.audit(board, refereeDead, nnLead, komiFor(boardSize),
-                gameCondition >= 2 ? gameCondition : 0);
-        GoBoard.FinalScore totals = audit.score;
-        String verdict = SmartReferee.resultText(totals);
-        String warning = audit.needsVerification ? String.format(Locale.CHINA,
-                "\n注意：AI 估分与数子相差 %.1f 目，可能有死活争议，请再次核对。\n", audit.difference) : "";
-        new AlertDialog.Builder(this).setTitle("确认中国规则数子")
-                .setMessage(String.format(Locale.CHINA,
-                        "黑棋 %.1f，白棋 %.1f\n结果：%s\n"
-                        + "红叉为准备移除的死子。AI 判断不是裁判证明，请逐块确认。"
-                        + "%s\n这是用户复核的中国规则数子；若为双人对局应双方确认。",
-                        totals.blackPoints, totals.whitePoints, verdict, warning))
-                .setPositiveButton("已复核并确认", (dialog, which) -> {
-                    finalDeadStones = SmartReferee.toGtpVertices(refereeDead, boardSize);
-                    gameResultText = "确认数子 · " + ("0".equals(verdict) ? "平局" :
-                            (verdict.startsWith("W") ? "白胜 " : "黑胜 ") + verdict.substring(2) + " 目");
-                    finalScoreText = String.format(Locale.CHINA,
-                            "中国规则（确认死子后）\n黑 %.1f · 白 %.1f\n%s",
-                            totals.blackPoints, totals.whitePoints, gameResultText);
-                    preciseScoreReady = true;
-                    refereeConfirmed = true;
-                    refereeAccepted.clear();
-                    refereeAccepted.addAll(refereeDead);
-                    fastEndgameLead = Double.NaN;
-                    refereeMode = false;
-                    refereeReview.clear();
-                    boardView.setRefereeMarks(refereeDead, null);
-                    boardView.setEndgameAlerts(null);
-                    Log.i(TAG, "REFEREE_CONFIRMED score=" + verdict + " dead=" + finalDeadStones
-                            + " black=" + totals.blackPoints + " white=" + totals.whitePoints);
-                    render(finalScoreText);
-                })
-                .setNeutralButton("恢复 AI 建议", (dialog, which) -> resetRefereeSuggestions())
-                .setNegativeButton("退出裁判", (dialog, which) -> leaveRefereeReview()).show();
-    }
-
-    /** Midgame inspection only clears marks; terminal inspection also undoes both passes. */
-    private void resumeFromReferee() {
-        if (evaluating || thinking || !engineReady || !gameReady) {
-            Toast.makeText(this, "当前不能恢复对局", Toast.LENGTH_LONG).show();
-            return;
-        }
-        if (!board.isGameOver()) {
-            final int moves = board.getMoveCount();
-            refereeAwaitingTap = false;
-            refereeMode = false;
-            refereeConfirmed = false;
-            refereeAccepted.clear();
-            refereeDead.clear();
-            refereeReview.clear();
-            refereeSuggested.clear();
-            refereeInitialReview.clear();
-            boardView.setRefereeMarks(null,null);
-            boardView.setEndgameAlerts(null);
-            endgameDecision = null;
-            // Preserve the engine move history and side to move exactly as they were.
-            render(currentPlayer == playerColor ? "棋形检查完成，轮到你了" : "棋形检查完成，轮到 AI");
-            if (isRefereeSmokeIntent()) Log.i("RefereeSmoke","INSPECT_RESUME id=" + refereeSmokeId()
-                    + " moves=" + moves + " after=" + board.getMoveCount() + " terminal="
-                    + board.isGameOver() + " refereeMode=" + refereeMode + " gameReady=" + gameReady);
-            return;
-        }
-        if (!board.canResumeAfterPasses()) {
-            Toast.makeText(this,"当前不能恢复对局",Toast.LENGTH_LONG).show();
-            return;
-        }
-        final GoBoard snapshot = board;
-        final int moves = board.getMoveCount();
-        final Move lastPass = board.getLastMove();
-        final StoneColor next = lastPass.color.opposite();
-        evaluating = true;
-        refereeAwaitingTap = false;
-        // Hide dispute markings instantly on the dismissing tap. The touch
-        // overlay consumes the gesture so it cannot also place a new stone.
-        boardView.setRefereeMarks(null,null);
-        boardView.setEndgameAlerts(null);
-        render("正在恢复对局并同步引擎...");
-        engineExecutor.execute(() -> {
-            boolean first = engine.undo();
-            boolean restored = first && engine.undo();
-            mainHandler.post(() -> {
-                if (snapshot != board || moves != board.getMoveCount()) return;
-                evaluating = false;
-                if (!restored || !board.resumeAfterPasses()) {
-                    gameReady = false;
-                    refereeMode = false;
-                    endgameDecision = null;
-                    render("恢复对局失败：棋盘与 AI 可能不同步，请重新开局");
-                    if (isRefereeSmokeIntent()) Log.e("RefereeSmoke","RESUME_FAIL id=" + refereeSmokeId()
-                            + " moves=" + moves + " undo=" + restored);
-                    return;
-                }
-                refereeMode = false;
-                refereeConfirmed = false;
-                refereeAccepted.clear();
-                refereeDead.clear();
-                refereeReview.clear();
-                refereeSuggested.clear();
-                refereeInitialReview.clear();
-                boardView.setRefereeMarks(null, null);
-                boardView.setEndgameAlerts(null);
-                boardView.setOwnership(null);
-                clearRecommendations();
-                finalDeadStones = null;
-                finalScoreText = null;
-                gameResultText = null;
-                preciseScoreReady = false;
-                fastEndgameLead = Double.NaN;
-                endgameEvaluation = null;
-                endgameDecision = null;
-                lastMove = null;
-                currentPlayer = next;
-                winRateSession++;
-                winRateEpoch++;
-                while (blackWinHistory.size() > board.getMoveCount()+1) {
-                    blackWinHistory.remove(blackWinHistory.size()-1);
-                    whiteWinHistory.remove(whiteWinHistory.size()-1);
-                }
-                resyncWinRateAfterReferee();
-                render(currentPlayer == playerColor ? "继续对局：轮到你了" : "继续对局：轮到 AI");
-                if (isRefereeSmokeIntent()) Log.i("RefereeSmoke","RESUME id=" + refereeSmokeId()
-                        + " moves=" + board.getMoveCount() + " terminal=" + board.isGameOver()
-                        + " refereeMode=" + refereeMode + " gameReady=" + gameReady);
-                if (currentPlayer != playerColor) requestAiMove();
-            });
-        });
-    }
-
-    private void resyncWinRateAfterReferee() {
-        final long session = winRateSession, epoch = winRateEpoch;
-        final GoBoard snapshot = board;
-        final int size = boardSize, moves = board.getMoveCount();
-        final StoneColor next = currentPlayer;
-        final float komi = komiFor(size);
-        final List<Move> history = board.getMoveHistorySnapshot();
-        final List<Point> handicap = gameCondition >= 2
-                ? GoBoard.standardHandicapPoints(size, gameCondition) : new ArrayList<>();
-        winRateExecutor.execute(() -> {
-            if (session != winRateSession) return;
-            boolean ok = winRateEngine.isReady() || winRateEngine.start(KataGoEngine.Model.HUMAN);
-            if (ok) ok = winRateEngine.setBoardSize(size);
-            if (ok) ok = winRateEngine.clearBoard();
-            if (ok) ok = winRateEngine.setChineseRules();
-            if (ok) ok = winRateEngine.setKomi(komi);
-            if (ok && !handicap.isEmpty()) ok = winRateEngine.setHandicapStones(handicap, size);
-            for (Move move : history) {
-                if (!ok) break;
-                String vertex = move instanceof Move.Stone
-                        ? ((Move.Stone) move).point.toGtp(size) : "pass";
-                ok = winRateEngine.playMove(move.color.toGtp(), vertex);
-            }
-            if (session != winRateSession) return;
-            winRateSynchronized = ok;
-            if (!ok) {
-                Log.w(TAG, "Could not resync independent winrate engine after resumed endgame");
-                return;
-            }
-            KataGoEngine.WinRate rate = winRateEngine.evaluateWinRate(next.toGtp());
-            mainHandler.post(() -> recordWinRate(snapshot, moves, epoch, rate));
-        });
-    }
-
-    /** Optional same-game comparison using original KataGo final_score and dead-status search. */
-    private void requestPreciseEndgame() {
-        DebugLog.enter(TAG, "requestPreciseEndgame in, evaluating=" + evaluating);
-        if (!engineReady || evaluating || !board.isGameOver() || finalDeadStones == null || preciseScoreReady) {
-            Toast.makeText(this, "请先完成快速结算", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        evaluating = true;
-        final GoBoard snapshot = board;
-        final int moves = board.getMoveCount();
-        final long epoch = winRateEpoch;
-        final String preliminaryDead = finalDeadStones;
-        final double preliminaryLead = fastEndgameLead;
-        final long startedNs = System.nanoTime();
-        render("正在深度搜索对照目差...");
-        engineExecutor.execute(() -> {
-            String score = engine.getFinalScore();
-            String actualDead = score == null ? null : engine.getFinalDeadStones();
-            final String deadStones = actualDead == null ? preliminaryDead : actualDead;
-            long elapsedMs = (System.nanoTime() - startedNs) / 1000000L;
-            double deepLead = parseScoreWhiteLead(score);
-            Log.i(TAG, String.format(Locale.US,
-                    "ENDGAME_TIMING phase=precise_done elapsedMs=%d valid=%s score=%s",
-                    elapsedMs, score != null, score == null ? "null" : score.trim()));
-            if (Double.isFinite(preliminaryLead) && Double.isFinite(deepLead)) {
-                Log.i(TAG, String.format(Locale.US,
-                        "ENDGAME_COMPARE fastLead=%.3f deepLead=%.3f delta=%.3f fastDead=%s deepDead=%s",
-                        preliminaryLead, deepLead, deepLead - preliminaryLead,
-                        preliminaryDead, actualDead == null ? "unavailable" : actualDead));
-            }
-            mainHandler.post(() -> {
-                if (board != snapshot || board.getMoveCount() != moves || winRateEpoch != epoch) return;
-                evaluating = false;
-                if (score != null) {
-                    preciseScoreReady = true;
-                    finalDeadStones = deadStones;
-                    gameResultText = formatFinalResult(score);
-                    finalScoreText = finalPointsSummary(score, deadStones);
-                    recordFinalWinRate(snapshot, moves, epoch, score);
-                } else {
-                    Toast.makeText(this, "深度估算失败，保留快速结果", Toast.LENGTH_LONG).show();
-                }
-                render(finalScoreText);
+                        .setPositiveButton(gameEnded ? "关闭" : "继续下棋",(dialog,which) -> {
+                            if (isRefereeSmokeIntent()) Log.i("RefereeSmoke","NN_DISMISS id=" + refereeSmokeId()
+                                    + " moves=" + board.getMoveCount() + " terminal=" + board.isGameOver());
+                        }).show();
+                if (isRefereeSmokeIntent()) Log.i("RefereeSmoke",String.format(Locale.US,
+                        "PASS id=%s game=%s stage=nn_dialog backend=%s moves=%d terminal=%s "
+                        + "whiteLead=%.3f blackWin=%.4f whiteWin=%.4f blackPoints=%.3f whitePoints=%.3f nnMs=%d",
+                        refereeSmokeId(),getIntent().getStringExtra("referee_smoke_game"),engine.getBackendName(),
+                        moves,gameEnded,result.whiteLead,result.blackWin,result.whiteWin,
+                        area.blackPoints,area.whitePoints,nnMs));
             });
         });
     }
@@ -1564,69 +928,6 @@ public class MainActivity extends AppCompatActivity {
                 render(finalScoreText == null ? "认输结束\n未进行数子" : finalScoreText);
             });
         });
-    }
-
-    private double parseScoreWhiteLead(String score) {
-        if (score == null) return Double.NaN;
-        try {
-            String text = score.trim().toUpperCase(Locale.US);
-            if ("0".equals(text)) return 0.0;
-            if (text.startsWith("W+")) return Double.parseDouble(text.substring(2));
-            if (text.startsWith("B+")) return -Double.parseDouble(text.substring(2));
-        } catch (NumberFormatException ignored) {
-            // Resign/no-result formats have no numeric lead.
-        }
-        return Double.NaN;
-    }
-
-    private String formatFinalResult(String score) {
-        if (score == null || score.trim().isEmpty()) return "对局结束 · 未得到数目结果";
-        String text = score.trim();
-        if ("0".equals(text)) return "对局结束 · 搜索预测平局";
-        if (text.startsWith("B+")) return "对局结束 · 搜索预测黑胜 " + text.substring(2);
-        if (text.startsWith("W+")) return "对局结束 · 搜索预测白胜 " + text.substring(2);
-        return "对局结束 · 搜索预测 " + text;
-    }
-
-    /** Local Chinese area points after removing GTP-predicted dead stones. */
-    private GoBoard.FinalScore calculateChineseFinalTotals(String deadVertices) {
-        Set<Point> deadStones = new HashSet<>();
-        for (String vertex : deadVertices.trim().split("\\s+")) {
-            Point point = Point.fromGtp(vertex, boardSize);
-            if (point != null && board.get(point) != Intersection.EMPTY) deadStones.add(point);
-        }
-        return board.countChineseScore(deadStones, komiFor(boardSize), gameCondition >= 2 ? gameCondition : 0);
-    }
-
-    /** Always label the fast estimate as approximate; a delayed precise query
-     * may disagree because final_score predicts how play could continue. */
-    private String finalPointsSummary(String finalScore, String deadVertices) {
-        if (deadVertices == null) return "终局数子\n结果不可用";
-        GoBoard.FinalScore totals = calculateChineseFinalTotals(deadVertices);
-        double expectedLead = Double.NaN;
-        if (finalScore != null) {
-            try {
-                String text = finalScore.trim().toUpperCase(Locale.US);
-                if ("0".equals(text)) expectedLead = 0.0;
-                else if (text.startsWith("W+")) expectedLead = Double.parseDouble(text.substring(2));
-                else if (text.startsWith("B+")) expectedLead = -Double.parseDouble(text.substring(2));
-            } catch (NumberFormatException e) {
-                Log.w(TAG, "KataGo final score does not have a numeric margin: " + finalScore, e);
-            }
-        }
-        double calculatedLead = totals.whitePoints - totals.blackPoints;
-        boolean agrees = Double.isFinite(expectedLead) && Math.abs(expectedLead - calculatedLead) < 0.01;
-        Log.i(TAG, String.format(Locale.US,
-                "Chinese area score B stones=%d territory=%d, W stones=%d territory=%d, "
-                        + "dead B=%d W=%d, komi=%.1f, total B=%.1f W=%.1f, lead local=%.1f engine=%.1f agrees=%s mode=%s",
-                totals.blackStones, totals.blackTerritory, totals.whiteStones, totals.whiteTerritory,
-                totals.deadBlack, totals.deadWhite, komiFor(boardSize),
-                totals.blackPoints, totals.whitePoints, calculatedLead, expectedLead, agrees,
-                finalScore == null ? "fast" : "precise"));
-        if (finalScore != null && !agrees)
-            Log.w(TAG, "Chinese area score differs from KataGo final_score; these totals are approximate");
-        String prefix = agrees ? "" : "约";
-        return String.format(Locale.CHINA, "黑%s%.0f目\n白%s%.1f目", prefix, totals.blackPoints, prefix, totals.whitePoints);
     }
 
     /** Ownership-based estimate of empty points plus projected dead-stone points, not a formal final score. */
@@ -1998,17 +1299,7 @@ public class MainActivity extends AppCompatActivity {
         preciseScoreReady = false;
         fastEndgameLead = Double.NaN;
         endgameEvaluation = null;
-        endgameDecision = null;
-        refereeMode = false;
-        refereeAwaitingTap = false;
-        refereeConfirmed = false;
-        refereeAccepted.clear();
-        refereeDead.clear();
-        refereeSuggested.clear();
-        refereeReview.clear();
-        refereeInitialReview.clear();
-        boardView.setRefereeMarks(null, null);
-        boardView.setEndgameAlerts(null);
+        boardView.setOwnership(null);
         winRateEpoch++;
         winRateSession++;
         blackWinHistory.clear();
@@ -2186,16 +1477,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void render(String message) {
         DebugLog.enter(TAG, "render in, message=" + message + ", engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer);
-        if (nativeRefereeMarkedBoard != null && (board != nativeRefereeMarkedBoard
-                || board.getMoveCount() != nativeRefereeMarkedMoves)) {
-            nativeRefereeMarkedBoard = null;
-            boardView.setRefereeMarks(null,null);
-        }
-        if (endgameInspectionMarkedBoard != null && (board != endgameInspectionMarkedBoard
-                || board.getMoveCount() != endgameInspectionMarkedMoves)) {
-            endgameInspectionMarkedBoard = null;
-            boardView.setEndgameAlerts(null);
-        }
         statusText.setText(message);
         if (nnAreaScoreBoard != board || nnAreaScoreMoves != board.getMoveCount()) {
             nnAreaScoreBoard = null;
@@ -2210,10 +1491,9 @@ public class MainActivity extends AppCompatActivity {
                 + (engineReady ? engine.getBackendName() : selectedBackend == KataGoEngine.BackendPreference.GPU ? "GPU 准备中" : "CPU 准备中"));
         boardView.setBoard(board);
         boardView.setLastMove(lastMove);
-        boardView.setInputEnabled((refereeMode && !evaluating && !thinking)
-                || (engineReady && gameReady && !engineStarting && !thinking
-                && !evaluating && currentPlayer == playerColor && !board.isGameOver()));
-        boolean detailedResult = refereeMode || refereeConfirmed || boardView.hasRecommendations();
+        boardView.setInputEnabled(engineReady && gameReady && !engineStarting && !thinking
+                && !evaluating && currentPlayer == playerColor && !board.isGameOver());
+        boolean detailedResult = boardView.hasRecommendations();
         statusText.setMaxLines(detailedResult ? 3 : 2);
         statusText.setTextSize(detailedResult ? 10f : 13f);
         boolean playerBlack = playerColor == StoneColor.BLACK;
@@ -2233,23 +1513,6 @@ public class MainActivity extends AppCompatActivity {
     private void updateButtons() {
         DebugLog.enter(TAG, "updateButtons in, engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer + ", playerColor=" + playerColor);
         boolean playerTurn = engineReady && gameReady && !engineStarting && !thinking && !evaluating && currentPlayer == playerColor && !board.isGameOver();
-        boolean mustContinue = refereeMode && refereeRequiresContinuation();
-        refereePanel.setVisibility(refereeMode && !(mustContinue && evaluating) ? View.VISIBLE : View.GONE);
-        gameActionPanel.setVisibility(refereeMode ? View.GONE : View.VISIBLE);
-        refereeTapOverlay.setVisibility(mustContinue && refereeAwaitingTap && !evaluating
-                ? View.VISIBLE : View.GONE);
-        // Disputed positions are handled by a tap anywhere on the screen,
-        // not a fourth large button at the bottom.
-        refereeContinueButton.setVisibility(View.GONE);
-        refereeContinueButton.setEnabled(false);
-        // One action for any disagreement; scoring actions only if READY_TO_COUNT.
-        refereeResetButton.setVisibility(refereeMode && !mustContinue ? View.VISIBLE : View.GONE);
-        refereeConfirmButton.setVisibility(refereeMode && !mustContinue ? View.VISIBLE : View.GONE);
-        refereeExitButton.setVisibility(refereeMode && !mustContinue ? View.VISIBLE : View.GONE);
-        refereeConfirmButton.setText("确认数子");
-        refereeConfirmButton.setEnabled(refereeMode && !mustContinue && !evaluating);
-        refereeResetButton.setEnabled(refereeMode && !mustContinue && !evaluating);
-        refereeExitButton.setEnabled(refereeMode && !mustContinue && !evaluating);
         newGameButton.setEnabled(!thinking && !engineStarting && !evaluating);
         newRoundButton.setEnabled(!thinking && !engineStarting && !evaluating);
         countTerritoryButton.setText("智能裁判");
@@ -2270,10 +1533,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         DebugLog.enter(TAG, "onBackPressed in, gameVisible=" + (gamePageContainer.getVisibility() == View.VISIBLE));
-        if (refereeMode && refereeRequiresContinuation()) {
-            if (refereeAwaitingTap) resumeFromReferee();
-            return;
-        }
         if (variationBoard != null) exitVariationPreview();
         else if (gamePageContainer.getVisibility() == View.VISIBLE) showMainPage();
         else super.onBackPressed();
