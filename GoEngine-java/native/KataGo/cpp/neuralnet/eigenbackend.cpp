@@ -1771,7 +1771,7 @@ struct ComputeHandle {
 #ifdef USE_RKNN_BACKEND
     // The published 19x19 RKNN graph matches the g170 10b network only.
     // Human SL uses its separate b18 network and stays on Eigen.
-    if(loadedModel.modelDesc.name.find("g170-b10c128") == 0) {
+    if(loadedModel.modelDesc.name == "g170-b10c128-s1141046784-d204142634") {
       if(context->nnXLen != 19 || context->nnYLen != 19)
         throw StringError("RKNN 10b requires 19x19 NN shape");
       if(maxBatchSize != 1)
