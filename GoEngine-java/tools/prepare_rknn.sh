@@ -57,6 +57,7 @@ if [[ "${RKNN_MULTISIZE:-0}" == 1 || "${1:-}" == "--multisize" ]]; then
             rm -f "$target" "$target.sha256"
             exit 1
         fi
+        rm -f "$target.sha256"
         echo "Verified RKNN ${size}x${size}: $(wc -c < "$target") bytes"
     done
 fi
