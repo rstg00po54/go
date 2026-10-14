@@ -11,8 +11,9 @@ BACKEND="$BUILD_VARIANT"
 PORTABLE_OPENCL=false
 if [[ "$BUILD_VARIANT" == "openclportable" || "$BUILD_VARIANT" == "opencljni" ]]; then BACKEND="opencl"; PORTABLE_OPENCL=true; fi
 if [[ "$BUILD_VARIANT" == "eigenjni" ]]; then BACKEND="eigen"; fi
-if [[ $# -gt 1 || ("$BACKEND" != "eigen" && "$BACKEND" != "opencl") ]]; then
-    echo "Usage: $0 [eigen|opencl|openclportable|eigenjni|opencljni]" >&2
+if [[ "$BUILD_VARIANT" == "rknnjni" ]]; then BACKEND="rknn"; fi
+if [[ $# -gt 1 || ("$BACKEND" != "eigen" && "$BACKEND" != "opencl" && "$BACKEND" != "rknn") ]]; then
+    echo "Usage: $0 [eigen|opencl|openclportable|eigenjni|opencljni|rknnjni]" >&2
     exit 2
 fi
 if [[ ! -f "$SOURCE_DIR/cpp/CMakeLists.txt" ]]; then
@@ -78,13 +79,18 @@ ARGS=(
     -DBUILD_DISTRIBUTED=OFF -DNO_GIT_REVISION=ON -DUSE_AVX2=OFF -DUSE_TCMALLOC=OFF
     -DCMAKE_CXX_FLAGS="-DLITTLE_ENDIAN=1234 -DBIG_ENDIAN=4321 -DBYTE_ORDER=1234"
 )
-if [[ "$BUILD_VARIANT" == "eigenjni" || "$BUILD_VARIANT" == "opencljni" ]]; then
+if [[ "$BUILD_VARIANT" == "eigenjni" || "$BUILD_VARIANT" == "opencljni" || "$BUILD_VARIANT" == "rknnjni" ]]; then
     ARGS+=(-DKATAGO_BUILD_JNI_LIBRARY=ON)
 fi
-if [[ "$BACKEND" == "eigen" ]]; then
+if [[ "$BACKEND" == "eigen" || "$BACKEND" == "rknn" ]]; then
     EIGEN_CMAKE_DIR="$(find_eigen_cmake_dir)"
     echo "Eigen3 CMake dir: $EIGEN_CMAKE_DIR"
     ARGS+=(-DEigen3_DIR="$EIGEN_CMAKE_DIR")
+    if [[ "$BACKEND" == "rknn" ]]; then
+        bash "$PROJECT_DIR/tools/prepare_rknn.sh"
+        RKNN_SDK="$PROJECT_DIR/build/rknn_sdk"
+        ARGS+=(-DRKNN_INCLUDE_DIR="$RKNN_SDK/include" -DRKNN_LIBRARY="$RKNN_SDK/librknnrt.so")
+    fi
 else
     # OpenCL-Headers are architecture-neutral. The link library MUST be Android ARM64.
     # Use a device-provided library only locally; never commit proprietary binaries.
@@ -199,7 +205,9 @@ if [[ "$BUILD_VARIANT" == "eigen" || "$BUILD_VARIANT" == "opencl" || "$BUILD_VAR
     python3 "$PROJECT_DIR/tools/invalidate_unaligned_pie.py" "$BUILD_DIR/katago"
 fi
 cmake --build "$BUILD_DIR" --parallel "${KATAGO_JOBS:-8}"
-if [[ "$BUILD_VARIANT" == "opencljni" ]]; then
+if [[ "$BUILD_VARIANT" == "rknnjni" ]]; then
+    BIN="$BUILD_DIR/libkatago_npu.so"
+elif [[ "$BUILD_VARIANT" == "opencljni" ]]; then
     BIN="$BUILD_DIR/libkatago_gpu.so"
 elif [[ "$BUILD_VARIANT" == "eigenjni" ]]; then
     BIN="$BUILD_DIR/libkatago.so"
@@ -220,9 +228,10 @@ if ! grep -Eq '^[[:space:]]*Machine:[[:space:]]*AArch64([[:space:]]|$)' <<< "$HE
     echo "Check NDK toolchain, target architecture, and PIE linker flags." >&2
     exit 1
 fi
-if [[ "$BUILD_VARIANT" == "eigenjni" || "$BUILD_VARIANT" == "opencljni" ]]; then
+if [[ "$BUILD_VARIANT" == "eigenjni" || "$BUILD_VARIANT" == "opencljni" || "$BUILD_VARIANT" == "rknnjni" ]]; then
     EXPECTED_JNI_SONAME="libkatago.so"
     if [[ "$BUILD_VARIANT" == "opencljni" ]]; then EXPECTED_JNI_SONAME="libkatago_gpu.so"; fi
+    if [[ "$BUILD_VARIANT" == "rknnjni" ]]; then EXPECTED_JNI_SONAME="libkatago_npu.so"; fi
     OUT="$OUTPUT_DIR/$EXPECTED_JNI_SONAME"
     if ! "$READELF" -W -d "$BIN" | grep -Fq "[$EXPECTED_JNI_SONAME]"; then
         echo "ERROR: JNI ELF does not have $EXPECTED_JNI_SONAME SONAME." >&2
@@ -230,9 +239,20 @@ if [[ "$BUILD_VARIANT" == "eigenjni" || "$BUILD_VARIANT" == "opencljni" ]]; then
     fi
     JNI_CLASS="KataGoNative"
     if [[ "$BUILD_VARIANT" == "opencljni" ]]; then JNI_CLASS="KataGoGpuNative"; fi
+    if [[ "$BUILD_VARIANT" == "rknnjni" ]]; then JNI_CLASS="KataGoNpuNative"; fi
     if ! "$READELF" -W --dyn-syms "$BIN" | grep -F "Java_com_badukai_engine_${JNI_CLASS}_nativeBuildStatus" >/dev/null; then
         echo "ERROR: $JNI_CLASS nativeBuildStatus symbol not exported." >&2
         exit 1
+    fi
+    if [[ "$BUILD_VARIANT" == "rknnjni" ]]; then
+        if ! "$READELF" -W -d "$BIN" | grep -Fq '[librknnrt.so]'; then
+            echo "ERROR: RKNN JNI library missing librknnrt.so dependency." >&2; exit 1
+        fi
+        for symbol in nativeCreateSession nativeSendCommand nativeReadOutput nativeIsSessionAlive nativeStopSearch nativeDestroySession; do
+            if ! "$READELF" -W --dyn-syms "$BIN" | grep -Fq "Java_com_badukai_engine_KataGoNpuNative_$symbol"; then
+                echo "ERROR: NPU JNI symbol missing: $symbol" >&2; exit 1
+            fi
+        done
     fi
     if [[ "$BUILD_VARIANT" == "opencljni" ]]; then
         if "$READELF" -W --dyn-syms "$BIN" | grep -F "Java_com_badukai_engine_KataGoNative_nativeCreateSession" >/dev/null; then
@@ -285,7 +305,9 @@ if [[ "$BACKEND" == "opencl" ]]; then
     fi
 fi
 echo "No files were changed under app/src/main/jniLibs."
-if [[ "$BUILD_VARIANT" == "eigenjni" ]]; then
+if [[ "$BUILD_VARIANT" == "rknnjni" ]]; then
+    echo "RKNN JNI library built; 19x19 only. Use -PenableKataGoNpuJni=true to package it."
+elif [[ "$BUILD_VARIANT" == "eigenjni" ]]; then
     echo "CPU/Eigen JNI library built. Use Gradle -PenableKataGoJniCore=true to package it."
 elif [[ "$BUILD_VARIANT" == "opencljni" ]]; then
     echo "GPU/OpenCL JNI ELF built with independent SONAME and JNI method names."
