@@ -82,6 +82,7 @@ public class KataGoEngine {
     private volatile KataGoNative.GtpSession jniSession;
     private volatile KataGoGpuNative.GtpSession gpuSession;
     private volatile KataGoNpuNative.GtpSession npuSession;
+    private volatile int activeNpuBoardSize = -1;
     public enum BackendPreference { CPU, GPU, NPU }
     private volatile BackendPreference backendPreference = BackendPreference.CPU;
     private volatile boolean gpuDisabledForProcess;
@@ -124,6 +125,9 @@ public class KataGoEngine {
         if (!"engine".equals(engineDirectoryName) && !"engine_winrate".equals(engineDirectoryName))
             throw new IllegalArgumentException("Unsupported engine directory: " + engineDirectoryName);
     }
+
+    /** Board size of the RKNN model loaded by the active native GTP session. */
+    public int getActiveNpuBoardSize() { return npuSession != null ? activeNpuBoardSize : -1; }
 
     public String getBackendName() {
         return npuSession != null ? (humanSLRunning ? "NPU 10b + CPU Human SL" : "NPU/RKNN JNI") : gpuSession != null ? "GPU/OpenCL JNI" : jniSession != null ? "CPU/Eigen JNI" : "PIE/ProcessBuilder";
@@ -177,7 +181,9 @@ public class KataGoEngine {
         long totalStartNs = System.nanoTime();
         DebugLog.enter(TAG, "start in, model=" + model + ", running=" + running.get());
         if (running.get()) {
-            if (isReady() && humanSLRunning == useHumanSL) return true;
+            // RKNN graphs are fixed-shape; a different board needs a fresh session.
+            if (isReady() && humanSLRunning == useHumanSL
+                    && (npuSession == null || activeNpuBoardSize == startupBoardSize)) return true;
             stop(); // Different engine mode or an engine process/session died.
         }
         configuredBoardSize = -1;
@@ -288,6 +294,8 @@ public class KataGoEngine {
                             new File(engineDir, rknnModelName));
                     startupTiming("engine_npu_native_create", phaseNs);
                     if (npuSession == null) throw new IOException("NPU JNI createSession returned null");
+                    activeNpuBoardSize = startupBoardSize;
+                    Log.i(TAG, "NPU_MODEL_SELECTED board=" + activeNpuBoardSize + " path=" + new File(engineDir, rknnModelName));
                     running.set(true);
                     humanSLRunning = useHumanSL;
                     startReaderThread();
@@ -613,6 +621,7 @@ public class KataGoEngine {
         running.set(false);
         humanSLRunning = false;
         configuredBoardSize = -1;
+        activeNpuBoardSize = -1;
         if (npuSession != null) {
             KataGoNpuNative.GtpSession old = npuSession;
             npuSession = null;
@@ -939,6 +948,13 @@ public class KataGoEngine {
 
     public boolean setBoardSize(int size) {
         DebugLog.enter(TAG, "setBoardSize in, size=" + size);
+        // Never resize an active RKNN model to a different graph shape:
+        // MainActivity must restart GTP and choose that board's RKNN asset.
+        if (npuSession != null && activeNpuBoardSize != size) {
+            Log.e(TAG, "NPU_BOARD_SIZE_MISMATCH activeModel=" + activeNpuBoardSize
+                    + " requested=" + size + "; restart NPU engine first");
+            return false;
+        }
         if (isReady() && configuredBoardSize == size) {
             Log.i(TAG, "Reuse existing GTP boardsize=" + size + "; clear_board will reset game state");
             return true;
