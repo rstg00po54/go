@@ -132,6 +132,13 @@ public class MainActivity extends AppCompatActivity {
     private Button situationButton;
     private Button aiSuggestionButton;
     private Button countTerritoryButton;
+    private boolean hasBundledNpuModel(int size) {
+        if (size != 9 && size != 13 && size != 19) return false;
+        String asset = "engine/katago_10b_" + size + "x" + size + ".rknn";
+        try (InputStream in = getAssets().open(asset)) { return in.read() != -1; }
+        catch (java.io.IOException e) { return false; }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         DebugLog.enter(TAG, "onCreate in, savedInstanceState=" + savedInstanceState);
@@ -162,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
         engine = new KataGoEngine(getApplicationContext(), "engine", !forceLegacy);
         engine.setStartupBoardSize(boardSize);
         String savedBackend = settings.getString("backend", "CPU");
-        selectedBackend = "NPU".equals(savedBackend) && boardSize == 19
+        selectedBackend = "NPU".equals(savedBackend) && hasBundledNpuModel(boardSize)
                 ? KataGoEngine.BackendPreference.NPU
                 : "GPU".equals(savedBackend) ? KataGoEngine.BackendPreference.GPU : KataGoEngine.BackendPreference.CPU;
         if (forceLegacy) selectedBackend = KataGoEngine.BackendPreference.CPU;
@@ -1213,7 +1220,7 @@ public class MainActivity extends AppCompatActivity {
         }
         if (npuBundled) {
             backendChoices.add(KataGoEngine.BackendPreference.NPU);
-            backendNames.add("NPU / RKNN（10b加速，Human SL仍用CPU，仅19路）");
+            backendNames.add("NPU / RKNN（9/13/19路，需对应模型；Human SL仍用CPU）");
         }
         ArrayAdapter<String> backendAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, backendNames);
         backendAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -1243,8 +1250,8 @@ public class MainActivity extends AppCompatActivity {
             int selectedKyu = 18 - difficultySpinner.getSelectedItemPosition();
             int selectedCondition = conditionSpinner.getSelectedItemPosition();
             KataGoEngine.BackendPreference requested = backendChoices.get(backendSpinner.getSelectedItemPosition());
-            if (requested == KataGoEngine.BackendPreference.NPU && requestedBoardSize != 19) {
-                Toast.makeText(this, "当前 NPU 模型只支持19路，请选择19路或切回 CPU/GPU", Toast.LENGTH_LONG).show();
+            if (requested == KataGoEngine.BackendPreference.NPU && !hasBundledNpuModel(requestedBoardSize)) {
+                Toast.makeText(this, "当前 APK 没有 " + requestedBoardSize + " 路 RKNN 模型，请安装多尺寸版或选择 CPU/GPU", Toast.LENGTH_LONG).show();
                 return;
             }
             Runnable begin = () -> {
