@@ -260,6 +260,14 @@ def main(argv=None):
             try:
                 log = read_log(args.adb, serial)
                 (folder / "logcat.txt").write_text(log, encoding="utf-8")
+                # Crash/timeout raises from the poll loop before parse_log().
+                # Recover successful early steps from the final log instead of
+                # reporting an inaccurate 0/N PASS.
+                if started and report["status"] != "PASS":
+                    recovered = parse_log(log, run_id, args.sizes)
+                    report["steps"] = recovered["steps"]
+                    report["errors"] = list(dict.fromkeys(report["errors"] + recovered["errors"]))
+                    if report["status"] != "INTERRUPTED": report["status"] = "FAIL"
                 crash = command([args.adb, "-s", serial, "logcat", "-b", "crash", "-d", "-v", "brief"],
                                 timeout=20, check=False)
                 # Device was cleared before this run; save crash diagnostics if present.
