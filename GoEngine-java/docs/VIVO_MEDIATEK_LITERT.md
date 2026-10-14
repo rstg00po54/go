@@ -5,6 +5,7 @@
 - **Model conversion: PASS**. Three independent 10b KataGo g170 9/13/19 TFLite graphs,
   exported by upstream `katago dumponnx`, converted using `onnx2tf` and CPU-invoked.
 - **Android Java API: PASS**. `CompiledModel` 2.3.0 class compiled on GitHub Actions.
+- **Android probe APK: CI generated** when the GitHub workflow passes; this dedicated APK is not a regular playable Go APK.
 - **MediaTek runtime Maven artifact: resolved**. `litert-npu-runtime-mediatek:2.3.0`
   dependency resolves in the Android compile workflow; APK packaging is checked separately.
 - **MediaTek real NPU execution: NOT VERIFIED** without on-device delegate traces.
@@ -28,13 +29,15 @@ cd /mnt/hgfs/D/code/go/GoEngine-java
 git fetch origin
 git switch feature/vivo-mediatek-litert
 bash tools/prepare_vivo_litert.sh
-bash build.sh --apk-only -PenableKataGoNpuJni=false
+./gradlew :app:assembleDebug -PskipKataGoNative=true -PvivoProbeApk=true -PenableKataGoNpuJni=false -PenableKataGoGpuJni=false -PenableKataGoJniCore=false
 ```
 
-The APK should package three `.tflite` / `.json` model pairs and
+The **probe-only** APK should package three `.tflite` / `.json` model pairs and
 `com.google.ai.edge.litert:litert-npu-runtime-mediatek:2.3.0` vendor runtime.
 It must NOT package `librknnrt.so`. The CI workflow `vivo_litert_android_apk.yml`
 builds and checks this without touching the validated RK3588 branch.
+This probe-only APK deliberately omits the KataGo PIE and CPU/GPU/RKNN JNI GTP
+libraries, so ordinary AI games are **not** yet enabled in this APK.
 
 ## Run the first MediaTek graph inference smoke
 
