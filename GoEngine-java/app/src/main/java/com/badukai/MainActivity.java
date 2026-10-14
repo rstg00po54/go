@@ -928,36 +928,22 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /** Ownership-based estimate of empty points plus projected dead-stone points, not a formal final score. */
+    /** Display NN-estimated empty territory only; do not infer dead or living stones. */
     private String territorySummary(KataGoEngine.PositionEvaluation result) {
-        int blackTerritory = 0, whiteTerritory = 0, deadBlack = 0, deadWhite = 0, uncertainEmpty = 0;
+        int blackTerritory = 0, whiteTerritory = 0, uncertainEmpty = 0;
         final int size = result.size;
-        for (int y = 0; y < size; y++) {
-            for (int x = 0; x < size; x++) {
-                Intersection stone = board.get(x, y);
-                float whiteOwn = result.whiteOwnership[y * size + x];
-                if (!Float.isFinite(whiteOwn)) continue;
-                if (stone == Intersection.EMPTY) {
-                    if (whiteOwn >= GoBoardView.OWNERSHIP_MARK_THRESHOLD) whiteTerritory++;
-                    else if (whiteOwn <= -GoBoardView.OWNERSHIP_MARK_THRESHOLD) blackTerritory++;
-                    else uncertainEmpty++;
-                } else if (stone == Intersection.BLACK && whiteOwn >= GoBoardView.OWNERSHIP_MARK_THRESHOLD) {
-                    // A black stone likely dies: this point becomes white territory after removal.
-                    whiteTerritory++;
-                    deadBlack++;
-                } else if (stone == Intersection.WHITE && whiteOwn <= -GoBoardView.OWNERSHIP_MARK_THRESHOLD) {
-                    blackTerritory++;
-                    deadWhite++;
-                }
-            }
+        for (int y = 0; y < size; y++) for (int x = 0; x < size; x++) {
+            if (board.get(x,y) != Intersection.EMPTY) continue;
+            float whiteOwn = result.whiteOwnership[y*size+x];
+            if (!Float.isFinite(whiteOwn)) continue;
+            if (whiteOwn >= GoBoardView.OWNERSHIP_MARK_THRESHOLD) whiteTerritory++;
+            else if (whiteOwn <= -GoBoardView.OWNERSHIP_MARK_THRESHOLD) blackTerritory++;
+            else uncertainEmpty++;
         }
         boardView.setOwnership(result.whiteOwnership);
-        Log.i(TAG, String.format(Locale.US,
-                "Ownership estimate black=%d white=%d predictedDeadBlack=%d predictedDeadWhite=%d uncertainEmpty=%d "
-                        + "(threshold %.2f; no komi, prisoner count or official dead-stone confirmation)",
-                blackTerritory, whiteTerritory, deadBlack, deadWhite, uncertainEmpty,
-                GoBoardView.OWNERSHIP_MARK_THRESHOLD));
-        return String.format(Locale.CHINA, "黑估空%d目\n白估空%d目", blackTerritory, whiteTerritory);
+        Log.i(TAG,String.format(Locale.US,"NN empty territory B=%d W=%d uncertain=%d",
+                blackTerritory,whiteTerritory,uncertainEmpty));
+        return String.format(Locale.CHINA,"黑估空%d目\n白估空%d目",blackTerritory,whiteTerritory);
     }
 
     private void clearRecommendations() {
@@ -1294,7 +1280,6 @@ public class MainActivity extends AppCompatActivity {
         nnAreaScoreBoard = null;
         nnAreaScoreMessage = null;
         endgameEvaluation = null;
-        boardView.setOwnership(null);
         winRateEpoch++;
         winRateSession++;
         blackWinHistory.clear();
