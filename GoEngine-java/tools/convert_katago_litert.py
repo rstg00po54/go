@@ -93,6 +93,8 @@ def inspect_tflite(path, size):
         value = runtime.get_tensor(entry["index"])
         assert np.isfinite(value).all(), "NaN/Inf in " + name
     return {"size": size, "weights": MODEL_NAME, "format": "tflite-f32",
+            "inputOrder": [classify_name(d["name"], INPUT_NAMES) for d in inp],
+            "outputOrder": [classify_name(d["name"], OUTPUT_NAMES) for d in out],
             "inputs": inputs, "outputs": outputs, "cpu_inference": "PASS"}
 
 
