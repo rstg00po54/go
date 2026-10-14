@@ -1351,7 +1351,7 @@ public class KataGoEngine {
 
         // Preserve the extracted .bin model's mtime so native Winograd caches
         // stay valid between launches of the same APK. Configs are still rewritten.
-        boolean modelAsset = assetPath.endsWith(".bin");
+        boolean modelAsset = assetPath.endsWith(".bin") || assetPath.endsWith(".rknn");
         String cacheKey = "asset_install_" + assetPath + "_" + dest.getName();
         long apkUpdateTime = -1;
         android.content.SharedPreferences prefs = null;
