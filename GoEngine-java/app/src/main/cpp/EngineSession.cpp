@@ -165,11 +165,16 @@ public:
               outputBuf_.close();
           }) {}
 
-    ~Session() {
-        // Send quit, then EOF; GTP will clean up the bot and NN evaluator.
-        inputBuf_.send("quit");
-        inputBuf_.close();
-        if (worker_.joinable()) worker_.join();
+    ~Session() { shutdown(); }
+
+    void shutdown() {
+        // Shutdown must finish even when another JNI thread temporarily owns
+        // a shared_ptr from nativeReadOutput(). Never rely only on reset().
+        std::call_once(shutdownOnce_, [this] {
+            inputBuf_.send("quit");
+            inputBuf_.close();
+            if (worker_.joinable()) worker_.join();
+        });
     }
 
     bool send(const std::string& line) { return inputBuf_.send(line); }
@@ -183,12 +188,17 @@ private:
     std::istream input_;
     std::ostream output_;
     std::thread worker_;
+    std::once_flag shutdownOnce_;
 };
 
 // GTP includes process-level neural-net cleanup. Until global setup is refactored,
 // allow only one JNI GTP session per process (the existing ProcessBuilder engine
 // remains separate because it is a different OS process).
 std::mutex sessionsMutex;
+// Serialize complete shutdown/join against creation of the next in-process
+// GTP engine. sessionsMutex alone cannot do this: the session was removed
+// before its worker had finished releasing process-wide KataGo globals.
+std::mutex sessionLifecycleMutex;
 std::unordered_map<jlong, std::shared_ptr<Session>> sessions;
 jlong nextHandle = 1;
 
@@ -218,6 +228,7 @@ KATAGO_SESSION_JNI(nativeCreateSession)(JNIEnv* env, jclass, jstring model, jstr
     const std::string modelPath = toUtf8(env, model);
     const std::string configPath = toUtf8(env, config);
     const std::string humanModelPath = toUtf8(env, humanModel);
+    std::lock_guard<std::mutex> lifecycleLock(sessionLifecycleMutex);
 #if defined(USE_RKNN_BACKEND)
     const std::string rknnPath = toUtf8(env, rknnModel);
     if (rknnPath.empty() || setenv("KATAGO_RKNN_MODEL", rknnPath.c_str(), 1) != 0) return 0;
@@ -265,6 +276,10 @@ KATAGO_SESSION_JNI(nativeStopSearch)(JNIEnv*, jclass, jlong handle) {
 
 extern "C" JNIEXPORT void JNICALL
 KATAGO_SESSION_JNI(nativeDestroySession)(JNIEnv*, jclass, jlong handle) {
+    // Keep new sessions from starting before the old search, GTP and NN
+    // threads have fully quit; holding sessionsMutex during join would
+    // risk deadlocking unrelated JNI lookups.
+    std::lock_guard<std::mutex> lifecycleLock(sessionLifecycleMutex);
     std::shared_ptr<Session> removed;
     {
         std::lock_guard<std::mutex> lock(sessionsMutex);
@@ -273,7 +288,10 @@ KATAGO_SESSION_JNI(nativeDestroySession)(JNIEnv*, jclass, jlong handle) {
         removed = std::move(it->second);
         sessions.erase(it);
     }
-    // Destroy outside the registry mutex; joining the native search can block.
+    // Explicitly wait for shutdown even if a concurrent nativeReadOutput()
+    // still holds a shared_ptr. Otherwise a new session can race with GTP's
+    // global cleanup despite registry.erase() succeeding.
+    removed->shutdown();
     removed.reset();
 }
 
