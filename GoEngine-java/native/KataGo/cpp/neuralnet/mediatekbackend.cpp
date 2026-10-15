@@ -19,6 +19,7 @@ constexpr int kGlobalChannels = 19;
 std::mutex runnerMutex;
 JavaVM* javaVm = nullptr;
 jobject javaRunner = nullptr;
+jobject javaHumanRunner = nullptr;
 jmethodID inferenceMethod = nullptr;
 std::atomic<bool> verifyAgainstCpu{false};
 
@@ -60,7 +61,7 @@ jfloatArray makeFloatArray(JNIEnv* env, const float* floats, jsize len) {
 }
 }
 
-bool KataGoMediaTekBridge::install(JNIEnv* env, jobject runner, bool compareCpu) {
+bool KataGoMediaTekBridge::install(JNIEnv* env, jobject runner, jobject humanRunner, bool compareCpu) {
   if (runner == nullptr) return false;
   std::lock_guard<std::mutex> lock(runnerMutex);
   if (javaRunner != nullptr) return false;  // No concurrent GTP sessions.
@@ -71,7 +72,7 @@ bool KataGoMediaTekBridge::install(JNIEnv* env, jobject runner, bool compareCpu)
     if (env->ExceptionCheck()) env->ExceptionClear();
     return false;
   }
-  jmethodID method = env->GetMethodID(cls, "infer", "([F[F[F)[[F");
+  jmethodID method = env->GetMethodID(cls, "infer", "([F[F[F[F)[[F");
   env->DeleteLocalRef(cls);
   if (!method) {
     if (env->ExceptionCheck()) env->ExceptionClear();
@@ -82,8 +83,15 @@ bool KataGoMediaTekBridge::install(JNIEnv* env, jobject runner, bool compareCpu)
     if (env->ExceptionCheck()) env->ExceptionClear();
     return false;
   }
+  jobject humanRef = humanRunner == nullptr ? nullptr : env->NewGlobalRef(humanRunner);
+  if (humanRunner != nullptr && humanRef == nullptr) {
+    env->DeleteGlobalRef(ref);
+    if (env->ExceptionCheck()) env->ExceptionClear();
+    return false;
+  }
   javaVm = vm;
   javaRunner = ref;
+  javaHumanRunner = humanRef;
   inferenceMethod = method;
   verifyAgainstCpu.store(compareCpu);
   __android_log_print(ANDROID_LOG_INFO, "KataGoMTK", "MTK_GTP_BRIDGE_INSTALLED");
@@ -93,7 +101,9 @@ bool KataGoMediaTekBridge::install(JNIEnv* env, jobject runner, bool compareCpu)
 void KataGoMediaTekBridge::reset(JNIEnv* env) {
   std::lock_guard<std::mutex> lock(runnerMutex);
   if (javaRunner) env->DeleteGlobalRef(javaRunner);
+  if (javaHumanRunner) env->DeleteGlobalRef(javaHumanRunner);
   javaRunner = nullptr;
+  javaHumanRunner = nullptr;
   inferenceMethod = nullptr;
   verifyAgainstCpu.store(false);
   // Keep javaVm valid for an attached native thread that is finishing up.
@@ -101,20 +111,28 @@ void KataGoMediaTekBridge::reset(JNIEnv* env) {
 }
 
 bool KataGoMediaTekBridge::parityEnabled() { return verifyAgainstCpu.load(); }
+bool KataGoMediaTekBridge::hasHumanRunner() {
+  std::lock_guard<std::mutex> lock(runnerMutex);
+  return javaHumanRunner != nullptr;
+}
 
 bool KataGoMediaTekBridge::ready() {
   std::lock_guard<std::mutex> lock(runnerMutex);
   return javaRunner != nullptr && inferenceMethod != nullptr;
 }
 
-KataGoMediaTekRunner::KataGoMediaTekRunner(int board) : boardSize_(board) {
+KataGoMediaTekRunner::KataGoMediaTekRunner(int board, bool humanModel) : boardSize_(board), humanModel_(humanModel) {
   if (board != 9 && board != 13 && board != 19)
     throw std::runtime_error("MediaTek LiteRT requires 9, 13 or 19 lines");
   if (!KataGoMediaTekBridge::ready())
     throw std::runtime_error("MediaTek LiteRT Java runner not installed");
+  if (humanModel && !KataGoMediaTekBridge::hasHumanRunner())
+    throw std::runtime_error("Human SL LiteRT Java runner not installed");
 }
 
-void KataGoMediaTekRunner::infer(const float* spatial, const float* global,
+void KataGoMediaTekRunner::infer(const float* spatial, const float* global, const float* meta,
+                                int metaChannels, int spatialChannels, int globalChannels,
+                                int policyChannels, int scoreChannels,
                                 float* pass, float* policy, float* value,
                                 float* score, float* ownership) {
   ThreadEnv thread;
@@ -123,15 +141,19 @@ void KataGoMediaTekRunner::infer(const float* spatial, const float* global,
   jmethodID method;
   {
     std::lock_guard<std::mutex> lock(runnerMutex);
-    if (!javaRunner || !inferenceMethod)
+    if (!javaRunner || !inferenceMethod || (humanModel_ && !javaHumanRunner))
       throw std::runtime_error("MediaTek GTP JNI callback no longer available");
-    runner = env->NewLocalRef(javaRunner);
+    runner = env->NewLocalRef(humanModel_ ? javaHumanRunner : javaRunner);
     method = inferenceMethod;
   }
   checkJava(env, "NewLocalRef");
   if (!runner) throw std::runtime_error("Could not retain MediaTek LiteRT runner");
   const int area = boardSize_ * boardSize_;
-  jfloatArray spatialArr = nullptr, globalArr = nullptr, maskArr = nullptr;
+  if (spatialChannels != kSpatialChannels || globalChannels != kGlobalChannels ||
+      (humanModel_ && (meta == nullptr || metaChannels <= 0)) ||
+      (!humanModel_ && metaChannels != 0) || policyChannels <= 0 || scoreChannels <= 0)
+    throw std::runtime_error("MediaTek model features/heads not compatible with NN contract");
+  jfloatArray spatialArr = nullptr, globalArr = nullptr, maskArr = nullptr, metaArr = nullptr;
   jobjectArray heads = nullptr;
   try {
     spatialArr = makeFloatArray(env, spatial, area * kSpatialChannels);
@@ -140,12 +162,13 @@ void KataGoMediaTekRunner::infer(const float* spatial, const float* global,
     std::vector<float> mask(area);
     for (int p = 0; p < area; p++) mask[p] = spatial[p * kSpatialChannels];
     maskArr = makeFloatArray(env, mask.data(), area);
+    if (humanModel_) metaArr = makeFloatArray(env, meta, metaChannels);
     heads = static_cast<jobjectArray>(
-      env->CallObjectMethod(runner, method, spatialArr, globalArr, maskArr));
+      env->CallObjectMethod(runner, method, spatialArr, globalArr, maskArr, metaArr));
     checkJava(env, "KataGoMediaTekLiteRt.infer");
     if (!heads || env->GetArrayLength(heads) != 5)
       throw std::runtime_error("MediaTek inference must return five heads");
-    const std::array<int,5> sizes = {{1, area, 3, 4, area}};
+    const std::array<int,5> sizes = {{policyChannels, area * policyChannels, 3, scoreChannels, area}};
     const std::array<float*,5> dests = {{pass, policy, value, score, ownership}};
     for (int h = 0; h < 5; h++) {
       jfloatArray head = static_cast<jfloatArray>(env->GetObjectArrayElement(heads, h));
@@ -166,6 +189,7 @@ void KataGoMediaTekRunner::infer(const float* spatial, const float* global,
     if (spatialArr) env->DeleteLocalRef(spatialArr);
     if (globalArr) env->DeleteLocalRef(globalArr);
     if (maskArr) env->DeleteLocalRef(maskArr);
+    if (metaArr) env->DeleteLocalRef(metaArr);
     env->DeleteLocalRef(runner);
     throw;
   }
@@ -173,6 +197,8 @@ void KataGoMediaTekRunner::infer(const float* spatial, const float* global,
   if (spatialArr) env->DeleteLocalRef(spatialArr);
   if (globalArr) env->DeleteLocalRef(globalArr);
   if (maskArr) env->DeleteLocalRef(maskArr);
+  if (metaArr) env->DeleteLocalRef(metaArr);
   env->DeleteLocalRef(runner);
-  __android_log_print(ANDROID_LOG_INFO, "KataGoMTK", "MTK_GTP_INFER board=%d", boardSize_);
+  __android_log_print(ANDROID_LOG_INFO, "KataGoMTK", "MTK_GTP_INFER board=%d model=%s",
+                      boardSize_, humanModel_ ? "human" : "10b");
 }
