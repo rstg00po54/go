@@ -11,6 +11,8 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.animation.OvershootInterpolator;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -205,6 +207,28 @@ public class MainActivity extends AppCompatActivity {
                 R.id.homeSettingsButton, R.id.homeRecordTabButton,
                 R.id.homeTrainingTabButton, R.id.homeSettingsTabButton}) {
             findViewById(id).setOnClickListener(upcoming);
+        }
+        // Real buttons: spring back on release; normal OnClick listeners still handle navigation.
+        for (int id : new int[]{R.id.aiBattleButton, R.id.homeRecordButton,
+                R.id.homeTrainingButton, R.id.homeSettingsButton,
+                R.id.homeTabButton, R.id.homeGameTabButton,
+                R.id.homeRecordTabButton, R.id.homeTrainingTabButton,
+                R.id.homeSettingsTabButton}) {
+            View button = findViewById(id);
+            button.setOnTouchListener((view, event) -> {
+                if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                    view.animate().cancel();
+                    view.animate().scaleX(0.95f).scaleY(0.95f)
+                            .alpha(0.83f).setDuration(95).start();
+                } else if (event.getActionMasked() == MotionEvent.ACTION_UP
+                        || event.getActionMasked() == MotionEvent.ACTION_CANCEL) {
+                    view.animate().cancel();
+                    view.animate().scaleX(1f).scaleY(1f).alpha(1f)
+                            .setInterpolator(new OvershootInterpolator(1.35f))
+                            .setDuration(260).start();
+                }
+                return false;
+            });
         }
         boardView.setOnIntersectionClickListener(this::onBoardTap);
         aiWinRateText.setOnClickListener(v -> showWinRateChart());
