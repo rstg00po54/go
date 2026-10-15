@@ -1,0 +1,347 @@
+{
+  "test": "vivo MediaTek KataGo real game backend with Human SL",
+  "run_id": "b03b0669278c4006",
+  "sizes": [
+    9,
+    11,
+    13,
+    15,
+    19,
+    9
+  ],
+  "humanSL": true,
+  "requireHumanNpu": true,
+  "hardwareExecution": "UNVERIFIED",
+  "status": "PASS",
+  "errors": [],
+  "steps": [
+    {
+      "index": 0,
+      "board": 9,
+      "phaseTimingMs": {
+        "startupMs": 1307.0,
+        "setupMs": 2.0,
+        "blackMs": 463.0,
+        "whiteMs": 337.0
+      },
+      "inferenceTiming": {
+        "10b": {
+          "count": 68,
+          "meanMs": 1.279,
+          "minMs": 1.0,
+          "maxMs": 3.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 8.25,
+          "minMs": 7.0,
+          "maxMs": 11.0
+        }
+      },
+      "status": "PASS",
+      "errors": [],
+      "litertInferenceCount": 72,
+      "humanLiteRtInferenceCount": 4,
+      "humanParitySampleCount": 20,
+      "black": "E5",
+      "white": "C3"
+    },
+    {
+      "index": 1,
+      "board": 11,
+      "phaseTimingMs": {
+        "startupMs": 1255.0,
+        "setupMs": 3.0,
+        "blackMs": 532.0,
+        "whiteMs": 377.0
+      },
+      "inferenceTiming": {
+        "10b": {
+          "count": 60,
+          "meanMs": 1.367,
+          "minMs": 1.0,
+          "maxMs": 5.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 9.75,
+          "minMs": 8.0,
+          "maxMs": 12.0
+        }
+      },
+      "status": "PASS",
+      "errors": [],
+      "litertInferenceCount": 64,
+      "humanLiteRtInferenceCount": 4,
+      "humanParitySampleCount": 20,
+      "black": "J9",
+      "white": "C3"
+    },
+    {
+      "index": 2,
+      "board": 13,
+      "phaseTimingMs": {
+        "startupMs": 1281.0,
+        "setupMs": 6.0,
+        "blackMs": 750.0,
+        "whiteMs": 460.0
+      },
+      "inferenceTiming": {
+        "10b": {
+          "count": 37,
+          "meanMs": 2.405,
+          "minMs": 1.0,
+          "maxMs": 4.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 15.0,
+          "minMs": 13.0,
+          "maxMs": 19.0
+        }
+      },
+      "status": "PASS",
+      "errors": [],
+      "litertInferenceCount": 41,
+      "humanLiteRtInferenceCount": 4,
+      "humanParitySampleCount": 20,
+      "black": "K10",
+      "white": "L11"
+    },
+    {
+      "index": 3,
+      "board": 15,
+      "phaseTimingMs": {
+        "startupMs": 1312.0,
+        "setupMs": 7.0,
+        "blackMs": 811.0,
+        "whiteMs": 534.0
+      },
+      "inferenceTiming": {
+        "10b": {
+          "count": 38,
+          "meanMs": 2.395,
+          "minMs": 2.0,
+          "maxMs": 5.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 14.5,
+          "minMs": 12.0,
+          "maxMs": 18.0
+        }
+      },
+      "status": "PASS",
+      "errors": [],
+      "litertInferenceCount": 42,
+      "humanLiteRtInferenceCount": 4,
+      "humanParitySampleCount": 20,
+      "black": "M12",
+      "white": "C4"
+    },
+    {
+      "index": 4,
+      "board": 19,
+      "phaseTimingMs": {
+        "startupMs": 1322.0,
+        "setupMs": 5.0,
+        "blackMs": 1182.0,
+        "whiteMs": 833.0
+      },
+      "inferenceTiming": {
+        "10b": {
+          "count": 49,
+          "meanMs": 2.776,
+          "minMs": 2.0,
+          "maxMs": 4.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 19.5,
+          "minMs": 18.0,
+          "maxMs": 22.0
+        }
+      },
+      "status": "PASS",
+      "errors": [],
+      "litertInferenceCount": 53,
+      "humanLiteRtInferenceCount": 4,
+      "humanParitySampleCount": 20,
+      "black": "Q16",
+      "white": "D4"
+    },
+    {
+      "index": 5,
+      "board": 9,
+      "phaseTimingMs": {
+        "startupMs": 1365.0,
+        "setupMs": 5.0,
+        "blackMs": 533.0,
+        "whiteMs": 401.0
+      },
+      "inferenceTiming": {
+        "10b": {
+          "count": 68,
+          "meanMs": 2.265,
+          "minMs": 2.0,
+          "maxMs": 4.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 12.5,
+          "minMs": 12.0,
+          "maxMs": 14.0
+        }
+      },
+      "status": "PASS",
+      "errors": [],
+      "litertInferenceCount": 72,
+      "humanLiteRtInferenceCount": 4,
+      "humanParitySampleCount": 20,
+      "black": "G6",
+      "white": "E5"
+    }
+  ],
+  "serial": "10AFB21HP5002ZK",
+  "socModel": "MT6993",
+  "performanceSummary": [
+    {
+      "board": 9,
+      "inferenceTiming": {
+        "10b": {
+          "count": 68,
+          "meanMs": 1.279,
+          "minMs": 1.0,
+          "maxMs": 3.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 8.25,
+          "minMs": 7.0,
+          "maxMs": 11.0
+        }
+      },
+      "phaseTimingMs": {
+        "startupMs": 1307.0,
+        "setupMs": 2.0,
+        "blackMs": 463.0,
+        "whiteMs": 337.0
+      }
+    },
+    {
+      "board": 11,
+      "inferenceTiming": {
+        "10b": {
+          "count": 60,
+          "meanMs": 1.367,
+          "minMs": 1.0,
+          "maxMs": 5.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 9.75,
+          "minMs": 8.0,
+          "maxMs": 12.0
+        }
+      },
+      "phaseTimingMs": {
+        "startupMs": 1255.0,
+        "setupMs": 3.0,
+        "blackMs": 532.0,
+        "whiteMs": 377.0
+      }
+    },
+    {
+      "board": 13,
+      "inferenceTiming": {
+        "10b": {
+          "count": 37,
+          "meanMs": 2.405,
+          "minMs": 1.0,
+          "maxMs": 4.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 15.0,
+          "minMs": 13.0,
+          "maxMs": 19.0
+        }
+      },
+      "phaseTimingMs": {
+        "startupMs": 1281.0,
+        "setupMs": 6.0,
+        "blackMs": 750.0,
+        "whiteMs": 460.0
+      }
+    },
+    {
+      "board": 15,
+      "inferenceTiming": {
+        "10b": {
+          "count": 38,
+          "meanMs": 2.395,
+          "minMs": 2.0,
+          "maxMs": 5.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 14.5,
+          "minMs": 12.0,
+          "maxMs": 18.0
+        }
+      },
+      "phaseTimingMs": {
+        "startupMs": 1312.0,
+        "setupMs": 7.0,
+        "blackMs": 811.0,
+        "whiteMs": 534.0
+      }
+    },
+    {
+      "board": 19,
+      "inferenceTiming": {
+        "10b": {
+          "count": 49,
+          "meanMs": 2.776,
+          "minMs": 2.0,
+          "maxMs": 4.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 19.5,
+          "minMs": 18.0,
+          "maxMs": 22.0
+        }
+      },
+      "phaseTimingMs": {
+        "startupMs": 1322.0,
+        "setupMs": 5.0,
+        "blackMs": 1182.0,
+        "whiteMs": 833.0
+      }
+    },
+    {
+      "board": 9,
+      "inferenceTiming": {
+        "10b": {
+          "count": 68,
+          "meanMs": 2.265,
+          "minMs": 2.0,
+          "maxMs": 4.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 12.5,
+          "minMs": 12.0,
+          "maxMs": 14.0
+        }
+      },
+      "phaseTimingMs": {
+        "startupMs": 1365.0,
+        "setupMs": 5.0,
+        "blackMs": 533.0,
+        "whiteMs": 401.0
+      }
+    }
+  ]
+}
