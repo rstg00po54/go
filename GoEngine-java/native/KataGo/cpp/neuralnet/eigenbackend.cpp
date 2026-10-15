@@ -1808,8 +1808,8 @@ struct ComputeHandle {
     // When the optional Human graph is absent, retain Eigen's known-good path.
     if(loadedModel.modelDesc.name == "g170-b10c128-s1141046784-d204142634") {
       if(context->nnXLen != context->nnYLen ||
-         (context->nnXLen != 9 && context->nnXLen != 13 && context->nnXLen != 19))
-        throw StringError("MediaTek LiteRT requires 9x9, 13x13 or 19x19");
+         (context->nnXLen != 9 && context->nnXLen != 11 && context->nnXLen != 13 && context->nnXLen != 15 && context->nnXLen != 19))
+        throw StringError("MediaTek LiteRT requires 9x9, 11x11, 13x13, 15x15 or 19x19");
       if(model->numInputChannels != 22 || model->numInputGlobalChannels != 19 ||
          model->numPolicyChannels != 1 || model->numValueChannels != 3 ||
          model->numScoreValueChannels != 4 || model->numOwnershipChannels != 1)
@@ -1819,8 +1819,8 @@ struct ComputeHandle {
     else if(loadedModel.modelDesc.name.find("b18c384nbt-human") == 0) {
       if(KataGoMediaTekBridge::hasHumanRunner()) {
         if(context->nnXLen != context->nnYLen ||
-           (context->nnXLen != 9 && context->nnXLen != 13 && context->nnXLen != 19))
-          throw StringError("Human LiteRT requires fixed 9, 13 or 19 line board graph");
+           (context->nnXLen != 9 && context->nnXLen != 11 && context->nnXLen != 13 && context->nnXLen != 15 && context->nnXLen != 19))
+          throw StringError("Human LiteRT requires fixed 9, 11, 13, 15 or 19 line board graph");
         if(model->numInputChannels != 22 || model->numInputGlobalChannels != 19 ||
            model->numInputMetaChannels != 192 ||
            (model->numPolicyChannels != 1 && model->numPolicyChannels != 2 &&
