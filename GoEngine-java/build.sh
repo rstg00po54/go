@@ -70,7 +70,7 @@ if [[ "$aligned_pie" == false ]]; then
         rm -rf -- "$pie_cache"
     fi
     echo "Building fresh 16 KB-aligned KataGo PIE for independent win-rate analysis..."
-    KATAGO_JOBS="${KATAGO_JOBS:-2}" bash "$PROJECT_DIR/tools/build_katago_from_source.sh" eigen
+    KATAGO_JOBS="${KATAGO_JOBS:-8}" bash "$PROJECT_DIR/tools/build_katago_from_source.sh" eigen
 fi
 
 ./gradlew assembleDebug "${GRADLE_ARGS[@]}" "$@"
