@@ -59,8 +59,8 @@ def summarize_npu_logs(lines, board):
                                  "partitions": int(m.group(3))})
     scale_entries = []
     for line in lines:
-        m = re.search(r"MTK_LITERT_INIT board=(\\d+).*?outputScaleMultiplier=([0-9.]+)"
-                      r"\\s+scaleSource=([a-z_]+)", line)
+        m = re.search(r"MTK_LITERT_INIT board=(\d+).*?outputScaleMultiplier=([0-9.]+)"
+                      r"\s+scaleSource=([a-z_]+)", line)
         if m and int(m.group(1)) == board:
             scale_entries.append({"factor": float(m.group(2)), "source": m.group(3)})
     fallback = [line.strip()[-300:] for line in lines if re.search(
