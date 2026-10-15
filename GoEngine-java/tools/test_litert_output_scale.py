@@ -51,11 +51,16 @@ public class VerifyKataGoOutputScale {
         near(heads[2][0],-6.02734375f);
         near(heads[3][0],-0.50878906f);
         near(heads[4][0],1.3417969f);
+        // Actual vivo 9x9 parity report: all five worst values agree after
+        // compensating for upstream ONNX scale8 to within FP16 error.
+        float[] cpu = {-7.6334043f,-20.994648f,-6.0223126f,-0.50829363f,1.3403282f};
+        for (int i=0;i<cpu.length;i++)
+            if (Math.abs(cpu[i]-heads[i][0]) > 0.025f)
+                throw new AssertionError("Historical CPU/ONNX scale8 mismatch in head "+i);
         File file = new File(args[0]);
         Files.write(file.toPath(),"katago".getBytes(StandardCharsets.UTF_8));
-        String expectedSha = "ae0b54a48ba0c31ea95469b00fe26b4054a09f75f340c44ce9ed26bd4308c15f";
         String actual = KataGoLiteRtOutputScale.sha256(file);
-        // Verify via Python on the host rather than embedding a guessed digest.
+        // Verify via Python on the host.
         System.out.println("KATAGO_LITERT_GRAPH_SHA256="+actual);
         System.out.println("KATAGO_OUTPUT_SCALE_PASS");
     }
