@@ -18,15 +18,15 @@ def trace(backend="GPU", ident=IDENT, board=9, startup=1234, samples=(100, 110, 
         % (ident, backend, board, backend, startup),
     ]
     for i, ms in enumerate(list(warmups) + list(samples)):
+        lines.append("I/KataGoBench: POSITION id=%s backend=%s board=%s iter=%d replayMs=4 stones=b:D4,w:F6,b:C7,w:G3,b:%s"
+                     % (ident, backend, board, i, "E" + str(i + 1)))
+        if backend == "NPU" and npu_infer:
+            lines.append("I/KataGoMTK: MTK_GTP_INFER board=%s" % board)
+            lines.append("I/KataGoMTK: MTK_LITERT_INFER board=%s ms=%s" %
+                         (board, 2.0 if i % 2 == 0 else 3.0))
         lines.append(
             "I/KataGoBench: MOVE id=%s backend=%s board=%s iter=%d warmup=%s ms=%d vertex=F5"
             % (ident, backend, board, i, "true" if i < len(warmups) else "false", ms))
-    if backend == "NPU" and npu_infer:
-        lines.extend([
-            "I/KataGoMTK: MTK_GTP_INFER board=%s" % board,
-            "I/KataGoMTK: MTK_LITERT_INFER board=%s ms=2.0" % board,
-            "I/KataGoMTK: MTK_LITERT_INFER board=%s ms=3.0" % board,
-        ])
     lines.append("I/KataGoBench: PASS id=%s backend=%s board=%s measured=%s warmups=%s"
                  % (ident, backend, board, len(samples), len(warmups)))
     return "\n".join(lines)
@@ -55,8 +55,9 @@ class VivoBackendBenchmarkTests(unittest.TestCase):
         good = trace("NPU", ident)
         result = parse_backend_log(good, ident, "NPU", 9, 1, 3)
         self.assertEqual(result["status"], "PASS", result["errors"])
-        self.assertEqual(result["liteRtInferenceCalls"], 1)
+        self.assertEqual(result["liteRtInferenceCalls"], 4)
         self.assertEqual(result["liteRtMeanInferenceMs"], 2.5)
+        self.assertTrue(all(m["litertInferenceCalls"] == 1 for m in result["measuredMoves"]))
         self.assertEqual(parse_backend_log(trace("NPU", ident, npu_infer=False),
                                            ident, "NPU", 9, 1, 3)["status"], "FAIL")
 
@@ -70,6 +71,8 @@ class VivoBackendBenchmarkTests(unittest.TestCase):
                                            IDENT, "GPU", 9, 1, 3)["status"], "FAIL")
         self.assertEqual(parse_backend_log(good.replace("iter=2", "iter=1"),
                                            IDENT, "GPU", 9, 1, 3)["status"], "FAIL")
+        self.assertEqual(parse_backend_log(good.replace("POSITION id=", "UNRELATED id="),
+                                           IDENT, "GPU", 9, 1, 3)["status"], "FAIL")
         self.assertEqual(parse_backend_log(good, "other_id", "GPU", 9, 1, 3)["status"], "FAIL")
 
     def test_host_intent_and_java_benchmark_are_wired(self):
@@ -81,6 +84,8 @@ class VivoBackendBenchmarkTests(unittest.TestCase):
         self.assertIn('engine.generateMove("black")', app)
         self.assertIn("SystemClock.elapsedRealtimeNanos()", app)
         self.assertIn("engine.clearBoard()", app)
+        self.assertIn("setUniquePosition(engine, board, i)", app)
+        self.assertIn("engine.playMove(color, coordinate)", app)
         self.assertIn('"MOVE id="', app)
         self.assertIn('"READY id="', app)
         self.assertIn("if (!actual.startsWith(backendName", app)
