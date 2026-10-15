@@ -98,6 +98,33 @@ class MishOptimizerTests(unittest.TestCase):
         result = module.optimize_model(model, 1)
         self.assertEqual(result["matchedSourceForms"], {"Softplus/Tanh/Mul":1})
 
+    def test_gated_softplus_with_different_multiplier_remains_exact(self):
+        x=helper.make_tensor_value_info("input", TensorProto.FLOAT, [1,2])
+        y=helper.make_tensor_value_info("out", TensorProto.FLOAT, [1,2])
+        graph=helper.make_graph([
+            helper.make_node("Mul", ["input", "gate"], ["z"]),
+            helper.make_node("Softplus", ["z"], ["sp"]),
+            helper.make_node("Tanh", ["sp"], ["tanh"]),
+            helper.make_node("Mul", ["input", "tanh"], ["out"])
+        ], "b18_gated_mish", [x], [y], initializer=[
+            numpy_helper.from_array(np.array(0.6,dtype=np.float32),name="gate")])
+        model=helper.make_model(graph,opset_imports=[helper.make_opsetid("",17)])
+        model.ir_version=9
+        original=onnx.ModelProto(); original.CopyFrom(model)
+        data=module.optimize_model(model,1)
+        self.assertEqual(data["gatedActivations"],1)
+        import onnxruntime as ort
+        opts=ort.SessionOptions(); opts.intra_op_num_threads=1
+        a=ort.InferenceSession(original.SerializeToString(),opts,
+                               providers=["CPUExecutionProvider"])
+        b=ort.InferenceSession(model.SerializeToString(),opts,
+                               providers=["CPUExecutionProvider"])
+        for vals in ([-19.,-1.],[-.01, 10.], [2.,20.]):
+            z=np.array(vals,dtype=np.float32).reshape(1,2)
+            np.testing.assert_allclose(a.run(None,{"input":z})[0],
+                                       b.run(None,{"input":z})[0],
+                                       rtol=1e-3,atol=1e-4)
+
     def test_reject_changed_mish_identity(self):
         with self.assertRaisesRegex(ValueError, "Expected 1 safe Mish"):
             module.optimize_model(make_model(1, wrong_constant=True), 1)
