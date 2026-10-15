@@ -1,0 +1,133 @@
+--------- beginning of main
+10-15 12:06:15.096 I/KataGoBench(14385): START id=4838bc44955a4adf_npu backend=NPU board=9 visits=32 maxTime=12.0 warmups=1 repeats=5 human=false
+10-15 12:06:15.097 I/KataGoBench(14385): PHASE id=4838bc44955a4adf_npu stage=engine_start
+10-15 12:06:15.097 I/KataGoEngine(14385): === JAVA KATAGO ENGINE / ANDROID ARM64 ===
+10-15 12:06:15.097 I/KataGoEngine(14385): STARTUP_TIMING phase=engine_backend_and_paths ms=0.281088
+10-15 12:06:15.120 I/KataGoEngine(14385): Native GTP defaultBoardSize=9
+10-15 12:06:15.120 I/KataGoEngine(14385): STARTUP_TIMING phase=engine_prepare_config ms=22.719232
+10-15 12:06:15.122 I/KataGoEngine(14385): Reusing installed model asset: /data/user/0/com.badukai.java.nputest/files/engine/10b.bin
+10-15 12:06:15.133 I/KataGoEngine(14385): STARTUP_TIMING phase=engine_prepare_model_asset ms=12.99584
+10-15 12:06:15.133 I/KataGoEngine(14385): STARTUP_TIMING phase=engine_find_human_model ms=0.00512
+10-15 12:06:15.133 I/KataGoEngine(14385): Model: /data/user/0/com.badukai.java.nputest/files/engine/10b.bin size=12003218
+10-15 12:06:15.133 I/KataGoEngine(14385): Config: /data/user/0/com.badukai.java.nputest/files/engine/default_gtp.cfg
+10-15 12:06:15.133 I/KataGoEngine(14385): Backend requested: NPU/MediaTek LiteRT in-process JNI
+10-15 12:06:15.332 I/KataGoMTK(14385): MTK_LITERT_INIT board=9 npuRequested=true graph=katago_10b_9x9.tflite outputScaleMultiplier=8.0 scaleSource=pinned_legacy_graph
+10-15 12:06:15.332 I/KataGoMTK(14385): MTK_GTP_BRIDGE_INSTALLED
+10-15 12:06:15.332 I/KataGoMTK(14385): MTK_GTP_NATIVE_READY board=9 handle=1
+10-15 12:06:15.332 I/KataGoEngine(14385): STARTUP_TIMING phase=engine_mtk_native_create ms=199.291648
+10-15 12:06:15.515 I/KataGoEngine(14385): KataGo GTP ready response: = KataGo
+10-15 12:06:15.515 I/KataGoEngine(14385): MTK_GAME_BACKEND_READY board=9 humanSL=false backend=NPU/MediaTek LiteRT JNI
+10-15 12:06:15.515 I/KataGoEngine(14385): STARTUP_TIMING phase=engine_mtk_ready ms=418.187904
+10-15 12:06:15.515 I/KataGoBench(14385): READY id=4838bc44955a4adf_npu backend=NPU board=9 actual=NPU/MediaTek_LiteRT_JNI startupMs=418
+10-15 12:06:15.515 I/KataGoBench(14385): PHASE id=4838bc44955a4adf_npu stage=gtp_setup
+10-15 12:06:15.515 I/KataGoEngine(14385): GTP boardsize=9 ok=true elapsedMs=0
+10-15 12:06:15.516 I/KataGoEngine(14385): Chinese rules verified=true rules={"friendlyPassOk":true,"hasButton":false,"ko":"SIMPLE","scoring":"AREA","suicide":false,"tax":"NONE","whiteHandicapBonus":"N"}
+10-15 12:06:15.518 I/KataGoEngine(14385): Search limits verified=true requested: maxVisits=32 maxTime=12.000 readback: maxVisits=32 maxTime=12.0
+10-15 12:06:15.518 I/KataGoBench(14385): PHASE id=4838bc44955a4adf_npu stage=warmup iter=0 backend=NPU
+10-15 12:06:15.523 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=3 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.523 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.526 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.526 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.528 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.528 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.530 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.530 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.531 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.531 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.533 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.533 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.535 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.535 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.537 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.537 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.538 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.538 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.540 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.540 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.542 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.542 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.544 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.544 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.546 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.546 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.547 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.547 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.549 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.549 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.552 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.552 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.554 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.554 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.556 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.556 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.558 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.558 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.560 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.560 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.561 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.561 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.563 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.563 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.565 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.565 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.567 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.567 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.569 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.569 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.571 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.571 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.573 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.573 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.575 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.575 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.577 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.577 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.579 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.579 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.581 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.581 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.582 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.582 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.584 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.584 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.586 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.586 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.588 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.588 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.588 I/KataGoEngine(14385): genmove color=black move=F5 rootVisits=unavailable newPlayouts=unavailable elapsedMs=69 (wall time includes GTP and inference overhead)
+10-15 12:06:15.589 I/KataGoBench(14385): MOVE id=4838bc44955a4adf_npu backend=NPU board=9 iter=0 warmup=true ms=70 vertex=F5
+10-15 12:06:15.589 I/KataGoBench(14385): PHASE id=4838bc44955a4adf_npu stage=measure iter=1 backend=NPU
+10-15 12:06:15.592 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.592 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.594 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.594 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.594 I/KataGoEngine(14385): genmove color=black move=F6 rootVisits=unavailable newPlayouts=unavailable elapsedMs=5 (wall time includes GTP and inference overhead)
+10-15 12:06:15.594 I/KataGoBench(14385): MOVE id=4838bc44955a4adf_npu backend=NPU board=9 iter=1 warmup=false ms=5 vertex=F6
+10-15 12:06:15.594 I/KataGoBench(14385): PHASE id=4838bc44955a4adf_npu stage=measure iter=2 backend=NPU
+10-15 12:06:15.598 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.598 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.600 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.600 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.601 I/KataGoEngine(14385): genmove color=black move=F6 rootVisits=unavailable newPlayouts=unavailable elapsedMs=5 (wall time includes GTP and inference overhead)
+10-15 12:06:15.601 I/KataGoBench(14385): MOVE id=4838bc44955a4adf_npu backend=NPU board=9 iter=2 warmup=false ms=5 vertex=F6
+10-15 12:06:15.601 I/KataGoBench(14385): PHASE id=4838bc44955a4adf_npu stage=measure iter=3 backend=NPU
+10-15 12:06:15.604 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.604 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.606 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.606 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.607 I/KataGoEngine(14385): genmove color=black move=F5 rootVisits=unavailable newPlayouts=unavailable elapsedMs=5 (wall time includes GTP and inference overhead)
+10-15 12:06:15.607 I/KataGoBench(14385): MOVE id=4838bc44955a4adf_npu backend=NPU board=9 iter=3 warmup=false ms=5 vertex=F5
+10-15 12:06:15.607 I/KataGoBench(14385): PHASE id=4838bc44955a4adf_npu stage=measure iter=4 backend=NPU
+10-15 12:06:15.612 I/KataGoMTK(14385): MTK_LITERT_INFER board=9 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 12:06:15.612 I/KataGoMTK(14385): MTK_GTP_INFER board=9
+10-15 12:06:15.613 I/KataGoEngine(14385): genmove color=black move=F5 rootVisits=unavailable newPlayouts=unavailable elapsedMs=3 (wall time includes GTP and inference overhead)
+10-15 12:06:15.613 I/KataGoBench(14385): MOVE id=4838bc44955a4adf_npu backend=NPU board=9 iter=4 warmup=false ms=3 vertex=F5
+10-15 12:06:15.613 I/KataGoBench(14385): PHASE id=4838bc44955a4adf_npu stage=measure iter=5 backend=NPU
+10-15 12:06:15.614 I/KataGoEngine(14385): genmove color=black move=F5 rootVisits=unavailable newPlayouts=unavailable elapsedMs=0 (wall time includes GTP and inference overhead)
+10-15 12:06:15.614 I/KataGoBench(14385): MOVE id=4838bc44955a4adf_npu backend=NPU board=9 iter=5 warmup=false ms=0 vertex=F5
+10-15 12:06:15.614 I/KataGoBench(14385): PHASE id=4838bc44955a4adf_npu stage=stop
+10-15 12:06:15.620 I/KataGoMTK(14385): MTK_GTP_BRIDGE_RELEASED
+10-15 12:06:15.627 I/KataGoMTK(14385): MTK_GTP_NATIVE_CLOSED
+10-15 12:06:15.627 I/KataGoEngine(14385): NPU/MediaTek LiteRT JNI session stopped
+10-15 12:06:15.627 I/KataGoEngine(14385): KataGo stopped
+10-15 12:06:15.627 I/KataGoBench(14385): PASS id=4838bc44955a4adf_npu backend=NPU board=9 measured=5 warmups=1

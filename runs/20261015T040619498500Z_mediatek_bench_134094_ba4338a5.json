@@ -1,0 +1,201 @@
+{
+  "test": "Vivo KataGo CPU GPU MediaTek GTP wall time benchmark",
+  "run_id": "4838bc44955a4adf",
+  "board": 9,
+  "backends": [
+    "CPU",
+    "GPU",
+    "NPU"
+  ],
+  "visits": 32,
+  "maxTimeSeconds": 12.0,
+  "warmup": 1,
+  "repeats": 5,
+  "humanSL": false,
+  "timingScope": "Full genmove GTP wall time (model inference + search + IPC)",
+  "hardwareExecution": "UNVERIFIED",
+  "status": "PASS",
+  "results": {
+    "CPU": {
+      "status": "PASS",
+      "backend": "CPU",
+      "board": 9,
+      "startupMs": 225,
+      "latencyMs": {
+        "meanMs": 9.8,
+        "medianMs": 11,
+        "minMs": 0,
+        "maxMs": 16,
+        "p95NearestRankMs": 16
+      },
+      "measuredMoves": [
+        {
+          "iter": 1,
+          "move": "F5",
+          "elapsedMs": 16,
+          "warmup": false
+        },
+        {
+          "iter": 2,
+          "move": "E5",
+          "elapsedMs": 13,
+          "warmup": false
+        },
+        {
+          "iter": 3,
+          "move": "F5",
+          "elapsedMs": 9,
+          "warmup": false
+        },
+        {
+          "iter": 4,
+          "move": "F5",
+          "elapsedMs": 0,
+          "warmup": false
+        },
+        {
+          "iter": 5,
+          "move": "F5",
+          "elapsedMs": 11,
+          "warmup": false
+        }
+      ],
+      "warmupMoves": [
+        {
+          "iter": 0,
+          "move": "F5",
+          "elapsedMs": 158,
+          "warmup": true
+        }
+      ],
+      "liteRtInferenceCalls": null,
+      "liteRtMeanInferenceMs": null,
+      "errors": []
+    },
+    "GPU": {
+      "status": "PASS",
+      "backend": "GPU",
+      "board": 9,
+      "startupMs": 43696,
+      "latencyMs": {
+        "meanMs": 22,
+        "medianMs": 19,
+        "minMs": 14,
+        "maxMs": 32,
+        "p95NearestRankMs": 32
+      },
+      "measuredMoves": [
+        {
+          "iter": 1,
+          "move": "F5",
+          "elapsedMs": 14,
+          "warmup": false
+        },
+        {
+          "iter": 2,
+          "move": "F5",
+          "elapsedMs": 15,
+          "warmup": false
+        },
+        {
+          "iter": 3,
+          "move": "F5",
+          "elapsedMs": 30,
+          "warmup": false
+        },
+        {
+          "iter": 4,
+          "move": "F5",
+          "elapsedMs": 32,
+          "warmup": false
+        },
+        {
+          "iter": 5,
+          "move": "F5",
+          "elapsedMs": 19,
+          "warmup": false
+        }
+      ],
+      "warmupMoves": [
+        {
+          "iter": 0,
+          "move": "F5",
+          "elapsedMs": 223,
+          "warmup": true
+        }
+      ],
+      "liteRtInferenceCalls": null,
+      "liteRtMeanInferenceMs": null,
+      "errors": []
+    },
+    "NPU": {
+      "status": "PASS",
+      "backend": "NPU",
+      "board": 9,
+      "startupMs": 418,
+      "latencyMs": {
+        "meanMs": 3.6,
+        "medianMs": 5,
+        "minMs": 0,
+        "maxMs": 5,
+        "p95NearestRankMs": 5
+      },
+      "measuredMoves": [
+        {
+          "iter": 1,
+          "move": "F6",
+          "elapsedMs": 5,
+          "warmup": false
+        },
+        {
+          "iter": 2,
+          "move": "F6",
+          "elapsedMs": 5,
+          "warmup": false
+        },
+        {
+          "iter": 3,
+          "move": "F5",
+          "elapsedMs": 5,
+          "warmup": false
+        },
+        {
+          "iter": 4,
+          "move": "F5",
+          "elapsedMs": 3,
+          "warmup": false
+        },
+        {
+          "iter": 5,
+          "move": "F5",
+          "elapsedMs": 0,
+          "warmup": false
+        }
+      ],
+      "warmupMoves": [
+        {
+          "iter": 0,
+          "move": "F5",
+          "elapsedMs": 70,
+          "warmup": true
+        }
+      ],
+      "liteRtInferenceCalls": 42,
+      "liteRtMeanInferenceMs": 1.143,
+      "errors": []
+    }
+  },
+  "errors": [],
+  "startedUtc": "2026-10-15T04:05:29.372472+00:00",
+  "serial": "10AFB21HP5002ZK",
+  "socModel": "MT6993",
+  "comparison": {
+    "reference": "GPU",
+    "target": "NPU",
+    "gpuMedianMs": 19,
+    "npuMedianMs": 5,
+    "gpuOverNpuSpeedup": 3.8,
+    "meaning": "Full GTP genmove median ratio; not standalone silicon inference speed"
+  },
+  "finishedUtc": "2026-10-15T04:06:19.487025+00:00"
+}
