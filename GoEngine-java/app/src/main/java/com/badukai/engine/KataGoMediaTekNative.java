@@ -37,6 +37,12 @@ public final class KataGoMediaTekNative {
     public static GtpSession createSession(Context context, File model, File config,
                                            File humanModel, File graph, File manifest,
                                            int boardSize) throws Exception {
+        return createSession(context, model, config, humanModel, graph, manifest, boardSize, false);
+    }
+
+    public static GtpSession createSession(Context context, File model, File config,
+                                           File humanModel, File graph, File manifest,
+                                           int boardSize, boolean compareCpu) throws Exception {
         if (!NpuHardware.canProbeMediaTekLiteRt())
             throw new IllegalStateException("MediaTek SoC required");
         load();
@@ -45,7 +51,7 @@ public final class KataGoMediaTekNative {
         long handle = 0;
         try {
             handle = nativeCreateSession(model.getAbsolutePath(), config.getAbsolutePath(),
-                    humanModel == null ? null : humanModel.getAbsolutePath(), runner);
+                    humanModel == null ? null : humanModel.getAbsolutePath(), runner, compareCpu);
             if (handle == 0)
                 throw new IllegalStateException("MediaTek JNI GTP session could not start");
             Log.i(TAG, "MTK_GTP_NATIVE_READY board=" + boardSize + " handle=" + handle);
@@ -102,7 +108,7 @@ public final class KataGoMediaTekNative {
     private static native String nativeBuildStatus();
     private static native long nativeCreateSession(String modelPath, String configPath,
                                                     String humanModelPath,
-                                                    KataGoMediaTekLiteRt runner);
+                                                    KataGoMediaTekLiteRt runner, boolean compareCpu);
     private static native boolean nativeSendCommand(long handle, String command);
     private static native String nativeReadOutput(long handle, int timeoutMs);
     private static native boolean nativeIsSessionAlive(long handle);
