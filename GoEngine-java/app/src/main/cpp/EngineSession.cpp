@@ -18,9 +18,14 @@
 #include "command/gtp_io.h"
 #include "game/board.h"
 #include "game/boardhistory.h"
+#if defined(USE_MEDIATEK_BACKEND)
+#include "neuralnet/mediatekbackend.h"
+#endif
 
 #if defined(USE_RKNN_BACKEND)
 #define KATAGO_SESSION_JNI(name) Java_com_badukai_engine_KataGoNpuNative_##name
+#elif defined(USE_MEDIATEK_BACKEND)
+#define KATAGO_SESSION_JNI(name) Java_com_badukai_engine_KataGoMediaTekNative_##name
 #elif defined(USE_OPENCL_BACKEND)
 #define KATAGO_SESSION_JNI(name) Java_com_badukai_engine_KataGoGpuNative_##name
 #else
@@ -222,6 +227,8 @@ std::string toUtf8(JNIEnv* env, jstring value) {
 extern "C" JNIEXPORT jlong JNICALL
 #if defined(USE_RKNN_BACKEND)
 KATAGO_SESSION_JNI(nativeCreateSession)(JNIEnv* env, jclass, jstring model, jstring config, jstring humanModel, jstring rknnModel) {
+#elif defined(USE_MEDIATEK_BACKEND)
+KATAGO_SESSION_JNI(nativeCreateSession)(JNIEnv* env, jclass, jstring model, jstring config, jstring humanModel, jobject runner) {
 #else
 KATAGO_SESSION_JNI(nativeCreateSession)(JNIEnv* env, jclass, jstring model, jstring config, jstring humanModel) {
 #endif
@@ -236,11 +243,17 @@ KATAGO_SESSION_JNI(nativeCreateSession)(JNIEnv* env, jclass, jstring model, jstr
     if (modelPath.empty() || configPath.empty()) return 0;
     std::lock_guard<std::mutex> lock(sessionsMutex);
     if (!sessions.empty()) return 0;
+#if defined(USE_MEDIATEK_BACKEND)
+    if (!KataGoMediaTekBridge::install(env, runner)) return 0;
+#endif
     try {
         const jlong handle = nextHandle++;
         sessions.emplace(handle, std::make_shared<Session>(modelPath, configPath, humanModelPath));
         return handle;
     } catch (...) {
+#if defined(USE_MEDIATEK_BACKEND)
+        KataGoMediaTekBridge::reset(env);
+#endif
         return 0;
     }
 }
@@ -275,7 +288,7 @@ KATAGO_SESSION_JNI(nativeStopSearch)(JNIEnv*, jclass, jlong handle) {
 }
 
 extern "C" JNIEXPORT void JNICALL
-KATAGO_SESSION_JNI(nativeDestroySession)(JNIEnv*, jclass, jlong handle) {
+KATAGO_SESSION_JNI(nativeDestroySession)(JNIEnv* env, jclass, jlong handle) {
     // Keep new sessions from starting before the old search, GTP and NN
     // threads have fully quit; holding sessionsMutex during join would
     // risk deadlocking unrelated JNI lookups.
@@ -293,6 +306,9 @@ KATAGO_SESSION_JNI(nativeDestroySession)(JNIEnv*, jclass, jlong handle) {
     // global cleanup despite registry.erase() succeeding.
     removed->shutdown();
     removed.reset();
+#if defined(USE_MEDIATEK_BACKEND)
+    KataGoMediaTekBridge::reset(env);
+#endif
 }
 
 // A read-only, strict Benson/pass-alive endgame check. Both CPU and GPU JNI
