@@ -9,7 +9,7 @@ cd "$ROOT"
 # Full build.sh compiles CPU/Eigen JNI, GPU/OpenCL JNI, and a 16 KB-aligned
 # KataGo PIE for the independent analysis engine. Do not use --apk-only or
 # vivoProbeApk=true here: those omit native code needed for normal gameplay.
-ALLOW_4K_RKNN_RUNTIME=0 KATAGO_JOBS="${KATAGO_JOBS:-2}" bash "$ROOT/build.sh" \
+ALLOW_4K_RKNN_RUNTIME=0 KATAGO_JOBS="${KATAGO_JOBS:-8}" bash "$ROOT/build.sh" \
     -PenableKataGoNpuJni=false \
     -PbundleVivoLiteRtModels=true "$@"
 
