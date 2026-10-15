@@ -73,6 +73,31 @@ class MishOptimizerTests(unittest.TestCase):
             revised = b.run(None, {"input": values.reshape((1,1,2,2))})[0]
             np.testing.assert_allclose(source, revised, rtol=1.e-3, atol=1.e-4)
 
+    def test_standard_onnx_mish_operator(self):
+        x = helper.make_tensor_value_info("input", TensorProto.FLOAT, [1,2])
+        y = helper.make_tensor_value_info("out", TensorProto.FLOAT, [1,2])
+        model = helper.make_model(helper.make_graph([
+            helper.make_node("Mish", ["input"], ["out"])], "direct_mish", [x], [y]),
+            opset_imports=[helper.make_opsetid("", 20)])
+        model.ir_version = 9
+        result = module.optimize_model(model, 1)
+        self.assertEqual(result["matchedSourceForms"], {"Mish": 1})
+        self.assertEqual(result["rewrittenChains"], 1)
+        self.assertNotIn("Mish", [n.op_type for n in model.graph.node])
+
+    def test_standard_softplus_tanh_mish_operator(self):
+        x = helper.make_tensor_value_info("input", TensorProto.FLOAT, [1,2])
+        y = helper.make_tensor_value_info("out", TensorProto.FLOAT, [1,2])
+        model = helper.make_model(helper.make_graph([
+            helper.make_node("Softplus", ["input"], ["sp"]),
+            helper.make_node("Tanh", ["sp"], ["tanh"]),
+            helper.make_node("Mul", ["input", "tanh"], ["out"])
+        ], "softplus_mish", [x], [y]),
+            opset_imports=[helper.make_opsetid("", 17)])
+        model.ir_version = 9
+        result = module.optimize_model(model, 1)
+        self.assertEqual(result["matchedSourceForms"], {"Softplus/Tanh/Mul":1})
+
     def test_reject_changed_mish_identity(self):
         with self.assertRaisesRegex(ValueError, "Expected 1 safe Mish"):
             module.optimize_model(make_model(1, wrong_constant=True), 1)
