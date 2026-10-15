@@ -86,6 +86,8 @@ public class GoBoardView extends View {
         } else {
             ownershipWhite = values.clone();
             ownershipMode = OWNERSHIP_SQUARES;
+            // Always invalidate markers from a previous neural evaluation.
+            deadStoneMarks = Collections.emptySet();
         }
         invalidate();
     }
