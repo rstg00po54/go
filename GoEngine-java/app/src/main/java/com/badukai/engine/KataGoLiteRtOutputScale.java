@@ -22,6 +22,14 @@ public final class KataGoLiteRtOutputScale {
 
     private KataGoLiteRtOutputScale() {}
 
+    /** Human graphs are never legacy-pinned: scale must be explicit in the manifest. */
+    public static double resolveDeclared(Double declaredMultiplier) {
+        if (declaredMultiplier == null || !Double.isFinite(declaredMultiplier)
+                || (declaredMultiplier != 1.0 && declaredMultiplier != 8.0))
+            throw new IllegalArgumentException("Human ONNX output multiplier missing or invalid");
+        return declaredMultiplier;
+    }
+
     public static double resolve(int board, Double declaredMultiplier, String graphSha256) {
         if (declaredMultiplier != null) {
             double scale = declaredMultiplier;
