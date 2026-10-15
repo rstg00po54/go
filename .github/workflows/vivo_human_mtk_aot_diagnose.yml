@@ -1,0 +1,63 @@
+name: Diagnose Human SL b18 with MediaTek host AOT compiler
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/rk3588-rknn]
+    paths:
+      - '.github/workflows/vivo_human_mtk_aot_diagnose.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  compile-human-9:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install public Neuron AOT plugin for MT6993
+        run: |
+          python -m pip install -U pip
+          python -m pip install 'ai-edge-litert==2.1.5' 'ai-edge-litert-sdk-mediatek==2.1.5'
+          python -c "from ai_edge_litert.aot import aot_compile; from ai_edge_litert.aot.vendors.mediatek import target; print('NEURON_AOT_HOST_READY')"
+      - name: Download pinned official b18 Human 9x9 LiteRT graph
+        run: |
+          set -euo pipefail
+          mkdir -p input diagnostics
+          curl -fL --retry 3 -o input/human9.tflite \
+            https://github.com/rstg00po54/go/releases/download/vivo-human-litert-9-13-19-experimental-v0/katago_human_9x9.tflite
+          echo '460463f71eb61fb8e5fd48df0309775de40cde520874edc402e07106e5f45d09  input/human9.tflite' | sha256sum -c
+      - name: Test Neuron AOT compilation independently of vivo Android HAL
+        shell: bash
+        run: |
+          set -o pipefail
+          python -u - <<'PY' 2>&1 | tee diagnostics/human9_aot.log
+          import traceback
+          from ai_edge_litert.aot import aot_compile as compiler
+          from ai_edge_litert.aot.vendors.mediatek import target as mtk
+          print('HUMAN_AOT_BEGIN model=b18c384nbt-humanv0 board=9 target=MT6993',flush=True)
+          try:
+              import inspect
+              print('HUMAN_AOT_COMPILER_SIGNATURE', inspect.signature(compiler.aot_compile),flush=True)
+              result = compiler.aot_compile(
+                  'input/human9.tflite',
+                  target=[mtk.Target(mtk.SocModel.MT6993)],
+                  output_dir='diagnostics/aot_output',
+                  keep_going=False)
+              print('HUMAN_AOT_COMPILE_PASS result=', str(result)[:400],flush=True)
+          except Exception as exc:
+              print('HUMAN_AOT_COMPILE_FAIL:',repr(exc),flush=True)
+              traceback.print_exc()
+              raise
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: human-b18-mediatek-aot-compile-diagnostics
+          path: |
+            diagnostics/*.log
+          if-no-files-found: warn
