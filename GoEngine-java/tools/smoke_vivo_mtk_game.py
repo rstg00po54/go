@@ -145,7 +145,15 @@ def parse_game_log(raw, run_id, sizes, human=True, require_human_npu=False):
                            "minMs": min(values) if values else None,
                            "maxMs": max(values) if values else None}
                    for model,values in timing.items()}
-        item = {"index": index, "board": requested, "inferenceTiming": summary,
+        phase_ms = {}
+        if terminal:
+            for key in ("startupMs", "setupMs", "blackMs", "whiteMs"):
+                value = field(terminal[0], key)
+                if value is not None:
+                    try: phase_ms[key] = float(value)
+                    except ValueError: part_errors.append("Invalid phase timing " + key)
+        item = {"index": index, "board": requested, "phaseTimingMs": phase_ms,
+                "inferenceTiming": summary,
                 "status": "PASS" if not part_errors else "FAIL", "errors": part_errors,
                 "litertInferenceCount": len(neural),
                 "humanLiteRtInferenceCount": len(human_calls),
@@ -341,7 +349,8 @@ def main(argv=None):
         if result["errors"]: result["status"] = "FAIL"
         report.update(result)
         report["performanceSummary"] = [{"board": step["board"],
-            "inferenceTiming": step.get("inferenceTiming", {})} for step in result["steps"]]
+            "inferenceTiming": step.get("inferenceTiming", {}),
+            "phaseTimingMs": step.get("phaseTimingMs", {})} for step in result["steps"]]
         for row in report["performanceSummary"]:
             print("BOARD_PERF board=%s 10b=%s human=%s" % (
                 row["board"],row["inferenceTiming"].get("10b",{}).get("meanMs"),
