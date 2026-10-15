@@ -1,0 +1,27 @@
+{
+  "test": "vivo MediaTek KataGo real game backend with Human SL",
+  "run_id": "7e1c817ea4db41a3",
+  "sizes": [
+    13
+  ],
+  "humanSL": true,
+  "requireHumanNpu": true,
+  "hardwareExecution": "UNVERIFIED",
+  "status": "PASS",
+  "errors": [],
+  "steps": [
+    {
+      "index": 0,
+      "board": 13,
+      "status": "PASS",
+      "errors": [],
+      "litertInferenceCount": 42,
+      "humanLiteRtInferenceCount": 4,
+      "humanParitySampleCount": 20,
+      "black": "K10",
+      "white": "D4"
+    }
+  ],
+  "serial": "10AFB21HP5002ZK",
+  "socModel": "MT6993"
+}
