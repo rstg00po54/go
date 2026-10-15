@@ -193,12 +193,22 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "Game engine preference=" + (forceLegacy ? "PIE forced" : "JNI if bundled")
                 + "; preload boardSize=" + boardSize + "; backend=" + selectedBackend + "; winrate engine=PIE");
         bindViews();
-        // Artwork lives in docs and is copied into APK assets by Gradle.
-        try (InputStream in = getAssets().open("home/home_green.png")) {
-            ((ImageView) findViewById(R.id.homeArtwork)).setImageBitmap(BitmapFactory.decodeStream(in));
+        // Each home UI element is a separate PNG (not a painted button hotspot).
+        try (InputStream in = getAssets().open("home/background.png")) {
+            ((ImageView) findViewById(R.id.homeArtwork))
+                    .setImageBitmap(BitmapFactory.decodeStream(in));
         } catch (Exception ex) {
-            Log.e(TAG, "Home artwork could not be loaded", ex);
-            Toast.makeText(this, "首页图片未打包，请检查构建日志", Toast.LENGTH_LONG).show();
+            Log.e(TAG, "Home background missing", ex);
+        }
+        setHomeButtonArt(R.id.aiBattleButton, "home/play.png");
+        setHomeButtonArt(R.id.homeRecordButton, "home/record.png");
+        setHomeButtonArt(R.id.homeTrainingButton, "home/training.png");
+        setHomeButtonArt(R.id.homeSettingsButton, "home/settings.png");
+        // Simple translucent navigation tabs, distinct from the illustrated buttons.
+        for (int id : new int[]{R.id.homeTabButton, R.id.homeGameTabButton,
+                R.id.homeRecordTabButton, R.id.homeTrainingTabButton,
+                R.id.homeSettingsTabButton}) {
+            findViewById(id).setBackgroundResource(R.drawable.home_button_tab);
         }
         findViewById(R.id.homeGameTabButton).setOnClickListener(v -> showNewGameDialog());
         findViewById(R.id.homeTabButton).setOnClickListener(v -> showMainPage());
@@ -702,6 +712,19 @@ public class MainActivity extends AppCompatActivity {
         situationButton = findViewById(R.id.situationButton);
         aiSuggestionButton = findViewById(R.id.aiSuggestionButton);
         countTerritoryButton = findViewById(R.id.countTerritoryButton);
+    }
+
+    private void setHomeButtonArt(int viewId, String asset) {
+        try (InputStream stream = getAssets().open(asset)) {
+            android.graphics.Bitmap bitmap = BitmapFactory.decodeStream(stream);
+            if (bitmap == null) throw new java.io.IOException("Invalid bitmap: " + asset);
+            android.graphics.drawable.BitmapDrawable drawable =
+                    new android.graphics.drawable.BitmapDrawable(getResources(), bitmap);
+            drawable.setGravity(android.view.Gravity.FILL);
+            findViewById(viewId).setBackground(drawable);
+        } catch (Exception ex) {
+            Log.e(TAG, "Cannot load home button artwork: " + asset, ex);
+        }
     }
 
     private void startEngine() {
