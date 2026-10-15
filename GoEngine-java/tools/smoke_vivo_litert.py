@@ -20,7 +20,7 @@ from upload_referee_test_results import UploadError, upload_referee_results
 
 ROOT = Path(__file__).resolve().parents[1]
 APK = ROOT / "app/build/outputs/apk/debug/app-debug.apk"
-COMPONENT = "com.badukai.java/com.badukai.MainActivity"
+COMPONENT = "com.badukai.java.nputest/com.badukai.MainActivity"
 
 
 def adb(args, serial, *command, timeout=40):
@@ -68,7 +68,7 @@ def run(argv=None):
         if not args.skip_install:
             if not APK.is_file(): raise RuntimeError("Missing APK: " + str(APK))
             print(adb(args, serial, "install", "-r", str(APK), timeout=140).strip(), flush=True)
-        adb(args, serial, "shell", "am", "force-stop", "com.badukai.java")
+        adb(args, serial, "shell", "am", "force-stop", "com.badukai.java.nputest")
         adb(args, serial, "logcat", "-b", "all", "-c")
         print(adb(args, serial, "shell", "am", "start", "-n", COMPONENT,
                   "--ez", "mtk_litert_smoke", "true", "--es", "mtk_smoke_id", ident,
