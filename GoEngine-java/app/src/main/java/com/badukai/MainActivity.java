@@ -25,6 +25,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.badukai.engine.KataGoEngine;
 import com.badukai.engine.KataGoMediaTekLiteRt;
 import com.badukai.engine.KataGoMediaTekGtpSmoke;
+import com.badukai.engine.KataGoBackendBenchmark;
 import com.badukai.engine.NpuHardware;
 import com.badukai.engine.DeviceHardwareInfo;
 import com.badukai.engine.GpuTuneCache;
@@ -209,6 +210,8 @@ public class MainActivity extends AppCompatActivity {
             startDebugRefereeSmoke();
         } else if (isNpuSmokeIntent()) {
             startDebugNpuSwitchSmoke();
+        } else if (isBackendBenchIntent()) {
+            startDebugBackendBench();
         } else if (isMtkGtpSmokeIntent()) {
             startDebugMtkGtpSmoke();
         } else if (isMtkSmokeIntent()) {
@@ -217,6 +220,38 @@ public class MainActivity extends AppCompatActivity {
             showGpuStartupScreen(boardSize, selectedBackend);
             startEngine();
         }
+    }
+
+    /** Real CPU/GPU/NPU timing test; active only for explicit debug ADB launches. */
+    private boolean isBackendBenchIntent() {
+        return (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+                && getIntent() != null && getIntent().getBooleanExtra("katago_backend_bench", false);
+    }
+
+    private void startDebugBackendBench() {
+        final String id = getIntent().getStringExtra("bench_id");
+        if (id == null || !id.matches("[a-zA-Z0-9_-]{1,40}")) {
+            Log.e("KataGoBench", "FAIL id=invalid stage=args reason=Invalid_run_id");
+            return;
+        }
+        String backend = getIntent().getStringExtra("bench_backend");
+        if (!"CPU".equals(backend) && !"GPU".equals(backend) && !"NPU".equals(backend)) {
+            Log.e("KataGoBench", "FAIL id=" + id + " stage=args reason=Invalid_backend");
+            return;
+        }
+        final int size = getIntent().getIntExtra("bench_board", 9);
+        final int visits = getIntent().getIntExtra("bench_visits", 32);
+        final int warmup = getIntent().getIntExtra("bench_warmup", 1);
+        final int repeats = getIntent().getIntExtra("bench_repeats", 5);
+        final double seconds = getIntent().getDoubleExtra("bench_seconds", 12.0);
+        final boolean human = getIntent().getBooleanExtra("bench_human", false);
+        final String selected = backend;
+        render("性能测试：" + selected + " " + size + "路");
+        engineExecutor.execute(() -> {
+            KataGoBackendBenchmark.run(getApplicationContext(), id, selected, size,
+                    visits, seconds, warmup, repeats, human);
+            mainHandler.post(() -> render("性能测试结束：" + selected));
+        });
     }
 
     private boolean isMtkGtpSmokeIntent() {
