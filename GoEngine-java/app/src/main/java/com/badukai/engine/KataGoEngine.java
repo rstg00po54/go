@@ -83,6 +83,7 @@ public class KataGoEngine {
     private volatile KataGoGpuNative.GtpSession gpuSession;
     private volatile KataGoNpuNative.GtpSession npuSession;
     private volatile KataGoMediaTekNative.GtpSession mediaTekSession;
+    private volatile boolean mediaTekParityEnabled;
     private volatile int activeNpuBoardSize = -1;
     public enum BackendPreference { CPU, GPU, NPU }
     private volatile BackendPreference backendPreference = BackendPreference.CPU;
@@ -147,6 +148,9 @@ public class KataGoEngine {
     }
 
     /** Board size of the RKNN model loaded by the active native GTP session. */
+    /** Debug only: compare native Eigen and LiteRT pre-postprocessing output heads. */
+    public void setMediaTekParityEnabled(boolean enabled) { mediaTekParityEnabled = enabled; }
+
     public int getActiveNpuBoardSize() { return npuSession != null || mediaTekSession != null ? activeNpuBoardSize : -1; }
 
     public String getBackendName() {
@@ -339,7 +343,7 @@ public class KataGoEngine {
                     phaseNs = System.nanoTime();
                     mediaTekSession = KataGoMediaTekNative.createSession(context, modelFile, configFile,
                             humanFile, liteRtGraph, liteRtManifest, startupBoardSize,
-                            false, humanGraph, humanManifest);
+                            mediaTekParityEnabled, humanGraph, humanManifest);
                     startupTiming("engine_mtk_native_create", phaseNs);
                     if (mediaTekSession == null) throw new IOException("MediaTek GTP returned null");
                     activeNpuBoardSize = startupBoardSize;
