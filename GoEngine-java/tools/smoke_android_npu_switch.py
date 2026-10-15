@@ -26,7 +26,7 @@ from upload_referee_test_results import UploadError, upload_referee_results
 
 PROJECT = Path(__file__).resolve().parents[1]
 APK = PROJECT / "app/build/outputs/apk/debug/app-debug.apk"
-PACKAGE = "com.badukai.java"
+PACKAGE = "com.badukai.java.nputest"
 ACTIVITY = PACKAGE + "/com.badukai.MainActivity"
 DEFAULT_SIZES = (9, 13, 19, 9)
 TAGS = ("NpuSmoke:I", "KataGoRKNN:V", "KataGoEngine:I", "libc:F", "DEBUG:F", "AndroidRuntime:E")
