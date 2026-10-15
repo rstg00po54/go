@@ -126,7 +126,7 @@ def inspect_tflite(path, size):
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--onnx", type=Path, required=True)
-    p.add_argument("--size", type=int, required=True, choices=(9, 13, 19))
+    p.add_argument("--size", type=int, required=True, choices=(9, 11, 13, 15, 19))
     p.add_argument("--output", type=Path, required=True)
     p.add_argument("--signature", type=Path, required=True)
     args = p.parse_args()
