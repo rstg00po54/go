@@ -30,6 +30,14 @@ if [[ "${1:-}" == "--aot9" ]]; then
     -o "$graphTmp" "$base/human_9x9_mediatek_mt6993_aot.tflite"
   curl --fail --location --retry 3 --connect-timeout 15 \
     -o "$manifestTmp" "$base/human_9x9_mediatek_mt6993_aot.json"
+  echo '4cbefc83200982184985115e4faf4da87ba32722083849cfd22e5e12dfc68f95  '"$graphTmp" | sha256sum -c --status || {
+    echo "ERROR: MT6993 AOT compiled Human graph differs from independently validated artifact" >&2
+    exit 1
+  }
+  echo '38229edc28bcd239017a1c57384a4e06a4f1a956ef8c206d1758c658f7e19be8  '"$manifestTmp" | sha256sum -c --status || {
+    echo "ERROR: AOT Human manifest differs from independently validated artifact" >&2
+    exit 1
+  }
   python3 - "$graphTmp" "$manifestTmp" <<'PY'
 import hashlib,json,pathlib,sys
 graph, manifest = (pathlib.Path(x) for x in sys.argv[1:3])
