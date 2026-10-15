@@ -15,7 +15,10 @@ unzip -l "$APK" | grep -F "lib/arm64-v8a/libkatago_mtk.so" || {
   echo "ERROR: experimental MediaTek GTP JNI not found in APK" >&2
   exit 1
 }
-echo "Experimental GTP test APK: $APK"
-echo "Automatic real genmove smoke:"
-echo "  python3 tools/smoke_vivo_litert.py --gtp --size 9 --timeout 480"
-echo "NPU is NOT offered in the normal UI until this test and CPU parity pass."
+echo "Vivo playable CPU/GPU + MediaTek LiteRT NPU APK: $APK"
+echo "App: BadukaiJ NPU测试; new game backend: NPU / MediaTek LiteRT (9/13/19)"
+echo "Automatic Human SL gameplay backend switching test:"
+echo "  python3 tools/smoke_vivo_mtk_game.py --skip-install"
+echo "Neural-only parity smoke:"
+echo "  python3 tools/smoke_vivo_litert.py --gtp --size 9 --skip-install"
+echo "Open the new-game dialog to select NPU after installing this APK."
