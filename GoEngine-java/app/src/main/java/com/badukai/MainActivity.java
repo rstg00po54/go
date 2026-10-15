@@ -143,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
         if (NpuHardware.current() == NpuHardware.Vendor.MEDIATEK)
             return KataGoEngine.supportsMediaTekGame(this, size);
         if (!KataGoEngine.supportsRknnHardware()) return false;
-        if (size != 9 && size != 11 && size != 13 && size != 15 && size != 19) return false;
+        if (size != 9 && size != 13 && size != 19) return false;
         String asset = "engine/katago_10b_" + size + "x" + size + ".rknn";
         try (InputStream in = getAssets().open(asset)) { return in.read() != -1; }
         catch (java.io.IOException e) { return false; }
@@ -344,7 +344,7 @@ public class MainActivity extends AppCompatActivity {
                 sizes[i] = Integer.parseInt(values[i]);
                 if (sizes[i] != 9 && sizes[i] != 11 && sizes[i] != 13 && sizes[i] != 15 && sizes[i] != 19)
                     throw new IllegalArgumentException("Unsupported_board_" + sizes[i]);
-                if (!hasBundledNpuModel(sizes[i])) throw new IllegalArgumentException("RKNN_asset_missing_" + sizes[i]);
+                if (!hasBundledNpuModel(sizes[i])) throw new IllegalArgumentException("NPU_asset_missing_" + sizes[i]);
             }
         } catch (RuntimeException ex) {
             Log.e("NpuSmoke", "FAIL id=" + id + " stage=args reason=" + ex, ex);
