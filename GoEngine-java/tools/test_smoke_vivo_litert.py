@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from smoke_vivo_litert import save_npu_diagnostics, summarize_npu_logs
+from smoke_vivo_litert import parse_gtp_events, save_npu_diagnostics, summarize_npu_logs
 from upload_referee_test_results import report_items
 
 
@@ -44,6 +44,37 @@ class VivoNpuDiagnosticsTests(unittest.TestCase):
         lines = [line for line in SUCCESS if "Replacing 1 out of 1" not in line]
         self.assertEqual(summarize_npu_logs(lines, 9)["delegateStatus"], "NOT_OBSERVED")
         self.assertEqual(summarize_npu_logs(lines, 13)["inferenceTiming"]["count"], 0)
+
+    def test_real_gtp_pass_reads_moves_and_neural_inference(self):
+        ident = "5620d3ce6bd142ef"
+        lines = [
+            "I/KataGoMTK: MTK_GTP_BRIDGE_INSTALLED",
+            "I/KataGoMTK: MTK_GTP_REPLY command=name reply== KataGo",
+            "I/KataGoMTK: MTK_LITERT_INFER board=9 ms=5",
+            "I/KataGoMTK: MTK_GTP_INFER board=9",
+            "I/KataGoMTK: MTK_GTP_REPLY command=genmove black reply== F5",
+            "I/KataGoMTK: MTK_LITERT_INFER board=9 ms=1",
+            "I/KataGoMTK: MTK_GTP_INFER board=9",
+            "I/KataGoMTK: MTK_GTP_REPLY command=genmove white reply== D5",
+            "I/KataGoMTK: MTK_GTP_SMOKE_PASS id=" + ident +
+                " board=9 black=F5 blackMs=23 white=D5 whiteMs=4",
+        ]
+        result = parse_gtp_events(lines, ident)
+        self.assertTrue(result["passed"])
+        self.assertEqual(result["searchMoves"], {"black": "F5", "white": "D5"})
+        self.assertEqual(result["gtpNeuralInferenceCount"], 2)
+        self.assertEqual(result["modelInferenceCount"], 2)
+
+    def test_real_gtp_requires_both_moves_and_native_inference(self):
+        ident = "test123"
+        common = ["MTK_GTP_BRIDGE_INSTALLED", "MTK_LITERT_INFER board=9 ms=1",
+                  "MTK_GTP_INFER board=9",
+                  "MTK_GTP_REPLY command=genmove black reply== F5",
+                  "MTK_GTP_SMOKE_PASS id=test123 board=9 black=F5 white=D5"]
+        self.assertFalse(parse_gtp_events(common, ident)["passed"])
+        self.assertFalse(parse_gtp_events(common + [
+            "MTK_GTP_REPLY command=genmove white reply== D5",
+            "MTK_GTP_SMOKE_FAIL id=test123 board=9 reason=error"], ident)["passed"])
 
     def test_important_diagnostics_are_in_upload_allowlist(self):
         with tempfile.TemporaryDirectory() as tmp:
