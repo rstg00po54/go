@@ -85,7 +85,7 @@ public final class KataGoMediaTekGtpSmoke {
             Log.i(TAG, "MTK_GTP_ASSETS_READY id=" + id + " board=" + boardSize);
             try (KataGoMediaTekNative.GtpSession session =
                          KataGoMediaTekNative.createSession(app, model, config, null,
-                                 graph, manifest, boardSize)) {
+                                 graph, manifest, boardSize, true)) {
                 command(session, "name", 120000);
                 command(session, "boardsize " + boardSize, 60000);
                 command(session, "clear_board", 60000);
