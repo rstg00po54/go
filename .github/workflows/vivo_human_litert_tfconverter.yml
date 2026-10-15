@@ -23,7 +23,7 @@ jobs:
       - name: Install independent TensorFlow/onnx2tf conversion runtime
         run: |
           python -m pip install -U pip
-          python -m pip install 'onnx2tf[tensorflow]==2.6.9'
+          python -m pip install 'onnx2tf[tensorflow]==2.6.9' 'onnxruntime>=1.20,<2'
           python -c "import tensorflow as tf; print('TF version', tf.__version__)"
       - name: Download original Human SL and official KataGo ONNX exporter
         run: |
@@ -64,6 +64,12 @@ jobs:
           assert p['flatbufferAudit']['rawDynamicSignatureCount'] == 0
           print('HUMAN_ALT_MODEL_STATIC_READY', p['graphSha256'])
           PY
+          python GoEngine-java/tools/check_human_litert_onnx_parity.py \
+            --onnx models/human_9x9.onnx \
+            --tflite models/katago_human_9x9.tflite \
+            --signature models/katago_human_9x9.json --size 9 \
+            --report models/human_onnx_tf_parity.json \
+            2>&1 | tee models/human_onnx_tf_parity.log
           sha256sum models/katago_human_9x9.tflite models/katago_human_9x9.json \
             > models/HUMAN_ALT_SHA256SUMS
           cat models/HUMAN_ALT_SHA256SUMS
@@ -76,6 +82,8 @@ jobs:
             models/katago_human_9x9.tflite
             models/katago_human_9x9.json
             models/convert_tfconverter.log
+            models/human_onnx_tf_parity.json
+            models/human_onnx_tf_parity.log
             models/HUMAN_ALT_SHA256SUMS
           if-no-files-found: warn
       - name: Publish experimental alternative only when all static/CPU tests pass
@@ -91,4 +99,4 @@ jobs:
               --notes "Same official b18 Human SL weights and metadata. Independent TensorFlow Lite converter graph lowering; static flatbuffer validated, CPU finiteness checked. Neuron NPU compile and parity NOT YET validated. Use only in experimental build."
           fi
           gh release upload "$TAG" models/katago_human_9x9.tflite models/katago_human_9x9.json \
-            models/HUMAN_ALT_SHA256SUMS --clobber
+            models/HUMAN_ALT_SHA256SUMS models/human_onnx_tf_parity.json --clobber
