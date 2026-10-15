@@ -7,7 +7,7 @@ from smoke_vivo_mtk_game import DEFAULT_SIZES, field, parse_game_log, vertex
 
 def example_log(sizes=DEFAULT_SIZES, human=True, include_final=True):
     run_id = "example1234"
-    lines = ["I/NpuSmoke: START id=" + run_id + " sizes=9,13,19,9 humanSL=" + str(human).lower(),
+    lines = ["I/NpuSmoke: START id=" + run_id + " sizes=" + ",".join(map(str, sizes)) + " humanSL=" + str(human).lower(),
              "I/NpuSmoke: MTK_CPU_TO_NPU_PRECHECK_READY id=" + run_id + " backend=CPU/Eigen JNI"]
     for idx, size in enumerate(sizes):
         lines.extend([
@@ -19,7 +19,7 @@ def example_log(sizes=DEFAULT_SIZES, human=True, include_final=True):
             "startupMs=202 black=D4 blackMs=42 white=F5 whiteMs=39",
         ])
     if include_final:
-        lines.append(f"I/NpuSmoke: PASS id={run_id} steps={len(sizes)} sizes=9,13,19,9")
+        lines.append(f"I/NpuSmoke: PASS id={run_id} steps={len(sizes)} sizes={",".join(map(str,sizes))}")
     return "\n".join(lines)
 
 
@@ -60,7 +60,18 @@ class MtkRealGameTests(unittest.TestCase):
     def test_each_board_and_return_to_nine_pass(self):
         data = parse_game_log(example_log(), "example1234", DEFAULT_SIZES)
         self.assertEqual(data["status"], "PASS", data["errors"])
-        self.assertEqual([s["status"] for s in data["steps"]], ["PASS"]*4)
+        self.assertEqual([s["status"] for s in data["steps"]], ["PASS"]*len(DEFAULT_SIZES))
+
+    def test_five_size_timing_summary(self):
+        raw = example_log((11, 15))
+        raw = raw.replace("I/NpuSmoke: STEP_PASS id=example1234 index=0",
+            "I/KataGoMTK: MTK_LITERT_INFER board=11 model=10b ms=2\\n"
+            "I/KataGoMTK: MTK_LITERT_INFER board=11 model=human ms=8\\n"
+            "I/NpuSmoke: STEP_PASS id=example1234 index=0")
+        result = parse_game_log(raw, "example1234", (11, 15))
+        self.assertEqual(result["status"], "PASS", result["errors"])
+        self.assertEqual(result["steps"][0]["inferenceTiming"]["10b"]["meanMs"], 2)
+        self.assertEqual(result["steps"][0]["inferenceTiming"]["human"]["meanMs"], 8)
 
     def test_cpu_to_npu_switch_is_required(self):
         raw = example_log()
