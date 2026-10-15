@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Algebraically rewrite all b18 Human SL Mish chains without altering weights.
 
-Original:  y = x * tanh(log(1 + exp(x)))
-Equivalent: s = sigmoid(x); t = 1 - s; y = x * (1 - t*t)/(1 + t*t)
+Original:  y = factor * tanh(log(1 + exp(z)))
+Equivalent: s = sigmoid(z); t = 1 - s; y = factor * (1 - t*t)/(1 + t*t)
+For ordinary Mish, factor == z. KataGo b18 additionally has gated activations
+where factor != z. The algebraic identity remains exact for both.
 
 This rewrite deliberately does NOT approximate Mish, replace activations with
 ReLU/SiLU, retrain, modify human-rank metadata, change topology, or alter
@@ -63,15 +65,16 @@ def optimize_model(model, expected=120):
     claimed = set()
     rejected = Counter()
 
-    def record(chain, x, output, op_form):
-        if not x or not output or any(id(n) in claimed for n in chain):
+    def record(chain, activation_input, factor_input, output, op_form):
+        if not activation_input or not factor_input or not output or any(id(n) in claimed for n in chain):
             rejected["missing_input_or_duplicate"] += 1
             return False
         if any(len(consumers[n.output[0]]) != 1 or n.output[0] in output_names
                for n in chain[:-1]):
             rejected["intermediate_shared"] += 1
             return False
-        matches.append({"nodes": chain, "x": x, "out": output,
+        matches.append({"nodes": chain, "activationInput": activation_input,
+                        "factorInput": factor_input, "out": output,
                         "originalOpForm": op_form})
         for node in chain:
             claimed.add(id(node))
@@ -82,7 +85,7 @@ def optimize_model(model, expected=120):
     # the exact same algebra, and all original weight tensors stay intact.
     for node in nodes:
         if node.op_type == "Mish" and len(node.input) == 1 and len(node.output) == 1:
-            record((node,), node.input[0], node.output[0], "Mish")
+            record((node,), node.input[0], node.input[0], node.output[0], "Mish")
 
     for multiply in nodes:
         if multiply.op_type != "Mul" or len(multiply.input) != 2:
@@ -116,13 +119,11 @@ def optimize_model(model, expected=120):
                 op_form = "Exp/Add/Log/Tanh/Mul"
             else:
                 continue
-            if multiply.input[1-side] != x:
-                rejected["not_same_x"] += 1
-                continue
+            factor_input = multiply.input[1-side]
             if len(multiply.output) != 1:
                 rejected["malformed_output"] += 1
                 continue
-            if record(chain, x, multiply.output[0], op_form):
+            if record(chain, x, factor_input, multiply.output[0], op_form):
                 break
 
     if len(matches) != expected:
@@ -160,7 +161,7 @@ def optimize_model(model, expected=120):
             item, names = replacement[id(node)]
             prefix = next(k for k in (names["sigmoid"],) if k)
             new_nodes.extend([
-                helper.make_node("Sigmoid", [item["x"]], [names["sigmoid"]],
+                helper.make_node("Sigmoid", [item["activationInput"]], [names["sigmoid"]],
                                  name=prefix+"_op"),
                 helper.make_node("Sub", [one_name, names["sigmoid"]], [names["one_minus"]]),
                 helper.make_node("Mul", [names["one_minus"], names["one_minus"]],
@@ -171,7 +172,7 @@ def optimize_model(model, expected=120):
                                  [names["denominator"]]),
                 helper.make_node("Div", [names["numerator"], names["denominator"]],
                                  [names["ratio"]]),
-                helper.make_node("Mul", [item["x"], names["ratio"]], [item["out"]],
+                helper.make_node("Mul", [item["factorInput"], names["ratio"]], [item["out"]],
                                  name=names["sigmoid"]+"_mish_output_op"),
             ])
         elif id(node) not in remove:
@@ -195,6 +196,8 @@ def optimize_model(model, expected=120):
         "opTypesAfter": dict(Counter(n.op_type for n in new_nodes)),
         "rejected": dict(rejected),
         "matchedSourceForms": dict(Counter(m["originalOpForm"] for m in matches)),
+        "gatedActivations": sum(m["activationInput"] != m["factorInput"]
+                               for m in matches),
     }
 
 
