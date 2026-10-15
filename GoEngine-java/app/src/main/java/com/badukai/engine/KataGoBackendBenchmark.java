@@ -4,7 +4,11 @@ import android.content.Context;
 import android.os.SystemClock;
 import android.util.Log;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 
 /**
  * Explicit debug-only timing protocol, launched by MainActivity's benchmark intent.
@@ -29,6 +33,38 @@ public final class KataGoBackendBenchmark {
         int x = col - 'A' - (col > 'I' ? 1 : 0);
         int y = Integer.parseInt(value.substring(1));
         return x >= 0 && x < size && y >= 1 && y <= size;
+    }
+
+    /**
+     * Create independent deterministic opening positions. The earlier benchmark
+     * repeatedly evaluated an empty board and measured cache hits (sometimes
+     * 0ms). Each index produces an identical position across CPU/GPU/NPU but
+     * differs across timed trials. Position setup is NOT part of move timing.
+     */
+    private static String setUniquePosition(KataGoEngine engine, int board, int iteration) {
+        int center = board / 2;
+        int[][] locations = {
+                {2, 2}, {board-3, board-3}, {board-3, 2}, {2, board-3},
+                {center, center}, {center, 1}, {1, center}, {board-2, center},
+                {center, board-2}, {1, 1}, {board-2, 1}, {1, board-2}
+        };
+        List<int[]> order = new ArrayList<>();
+        Collections.addAll(order, locations);
+        Collections.shuffle(order, new Random(70379L + board * 1009L + iteration * 7919L));
+        final int count = 4 + 2 * (iteration % 3);
+        if (!engine.clearBoard()) throw new IllegalStateException("clear_board failed");
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < count; i++) {
+            int x = order.get(i)[0];
+            int y = order.get(i)[1] + 1;
+            String coordinate = "" + (char) ('A' + x + (x >= 8 ? 1 : 0)) + y;
+            String color = i % 2 == 0 ? "black" : "white";
+            if (!engine.playMove(color, coordinate))
+                throw new IllegalStateException("Could not set position: " + color + " " + coordinate);
+            if (result.length() > 0) result.append(',');
+            result.append(color.charAt(0)).append(':').append(coordinate);
+        }
+        return result.toString();
     }
 
     public static void run(Context context, String id, String backendName, int board,
@@ -88,8 +124,14 @@ public final class KataGoBackendBenchmark {
                 step = warmup ? "warmup" : "measure";
                 Log.i(TAG, "PHASE id=" + id + " stage=" + step + " iter=" + i
                         + " backend=" + backendName);
-                // Reset the board so CPU / GPU / NPU receive the same board.
-                if (!engine.clearBoard()) throw new IllegalStateException("clear_board failed");
+                // Distinct replayed board positions avoid benchmarking NN/cache
+                // hits from the same empty board. Setup is excluded from timing.
+                final long setupNs = SystemClock.elapsedRealtimeNanos();
+                final String position = setUniquePosition(engine, board, i);
+                final long setupMs = millis(setupNs);
+                Log.i(TAG, "POSITION id=" + id + " backend=" + backendName
+                        + " board=" + board + " iter=" + i + " replayMs=" + setupMs
+                        + " stones=" + position);
                 long genNs = SystemClock.elapsedRealtimeNanos();
                 String move = engine.generateMove("black");
                 long elapsedMs = millis(genNs);
@@ -97,7 +139,8 @@ public final class KataGoBackendBenchmark {
                     throw new IllegalStateException("Invalid GTP genmove: " + move);
                 Log.i(TAG, "MOVE id=" + id + " backend=" + backendName + " board=" + board
                         + " iter=" + i + " warmup=" + warmup
-                        + " ms=" + elapsedMs + " vertex=" + move.toUpperCase(Locale.US));
+                        + " ms=" + elapsedMs + " positionIter=" + i
+                        + " vertex=" + move.toUpperCase(Locale.US));
             }
             step = "stop";
             Log.i(TAG, "PHASE id=" + id + " stage=" + step);
