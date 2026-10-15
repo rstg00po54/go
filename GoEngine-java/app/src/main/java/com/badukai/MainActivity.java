@@ -24,6 +24,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.badukai.engine.KataGoEngine;
 import com.badukai.engine.KataGoMediaTekLiteRt;
 import com.badukai.engine.NpuHardware;
+import com.badukai.engine.DeviceHardwareInfo;
 import com.badukai.engine.GpuTuneCache;
 import com.badukai.engine.GpuStartupLogProgress;
 import com.badukai.engine.KataGoOpenCLProbe;
@@ -1331,6 +1332,8 @@ public class MainActivity extends AppCompatActivity {
         Spinner difficultySpinner = content.findViewById(R.id.difficultySpinner);
         Spinner conditionSpinner = content.findViewById(R.id.conditionSpinner);
         Spinner backendSpinner = content.findViewById(R.id.backendSpinner);
+        TextView deviceModelText = content.findViewById(R.id.deviceModelText);
+        TextView hardwareInfoText = content.findViewById(R.id.hardwareInfoText);
         Button startButton = content.findViewById(R.id.startGameButton);
         Button closeButton = content.findViewById(R.id.closeDialogButton);
 
@@ -1352,17 +1355,21 @@ public class MainActivity extends AppCompatActivity {
         boolean npuBundled = KataGoEngine.supportsRknnHardware()
                 && new File(getApplicationInfo().nativeLibraryDir, "libkatago_npu.so").isFile()
                 && new File(getApplicationInfo().nativeLibraryDir, "librknnrt.so").isFile();
+        deviceModelText.setText(DeviceHardwareInfo.deviceName());
+        final String cpuName = DeviceHardwareInfo.cpuName();
+        final String npuInfo = DeviceHardwareInfo.npuDescription(npuBundled);
+        hardwareInfoText.setText("CPU：" + cpuName + "\nGPU：正在识别…\n" + npuInfo);
         List<KataGoEngine.BackendPreference> backendChoices = new ArrayList<>();
         List<String> backendNames = new ArrayList<>();
         backendChoices.add(KataGoEngine.BackendPreference.CPU);
-        backendNames.add("CPU / Eigen");
+        backendNames.add("CPU / Eigen · " + DeviceHardwareInfo.socName());
         if (gpuBundled) {
             backendChoices.add(KataGoEngine.BackendPreference.GPU);
-            backendNames.add("GPU / OpenCL");
+            backendNames.add("GPU / OpenCL · 识别中…");
         }
         if (npuBundled) {
             backendChoices.add(KataGoEngine.BackendPreference.NPU);
-            backendNames.add("NPU / RKNN（9/13/19路，需对应模型；Human SL仍用CPU）");
+            backendNames.add("NPU / RKNN · " + DeviceHardwareInfo.socName());
         }
         ArrayAdapter<String> backendAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, backendNames);
         backendAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -1429,6 +1436,23 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         dialog.show();
+        // Do not create an EGL context on the UI thread: vendor driver startup
+        // can be slow. The GPU's OpenGL renderer identifies the chip, but does
+        // not imply the KataGo OpenCL backend is installed or functional.
+        new Thread(() -> {
+            String gpuName = DeviceHardwareInfo.queryGpuRenderer();
+            runOnUiThread(() -> {
+                if (!dialog.isShowing()) return;
+                hardwareInfoText.setText("CPU：" + cpuName + "\nGPU：" + gpuName
+                        + "（OpenGL 识别）\n" + npuInfo);
+                int gpuIndex = backendChoices.indexOf(KataGoEngine.BackendPreference.GPU);
+                if (gpuIndex >= 0) {
+                    String shortName = gpuName.length() > 40 ? gpuName.substring(0, 40) + "…" : gpuName;
+                    backendNames.set(gpuIndex, "GPU / OpenCL · " + shortName);
+                    backendAdapter.notifyDataSetChanged();
+                }
+            });
+        }, "Badukai-GPU-Info").start();
     }
 
     private void showMainPage() {
