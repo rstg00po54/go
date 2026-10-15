@@ -1,0 +1,48 @@
+name: Vivo MediaTek KataGo real GTP JNI build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/rk3588-rknn]
+    paths:
+      - '.github/workflows/vivo_mtk_gtp_native.yml'
+      - 'GoEngine-java/native/KataGo/cpp/CMakeLists.txt'
+      - 'GoEngine-java/native/KataGo/cpp/neuralnet/mediatekbackend.cpp'
+      - 'GoEngine-java/native/KataGo/cpp/neuralnet/mediatekbackend.h'
+      - 'GoEngine-java/native/KataGo/cpp/neuralnet/eigenbackend.cpp'
+      - 'GoEngine-java/app/src/main/cpp/katago_jni.cpp'
+      - 'GoEngine-java/app/src/main/cpp/EngineSession.cpp'
+      - 'GoEngine-java/tools/build_katago_from_source.sh'
+
+permissions:
+  contents: read
+
+jobs:
+  compile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install cross compilation dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build libeigen3-dev binutils
+      - name: Install Android NDK
+        run: |
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -maxdepth 3 -type f -name sdkmanager | sort -V | tail -n 1)"
+          test -n "$SDKMANAGER"
+          "$SDKMANAGER" --install "ndk;27.2.12479018"
+      - name: Build independent MediaTek JNI GTP library
+        working-directory: GoEngine-java
+        env:
+          KATAGO_JOBS: 2
+        run: |
+          export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/27.2.12479018"
+          bash tools/build_katago_from_source.sh mediatekjni
+          readelf -W -d build/katago_android_arm64_mediatekjni/libkatago_mtk.so | grep -F '[libkatago_mtk.so]'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: katago-mediatek-gtp-experimental
+          path: GoEngine-java/build/katago_android_arm64_mediatekjni/libkatago_mtk.so
+          if-no-files-found: error
+          retention-days: 7
