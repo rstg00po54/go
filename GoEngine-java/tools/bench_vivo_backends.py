@@ -74,7 +74,7 @@ def field(line, key):
 def has_event(line, event, run_id):
     """Only explicit benchmark event tokens, not NO_PASS or NOT_READY."""
     return "KataGoBench" in line and bool(re.search(
-        r"\\b" + re.escape(event) + r" id=" + re.escape(run_id) + r"(?:\\s|$)", line))
+        r"\b" + re.escape(event) + r" id=" + re.escape(run_id) + r"(?:\s|$)", line))
 
 
 def parse_backend_log(raw, run_id, backend, board, warmups, repeats):
