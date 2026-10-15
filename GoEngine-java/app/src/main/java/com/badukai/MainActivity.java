@@ -204,12 +204,7 @@ public class MainActivity extends AppCompatActivity {
         setHomeButtonArt(R.id.homeRecordButton, "home/record.png");
         setHomeButtonArt(R.id.homeTrainingButton, "home/training.png");
         setHomeButtonArt(R.id.homeSettingsButton, "home/settings.png");
-        // Simple translucent navigation tabs, distinct from the illustrated buttons.
-        for (int id : new int[]{R.id.homeTabButton, R.id.homeGameTabButton,
-                R.id.homeRecordTabButton, R.id.homeTrainingTabButton,
-                R.id.homeSettingsTabButton}) {
-            findViewById(id).setBackgroundResource(R.drawable.home_button_tab);
-        }
+        setHomeImageArt(R.id.homeNavBarArtwork, "home/navbar/bar.png");
         findViewById(R.id.homeGameTabButton).setOnClickListener(v -> showNewGameDialog());
         findViewById(R.id.homeTabButton).setOnClickListener(v -> showMainPage());
         View.OnClickListener upcoming = v -> Toast.makeText(this, "功能开发中", Toast.LENGTH_SHORT).show();
@@ -712,6 +707,16 @@ public class MainActivity extends AppCompatActivity {
         situationButton = findViewById(R.id.situationButton);
         aiSuggestionButton = findViewById(R.id.aiSuggestionButton);
         countTerritoryButton = findViewById(R.id.countTerritoryButton);
+    }
+
+    private void setHomeImageArt(int viewId, String asset) {
+        try (InputStream stream = getAssets().open(asset)) {
+            android.graphics.Bitmap bitmap = BitmapFactory.decodeStream(stream);
+            if (bitmap == null) throw new java.io.IOException("Invalid bitmap: " + asset);
+            ((ImageView) findViewById(viewId)).setImageBitmap(bitmap);
+        } catch (Exception ex) {
+            Log.e(TAG, "Cannot load home image: " + asset, ex);
+        }
     }
 
     private void setHomeButtonArt(int viewId, String asset) {
