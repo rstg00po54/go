@@ -24,8 +24,8 @@ import java.util.Locale;
 
 /**
  * Experimental MediaTek NeuroPilot/LiteRT runner for the *actual* KataGo g170
- * 10-block graph. 3 feature tensors in, 5 heads out. This class is a runtime
- * probe and reusable model session, not yet wired into KataGo's GTP NN server.
+ * 10-block graph or separately validated Human SL b18 graph. The Human graph
+ * requires InputMeta with 192 SGF features, provided by native KataGo.
  *
  * Note: Accelerator.NPU is a request, NOT proof of NPU execution: LiteRT may
  * partially or completely fall back to CPU when a vendor plugin is absent or
@@ -35,9 +35,14 @@ import java.util.Locale;
 public final class KataGoMediaTekLiteRt implements AutoCloseable {
     private static final String TAG = "KataGoMTK";
     private static final String[] INPUT = {"InputSpatial", "InputGlobal", "InputMask"};
+    private static final String[] INPUT_HUMAN = {"InputSpatial", "InputGlobal", "InputMeta", "InputMask"};
     private static final String[] OUTPUT = {"OutputPolicyPass", "OutputPolicy", "OutputValue",
             "OutputScoreValue", "OutputOwnership"};
     private static final int[] CHANNELS = {22, 19, 1};
+    private final boolean humanModel;
+    private final String[] inputKeys;
+    private final int policyChannels;
+    private final int metaChannels;
     private final Environment environment;
     private final CompiledModel model;
     private final List<TensorBuffer> inputs;
@@ -54,8 +59,14 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
 
     public static boolean isMediaTek() { return NpuHardware.canProbeMediaTekLiteRt(); }
 
-    /** Requires an independently verified per-board TFLite graph + JSON. */
+    /** Existing g170 caller; do not change its deployed tensor contract. */
     public KataGoMediaTekLiteRt(Context context, File file, File json, int board) throws Exception {
+        this(context, file, json, board, false);
+    }
+
+    /** Human model is explicitly opted-in only after exact graph/manifest validation. */
+    public KataGoMediaTekLiteRt(Context context, File file, File json, int board,
+                                boolean human) throws Exception {
         if (!isMediaTek() || Build.VERSION.SDK_INT < 31)
             throw new IllegalStateException("MediaTek Android 12+ NPU required");
         if (!file.isFile() || !json.isFile())
@@ -64,10 +75,27 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
             throw new IllegalArgumentException("Unsupported fixed KataGo graph size");
         size = board;
         JSONObject metadata = new JSONObject(new String(Files.readAllBytes(json.toPath()), StandardCharsets.UTF_8));
-        if (metadata.getInt("size") != board || !metadata.getString("weights").equals(
-                "g170-b10c128-s1141046784-d204142634") ||
-                !"PASS".equals(metadata.getString("cpu_inference")))
+        humanModel = human;
+        inputKeys = human ? INPUT_HUMAN : INPUT;
+        String expectedWeights = human ? "b18c384nbt-humanv0" :
+                "g170-b10c128-s1141046784-d204142634";
+        if (metadata.getInt("size") != board || !expectedWeights.equals(metadata.getString("weights"))
+                || !"PASS".equals(metadata.getString("cpu_inference")))
             throw new IllegalArgumentException("KataGo graph is not validated for this board/weights");
+        if (human && (!"human".equals(metadata.optString("modelType"))
+                || metadata.optInt("metaEncoderVersion") != 1
+                || metadata.optInt("numInputMetaChannels") != 192
+                || metadata.optInt("numInputChannels") != 22
+                || metadata.optInt("numInputGlobalChannels") != 19
+                || metadata.optInt("numScoreValueChannels") != 6
+                || metadata.optInt("numValueChannels") != 3
+                || metadata.optInt("numOwnershipChannels") != 1
+                || !metadata.has("graphSha256")))
+            throw new IllegalArgumentException("Human SGF metadata / original weights contract missing");
+        policyChannels = human ? metadata.getInt("numPolicyChannels") : 1;
+        metaChannels = human ? 192 : 0;
+        if (policyChannels < 1 || policyChannels > 4 || (human && policyChannels == 3))
+            throw new IllegalArgumentException("Unexpected Human policy channel count");
         // KataGo dumponnx defaults to scale8. Its outputs are raw and have
         // to be unscaled before neuralnet/nneval.cpp postprocessing.
         // Legacy release manifests omitted the field; only their exact SHA256
@@ -75,25 +103,30 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
         Double declaredScale = metadata.has("outputScaleMultiplier")
                 ? metadata.getDouble("outputScaleMultiplier") : null;
         String graphHash = KataGoLiteRtOutputScale.sha256(file);
-        double scale = KataGoLiteRtOutputScale.resolve(board, declaredScale, graphHash);
+        if (human && !graphHash.equalsIgnoreCase(metadata.getString("graphSha256")))
+            throw new IllegalArgumentException("Human graph SHA-256 differs from validated manifest");
+        double scale = human
+                ? KataGoLiteRtOutputScale.resolveDeclared(declaredScale)
+                : KataGoLiteRtOutputScale.resolve(board, declaredScale, graphHash);
         if (metadata.has("scale8Applied") && metadata.getBoolean("scale8Applied") != (scale == 8.0))
             throw new IllegalArgumentException("ONNX scale8Applied and output multiplier disagree");
         outputScaleMultiplier = (float) scale;
-        inputNames = new String[INPUT.length];
+        inputNames = new String[inputKeys.length];
         outputNames = new String[OUTPUT.length];
-        inputCounts = new int[INPUT.length];
+        inputCounts = new int[inputKeys.length];
         outputCounts = new int[OUTPUT.length];
-        inputPositions = new int[INPUT.length];
+        inputPositions = new int[inputKeys.length];
         outputPositions = new int[OUTPUT.length];
         JSONArray inputOrder = metadata.getJSONArray("inputOrder");
         JSONArray outputOrder = metadata.getJSONArray("outputOrder");
-        if (inputOrder.length() != 3 || outputOrder.length() != 5)
+        if (inputOrder.length() != inputKeys.length || outputOrder.length() != 5)
             throw new IllegalArgumentException("Invalid LiteRT buffer order in manifest");
-        for (int i=0;i<INPUT.length;i++) {
+        for (int i=0;i<inputKeys.length;i++) {
             inputPositions[i] = -1;
-            for (int pos=0;pos<3;pos++)
-                if (INPUT[i].equals(inputOrder.getString(pos))) inputPositions[i] = pos;
-            if (inputPositions[i] < 0) throw new IllegalArgumentException("Missing LiteRT input " + INPUT[i]);
+            for (int pos=0;pos<inputKeys.length;pos++)
+                if (inputKeys[i].equals(inputOrder.getString(pos))) inputPositions[i] = pos;
+            if (inputPositions[i] < 0)
+                throw new IllegalArgumentException("Missing LiteRT input " + inputKeys[i]);
         }
         for (int i=0;i<OUTPUT.length;i++) {
             outputPositions[i] = -1;
@@ -103,8 +136,8 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
         }
         JSONObject rawInputs = metadata.getJSONObject("inputs");
         JSONObject rawOutputs = metadata.getJSONObject("outputs");
-        for (int i=0;i<INPUT.length;i++) {
-            JSONObject item = rawInputs.getJSONObject(INPUT[i]);
+        for (int i=0;i<inputKeys.length;i++) {
+            JSONObject item = rawInputs.getJSONObject(inputKeys[i]);
             inputNames[i] = item.getString("name");
             inputCounts[i] = item.getInt("count");
         }
@@ -116,9 +149,11 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
         JSONArray spatialShape = rawInputs.getJSONObject("InputSpatial").getJSONArray("shape");
         spatialIsNchw = spatialShape.getInt(1) == 22 && spatialShape.getInt(2) == board;
         if (inputCounts[0] != board * board * CHANNELS[0] || inputCounts[1] != 19 ||
-                inputCounts[2] != board * board ||
-                outputCounts[0] != 1 || outputCounts[1] != board * board ||
-                outputCounts[2] != 3 || outputCounts[3] != 4 ||
+                (human && inputCounts[2] != metaChannels) ||
+                inputCounts[human ? 3 : 2] != board * board ||
+                outputCounts[0] != policyChannels ||
+                outputCounts[1] != board * board * policyChannels ||
+                outputCounts[2] != 3 || outputCounts[3] != (human ? 6 : 4) ||
                 outputCounts[4] != board * board)
             throw new IllegalArgumentException("KataGo LiteRT tensor contract mismatch");
 
@@ -135,7 +170,7 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
                     new CompiledModel.Options(Accelerator.NPU), candidateEnv);
             in = candidate.createInputBuffers();
             out = candidate.createOutputBuffers();
-            if (in.size() != 3 || out.size() != 5)
+            if (in.size() != inputKeys.length || out.size() != 5)
                 throw new IllegalStateException("LiteRT created wrong tensor buffer count");
         } catch (Exception | LinkageError ex) {
             if (in != null) for (TensorBuffer buffer : in) buffer.close();
@@ -148,7 +183,8 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
         model = candidate;
         inputs = in;
         outputs = out;
-        Log.i(TAG, "MTK_LITERT_INIT board=" + board + " npuRequested=true graph=" + file.getName()
+        Log.i(TAG, "MTK_LITERT_INIT board=" + board + " model=" + (human ? "human" : "10b")
+                + " npuRequested=true graph=" + file.getName()
                 + " outputScaleMultiplier=" + outputScaleMultiplier
                 + " scaleSource=" + (declaredScale == null ? "pinned_legacy_graph" : "onnx_manifest"));
     }
@@ -158,10 +194,20 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
      * head semantics, without remapping the value/ownership head contents.
      */
     public synchronized float[][] infer(float[] spatial, float[] global, float[] mask) throws Exception {
-        float[][] values = {spatial, global, mask};
-        for (int i=0;i<3;i++) {
-            if (values[i].length != inputCounts[i])
-                throw new IllegalArgumentException("Incorrect tensor length for " + INPUT[i]);
+        return infer(spatial, global, mask, null);
+    }
+
+    public synchronized float[][] infer(float[] spatial, float[] global, float[] mask,
+                                         float[] meta) throws Exception {
+        if (humanModel && (meta == null || meta.length != 192))
+            throw new IllegalArgumentException("Human LiteRT requires 192 original SGF metadata features");
+        if (!humanModel && meta != null)
+            throw new IllegalArgumentException("g170 must not receive Human metadata");
+        float[][] values = humanModel ? new float[][] {spatial, global, meta, mask}
+                                      : new float[][] {spatial, global, mask};
+        for (int i=0;i<inputKeys.length;i++) {
+            if (values[i] == null || values[i].length != inputCounts[i])
+                throw new IllegalArgumentException("Incorrect tensor length for " + inputKeys[i]);
             float[] input = values[i];
             if (i == 0 && spatialIsNchw) {
                 input = new float[spatial.length];
@@ -182,7 +228,8 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
         }
         KataGoLiteRtOutputScale.restore(result, outputScaleMultiplier);
         long elapsedMs = (SystemClock.elapsedRealtimeNanos() - start) / 1000000L;
-        Log.i(TAG, "MTK_LITERT_INFER board=" + size + " ms=" + elapsedMs
+        Log.i(TAG, "MTK_LITERT_INFER board=" + size
+                + " model=" + (humanModel ? "human" : "10b") + " ms=" + elapsedMs
                 + " npuRequested=true hardwareExecution=UNVERIFIED");
         return result;
     }
