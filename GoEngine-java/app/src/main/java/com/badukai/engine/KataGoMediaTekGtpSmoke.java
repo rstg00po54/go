@@ -22,6 +22,32 @@ public final class KataGoMediaTekGtpSmoke {
         return output;
     }
 
+    /**
+     * Override a KataGo config key exactly once. The shipped default GTP config
+     * already defines numSearchThreads and maxVisits, so appending the same
+     * keys makes KataGo reject the whole GTP session.
+     */
+    static String setConfigValue(String config, String key, String value) {
+        if (!key.matches("[A-Za-z][A-Za-z0-9]*"))
+            throw new IllegalArgumentException("Invalid GTP config key");
+        StringBuilder result = new StringBuilder(config.length() + key.length() + value.length() + 32);
+        boolean found = false;
+        for (String line : config.split("\\r?\\n", -1)) {
+            String trimmed = line.trim();
+            if (!trimmed.startsWith("#")
+                    && trimmed.matches(java.util.regex.Pattern.quote(key) + "\\s*=.*")) {
+                if (!found) {
+                    result.append(key).append(" = ").append(value).append('\n');
+                    found = true;
+                }
+            } else if (!line.isEmpty()) {
+                result.append(line).append('\n');
+            }
+        }
+        if (!found) result.append(key).append(" = ").append(value).append('\n');
+        return result.toString();
+    }
+
     /** Wait for the GTP blank-line terminator, not just the first stdout chunk. */
     private static String command(KataGoMediaTekNative.GtpSession session, String command,
                                   int timeoutMs) throws Exception {
@@ -75,12 +101,12 @@ public final class KataGoMediaTekGtpSmoke {
             File model = asset(app, dir, "10b.bin", "engine/10b.bin");
             File config = asset(app, dir, "mtk_gtp.cfg", "engine/default_gtp.cfg");
             String text = new String(Files.readAllBytes(config.toPath()), StandardCharsets.UTF_8);
-            text = text.replace("logDir = gtp_logs", "logDir = " + logs.getAbsolutePath());
-            text += "\n" + "homeDataDir = " + dir.getAbsolutePath()
-                    + "\ndefaultBoardSize = " + boardSize
-                    + "\nnumSearchThreads = 2"
-                    + "\nmaxVisits = 8"
-                    + "\nnnMaxBatchSize = 1\n";
+            text = setConfigValue(text, "logDir", logs.getAbsolutePath());
+            text = setConfigValue(text, "homeDataDir", dir.getAbsolutePath());
+            text = setConfigValue(text, "defaultBoardSize", Integer.toString(boardSize));
+            text = setConfigValue(text, "numSearchThreads", "2");
+            text = setConfigValue(text, "maxVisits", "8");
+            text = setConfigValue(text, "nnMaxBatchSize", "1");
             Files.write(config.toPath(), text.getBytes(StandardCharsets.UTF_8));
             Log.i(TAG, "MTK_GTP_ASSETS_READY id=" + id + " board=" + boardSize);
             try (KataGoMediaTekNative.GtpSession session =
