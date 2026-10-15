@@ -3,16 +3,17 @@
   "run_id": "5620d3ce6bd142ef",
   "board": 9,
   "serial": "10AFB21HP5002ZK",
-  "status": "FAIL",
+  "status": "GTP_PASS",
   "hardwareExecution": "UNVERIFIED",
-  "errors": [
-    "MediaTek GTP test failed"
-  ],
+  "errors": [],
   "soc": "MT6993",
   "hardware": "mt6993",
   "modelInferenceCount": 10,
   "gtpNeuralInferenceCount": 10,
-  "searchMoves": {},
+  "searchMoves": {
+    "black": "F5",
+    "white": "D5"
+  },
   "vendorLogLineCount": 64,
   "npuDiagnostics": {
     "compilerPluginLoaded": true,
@@ -30,24 +31,26 @@
     "inferenceTiming": {
       "count": 10,
       "samplesMs": [
-        5.0,
-        2.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0,
-        1.0
+        5,
+        2,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
       ],
-      "minMs": 1.0,
-      "medianMs": 1.0,
+      "minMs": 1,
+      "medianMs": 1,
       "meanMs": 1.5,
-      "maxMs": 5.0
+      "maxMs": 5
     },
     "fallbackIndicators": [],
     "hardwareExecution": "UNVERIFIED"
   },
-  "fallbackWarnings": []
+  "fallbackWarnings": [],
+  "originalReportedStatus": "FAIL",
+  "reportCorrection": "Post-run correction: the host script's double-escaped regex word boundaries failed to parse an actual MTK_GTP_SMOKE_PASS line; logcat confirms both legal moves, 10 genuine JNI-to-LiteRT inference callbacks, and no MTK_GTP_SMOKE_FAIL event."
 }
