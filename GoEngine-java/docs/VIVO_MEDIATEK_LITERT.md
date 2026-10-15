@@ -9,8 +9,9 @@
 - **MediaTek runtime Maven artifact: resolved**. `litert-npu-runtime-mediatek:2.3.0`
   dependency resolves in the Android compile workflow; APK packaging is checked separately.
 - **MediaTek real NPU execution: NOT VERIFIED** without on-device delegate traces.
-- **KataGo `genmove` with MediaTek NPU: NOT YET IMPLEMENTED**. Probe is actual
-  graph tensor inference, NOT the KataGo JNI search/evaluator backend.
+- **KataGo `genmove` with MediaTek LiteRT: 9/13/19 validated** by real GTP
+  inference and raw five-head CPU/Eigen parity. Main-game selection is
+  implemented and requires a new on-device Human SL UI regression test.
 
 ## Models
 
@@ -89,6 +90,55 @@ The report now records `outputScaleRestoration` (factor and source) and
 `cpuLiteRtParity` separately from `GTP_PASS`. Expect factor 8 for this
 original ONNX model. **Numerical parity after the repair is not yet
 confirmed on a vivo device** until the next real GTP test report is uploaded.
+
+## MediaTek NPU selectable in the playable Android game
+
+9x9, 13x13 and 19x19 real `genmove` tests and identical-feature CPU/Eigen
+numerical parity on all five raw NN heads passed on the vivo MT6993. The
+playable Android app now connects `NPU / MediaTek LiteRT` to the original
+`KataGoEngine` GTP session lifecycle. `libkatago_mtk.so` supplies the
+g170 10b evaluator, while the Human SL b18 network continues on Eigen/CPU.
+
+After updating source, build the **playable game APK with MediaTek JNI**:
+
+```bash
+git pull --ff-only
+bash tools/build_vivo_mtk_gtp.sh
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+The build defaults to `KATAGO_JOBS=8`. The app label is **BadukaiJ NPU测试**
+and the Android application ID is `com.badukai.java.nputest`; it is separate
+from the original `com.badukai.java` installation.
+
+In the app, open **新开一局** and select `NPU / MediaTek LiteRT`.
+NPU is offered only when the phone is detected as MediaTek, the correct
+`libkatago_mtk.so` has been packaged and all board-specific graphs/manifests
+are installed. 11x11 and 15x15 remain CPU/GPU only; selecting NPU for them
+shows a clear warning without starting a game. The display indicates the
+active backend, and NPU startup failure logs the reason and visibly notifies
+the user if it falls back to CPU.
+
+Before relying on the new interface, exercise the **entire ordinary Java
+game controller and Human SL path** rather than the standalone GTP probe:
+
+```bash
+python3 tools/smoke_vivo_mtk_game.py --skip-install
+```
+
+This debug-only test uses the same main-game `KataGoEngine` class as the UI
+and runs 9→13→19→9 with Human SL enabled, 12-kyu profile, board setup,
+black/white moves, and per-step model switching. It rejects unintended CPU
+fallback, unsupported board models and missing real NPU initialization.
+Logs/reports are uploaded into separately named
+`ui-test-results/runs/*mediatek_game*` paths; use `--no-upload` to keep
+the report local. The test clears only device logcat and reuses the app's
+temporary engine files, not previous local or remote result directories.
+
+Note: complete Human SL gameplay and backend-switching have not yet been
+validated on the user's device after this UI integration. LiteRT graph
+delegation was confirmed in the earlier neural parity smoke, but physical
+silicon NPU execution has not been independently measured.
 
 ## Experimental real KataGo `genmove` (opt-in, **not yet device validated**)
 
