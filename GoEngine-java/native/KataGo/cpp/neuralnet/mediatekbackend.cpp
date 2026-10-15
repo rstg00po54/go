@@ -122,8 +122,8 @@ bool KataGoMediaTekBridge::ready() {
 }
 
 KataGoMediaTekRunner::KataGoMediaTekRunner(int board, bool human) : boardSize_(board), humanModel_(human) {
-  if (board != 9 && board != 13 && board != 19)
-    throw std::runtime_error("MediaTek LiteRT requires 9, 13 or 19 lines");
+  if (board != 9 && board != 11 && board != 13 && board != 15 && board != 19)
+    throw std::runtime_error("MediaTek LiteRT requires 9, 11, 13, 15 or 19 lines");
   if (!KataGoMediaTekBridge::ready())
     throw std::runtime_error("MediaTek LiteRT Java runner not installed");
   if (humanModel_ && !KataGoMediaTekBridge::hasHumanRunner())
