@@ -8,7 +8,7 @@ on:
       - '.github/workflows/vivo_human_mtk_aot_diagnose.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   compile-human-9:
@@ -110,6 +110,22 @@ jobs:
             diagnostics/human_9x9_mediatek_mt6993_aot.json \
             > diagnostics/HUMAN_AOT_SHA256SUMS
           cat diagnostics/HUMAN_AOT_SHA256SUMS
+      - name: Publish opt-in AOT test model only after original Human I/O checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          TAG="vivo-human-9x9-mt6993-aot-neuron-test-v1"
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --prerelease \
+              --title "Experimental KataGo b18 Human 9x9 MT6993 AOT (unverified on device)" \
+              --notes "Compiled on Linux with public MediaTek AOT plugin. The original b18 Human SL and 192-dimensional rank input contract are preserved. AOT compilation succeeded but device Neuron runtime compatibility and Eigen numerical parity are UNVERIFIED. For debug-only testing; normal Human SL keeps CPU fallback."
+          fi
+          gh release upload "$TAG" \
+            diagnostics/human_9x9_mediatek_mt6993_aot.tflite \
+            diagnostics/human_9x9_mediatek_mt6993_aot.json \
+            diagnostics/HUMAN_AOT_SHA256SUMS --clobber
       - uses: actions/upload-artifact@v4
         if: always()
         with:
