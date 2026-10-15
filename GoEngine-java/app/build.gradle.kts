@@ -382,6 +382,7 @@ val stageGreenHomeArtwork = tasks.register<Copy>("stageGreenHomeArtwork") {
     from(rootProject.file("docs/home/玉韵棋谱复盘按钮.png")) { rename { "record.png" } }
     from(rootProject.file("docs/home/玉璧雅韵_死活训练.png")) { rename { "training.png" } }
     from(rootProject.file("docs/home/翡翠鎏金竹韵设置图标.png")) { rename { "settings.png" } }
+    from(rootProject.file("docs/navbar")) { include("*.png"); into("navbar") }
 }
 tasks.configureEach {
     if (name.startsWith("merge") && name.endsWith("Assets")) dependsOn(stageGreenHomeArtwork)
