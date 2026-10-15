@@ -168,4 +168,5 @@ void KataGoMediaTekRunner::infer(const float* spatial, const float* global,
   if (globalArr) env->DeleteLocalRef(globalArr);
   if (maskArr) env->DeleteLocalRef(maskArr);
   env->DeleteLocalRef(runner);
+  __android_log_print(ANDROID_LOG_INFO, "KataGoMTK", "MTK_GTP_INFER board=%d", boardSize_);
 }
