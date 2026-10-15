@@ -28,7 +28,7 @@ class HumanBridgeTests(unittest.TestCase):
         for token in ('"b18c384nbt-humanv0"', '"InputMeta"',
                       'meta.length != 192', '"graphSha256"',
                       'getInt("numPolicyChannels")',
-                      'getInt("numScoreValueChannels")',
+                      'optInt("numScoreValueChannels")',
                       'policyIsNchw', 'interleaved[p*policyChannels + ch]',
                       'KataGoLiteRtOutputScale.resolveDeclared(declaredScale)'):
             self.assertIn(token, code)
