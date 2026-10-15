@@ -65,7 +65,7 @@ def parse_game_log(raw, run_id, sizes, human=True):
     lines = lines[start:]
     indexes = [idx for idx, line in enumerate(lines) if prefix in line and
                "STEP_BEGIN id=" + run_id in line]
-    end_ok = any(prefix in line and re.search(r"\\bPASS id=" + re.escape(run_id) + r"(?:\\s|$)", line) for line in lines)
+    end_ok = any(prefix in line and re.search(r"\bPASS id=" + re.escape(run_id) + r"(?:\s|$)", line) for line in lines)
     errors, steps = [], []
     if len(indexes) != len(sizes): errors.append("Expected %d steps; saw %d" % (len(sizes), len(indexes)))
     for index, begin in enumerate(indexes):
@@ -149,7 +149,7 @@ def main(argv=None):
         while time.monotonic() < end:
             logs = run_cmd([args.adb, "-s", serial, "logcat", "-d", "-v", "time", "-s", *tags],
                            timeout=30, check=False)
-            if re.search(r"\\b(?:PASS|FAIL) id=" + re.escape(run_id) + r"(?:\\s|$)", logs):
+            if re.search(r"\b(?:PASS|FAIL) id=" + re.escape(run_id) + r"(?:\s|$)", logs):
                 break
             if "Fatal signal" in logs or "FATAL EXCEPTION" in logs: break
             time.sleep(2)
