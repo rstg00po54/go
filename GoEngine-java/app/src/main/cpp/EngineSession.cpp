@@ -228,7 +228,7 @@ extern "C" JNIEXPORT jlong JNICALL
 #if defined(USE_RKNN_BACKEND)
 KATAGO_SESSION_JNI(nativeCreateSession)(JNIEnv* env, jclass, jstring model, jstring config, jstring humanModel, jstring rknnModel) {
 #elif defined(USE_MEDIATEK_BACKEND)
-KATAGO_SESSION_JNI(nativeCreateSession)(JNIEnv* env, jclass, jstring model, jstring config, jstring humanModel, jobject runner) {
+KATAGO_SESSION_JNI(nativeCreateSession)(JNIEnv* env, jclass, jstring model, jstring config, jstring humanModel, jobject runner, jboolean compareCpu) {
 #else
 KATAGO_SESSION_JNI(nativeCreateSession)(JNIEnv* env, jclass, jstring model, jstring config, jstring humanModel) {
 #endif
@@ -244,7 +244,7 @@ KATAGO_SESSION_JNI(nativeCreateSession)(JNIEnv* env, jclass, jstring model, jstr
     std::lock_guard<std::mutex> lock(sessionsMutex);
     if (!sessions.empty()) return 0;
 #if defined(USE_MEDIATEK_BACKEND)
-    if (!KataGoMediaTekBridge::install(env, runner)) return 0;
+    if (!KataGoMediaTekBridge::install(env, runner, compareCpu == JNI_TRUE)) return 0;
 #endif
     try {
         const jlong handle = nextHandle++;
