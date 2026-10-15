@@ -1,0 +1,117 @@
+10-15 09:59:42.255 I/litert  (20376): [accelerator_registry.cc:54] RegisterAccelerator: ptr=0xb400007302a13240, name=NpuAccelerator
+10-15 09:59:42.255 I/litert  (20376): [npu_registry.cc:30] NPU accelerator registered.
+10-15 09:59:42.255 I/litert  (20376): [gpu_registry.cc:130] Attempting to load GPU accelerator(libLiteRtGpuAccelerator.so).
+10-15 09:59:42.256 I/litert  (20376): [gpu_registry.cc:130] Attempting to load GPU accelerator(libLiteRtClGlAccelerator.so).
+10-15 09:59:42.256 I/litert  (20376): [gpu_registry.cc:130] Attempting to load GPU accelerator(libLiteRtOpenClAccelerator.so).
+10-15 09:59:42.256 I/litert  (20376): [gpu_registry.cc:130] Attempting to load GPU accelerator(libLiteRtWebGpuAccelerator.so).
+10-15 09:59:42.256 I/litert  (20376): [gpu_registry.cc:130] Attempting to load GPU accelerator(libLiteRtVulkanAccelerator.so).
+10-15 09:59:42.256 W/litert  (20376): [gpu_registry.cc:160] GPU accelerator could not be loaded and registered.
+10-15 09:59:42.256 I/litert  (20376): [accelerator_registry.cc:54] RegisterAccelerator: ptr=0xb400007302a12590, name=CpuAccelerator
+10-15 09:59:42.256 I/litert  (20376): [cpu_registry.cc:75] XNNPACK CPU accelerator registered.
+10-15 09:59:42.258 I/litert  (20376): [compiler_plugin.cc:308] Attempting to load plugin at: /data/app/~~IAZwLuu_a4quwyvdxfT9-g==/com.badukai.java.nputest-4RwLgW6DxwOCNCRg5RNASw==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 09:59:42.258 I/litert  (20376): [compiler_plugin.cc:250] Loading plugin at: /data/app/~~IAZwLuu_a4quwyvdxfT9-g==/com.badukai.java.nputest-4RwLgW6DxwOCNCRg5RNASw==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 09:59:42.259 I/litert  (20376): [compiler_plugin.cc:260] Loaded plugin at: /data/app/~~IAZwLuu_a4quwyvdxfT9-g==/com.badukai.java.nputest-4RwLgW6DxwOCNCRg5RNASw==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 09:59:42.259 I/litert  (20376): [compiler_plugin.cc:263] Resolved plugin api at: /data/app/~~IAZwLuu_a4quwyvdxfT9-g==/com.badukai.java.nputest-4RwLgW6DxwOCNCRg5RNASw==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 09:59:42.259 I/litert  (20376): [compiler_plugin.cc:268] Initialize plugin at: /data/app/~~IAZwLuu_a4quwyvdxfT9-g==/com.badukai.java.nputest-4RwLgW6DxwOCNCRg5RNASw==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 09:59:42.261 I/litert  (20376): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 09:59:42.367 I/litert  (20376): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 09:59:42.368 I/litert  (20376): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 09:59:42.368 W/litert  (20376): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 09:59:42.368 I/litert  (20376): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 09:59:42.368 I/litert  (20376): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 09:59:42.371 I/litert  (20376): [compiler_plugin.cc:948] Applying plugin with SDK version: np9.0.11
+10-15 09:59:42.371 I/litert  (20376): [compiler_plugin.cc:706] SoC model name is not specified
+10-15 09:59:42.371 I/litert  (20376): [compiler_plugin.cc:929] Registered 1 transformations.
+10-15 09:59:42.371 I/litert  (20376): [compiler_plugin.cc:936] Applied transformations.
+10-15 09:59:42.373 I/litert  (20376): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 09:59:42.374 I/litert  (20376): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 09:59:42.374 I/litert  (20376): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 09:59:42.374 W/litert  (20376): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 09:59:42.374 I/litert  (20376): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 09:59:42.374 I/litert  (20376): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 09:59:42.374 I/litert  (20376): [compiler_plugin.cc:514] Use Get supported operations for partition.
+10-15 09:59:42.379 I/litert  (20376): [compile_model.cc:136] NeuronCompilation_setPreference being set with value: 2
+10-15 09:59:42.379 I/neuron  (20376): Validate optimization hint code: 0
+10-15 09:59:42.417 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.422 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.423 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 09:59:42.428 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.428 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 09:59:42.433 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.433 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 09:59:42.433 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 09:59:42.434 I/apuware_hidl(20376): AidlNeuronClient get aidl version=5
+10-15 09:59:42.531 I/litert  (20376): [compiler_plugin.cc:524] Partition strategy: 0
+10-15 09:59:42.531 I/litert  (20376): [compiler_plugin.cc:742] Partitioned subgraph<0>, selected 170 ops, from a total of 170 ops. resulted in 1 partitions.
+10-15 09:59:42.533 I/litert  (20376): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 09:59:42.533 I/litert  (20376): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 09:59:42.533 I/litert  (20376): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 09:59:42.533 W/litert  (20376): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 09:59:42.534 I/litert  (20376): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 09:59:42.534 I/litert  (20376): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 09:59:42.534 I/litert  (20376): [compiler_plugin.cc:624] Starting MediaTek Compilation for 1 subgraphs, soc_model=(null)
+10-15 09:59:42.534 I/litert  (20376): [compiler_plugin.cc:632] Recording Neuron SDK version in bytecode: 9.0.11
+10-15 09:59:42.536 I/litert  (20376): [compile_model.cc:136] NeuronCompilation_setPreference being set with value: 2
+10-15 09:59:42.536 I/neuron  (20376): Validate optimization hint code: 0
+10-15 09:59:42.555 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.560 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.561 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 09:59:42.566 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.566 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 09:59:42.571 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.571 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 09:59:42.571 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 09:59:42.571 I/apuware_hidl(20376): AidlNeuronClient get aidl version=5
+10-15 09:59:42.656 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.661 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.661 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 09:59:42.666 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.666 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 09:59:42.671 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.671 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 09:59:42.671 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 09:59:42.671 I/apuware_hidl(20376): AidlNeuronClient get aidl version=5
+10-15 09:59:43.093 I/litert  (20376): [compiled_model.cc:1397] 1 compiler plugins were applied successfully: MediaTek compiler plugin (ver 0.1.0)
+10-15 09:59:43.098 I/litert  (20376): [dispatch_delegate.cc:98] DispatchDelegate::DispatchDelegate
+10-15 09:59:43.098 I/litert  (20376): [dispatch_accelerator.cc:138] Dispatch delegate getting hooks.
+10-15 09:59:43.098 I/litert  (20376): [dispatch_delegate.cc:187] Lazy initializing Dispatch API for GetHooks.
+10-15 09:59:43.098 I/litert  (20376): [litert_dispatch.cc:186] Loading shared library: /data/app/~~IAZwLuu_a4quwyvdxfT9-g==/com.badukai.java.nputest-4RwLgW6DxwOCNCRg5RNASw==/lib/arm64/libLiteRtDispatch_MediaTek.so
+10-15 09:59:43.100 I/litert  (20376): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 09:59:43.100 I/litert  (20376): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 09:59:43.101 I/litert  (20376): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 09:59:43.101 W/litert  (20376): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 09:59:43.101 I/litert  (20376): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 09:59:43.101 I/litert  (20376): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 09:59:43.101 I/litert  (20376): [dispatch_api.cc:133] Neuron SDK version: 9.0.11
+10-15 09:59:43.101 I/litert  (20376): [dispatch_api.cc:368] Runtime compatibility check: Neuron SDK version 9.0.11
+10-15 09:59:43.101 I/litert  (20376): [compiled_model.cc:1065] Accelerator returned null hooks.
+10-15 09:59:43.101 I/litert  (20376): [dispatch_delegate.cc:128] DispatchDelegate::Initialize katago_10b_13x13_batch1
+10-15 09:59:43.101 I/tflite  (20376): Replacing 1 out of 1 node(s) with delegate (DispatchDelegate) node, yielding 1 partitions for subgraph 0 (katago_10b_13x13_batch1).
+10-15 09:59:43.101 I/litert  (20376): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.0.11, runtime 9.0.11
+10-15 09:59:43.103 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:43.108 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:43.108 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 09:59:43.113 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:43.113 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 09:59:43.118 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:43.118 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 09:59:43.118 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 09:59:43.118 I/apuware_hidl(20376): AidlNeuronClient get aidl version=5
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:398] MediaTek GetInputRequirements called for index 0, tensor_type.element_type=1 (Float32=1)
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 14872 bytes for Float32 tensor at index 0
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:398] MediaTek GetInputRequirements called for index 1, tensor_type.element_type=1 (Float32=1)
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 76 bytes for Float32 tensor at index 1
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:398] MediaTek GetInputRequirements called for index 2, tensor_type.element_type=1 (Float32=1)
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 676 bytes for Float32 tensor at index 2
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:460] MediaTek GetOutputRequirements called for index 0, tensor_type.element_type=1 (Float32=1)
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 676 bytes for Float32 tensor at index 0
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:460] MediaTek GetOutputRequirements called for index 1, tensor_type.element_type=1 (Float32=1)
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 4 bytes for Float32 tensor at index 1
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:460] MediaTek GetOutputRequirements called for index 2, tensor_type.element_type=1 (Float32=1)
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 12 bytes for Float32 tensor at index 2
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:460] MediaTek GetOutputRequirements called for index 3, tensor_type.element_type=1 (Float32=1)
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 16 bytes for Float32 tensor at index 3
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:460] MediaTek GetOutputRequirements called for index 4, tensor_type.element_type=1 (Float32=1)
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 676 bytes for Float32 tensor at index 4
+10-15 09:59:43.139 I/litert  (20376): [accelerator_registry.cc:43] DestroyAccelerator: ptr=0xb400007302a12590, name=CpuAccelerator
+10-15 09:59:43.139 I/litert  (20376): [accelerator_registry.cc:43] DestroyAccelerator: ptr=0xb400007302a13240, name=NpuAccelerator

@@ -1,0 +1,814 @@
+10-15 09:59:42.199 I/MainActivity(20376): NPU_PLATFORM detected=MediaTek / LiteRT probe mediatekGtpReady=false
+10-15 09:59:42.206 I/KataGoMTK(20376): MTK_SMOKE_BEGIN id=e3a9000979df4a0a board=13
+10-15 09:59:42.255 I/litert  (20376): [litert_runtime_builtin.cc:63] Loaded runtime library and found kLiteRtRuntimeBuiltin.
+10-15 09:59:42.255 I/litert  (20376): [environment.cc:36] Creating LiteRT environment with options
+10-15 09:59:42.255 I/litert  (20376): [accelerator_registry.cc:54] RegisterAccelerator: ptr=0xb400007302a13240, name=NpuAccelerator
+10-15 09:59:42.255 I/litert  (20376): [npu_registry.cc:30] NPU accelerator registered.
+10-15 09:59:42.255 I/litert  (20376): [gpu_registry.cc:130] Attempting to load GPU accelerator(libLiteRtGpuAccelerator.so).
+10-15 09:59:42.256 I/litert  (20376): [gpu_registry.cc:130] Attempting to load GPU accelerator(libLiteRtClGlAccelerator.so).
+10-15 09:59:42.256 I/litert  (20376): [gpu_registry.cc:130] Attempting to load GPU accelerator(libLiteRtOpenClAccelerator.so).
+10-15 09:59:42.256 I/litert  (20376): [gpu_registry.cc:130] Attempting to load GPU accelerator(libLiteRtWebGpuAccelerator.so).
+10-15 09:59:42.256 I/litert  (20376): [gpu_registry.cc:130] Attempting to load GPU accelerator(libLiteRtVulkanAccelerator.so).
+10-15 09:59:42.256 W/litert  (20376): [gpu_registry.cc:160] GPU accelerator could not be loaded and registered.
+10-15 09:59:42.256 I/litert  (20376): [accelerator_registry.cc:54] RegisterAccelerator: ptr=0xb400007302a12590, name=CpuAccelerator
+10-15 09:59:42.256 I/litert  (20376): [cpu_registry.cc:75] XNNPACK CPU accelerator registered.
+10-15 09:59:42.258 I/litert  (20376): [compiled_model.cc:750] NPU JIT compilation caching enabled with cache dir: /data/user/0/com.badukai.java.nputest/cache
+10-15 09:59:42.258 I/litert  (20376): [compiler_plugin.cc:308] Attempting to load plugin at: /data/app/~~IAZwLuu_a4quwyvdxfT9-g==/com.badukai.java.nputest-4RwLgW6DxwOCNCRg5RNASw==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 09:59:42.258 I/litert  (20376): [compiler_plugin.cc:250] Loading plugin at: /data/app/~~IAZwLuu_a4quwyvdxfT9-g==/com.badukai.java.nputest-4RwLgW6DxwOCNCRg5RNASw==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 09:59:42.258 W/linker  (20376): Warning: "/data/app/~~IAZwLuu_a4quwyvdxfT9-g==/com.badukai.java.nputest-4RwLgW6DxwOCNCRg5RNASw==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so" unused DT entry: DT_RPATH (type 0xf arg 0x761) (ignoring)
+10-15 09:59:42.259 I/litert  (20376): [compiler_plugin.cc:260] Loaded plugin at: /data/app/~~IAZwLuu_a4quwyvdxfT9-g==/com.badukai.java.nputest-4RwLgW6DxwOCNCRg5RNASw==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 09:59:42.259 I/litert  (20376): [compiler_plugin.cc:263] Resolved plugin api at: /data/app/~~IAZwLuu_a4quwyvdxfT9-g==/com.badukai.java.nputest-4RwLgW6DxwOCNCRg5RNASw==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 09:59:42.259 I/litert  (20376): [compiler_plugin.cc:268] Initialize plugin at: /data/app/~~IAZwLuu_a4quwyvdxfT9-g==/com.badukai.java.nputest-4RwLgW6DxwOCNCRg5RNASw==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 09:59:42.261 I/litert  (20376): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 09:59:42.265 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.utils@2.0::IApuwareUtils/default without hwservicemanager
+10-15 09:59:42.265 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.utils@2.0::IApuwareUtils/default without hwservicemanager
+10-15 09:59:42.367 I/litert  (20376): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 09:59:42.368 I/litert  (20376): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 09:59:42.368 W/litert  (20376): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 09:59:42.368 I/litert  (20376): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 09:59:42.368 I/litert  (20376): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 09:59:42.371 I/litert  (20376): [compiler_plugin.cc:948] Applying plugin with SDK version: np9.0.11
+10-15 09:59:42.371 I/litert  (20376): [compiler_plugin.cc:706] SoC model name is not specified
+10-15 09:59:42.371 I/litert  (20376): [compiler_plugin.cc:929] Registered 1 transformations.
+10-15 09:59:42.371 I/litert  (20376): [compiler_plugin.cc:936] Applied transformations.
+10-15 09:59:42.373 I/litert  (20376): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 09:59:42.374 I/litert  (20376): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 09:59:42.374 I/litert  (20376): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 09:59:42.374 W/litert  (20376): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 09:59:42.374 I/litert  (20376): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 09:59:42.374 I/litert  (20376): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 09:59:42.374 I/litert  (20376): [compiler_plugin.cc:514] Use Get supported operations for partition.
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 0
+10-15 09:59:42.374 I/litert  (20376): [reshape_op_legalization.cc:32] Legalize Reshape
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 1
+10-15 09:59:42.374 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 74
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 2
+10-15 09:59:42.374 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 3
+10-15 09:59:42.374 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 4
+10-15 09:59:42.374 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 5
+10-15 09:59:42.374 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 88
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 6
+10-15 09:59:42.374 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 7
+10-15 09:59:42.374 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 8
+10-15 09:59:42.374 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 9
+10-15 09:59:42.374 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 10
+10-15 09:59:42.374 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 11
+10-15 09:59:42.374 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 12
+10-15 09:59:42.374 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 13
+10-15 09:59:42.374 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 14
+10-15 09:59:42.374 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 15
+10-15 09:59:42.374 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 16
+10-15 09:59:42.374 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 17
+10-15 09:59:42.374 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 18
+10-15 09:59:42.374 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 19
+10-15 09:59:42.374 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 20
+10-15 09:59:42.374 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 21
+10-15 09:59:42.374 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 22
+10-15 09:59:42.374 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 23
+10-15 09:59:42.374 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 24
+10-15 09:59:42.374 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 25
+10-15 09:59:42.374 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 26
+10-15 09:59:42.374 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 27
+10-15 09:59:42.374 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 28
+10-15 09:59:42.374 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 29
+10-15 09:59:42.374 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 30
+10-15 09:59:42.374 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 31
+10-15 09:59:42.374 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 32
+10-15 09:59:42.374 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 33
+10-15 09:59:42.374 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 34
+10-15 09:59:42.374 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.374 I/litert  (20376): [create_model.cc:100] Legalizing op index: 35
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 36
+10-15 09:59:42.375 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 37
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 38
+10-15 09:59:42.375 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 39
+10-15 09:59:42.375 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 40
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 41
+10-15 09:59:42.375 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 42
+10-15 09:59:42.375 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 43
+10-15 09:59:42.375 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 44
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 45
+10-15 09:59:42.375 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 46
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 47
+10-15 09:59:42.375 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 48
+10-15 09:59:42.375 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 49
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 50
+10-15 09:59:42.375 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 51
+10-15 09:59:42.375 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 52
+10-15 09:59:42.375 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 53
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 54
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 55
+10-15 09:59:42.375 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 56
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 57
+10-15 09:59:42.375 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 58
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 74
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 59
+10-15 09:59:42.375 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 60
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 42
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 61
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 82
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 62
+10-15 09:59:42.375 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 63
+10-15 09:59:42.375 I/litert  (20376): [concat_op_legalization.cc:32] Legalize Concate
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 64
+10-15 09:59:42.375 I/litert  (20376): [reshape_op_legalization.cc:32] Legalize Reshape
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 65
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 66
+10-15 09:59:42.375 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 67
+10-15 09:59:42.375 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 68
+10-15 09:59:42.375 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 69
+10-15 09:59:42.375 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 70
+10-15 09:59:42.375 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 71
+10-15 09:59:42.375 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 72
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 73
+10-15 09:59:42.375 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 74
+10-15 09:59:42.375 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 75
+10-15 09:59:42.375 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 76
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 77
+10-15 09:59:42.375 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 78
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 79
+10-15 09:59:42.375 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 80
+10-15 09:59:42.375 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 81
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 82
+10-15 09:59:42.375 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 83
+10-15 09:59:42.375 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 84
+10-15 09:59:42.375 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 85
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 86
+10-15 09:59:42.375 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 87
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 88
+10-15 09:59:42.375 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 89
+10-15 09:59:42.375 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 90
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 91
+10-15 09:59:42.375 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 92
+10-15 09:59:42.375 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 93
+10-15 09:59:42.375 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 94
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 95
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 96
+10-15 09:59:42.375 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 97
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 98
+10-15 09:59:42.375 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 99
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 74
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 100
+10-15 09:59:42.375 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 101
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 42
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 102
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 82
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 103
+10-15 09:59:42.375 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 104
+10-15 09:59:42.375 I/litert  (20376): [concat_op_legalization.cc:32] Legalize Concate
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 105
+10-15 09:59:42.375 I/litert  (20376): [reshape_op_legalization.cc:32] Legalize Reshape
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 106
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 107
+10-15 09:59:42.375 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 108
+10-15 09:59:42.375 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 109
+10-15 09:59:42.375 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 110
+10-15 09:59:42.375 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 111
+10-15 09:59:42.375 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 112
+10-15 09:59:42.375 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 113
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 114
+10-15 09:59:42.375 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 115
+10-15 09:59:42.375 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 116
+10-15 09:59:42.375 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 117
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 118
+10-15 09:59:42.375 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 119
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 120
+10-15 09:59:42.375 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 121
+10-15 09:59:42.375 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 122
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 123
+10-15 09:59:42.375 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 124
+10-15 09:59:42.375 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 125
+10-15 09:59:42.375 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 126
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 127
+10-15 09:59:42.375 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 128
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 129
+10-15 09:59:42.375 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 130
+10-15 09:59:42.375 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 131
+10-15 09:59:42.375 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.375 I/litert  (20376): [create_model.cc:100] Legalizing op index: 132
+10-15 09:59:42.375 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 133
+10-15 09:59:42.376 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 134
+10-15 09:59:42.376 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 135
+10-15 09:59:42.376 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 136
+10-15 09:59:42.376 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 137
+10-15 09:59:42.376 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 138
+10-15 09:59:42.376 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 139
+10-15 09:59:42.376 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 140
+10-15 09:59:42.376 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 141
+10-15 09:59:42.376 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 142
+10-15 09:59:42.376 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 143
+10-15 09:59:42.376 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 144
+10-15 09:59:42.376 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 74
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 145
+10-15 09:59:42.376 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 146
+10-15 09:59:42.376 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 74
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 147
+10-15 09:59:42.376 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 148
+10-15 09:59:42.376 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 149
+10-15 09:59:42.376 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 42
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 150
+10-15 09:59:42.376 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 82
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 151
+10-15 09:59:42.376 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 42
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 152
+10-15 09:59:42.376 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 153
+10-15 09:59:42.376 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 154
+10-15 09:59:42.376 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 155
+10-15 09:59:42.376 I/litert  (20376): [concat_op_legalization.cc:32] Legalize Concate
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 156
+10-15 09:59:42.376 I/litert  (20376): [concat_op_legalization.cc:32] Legalize Concate
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 157
+10-15 09:59:42.376 I/litert  (20376): [reshape_op_legalization.cc:32] Legalize Reshape
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 158
+10-15 09:59:42.376 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 159
+10-15 09:59:42.376 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 160
+10-15 09:59:42.376 I/litert  (20376): [reshape_op_legalization.cc:32] Legalize Reshape
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 161
+10-15 09:59:42.376 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 162
+10-15 09:59:42.376 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 163
+10-15 09:59:42.376 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 164
+10-15 09:59:42.376 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 165
+10-15 09:59:42.376 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 166
+10-15 09:59:42.376 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 167
+10-15 09:59:42.376 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 168
+10-15 09:59:42.376 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.376 I/litert  (20376): [create_model.cc:100] Legalizing op index: 169
+10-15 09:59:42.376 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.379 I/litert  (20376): [compile_model.cc:136] NeuronCompilation_setPreference being set with value: 2
+10-15 09:59:42.379 I/neuron  (20376): Validate optimization hint code: 0
+10-15 09:59:42.417 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.422 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.423 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 09:59:42.428 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.428 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 09:59:42.433 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.433 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 09:59:42.433 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 09:59:42.434 I/apuware_hidl(20376): AidlNeuronClient get aidl version=5
+10-15 09:59:42.531 I/litert  (20376): [compiler_plugin.cc:524] Partition strategy: 0
+10-15 09:59:42.531 I/litert  (20376): [compiler_plugin.cc:742] Partitioned subgraph<0>, selected 170 ops, from a total of 170 ops. resulted in 1 partitions.
+10-15 09:59:42.535 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 146
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 74
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 147
+10-15 09:59:42.535 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 148
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 149
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 42
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 150
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 82
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 151
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 42
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 152
+10-15 09:59:42.535 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 153
+10-15 09:59:42.533 I/litert  (20376): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 09:59:42.533 I/litert  (20376): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 09:59:42.533 I/litert  (20376): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 09:59:42.533 W/litert  (20376): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 09:59:42.534 I/litert  (20376): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 09:59:42.534 I/litert  (20376): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 09:59:42.534 I/litert  (20376): [compiler_plugin.cc:624] Starting MediaTek Compilation for 1 subgraphs, soc_model=(null)
+10-15 09:59:42.534 I/litert  (20376): [compiler_plugin.cc:632] Recording Neuron SDK version in bytecode: 9.0.11
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 0
+10-15 09:59:42.534 I/litert  (20376): [reshape_op_legalization.cc:32] Legalize Reshape
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 1
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 74
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 2
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 3
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 4
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 5
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 88
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 6
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 7
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 8
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 9
+10-15 09:59:42.534 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 10
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 11
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 12
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 13
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 14
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 15
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 16
+10-15 09:59:42.534 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 17
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 18
+10-15 09:59:42.534 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 19
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 20
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 21
+10-15 09:59:42.534 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 22
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 23
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 24
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 25
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 26
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 27
+10-15 09:59:42.534 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 28
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 29
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 30
+10-15 09:59:42.534 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 31
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 32
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 33
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 34
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 35
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 36
+10-15 09:59:42.534 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 37
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 38
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 39
+10-15 09:59:42.534 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 40
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 41
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.535 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 42
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 154
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 43
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.535 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 44
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 155
+10-15 09:59:42.535 I/litert  (20376): [concat_op_legalization.cc:32] Legalize Concate
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 156
+10-15 09:59:42.535 I/litert  (20376): [concat_op_legalization.cc:32] Legalize Concate
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 157
+10-15 09:59:42.535 I/litert  (20376): [reshape_op_legalization.cc:32] Legalize Reshape
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 158
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 159
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 160
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 45
+10-15 09:59:42.534 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 46
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 47
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 48
+10-15 09:59:42.534 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 49
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 50
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 51
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 52
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 53
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 54
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 55
+10-15 09:59:42.534 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 56
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 57
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 58
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 74
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 59
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 60
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 42
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 61
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 82
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 62
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 63
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 161
+10-15 09:59:42.534 I/litert  (20376): [concat_op_legalization.cc:32] Legalize Concate
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 64
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.534 I/litert  (20376): [reshape_op_legalization.cc:32] Legalize Reshape
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 162
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 65
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.535 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 66
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 67
+10-15 09:59:42.534 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 68
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 69
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 70
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 71
+10-15 09:59:42.534 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 72
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 73
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 74
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 75
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 76
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 77
+10-15 09:59:42.534 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 78
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 79
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 80
+10-15 09:59:42.534 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 81
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 82
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 83
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 84
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 85
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 86
+10-15 09:59:42.534 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 87
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 88
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 89
+10-15 09:59:42.534 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 90
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 91
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 92
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 93
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 94
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 95
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 96
+10-15 09:59:42.534 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 97
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 98
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 99
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 74
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 100
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 101
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 42
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 102
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 82
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 103
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 104
+10-15 09:59:42.534 I/litert  (20376): [concat_op_legalization.cc:32] Legalize Concate
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 105
+10-15 09:59:42.534 I/litert  (20376): [reshape_op_legalization.cc:32] Legalize Reshape
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 106
+10-15 09:59:42.534 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 107
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 108
+10-15 09:59:42.534 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 109
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 110
+10-15 09:59:42.534 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 111
+10-15 09:59:42.534 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.534 I/litert  (20376): [create_model.cc:100] Legalizing op index: 112
+10-15 09:59:42.534 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 113
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 114
+10-15 09:59:42.535 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 115
+10-15 09:59:42.535 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 116
+10-15 09:59:42.535 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 117
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 118
+10-15 09:59:42.535 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 119
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 120
+10-15 09:59:42.535 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 121
+10-15 09:59:42.535 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 122
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 123
+10-15 09:59:42.535 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 124
+10-15 09:59:42.535 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 125
+10-15 09:59:42.535 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 126
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 127
+10-15 09:59:42.535 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 128
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 129
+10-15 09:59:42.535 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 130
+10-15 09:59:42.535 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 131
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 132
+10-15 09:59:42.535 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 133
+10-15 09:59:42.535 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 134
+10-15 09:59:42.535 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 135
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 136
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 137
+10-15 09:59:42.535 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 138
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 139
+10-15 09:59:42.535 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 140
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 141
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.cc:84] Legalize Op: 19
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 142
+10-15 09:59:42.535 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 143
+10-15 09:59:42.535 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 144
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 74
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 145
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 163
+10-15 09:59:42.535 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 164
+10-15 09:59:42.535 I/litert  (20376): [add_op_legalization.cc:32] Legalize Add
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 165
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 166
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 167
+10-15 09:59:42.535 I/litert  (20376): [mul_op_legalization.cc:32] Legalize Mul
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 168
+10-15 09:59:42.535 I/litert  (20376): [transpose_op_legalization.cc:32] Legalize Transpose
+10-15 09:59:42.535 I/litert  (20376): [create_model.cc:100] Legalizing op index: 169
+10-15 09:59:42.535 I/litert  (20376): [common_op_legalization.h:61] Legalize Operation 3
+10-15 09:59:42.536 I/litert  (20376): [compile_model.cc:136] NeuronCompilation_setPreference being set with value: 2
+10-15 09:59:42.536 I/neuron  (20376): Validate optimization hint code: 0
+10-15 09:59:42.555 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.560 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.561 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 09:59:42.566 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.566 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 09:59:42.571 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.571 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 09:59:42.571 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 09:59:42.571 I/apuware_hidl(20376): AidlNeuronClient get aidl version=5
+10-15 09:59:42.656 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.661 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.661 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 09:59:42.666 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.666 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 09:59:42.671 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:42.671 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 09:59:42.671 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 09:59:42.671 I/apuware_hidl(20376): AidlNeuronClient get aidl version=5
+10-15 09:59:43.093 I/litert  (20376): [compiled_model.cc:1397] 1 compiler plugins were applied successfully: MediaTek compiler plugin (ver 0.1.0)
+10-15 09:59:43.093 I/litert  (20376): [compiled_model.cc:1411] JIT compilation changed model, reserializing...
+10-15 09:59:43.098 I/litert  (20376): [dispatch_delegate.cc:98] DispatchDelegate::DispatchDelegate
+10-15 09:59:43.098 I/litert  (20376): [dispatch_accelerator.cc:138] Dispatch delegate getting hooks.
+10-15 09:59:43.098 I/litert  (20376): [dispatch_delegate.cc:187] Lazy initializing Dispatch API for GetHooks.
+10-15 09:59:43.098 I/litert  (20376): [litert_dispatch.cc:186] Loading shared library: /data/app/~~IAZwLuu_a4quwyvdxfT9-g==/com.badukai.java.nputest-4RwLgW6DxwOCNCRg5RNASw==/lib/arm64/libLiteRtDispatch_MediaTek.so
+10-15 09:59:43.100 I/litert  (20376): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 09:59:43.100 I/litert  (20376): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 09:59:43.101 I/litert  (20376): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 09:59:43.101 W/litert  (20376): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 09:59:43.101 I/litert  (20376): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 09:59:43.101 I/litert  (20376): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 09:59:43.101 I/litert  (20376): [dispatch_api.cc:133] Neuron SDK version: 9.0.11
+10-15 09:59:43.101 I/litert  (20376): [dispatch_api.cc:368] Runtime compatibility check: Neuron SDK version 9.0.11
+10-15 09:59:43.101 I/litert  (20376): [compiled_model.cc:1065] Accelerator returned null hooks.
+10-15 09:59:43.101 I/litert  (20376): [dispatch_delegate.cc:128] DispatchDelegate::Initialize katago_10b_13x13_batch1
+10-15 09:59:43.101 I/tflite  (20376): Replacing 1 out of 1 node(s) with delegate (DispatchDelegate) node, yielding 1 partitions for subgraph 0 (katago_10b_13x13_batch1).
+10-15 09:59:43.101 I/litert  (20376): [schema_resolver.h:107] Found graph: Partition_0
+10-15 09:59:43.101 I/litert  (20376): [schema_resolver.h:112] There are 1 subgraphs in the bytecode
+10-15 09:59:43.101 I/litert  (20376): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.0.11, runtime 9.0.11
+10-15 09:59:43.103 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:43.108 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:43.108 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 09:59:43.113 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:43.113 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 09:59:43.118 I/HidlServiceManagement(20376): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 09:59:43.118 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 09:59:43.118 E/apuware_hidl(20376): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 09:59:43.118 I/apuware_hidl(20376): AidlNeuronClient get aidl version=5
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:398] MediaTek GetInputRequirements called for index 0, tensor_type.element_type=1 (Float32=1)
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 14872 bytes for Float32 tensor at index 0
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:398] MediaTek GetInputRequirements called for index 1, tensor_type.element_type=1 (Float32=1)
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 76 bytes for Float32 tensor at index 1
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:398] MediaTek GetInputRequirements called for index 2, tensor_type.element_type=1 (Float32=1)
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 676 bytes for Float32 tensor at index 2
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:460] MediaTek GetOutputRequirements called for index 0, tensor_type.element_type=1 (Float32=1)
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 676 bytes for Float32 tensor at index 0
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:460] MediaTek GetOutputRequirements called for index 1, tensor_type.element_type=1 (Float32=1)
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 4 bytes for Float32 tensor at index 1
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:460] MediaTek GetOutputRequirements called for index 2, tensor_type.element_type=1 (Float32=1)
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 12 bytes for Float32 tensor at index 2
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:460] MediaTek GetOutputRequirements called for index 3, tensor_type.element_type=1 (Float32=1)
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 16 bytes for Float32 tensor at index 3
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:460] MediaTek GetOutputRequirements called for index 4, tensor_type.element_type=1 (Float32=1)
+10-15 09:59:43.123 W/litert  (20376): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 676 bytes for Float32 tensor at index 4
+10-15 09:59:43.127 I/KataGoMTK(20376): MTK_LITERT_INIT board=13 npuRequested=true graph=katago_10b_13x13.tflite
+10-15 09:59:43.132 I/KataGoMTK(20376): MTK_LITERT_INFER board=13 ms=4 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 09:59:43.132 I/KataGoMTK(20376): MTK_LITERT_SMOKE board=13 heads=5 policyPass=-0.70410156 hardwareExecution=UNVERIFIED
+10-15 09:59:43.134 I/KataGoMTK(20376): MTK_LITERT_INFER board=13 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 09:59:43.134 I/KataGoMTK(20376): MTK_LITERT_SMOKE board=13 heads=5 policyPass=-0.70410156 hardwareExecution=UNVERIFIED
+10-15 09:59:43.135 I/KataGoMTK(20376): MTK_LITERT_INFER board=13 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 09:59:43.135 I/KataGoMTK(20376): MTK_LITERT_SMOKE board=13 heads=5 policyPass=-0.70410156 hardwareExecution=UNVERIFIED
+10-15 09:59:43.139 I/litert  (20376): [accelerator_registry.cc:43] DestroyAccelerator: ptr=0xb400007302a12590, name=CpuAccelerator
+10-15 09:59:43.139 I/litert  (20376): [accelerator_registry.cc:43] DestroyAccelerator: ptr=0xb400007302a13240, name=NpuAccelerator
+10-15 09:59:43.139 I/KataGoMTK(20376): MTK_SMOKE_PASS id=e3a9000979df4a0a board=13 tfliteInference=true hardwareExecution=UNVERIFIED
