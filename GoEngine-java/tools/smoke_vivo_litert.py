@@ -89,7 +89,7 @@ def save_npu_diagnostics(folder, relevant, report, board):
         r"Neuron|dispatch|compiler.plugin|delegate|accelerat", line, re.IGNORECASE)]
     (folder / "vendor_litert.txt").write_text("\n".join(vendor) + "\n", encoding="utf-8")
     diagnostic = [line for line in relevant if re.search(
-        r"MTK_LITERT_|MTK_SMOKE_|Loaded plugin at:|Neuron api version|Neuron SDK version|"
+        r"MTK_LITERT_|MTK_SMOKE_|MTK_GTP_|Loaded plugin at:|Neuron api version|Neuron SDK version|"
         r"Replacing [0-9]+ out of [0-9]+|DispatchDelegate::Initialize|AidlNeuronClient|"
         r"HidlNeuronClient|Failed to load symbol|fallback|failed to delegate|"
         r"FATAL EXCEPTION|Fatal signal", line, re.IGNORECASE)]
@@ -112,6 +112,7 @@ def run(argv=None):
     p.add_argument("--size", type=int, choices=(9, 13, 19), default=9)
     p.add_argument("--timeout", type=int, default=210)
     p.add_argument("--skip-install", action="store_true")
+    p.add_argument("--gtp", action="store_true", help="Run real KataGo GTP genmove instead of blank-board graph probe")
     p.add_argument("--no-upload", action="store_true")
     p.add_argument("--upload-existing", type=Path, nargs="+", metavar="RUN_DIR",
                    help="Upload saved diagnostics without connecting ADB or running inference")
@@ -140,7 +141,7 @@ def run(argv=None):
     folder = ROOT / "build/vivo_litert_smoke" / datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     folder.mkdir(parents=True)
     ident = uuid4().hex[:16]
-    report = {"test": "Vivo MediaTek KataGo 10b LiteRT graph",
+    report = {"test": "Vivo KataGo real GTP MediaTek LiteRT" if args.gtp else "Vivo MediaTek KataGo 10b LiteRT graph",
               "run_id": ident, "board": args.size, "serial": serial,
               "status": "ERROR", "hardwareExecution": "UNVERIFIED", "errors": []}
     result = 1
@@ -156,15 +157,18 @@ def run(argv=None):
         adb(args, serial, "shell", "am", "force-stop", "com.badukai.java.nputest")
         adb(args, serial, "logcat", "-b", "all", "-c")
         print(adb(args, serial, "shell", "am", "start", "-n", COMPONENT,
-                  "--ez", "mtk_litert_smoke", "true", "--es", "mtk_smoke_id", ident,
+                  "--ez", "mtk_gtp_smoke" if args.gtp else "mtk_litert_smoke", "true",
+                  "--es", "mtk_smoke_id", ident,
                   "--ei", "mtk_board_size", str(args.size)).strip(), flush=True)
+        pass_event = "MTK_GTP_SMOKE_PASS" if args.gtp else "MTK_SMOKE_PASS"
+        fail_event = "MTK_GTP_SMOKE_FAIL" if args.gtp else "MTK_SMOKE_FAIL"
         end = time.monotonic() + args.timeout
         events = []
         while time.monotonic() < end:
             txt = adb(args, serial, "logcat", "-d", "-v", "time", "-s",
                       "KataGoMTK:V", "AndroidRuntime:E", "libc:F", timeout=20)
             events = [l for l in txt.splitlines() if "KataGoMTK" in l]
-            if any("MTK_SMOKE_PASS id=" + ident in x or "MTK_SMOKE_FAIL id=" + ident in x for x in events):
+            if any(pass_event + " id=" + ident in x or fail_event + " id=" + ident in x for x in events):
                 break
             if "Fatal signal" in txt or "FATAL EXCEPTION" in txt:
                 raise RuntimeError("App crashed while probing LiteRT")
@@ -172,12 +176,23 @@ def run(argv=None):
         else:
             raise RuntimeError("Vivo LiteRT smoke timed out (%ds)" % args.timeout)
         (folder / "logcat.txt").write_text(txt, encoding="utf-8")
-        ok = any("MTK_SMOKE_PASS id=" + ident in x for x in events)
-        failures = [x for x in events if "MTK_SMOKE_FAIL id=" + ident in x]
+        ok = any(pass_event + " id=" + ident in x for x in events)
+        failures = [x for x in events if fail_event + " id=" + ident in x]
         inferences = [x for x in events if "MTK_LITERT_INFER board=" in x]
-        report.update(status="PROBE_PASS" if ok and len(inferences) >= 3 and not failures else "FAIL",
-                      modelInferenceCount=len(inferences), errors=failures)
-        if report["status"] != "PROBE_PASS": raise RuntimeError("LiteRT model inference probe failed")
+        real_calls = [x for x in events if "MTK_GTP_INFER board=" in x]
+        final_line = next((x for x in events if pass_event + " id=" + ident in x), "")
+        black = re.search(r"\\bblack=([^ ]+)", final_line)
+        white = re.search(r"\\bwhite=([^ ]+)", final_line)
+        valid_gtp = bool(black and white and len(real_calls) >= 1
+                         and any("MTK_GTP_BRIDGE_INSTALLED" in x for x in events))
+        passed = ok and not failures and (valid_gtp if args.gtp else len(inferences) >= 3)
+        status = ("GTP_PASS" if args.gtp else "PROBE_PASS") if passed else "FAIL"
+        report.update(status=status, modelInferenceCount=len(inferences),
+                      gtpNeuralInferenceCount=len(real_calls),
+                      searchMoves={"black": black.group(1), "white": white.group(1)}
+                          if args.gtp and valid_gtp else {},
+                      errors=failures)
+        if not passed: raise RuntimeError("MediaTek GTP test failed" if args.gtp else "LiteRT graph probe failed")
         result = 0
     except (OSError, ValueError, subprocess.TimeoutExpired, RuntimeError) as err:
         report["status"] = "FAIL"
@@ -197,10 +212,11 @@ def run(argv=None):
             report["errors"].append("Failed to save diagnostics: " + str(err))
         (folder / "report.json").write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n")
         print("Status:", report["status"], "(real NPU execution unverified)", flush=True)
+        if args.gtp: print("GTP moves:", report.get("searchMoves"), "real NN calls:", report.get("gtpNeuralInferenceCount"), flush=True)
         print("Report:", folder / "report.json", flush=True)
         if not args.no_upload:
             try:
-                url = upload_referee_results(folder, report, run_kind="mediatek")
+                url = upload_referee_results(folder, report, run_kind="mediatek_gtp" if args.gtp else "mediatek")
                 print("Uploaded:", url, flush=True)
             except Exception as err:
                 print("GitHub upload failed; local report preserved:", err, file=sys.stderr)
