@@ -66,6 +66,35 @@ the full KataGo 10b network 3 times, verifies the five head lengths and
 finite outputs, and uploads logs and report to the public `ui-test-results`
 branch (omit with `--no-upload`). Follow with `--size 13` and `--size 19`.
 
+### Diagnostic uploads (no repeated install or model inference)
+
+The smoke script automatically records LiteRT inference times, MediaTek compiler
+plugin loading, Neuron SDK version, full/partial delegate partitions, AIDL
+service availability and fallback indicators in `report.json`. It also writes
+`npu_diagnostics.txt` and `vendor_litert.txt` and uploads both with the
+filtered `logcat.txt` to the **PUBLIC** `ui-test-results` branch by default.
+An unverified silicon execution status remains `UNVERIFIED` even if a model
+was fully delegated; CPU accelerator registration alone does not mean fallback.
+
+To run again without reinstalling or uploading:
+
+```bash
+python3 tools/smoke_vivo_litert.py --size 9 --skip-install --no-upload
+```
+
+To publish already-saved results **without ADB, reinstalling, or re-inference**:
+
+```bash
+python3 tools/smoke_vivo_litert.py --upload-existing \
+  build/vivo_litert_smoke/20261015T015938792417Z \
+  build/vivo_litert_smoke/20261015T015943999937Z \
+  build/vivo_litert_smoke/20261015T015952496003Z
+```
+
+This requires the existing Git remote and working push credentials. The reports
+include raw device diagnostic lines, so use `--no-upload` when you do not
+want them published. A failed upload preserves all local diagnostic files.
+
 Use this grep if diagnosing vendor backend:
 
 ```bash
