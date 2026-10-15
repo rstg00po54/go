@@ -125,6 +125,89 @@ def parse_gtp_events(events, ident):
             "modelInferenceCount": litert_count, "errors": failures}
 
 
+
+# Provisional thresholds for raw *pre-postprocessing* float heads. A passing
+# result is not yet certification of hardware or all board positions.
+PARITY_TOLERANCES = {"policyPass": 0.025, "policy": 0.025, "value": 0.025,
+                     "score": 0.20, "ownership": 0.025}
+
+
+def parse_parity_events(lines, board):
+    """Read CPU/Eigen vs LiteRT comparisons from the same NN feature buffers."""
+    pattern = re.compile(
+        r"MTK_PARITY_HEAD handle=(0x[0-9a-fA-F]+) sample=(\d+) board=(\d+) "
+        r"head=(policyPass|policy|value|score|ownership) count=(\d+) "
+        r"maxAbs=([\deE+.-]+) mae=([\deE+.-]+) maxRel=([\deE+.-]+) "
+        r"worst=(\d+) cpu=([\deE+.-]+) npu=([\deE+.-]+)")
+    cpu_pattern = re.compile(
+        r"MTK_PARITY_CPU handle=(0x[0-9a-fA-F]+) sample=(\d+) "
+        r"board=(\d+) batch=(\d+) ms=(\d+)")
+    samples = {}
+    for line in lines:
+        m = cpu_pattern.search(line)
+        if m and int(m.group(3)) == board:
+            key = (m.group(1), int(m.group(2)))
+            samples.setdefault(key, {"heads": {}, "cpuMs": None})["cpuMs"] = int(m.group(5))
+        m = pattern.search(line)
+        if not m or int(m.group(3)) != board:
+            continue
+        key = (m.group(1), int(m.group(2)))
+        sample = samples.setdefault(key, {"heads": {}, "cpuMs": None})
+        head = m.group(4)
+        if head in sample["heads"]:
+            sample["heads"][head]["duplicate"] = True
+        sample["heads"][head] = {
+            "count": int(m.group(5)), "maxAbs": float(m.group(6)),
+            "mae": float(m.group(7)), "maxRel": float(m.group(8)),
+            "worstIndex": int(m.group(9)),
+            "cpuAtWorst": float(m.group(10)), "npuAtWorst": float(m.group(11))
+        }
+    groups = []
+    totals = {head: {"count": 0, "weightedAbs": 0.0, "maxAbs": 0.0,
+                     "maxRel": 0.0, "worst": None} for head in PARITY_TOLERANCES}
+    import math
+    complete = bool(samples)
+    for (handle, index), record in sorted(samples.items(), key=lambda p: (p[0][0], p[0][1])):
+        missing = sorted(set(PARITY_TOLERANCES) - set(record["heads"]))
+        if missing or record["cpuMs"] is None:
+            complete = False
+        groups.append({"sessionHandle": handle, "sample": index, "cpuMs": record["cpuMs"],
+                       "missingHeads": missing})
+        for head, detail in record["heads"].items():
+            if detail.get("duplicate") or not all(math.isfinite(detail[k]) for k in
+                    ("maxAbs", "mae", "maxRel", "cpuAtWorst", "npuAtWorst")):
+                complete = False
+                continue
+            aggregate = totals[head]
+            count = detail["count"]
+            if count < 1 or detail["worstIndex"] >= count:
+                complete = False
+                continue
+            aggregate["count"] += count
+            aggregate["weightedAbs"] += detail["mae"] * count
+            if detail["maxAbs"] >= aggregate["maxAbs"]:
+                aggregate["maxAbs"] = detail["maxAbs"]
+                aggregate["worst"] = {"sessionHandle": handle, "sample": index,
+                                      "index": detail["worstIndex"],
+                                      "cpu": detail["cpuAtWorst"], "litert": detail["npuAtWorst"]}
+            aggregate["maxRel"] = max(aggregate["maxRel"], detail["maxRel"])
+    heads = {}
+    within = bool(samples) and complete
+    for head, aggregate in totals.items():
+        n = aggregate["count"]
+        value = {"comparedElements": n, "maxAbs": aggregate["maxAbs"],
+                 "meanAbs": round(aggregate["weightedAbs"] / n, 9) if n else None,
+                 "maxRel": aggregate["maxRel"], "worst": aggregate["worst"],
+                 "provisionalMaxAbsTolerance": PARITY_TOLERANCES[head]}
+        heads[head] = value
+        if n == 0 or aggregate["maxAbs"] > PARITY_TOLERANCES[head]:
+            within = False
+    status = ("NO_DATA" if not samples else "INCOMPLETE" if not complete
+              else "WITHIN_PROVISIONAL_TOLERANCE" if within else "MISMATCH")
+    return {"status": status, "sampleCount": len(samples), "samples": groups,
+            "heads": heads, "hardwareExecution": "UNVERIFIED"}
+
+
 def run(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--adb", default=shutil.which("adb"))
@@ -222,6 +305,15 @@ def run(argv=None):
                 r"accelerator|FATAL.EXCEPTION|Fatal.signal|SIGABRT|SIGSEGV", line, re.IGNORECASE)]
             (folder / "logcat.txt").write_text("\n".join(relevant) + "\n", encoding="utf-8")
             save_npu_diagnostics(folder, relevant, report, args.size)
+            if args.gtp:
+                report["cpuLiteRtParity"] = parse_parity_events(relevant, args.size)
+                parity = report["cpuLiteRtParity"]
+                print("CPU/LiteRT parity:", parity["status"], "samples:", parity["sampleCount"], flush=True)
+                for head, values in parity["heads"].items():
+                    print("  ", head, "maxAbs:", values["maxAbs"],
+                          "MAE:", values["meanAbs"], flush=True)
+                (folder / "parity_summary.json").write_text(
+                    json.dumps(parity, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
             crash = adb(args, serial, "logcat", "-b", "crash", "-d", "-v", "brief")
             if crash.strip(): (folder / "crash.txt").write_text(crash, encoding="utf-8")
         except Exception as err:
