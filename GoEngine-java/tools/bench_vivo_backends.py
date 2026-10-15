@@ -385,16 +385,19 @@ def main(argv=None):
         with (folder / "timings.csv").open("w", newline="", encoding="utf-8") as fp:
             writer = csv.writer(fp)
             writer.writerow(("backend", "board", "phase", "iteration", "elapsed_ms",
-                             "move", "startup_ms", "result"))
+                             "move", "startup_ms", "result", "position",
+                             "position_replay_ms", "litert_inference_calls"))
             for backend, result in report["results"].items():
                 writer.writerow((backend, args.size, "startup", "", "", "",
-                                 result.get("startupMs", ""), result["status"]))
+                                 result.get("startupMs", ""), result["status"], "", "", ""))
                 for category in ("warmupMoves", "measuredMoves"):
                     for item in result.get(category, []):
                         writer.writerow((backend, args.size,
                                          "warmup" if item["warmup"] else "measured",
                                          item["iter"], item["elapsedMs"], item["move"], "",
-                                         result["status"]))
+                                         result["status"], item.get("position"),
+                                         item.get("positionReplayMs"),
+                                         item.get("litertInferenceCalls")))
         print("Local report:", folder / "report.json", flush=True)
         print("Timing CSV:", folder / "timings.csv", flush=True)
         if not args.no_upload:
