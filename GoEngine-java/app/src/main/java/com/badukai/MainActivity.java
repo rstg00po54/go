@@ -39,6 +39,7 @@ import com.badukai.engine.KataGoNative;
 import com.badukai.engine.KataGoGpuNative;
 import com.badukai.game.GoBoard;
 import com.badukai.game.GoSgf;
+import com.badukai.game.SgfArchive;
 import com.badukai.game.NnAreaScore;
 import com.badukai.game.FastEndgameScorer;
 import com.badukai.game.Intersection;
@@ -1673,13 +1674,14 @@ public class MainActivity extends AppCompatActivity {
         }, "Badukai-GPU-Info").start();
     }
 
-    private void saveReplaySnapshot() {
+    private void saveReplaySnapshot(boolean archive) {
         if (board == null || board.getMoveCount() == 0) return;
         try {
             String sgf = GoSgf.encode(boardSize, komiFor(boardSize),
                     board.getInitialHandicapSnapshot(), board.getMoveHistorySnapshot());
             java.nio.file.Files.write(new File(getFilesDir(), "last_game.sgf").toPath(),
                     sgf.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            if (archive) SgfArchive.save(this, sgf);
             Log.i(TAG, "SGF_SAVED moves=" + board.getMoveCount() + " board=" + boardSize);
         } catch (Exception ex) {
             Log.e(TAG, "SGF save failed", ex);
@@ -1687,12 +1689,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void openReplay() {
-        saveReplaySnapshot();
+        saveReplaySnapshot(true);
         startActivity(new android.content.Intent(this, ReplayActivity.class));
     }
 
     private void showMainPage() {
-        saveReplaySnapshot();
+        saveReplaySnapshot(true);
         DebugLog.enter(TAG, "showMainPage in");
         mainPageContainer.setVisibility(View.VISIBLE);
         gamePageContainer.setVisibility(View.GONE);
@@ -1706,6 +1708,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startNewGame() {
+        saveReplaySnapshot(true);
         DebugLog.enter(TAG, "startNewGame in, engineReady=" + engineReady + ", boardSize=" + boardSize + ", kyu=" + aiKyu);
         if (engineStarting || thinking || evaluating) {
             render("AI 正在处理，请稍候...");
@@ -1969,6 +1972,12 @@ public class MainActivity extends AppCompatActivity {
         if (variationBoard != null) exitVariationPreview();
         else if (gamePageContainer.getVisibility() == View.VISIBLE) showMainPage();
         else super.onBackPressed();
+    }
+
+    @Override
+    protected void onPause() {
+        saveReplaySnapshot(false);
+        super.onPause();
     }
 
     @Override
