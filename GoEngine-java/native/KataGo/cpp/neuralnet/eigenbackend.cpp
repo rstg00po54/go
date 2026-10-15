@@ -1804,7 +1804,8 @@ struct ComputeHandle {
     }
 #endif
 #ifdef USE_MEDIATEK_BACKEND
-    // 10b is served by the fixed-shape LiteRT graph; Human SL stays on Eigen.
+    // Main g170 and b18 Human SL use separate verified LiteRT graph runners.
+    // When the optional Human graph is absent, retain Eigen's known-good path.
     if(loadedModel.modelDesc.name == "g170-b10c128-s1141046784-d204142634") {
       if(context->nnXLen != context->nnYLen ||
          (context->nnXLen != 9 && context->nnXLen != 13 && context->nnXLen != 19))
@@ -1813,10 +1814,29 @@ struct ComputeHandle {
          model->numPolicyChannels != 1 || model->numValueChannels != 3 ||
          model->numScoreValueChannels != 4 || model->numOwnershipChannels != 1)
         throw StringError("MediaTek LiteRT g170 network tensor contract mismatch");
-      mediatek.reset(new KataGoMediaTekRunner(context->nnXLen));
+      mediatek.reset(new KataGoMediaTekRunner(context->nnXLen, false));
+    }
+    else if(loadedModel.modelDesc.name.find("b18c384nbt-human") == 0) {
+      if(KataGoMediaTekBridge::hasHumanRunner()) {
+        if(context->nnXLen != context->nnYLen ||
+           (context->nnXLen != 9 && context->nnXLen != 13 && context->nnXLen != 19))
+          throw StringError("Human LiteRT requires fixed 9, 13 or 19 line board graph");
+        if(model->numInputChannels != 22 || model->numInputGlobalChannels != 19 ||
+           model->numInputMetaChannels != 192 ||
+           (model->numPolicyChannels != 1 && model->numPolicyChannels != 2 &&
+            model->numPolicyChannels != 4) ||
+           model->numValueChannels != 3 || model->numScoreValueChannels != 6 ||
+           model->numOwnershipChannels != 1)
+          throw StringError("Human LiteRT native SGF / neural head contract mismatch");
+        mediatek.reset(new KataGoMediaTekRunner(context->nnXLen, true));
+      }
+      else {
+        __android_log_print(ANDROID_LOG_INFO,"KataGoMTK",
+          "MTK_HUMAN_CPU_FALLBACK reason=no_verified_human_graph board=%d",context->nnXLen);
+      }
     }
     else if(loadedModel.modelDesc.name.find("human") == std::string::npos) {
-      throw StringError("MediaTek LiteRT does not recognize 10b model: " + loadedModel.modelDesc.name);
+      throw StringError("MediaTek LiteRT does not recognize model: " + loadedModel.modelDesc.name);
     }
 #endif
   }
@@ -2007,6 +2027,10 @@ void NeuralNet::getOutput(
       computeHandle->mediatek->infer(
         inputBuffers->spatialInput.data() + (size_t)row * inputBuffers->singleInputElts,
         inputBuffers->globalInput.data() + (size_t)row * inputBuffers->singleInputGlobalElts,
+        numMetaFeatures > 0 ? inputBuffers->metaInput.data() + (size_t)row * inputBuffers->singleInputMetaElts : nullptr,
+        numMetaFeatures, numSpatialFeatures, numGlobalFeatures,
+        computeHandle->model->numPolicyChannels,
+        computeHandle->model->numScoreValueChannels,
         policyPass.data() + (size_t)row * computeHandle->model->numPolicyChannels,
         policy.data() + (size_t)row * computeHandle->model->numPolicyChannels * nnXLen * nnYLen,
         value.data() + (size_t)row * computeHandle->model->numValueChannels,
