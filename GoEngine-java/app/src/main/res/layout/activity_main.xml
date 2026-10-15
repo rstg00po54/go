@@ -64,7 +64,7 @@
             android:padding="0dp" android:stateListAnimator="@null" />
         <ImageView android:id="@+id/homeNavBarArtwork"
             android:layout_width="1dp" android:layout_height="1dp"
-            android:scaleType="fitXY" android:importantForAccessibility="no"
+            android:scaleType="fitCenter" android:importantForAccessibility="no"
             android:contentDescription="翡翠底部导航栏" />
         <Button android:id="@+id/homeTabButton"
             android:layout_width="1dp" android:layout_height="1dp"
