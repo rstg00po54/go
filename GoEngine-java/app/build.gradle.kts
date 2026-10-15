@@ -92,6 +92,9 @@ android {
         }
     }
 
+    // Package the checked-in green home artwork from docs automatically.
+    sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/homeAssets"))
+
     // Android 10+ does not allow executing binaries extracted under writable filesDir.
     // Package katago as libkatago_exec.so and extract native libs to nativeLibraryDir.
     // Only our arm64-v8a libraries are included; legacy SNPE/QNN/HTP libs stay out.
@@ -367,5 +370,17 @@ tasks.configureEach {
 tasks.configureEach {
     if (name.startsWith("merge") && (name.endsWith("JniLibFolders") || name.endsWith("NativeLibs"))) {
         dependsOn(stageKataGoNative)
+    }
+}
+
+// Keep the designer's original PNG in docs; stage it as a packaged Android asset.
+val stageGreenHomeArtwork = tasks.register<Copy>("stageGreenHomeArtwork") {
+    from(rootProject.file("docs/a_vertical_mobile_app_ui_scene_in_a_warm_serene.png"))
+    into(layout.buildDirectory.dir("generated/homeAssets/home"))
+    rename { "home_green.png" }
+}
+tasks.configureEach {
+    if (name.startsWith("merge") && name.endsWith("Assets")) {
+        dependsOn(stageGreenHomeArtwork)
     }
 }
