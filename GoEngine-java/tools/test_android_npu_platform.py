@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Source-level guard: RKNN APK is RK3588-only; MediaTek mobile stays on CPU/GPU."""
+"""Source-level guard: SoC-specific RKNN and MediaTek NN backends never cross over."""
 from pathlib import Path
 import unittest
 
@@ -23,7 +23,12 @@ class AndroidNpuPlatformTests(unittest.TestCase):
 
     def test_ui_hides_unsupported_npu_and_saved_choice_does_not_reload_it(self):
         self.assertIn("if (!KataGoEngine.supportsRknnHardware()) return false;", self.ui)
-        self.assertIn("boolean npuBundled = KataGoEngine.supportsRknnHardware()", self.ui)
+        self.assertIn("boolean mtkBundled = KataGoEngine.supportsMediaTekGame(this, 9)", self.ui)
+        self.assertIn("boolean npuBundled = mtkBundled || (KataGoEngine.supportsRknnHardware()", self.ui)
+        self.assertIn("return KataGoEngine.supportsMediaTekGame(this, size);", self.ui)
+        self.assertIn("&& rknnModelAvailable && supportsRknnHardware()", self.engine)
+        self.assertIn('new File(nativeLibDir, "libkatago_mtk.so").isFile()', self.engine)
+        self.assertIn('new File(nativeLibDir, "librknnrt.so").isFile()', self.engine)
         self.assertIn('"NPU".equals(savedBackend) && hasBundledNpuModel(boardSize)', self.ui)
 
     def test_rknn_init_failure_is_logged_and_does_not_throw(self):
