@@ -620,9 +620,9 @@ public class KataGoEngine {
                 while (running.get() && generation == sessionGeneration && mediaTekSession == session) {
                     String chunk = session.read(1000);
                     if (chunk == null || !running.get() || generation != sessionGeneration || mediaTekSession != session) break;
-                    buffer.append(chunk.replace("\\r\\n", "\\n"));
+                    buffer.append(chunk.replace("\r\n", "\n"));
                     int end;
-                    while ((end = buffer.indexOf("\\n\\n")) >= 0) {
+                    while ((end = buffer.indexOf("\n\n")) >= 0) {
                         String response = buffer.substring(0, end + 2);
                         buffer.delete(0, end + 2);
                         Log.d(TAG, "MediaTek JNI GTP response: " + response.trim());
