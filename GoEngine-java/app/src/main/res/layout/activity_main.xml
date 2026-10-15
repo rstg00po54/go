@@ -21,6 +21,11 @@
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="#193D2D" />
+        <View
+            android:id="@+id/homeHeaderPanel"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#244A35" />
         <TextView
             android:id="@+id/homeTitle"
             android:layout_width="wrap_content"
