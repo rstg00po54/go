@@ -209,6 +209,7 @@ def main(argv=None):
         serial = connected(args.adb, args.serial)
         report["serial"] = serial
         soc = run_cmd([args.adb, "-s", serial, "shell", "getprop", "ro.soc.model"]).strip()
+        report["socModel"] = soc
         if not re.search(r"MT6990|MT6993|mtk|mediatek", soc, re.IGNORECASE):
             raise RuntimeError("MediaTek phone required (SoC=" + soc + ")")
         if not args.skip_install:
