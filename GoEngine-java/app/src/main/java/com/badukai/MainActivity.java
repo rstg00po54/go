@@ -318,10 +318,13 @@ public class MainActivity extends AppCompatActivity {
         render("NPU 自动测试进行中（" + requested + "）");
         engineExecutor.execute(() -> {
             try {
+                Log.i("NpuSmoke", "STAGE id=" + id + " phase=human_model_prepare");
                 if (humanSL) engine.prepareHumanModel((done, total) -> {});
+                Log.i("NpuSmoke", "STAGE id=" + id + " phase=human_model_ready");
                 if (NpuHardware.current() == NpuHardware.Vendor.MEDIATEK) {
                     // The normal app typically preloads CPU JNI before a user
                     // switches to NPU. Verify both libraries coexist safely.
+                    Log.i("NpuSmoke", "STAGE id=" + id + " phase=cpu_preload");
                     engine.setBackendPreference(KataGoEngine.BackendPreference.CPU);
                     if (!engine.start(KataGoEngine.Model.HUMAN, humanSL)
                             || !engine.getBackendName().startsWith("CPU"))
@@ -329,6 +332,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.i("NpuSmoke", "MTK_CPU_TO_NPU_PRECHECK_READY id=" + id
                             + " backend=" + engine.getBackendName());
                     engine.stop();
+                    Log.i("NpuSmoke", "STAGE id=" + id + " phase=cpu_closed");
                 }
                 for (int i=0; i<sizes.length; i++) {
                     int size = sizes[i];
@@ -336,6 +340,7 @@ public class MainActivity extends AppCompatActivity {
                     long startupNs = System.nanoTime();
                     engine.setStartupBoardSize(size);
                     engine.setBackendPreference(KataGoEngine.BackendPreference.NPU);
+                    Log.i("NpuSmoke", "STAGE id=" + id + " phase=npu_start index=" + i + " board=" + size);
                     if (!engine.start(KataGoEngine.Model.HUMAN, humanSL))
                         throw new IllegalStateException("engine_start_failed");
                     long startupMs = (System.nanoTime() - startupNs) / 1000000L;
@@ -347,9 +352,11 @@ public class MainActivity extends AppCompatActivity {
                         throw new IllegalStateException("gtp_setup_failed_board_" + size);
                     if (humanSL && !engine.setHumanRank(12))
                         throw new IllegalStateException("human_rank_setup_failed");
+                    Log.i("NpuSmoke", "STAGE id=" + id + " phase=genmove_black index=" + i + " board=" + size);
                     long firstNs = System.nanoTime();
                     String black = engine.generateMove("black");
                     long blackMs = (System.nanoTime() - firstNs) / 1000000L;
+                    Log.i("NpuSmoke", "STAGE id=" + id + " phase=genmove_white index=" + i + " board=" + size);
                     long secondNs = System.nanoTime();
                     String white = engine.generateMove("white");
                     long whiteMs = (System.nanoTime() - secondNs) / 1000000L;
