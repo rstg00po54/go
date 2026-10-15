@@ -1,0 +1,53 @@
+{
+  "test": "vivo MediaTek KataGo real game backend with Human SL",
+  "run_id": "16e27023f861464d",
+  "sizes": [
+    9,
+    13,
+    19,
+    9
+  ],
+  "humanSL": true,
+  "hardwareExecution": "UNVERIFIED",
+  "status": "PASS",
+  "errors": [],
+  "steps": [
+    {
+      "index": 0,
+      "board": 9,
+      "status": "PASS",
+      "errors": [],
+      "litertInferenceCount": 68,
+      "black": "E5",
+      "white": "D4"
+    },
+    {
+      "index": 1,
+      "board": 13,
+      "status": "PASS",
+      "errors": [],
+      "litertInferenceCount": 37,
+      "black": "K10",
+      "white": "D4"
+    },
+    {
+      "index": 2,
+      "board": 19,
+      "status": "PASS",
+      "errors": [],
+      "litertInferenceCount": 47,
+      "black": "Q16",
+      "white": "D16"
+    },
+    {
+      "index": 3,
+      "board": 9,
+      "status": "PASS",
+      "errors": [],
+      "litertInferenceCount": 68,
+      "black": "G7",
+      "white": "E5"
+    }
+  ],
+  "serial": "10AFB21HP5002ZK"
+}
