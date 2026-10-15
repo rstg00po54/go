@@ -20,6 +20,9 @@ on:
       - 'GoEngine-java/tools/test_smoke_vivo_litert.py'
       - 'GoEngine-java/app/src/main/java/com/badukai/MainActivity.java'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoEngine.java'
+      - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoBackendBenchmark.java'
+      - 'GoEngine-java/tools/bench_vivo_backends.py'
+      - 'GoEngine-java/tools/test_bench_vivo_backends.py'
       - 'GoEngine-java/tools/smoke_vivo_mtk_game.py'
       - 'GoEngine-java/tools/test_smoke_vivo_mtk_game.py'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/DeviceHardwareInfo.java'
@@ -50,6 +53,9 @@ jobs:
       - name: Verify KataGo ONNX scale8 reconstruction on JVM
         working-directory: GoEngine-java
         run: python3 tools/test_litert_output_scale.py
+      - name: Verify CPU GPU NPU performance benchmarking and timing
+        working-directory: GoEngine-java
+        run: python3 tools/test_bench_vivo_backends.py
       - name: Validate MediaTek Human SL game switching reports
         working-directory: GoEngine-java
         run: python3 tools/test_smoke_vivo_mtk_game.py
