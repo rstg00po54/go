@@ -132,7 +132,20 @@ def parse_game_log(raw, run_id, sizes, human=True, require_human_npu=False):
             for name in ("startupMs", "blackMs", "whiteMs"):
                 value = field(terminal[0], name)
                 if value is None or not value.isdigit(): part_errors.append("Invalid " + name)
-        item = {"index": index, "board": requested,
+        timing = {"10b": [], "human": []}
+        for line in part:
+            if "MTK_LITERT_INFER board=" not in line or field(line, "board") != str(requested):
+                continue
+            model = field(line, "model")
+            if model in timing:
+                try: timing[model].append(float(field(line, "ms")))
+                except (ValueError, TypeError): part_errors.append("Invalid inference timing")
+        summary = {model: {"count": len(values),
+                           "meanMs": round(sum(values)/len(values),3) if values else None,
+                           "minMs": min(values) if values else None,
+                           "maxMs": max(values) if values else None}
+                   for model,values in timing.items()}
+        item = {"index": index, "board": requested, "inferenceTiming": summary,
                 "status": "PASS" if not part_errors else "FAIL", "errors": part_errors,
                 "litertInferenceCount": len(neural),
                 "humanLiteRtInferenceCount": len(human_calls),
@@ -178,7 +191,7 @@ def main(argv=None):
                    help="Capture filtered MediaTek Neuron compiler diagnostics; no root needed")
     p.add_argument("--require-human-npu", action="store_true",
                    help="Require real b18 Human NN LiteRT inference and 5-head Eigen parity (experimental)")
-    p.add_argument("--sizes", default="9,13,19,9",
+    p.add_argument("--sizes", default="9,11,13,15,19,9",
                    help="Ordered board sizes; e.g. --sizes 9 for first Human NPU validation")
     p.add_argument("--no-upload", action="store_true")
     p.add_argument("--timeout", type=int, default=480)
@@ -327,6 +340,12 @@ def main(argv=None):
         result["errors"] = report["errors"] + result["errors"]
         if result["errors"]: result["status"] = "FAIL"
         report.update(result)
+        report["performanceSummary"] = [{"board": step["board"],
+            "inferenceTiming": step.get("inferenceTiming", {})} for step in result["steps"]]
+        for row in report["performanceSummary"]:
+            print("BOARD_PERF board=%s 10b=%s human=%s" % (
+                row["board"],row["inferenceTiming"].get("10b",{}).get("meanMs"),
+                row["inferenceTiming"].get("human",{}).get("meanMs")), flush=True)
         code = 0 if report["status"] == "PASS" else 1
     except (OSError, subprocess.TimeoutExpired, RuntimeError) as exc:
         report["errors"].append(str(exc))
