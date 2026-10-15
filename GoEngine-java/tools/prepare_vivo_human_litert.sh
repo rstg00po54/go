@@ -17,10 +17,49 @@ declare -A VERIFIED_SHA=(
   [katago_human_19x19.tflite]=d2f239d8206f0f65b632a767af1cad50606a6d637479d60a3dfc9bb391b54cf5
 )
 mkdir -p "$DEST"
+
+# Explicitly opt into offline-compiled MT6993 b18 ONLY for a 9-line device
+# diagnostic. Preserve all installed 10b graphs and their manifests.
+if [[ "${1:-}" == "--aot9" ]]; then
+  base="https://github.com/rstg00po54/go/releases/download/vivo-human-9x9-mt6993-aot-neuron-test-v1"
+  stem="katago_human_9x9"
+  graphTmp="$(mktemp "$DEST/.${stem}.aot.XXXXXX")"
+  manifestTmp="$(mktemp "$DEST/.${stem}.aot.json.XXXXXX")"
+  trap 'rm -f -- "$graphTmp" "$manifestTmp"' EXIT
+  curl --fail --location --retry 3 --connect-timeout 15 \
+    -o "$graphTmp" "$base/human_9x9_mediatek_mt6993_aot.tflite"
+  curl --fail --location --retry 3 --connect-timeout 15 \
+    -o "$manifestTmp" "$base/human_9x9_mediatek_mt6993_aot.json"
+  python3 - "$graphTmp" "$manifestTmp" <<'PY'
+import hashlib,json,pathlib,sys
+graph, manifest = (pathlib.Path(x) for x in sys.argv[1:3])
+d = json.loads(manifest.read_text())
+assert d['modelType']=='human' and d['weights']=='b18c384nbt-humanv0'
+assert d['size']==9 and d['aotCompileTarget']=='MT6993'
+assert d['aotCompileStatus']=='PASS' and d['numInputMetaChannels']==192
+assert d['numInputChannels']==22 and d['numInputGlobalChannels']==19
+assert d['numPolicyChannels']==2 and d['numValueChannels']==3
+assert d['numScoreValueChannels']==6 and d['numOwnershipChannels']==1
+assert set(d['inputOrder'])=={'InputSpatial','InputGlobal','InputMeta','InputMask'}
+assert set(d['outputOrder'])=={'OutputPolicyPass','OutputPolicy','OutputValue','OutputScoreValue','OutputOwnership'}
+assert d['cpuInferenceValidationScope']=='source_tflite_only'
+h=hashlib.sha256()
+with graph.open('rb') as stream:
+    for chunk in iter(lambda: stream.read(1<<20), b''): h.update(chunk)
+assert h.hexdigest()==d['graphSha256'], 'AOT graph digest does not match manifest'
+print('HUMAN_AOT9_VERIFIED bytes=%d sha256=%s' % (graph.stat().st_size,h.hexdigest()))
+PY
+  mv -f "$graphTmp" "$DEST/${stem}.tflite"
+  mv -f "$manifestTmp" "$DEST/${stem}.json"
+  trap - EXIT
+  echo "HUMAN_AOT9_ASSETS_STAGED (Experimental MT6993 AOT; real vivo NPU parity NOT yet verified)"
+  exit 0
+fi
+
 case "${1:---size}" in
   --all) SIZES=(9 13 19) ;;
   --size) SIZES=("${2:-9}") ;;
-  *) echo "Usage: bash tools/prepare_vivo_human_litert.sh --size 9|13|19 OR --all" >&2; exit 2 ;;
+  *) echo "Usage: bash tools/prepare_vivo_human_litert.sh --size 9|13|19 OR --all OR --aot9" >&2; exit 2 ;;
 esac
 for size in "${SIZES[@]}"; do
   case "$size" in 9|13|19) ;; *) echo "Unsupported board size: $size" >&2; exit 2;; esac
