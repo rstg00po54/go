@@ -224,6 +224,9 @@ def main():
     parser.add_argument("--size", type=int, choices=(9, 13, 19), required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--signature", type=Path, required=True)
+    parser.add_argument("--converter-backend", choices=("flatbuffer_direct", "tf_converter"),
+                        default="flatbuffer_direct",
+                        help="Use independent TensorFlow Lite lowering for Neuron compatibility A/B")
     args = parser.parse_args()
     import onnx
     model, contract = validate_onnx(args.onnx, args.size)
@@ -232,22 +235,25 @@ def main():
     args.signature.parent.mkdir(parents=True, exist_ok=True)
     batched = args.output.parent / ("human_%dx%d_batch1.onnx" % (args.size, args.size))
     onnx.save(model, str(batched))
-    outdir = args.output.parent / ("human_onnx2tf_%d" % args.size)
+    outdir = args.output.parent / ("human_onnx2tf_%d_%s" %
+                                  (args.size, args.converter_backend))
     subprocess.run(["onnx2tf", "-i", str(batched.resolve()),
-                    "-o", str(outdir), "-coion"], check=True)
+                    "-o", str(outdir), "-coion",
+                    "--tflite_backend", args.converter_backend], check=True)
     files = list(outdir.rglob("*_float32.tflite"))
     if len(files) != 1: raise RuntimeError("Expected unique converted Human graph: " + str(files))
     shutil.copy2(files[0], args.output)
     contract["flatbufferAudit"] = inspect_raw_flatbuffer(args.output)
     contract.update(inspect_tflite(args.output, args.size, contract))
+    contract["converterBackend"] = args.converter_backend
     sha256 = hashlib.sha256()
     with args.output.open("rb") as reader:
         for chunk in iter(lambda: reader.read(1024 * 1024), b""):
             sha256.update(chunk)
     contract["graphSha256"] = sha256.hexdigest()
     args.signature.write_text(json.dumps(contract, indent=2) + "\n", encoding="utf-8")
-    print("KATAGO_HUMAN_LITERT_READY board=%d file=%s bytes=%d meta=192 policyChannels=%d" %
-          (args.size, args.output, args.output.stat().st_size,
+    print("KATAGO_HUMAN_LITERT_READY board=%d backend=%s file=%s bytes=%d meta=192 policyChannels=%d" %
+          (args.size, args.converter_backend, args.output, args.output.stat().st_size,
            contract["numPolicyChannels"]), flush=True)
 
 
