@@ -25,6 +25,10 @@ val enableKataGoGpuJni = providers.gradleProperty("enableKataGoGpuJni")
 val cachedNpuJni = rootProject.file("build/katago_android_arm64_rknnjni/libkatago_npu.so")
 val rknnSdkRuntime = rootProject.file("build/rknn_sdk/librknnrt.so")
 val rknnModelAsset = file("src/main/assets/engine/katago_10b_19x19.rknn")
+val cachedMtkJni = rootProject.file("build/katago_android_arm64_mediatekjni/libkatago_mtk.so")
+// Opt-in only: no normal APK, CPU, GPU, or RKNN packaging changes until GTP is validated.
+val enableKataGoMtkJni = providers.gradleProperty("enableKataGoMtkJni")
+    .map { it.equals("true", ignoreCase = true) }.getOrElse(false)
 val enableKataGoNpuJni = providers.gradleProperty("enableKataGoNpuJni")
     .map { it.equals("true", ignoreCase = true) }
     .getOrElse(cachedNpuJni.isFile && rknnSdkRuntime.isFile && rknnModelAsset.isFile)
@@ -207,6 +211,8 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
     inputs.property("enableKataGoJniCore", enableKataGoJniCore)
     inputs.property("enableKataGoGpuJni", enableKataGoGpuJni)
     inputs.property("enableKataGoNpuJni", enableKataGoNpuJni)
+    inputs.property("enableKataGoMtkJni", enableKataGoMtkJni)
+    if (enableKataGoMtkJni) inputs.file(cachedMtkJni)
     inputs.property("allow4kRknnRuntime", allow4kRknnRuntime)
     if (enableKataGoJniCore) inputs.file(katagoJniCoreFile)
     if (enableKataGoGpuJni) inputs.file(katagoGpuJniFile)
@@ -288,6 +294,16 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
         } else {
             File(abiDir, "libkatago_npu.so").delete()
             File(abiDir, "librknnrt.so").delete()
+        }
+        if (enableKataGoMtkJni) {
+            if (!cachedMtkJni.isFile) throw GradleException(
+                "MediaTek GTP JNI missing: run bash tools/build_katago_from_source.sh mediatekjni")
+            if (enableKataGoNpuJni) throw GradleException(
+                "MediaTek and RKNN libraries must not be packaged together")
+            stageFile(cachedMtkJni, "libkatago_mtk.so")
+            stagedBinaries.add(File(abiDir, "libkatago_mtk.so"))
+        } else {
+            File(abiDir, "libkatago_mtk.so").delete()
         }
         val needsCppShared = stagedBinaries.any { file ->
             readElf(file, "-d").lineSequence().any {
