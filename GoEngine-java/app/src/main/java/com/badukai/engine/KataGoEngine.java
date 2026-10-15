@@ -130,6 +130,22 @@ public class KataGoEngine {
     /** RKNN graphs bundled here target RK3588/RK3588S, not other Android NPUs. */
     public static boolean supportsRknnHardware() { return NpuHardware.canRunRknn(); }
 
+    private boolean hasAsset(String path) {
+        try (InputStream stream = context.getAssets().open(path)) { return stream.read() >= 0; }
+        catch (IOException missing) { return false; }
+    }
+
+    /** A MediaTek GTP session also needs a working, size-matched LiteRT model. */
+    public static boolean supportsMediaTekGame(Context context, int size) {
+        if (!NpuHardware.canProbeMediaTekLiteRt() || (size != 9 && size != 13 && size != 19)) return false;
+        if (!new File(context.getApplicationInfo().nativeLibraryDir, "libkatago_mtk.so").isFile()) return false;
+        String stem = "engine/katago_10b_" + size + "x" + size;
+        try (InputStream graph = context.getAssets().open(stem + ".tflite");
+             InputStream manifest = context.getAssets().open(stem + ".json")) {
+            return graph.read() >= 0 && manifest.read() >= 0;
+        } catch (IOException missing) { return false; }
+    }
+
     /** Board size of the RKNN model loaded by the active native GTP session. */
     public int getActiveNpuBoardSize() { return npuSession != null || mediaTekSession != null ? activeNpuBoardSize : -1; }
 
