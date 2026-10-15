@@ -12,6 +12,7 @@ per backend. Outputs one JSON and full log per backend and auto-uploads to
 the GitHub ui-test-results branch without touching older reports.
 """
 import argparse
+import csv
 from datetime import datetime, timezone
 import json
 from pathlib import Path
