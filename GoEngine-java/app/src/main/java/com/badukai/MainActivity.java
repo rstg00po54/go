@@ -38,6 +38,7 @@ import com.badukai.engine.KataGoOpenCLProbe;
 import com.badukai.engine.KataGoNative;
 import com.badukai.engine.KataGoGpuNative;
 import com.badukai.game.GoBoard;
+import com.badukai.game.GoSgf;
 import com.badukai.game.NnAreaScore;
 import com.badukai.game.FastEndgameScorer;
 import com.badukai.game.Intersection;
@@ -209,11 +210,13 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.homeGameTabButton).setOnClickListener(v -> showNewGameDialog());
         findViewById(R.id.homeTabButton).setOnClickListener(v -> showMainPage());
         View.OnClickListener upcoming = v -> Toast.makeText(this, "功能开发中", Toast.LENGTH_SHORT).show();
-        for (int id : new int[]{R.id.homeRecordButton, R.id.homeTrainingButton,
-                R.id.homeSettingsButton, R.id.homeRecordTabButton,
+        for (int id : new int[]{R.id.homeTrainingButton,
+                R.id.homeSettingsButton,
                 R.id.homeTrainingTabButton, R.id.homeSettingsTabButton}) {
             findViewById(id).setOnClickListener(upcoming);
         }
+        findViewById(R.id.homeRecordButton).setOnClickListener(v -> openReplay());
+        findViewById(R.id.homeRecordTabButton).setOnClickListener(v -> openReplay());
         // Real buttons: spring back on release; normal OnClick listeners still handle navigation.
         for (int id : new int[]{R.id.aiBattleButton, R.id.homeRecordButton,
                 R.id.homeTrainingButton, R.id.homeSettingsButton,
@@ -1670,7 +1673,26 @@ public class MainActivity extends AppCompatActivity {
         }, "Badukai-GPU-Info").start();
     }
 
+    private void saveReplaySnapshot() {
+        if (board == null || board.getMoveCount() == 0) return;
+        try {
+            String sgf = GoSgf.encode(boardSize, komiFor(boardSize),
+                    board.getInitialHandicapSnapshot(), board.getMoveHistorySnapshot());
+            java.nio.file.Files.write(new File(getFilesDir(), "last_game.sgf").toPath(),
+                    sgf.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            Log.i(TAG, "SGF_SAVED moves=" + board.getMoveCount() + " board=" + boardSize);
+        } catch (Exception ex) {
+            Log.e(TAG, "SGF save failed", ex);
+        }
+    }
+
+    private void openReplay() {
+        saveReplaySnapshot();
+        startActivity(new android.content.Intent(this, ReplayActivity.class));
+    }
+
     private void showMainPage() {
+        saveReplaySnapshot();
         DebugLog.enter(TAG, "showMainPage in");
         mainPageContainer.setVisibility(View.VISIBLE);
         gamePageContainer.setVisibility(View.GONE);
