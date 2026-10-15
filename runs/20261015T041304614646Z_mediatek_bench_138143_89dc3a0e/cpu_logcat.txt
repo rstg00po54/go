@@ -1,0 +1,52 @@
+--------- beginning of main
+10-15 12:12:55.406 I/KataGoBench(18473): START id=16d1e109cd34475f_cpu backend=CPU board=9 visits=32 maxTime=12.0 warmups=1 repeats=5 human=false
+10-15 12:12:55.406 I/KataGoBench(18473): PHASE id=16d1e109cd34475f_cpu stage=engine_start
+10-15 12:12:55.406 I/KataGoEngine(18473): === JAVA KATAGO ENGINE / ANDROID ARM64 ===
+10-15 12:12:55.407 I/KataGoEngine(18473): STARTUP_TIMING phase=engine_backend_and_paths ms=0.429312
+10-15 12:12:55.422 I/KataGoEngine(18473): Native GTP defaultBoardSize=9
+10-15 12:12:55.422 I/KataGoEngine(18473): STARTUP_TIMING phase=engine_prepare_config ms=15.771264
+10-15 12:12:55.424 I/KataGoEngine(18473): Reusing installed model asset: /data/user/0/com.badukai.java.nputest/files/engine/10b.bin
+10-15 12:12:55.424 I/KataGoEngine(18473): STARTUP_TIMING phase=engine_prepare_model_asset ms=1.541248
+10-15 12:12:55.424 I/KataGoEngine(18473): STARTUP_TIMING phase=engine_find_human_model ms=0.006144
+10-15 12:12:55.424 I/KataGoEngine(18473): Model: /data/user/0/com.badukai.java.nputest/files/engine/10b.bin size=12003218
+10-15 12:12:55.424 I/KataGoEngine(18473): Config: /data/user/0/com.badukai.java.nputest/files/engine/default_gtp.cfg
+10-15 12:12:55.424 I/KataGoEngine(18473): Backend requested: CPU/JNI Eigen
+10-15 12:12:55.427 I/KataGoEngine(18473): STARTUP_TIMING phase=engine_cpu_jni_create ms=2.813056
+10-15 12:12:55.427 I/KataGoEngine(18473): STARTUP_TIMING phase=engine_cpu_gtp_name_send ms=0.042368
+10-15 12:12:55.606 I/KataGoEngine(18473): KataGo GTP ready response: = KataGo
+10-15 12:12:55.607 I/KataGoEngine(18473): STARTUP_TIMING phase=engine_cpu_gtp_name_wait ms=179.376384
+10-15 12:12:55.607 I/KataGoEngine(18473): STARTUP_TIMING phase=engine_java_start_total ms=200.492032
+10-15 12:12:55.607 I/KataGoEngine(18473): === JNI/EIGEN ENGINE STARTED SUCCESSFULLY ===
+10-15 12:12:55.607 I/KataGoBench(18473): READY id=16d1e109cd34475f_cpu backend=CPU board=9 actual=CPU/Eigen_JNI startupMs=200
+10-15 12:12:55.607 I/KataGoBench(18473): PHASE id=16d1e109cd34475f_cpu stage=gtp_setup
+10-15 12:12:55.607 I/KataGoEngine(18473): GTP boardsize=9 ok=true elapsedMs=0
+10-15 12:12:55.608 I/KataGoEngine(18473): Chinese rules verified=true rules={"friendlyPassOk":true,"hasButton":false,"ko":"SIMPLE","scoring":"AREA","suicide":false,"tax":"NONE","whiteHandicapBonus":"N"}
+10-15 12:12:55.609 I/KataGoEngine(18473): Search limits verified=true requested: maxVisits=32 maxTime=12.000 readback: maxVisits=32 maxTime=12.0
+10-15 12:12:55.609 I/KataGoBench(18473): PHASE id=16d1e109cd34475f_cpu stage=warmup iter=0 backend=CPU
+10-15 12:12:55.610 I/KataGoBench(18473): POSITION id=16d1e109cd34475f_cpu backend=CPU board=9 iter=0 replayMs=0 stones=b:B5,w:C3,b:E2,w:B8
+10-15 12:12:55.773 I/KataGoEngine(18473): genmove color=black move=D4 rootVisits=unavailable newPlayouts=unavailable elapsedMs=163 (wall time includes GTP and inference overhead)
+10-15 12:12:55.773 I/KataGoBench(18473): MOVE id=16d1e109cd34475f_cpu backend=CPU board=9 iter=0 warmup=true ms=163 positionIter=0 vertex=D4
+10-15 12:12:55.773 I/KataGoBench(18473): PHASE id=16d1e109cd34475f_cpu stage=measure iter=1 backend=CPU
+10-15 12:12:55.774 I/KataGoBench(18473): POSITION id=16d1e109cd34475f_cpu backend=CPU board=9 iter=1 replayMs=0 stones=b:E5,w:C3,b:B2,w:E8,b:G3,w:C7
+10-15 12:12:55.876 I/KataGoEngine(18473): genmove color=black move=C5 rootVisits=unavailable newPlayouts=unavailable elapsedMs=101 (wall time includes GTP and inference overhead)
+10-15 12:12:55.876 I/KataGoBench(18473): MOVE id=16d1e109cd34475f_cpu backend=CPU board=9 iter=1 warmup=false ms=101 positionIter=1 vertex=C5
+10-15 12:12:55.876 I/KataGoBench(18473): PHASE id=16d1e109cd34475f_cpu stage=measure iter=2 backend=CPU
+10-15 12:12:55.877 I/KataGoBench(18473): POSITION id=16d1e109cd34475f_cpu backend=CPU board=9 iter=2 replayMs=0 stones=b:H5,w:C7,b:B5,w:G7,b:H2,w:E5,b:B2,w:B8
+10-15 12:12:55.986 I/KataGoEngine(18473): genmove color=black move=F6 rootVisits=unavailable newPlayouts=unavailable elapsedMs=109 (wall time includes GTP and inference overhead)
+10-15 12:12:55.986 I/KataGoBench(18473): MOVE id=16d1e109cd34475f_cpu backend=CPU board=9 iter=2 warmup=false ms=109 positionIter=2 vertex=F6
+10-15 12:12:55.986 I/KataGoBench(18473): PHASE id=16d1e109cd34475f_cpu stage=measure iter=3 backend=CPU
+10-15 12:12:55.987 I/KataGoBench(18473): POSITION id=16d1e109cd34475f_cpu backend=CPU board=9 iter=3 replayMs=0 stones=b:E8,w:C7,b:E2,w:B2
+10-15 12:12:56.098 I/KataGoEngine(18473): genmove color=black move=D6 rootVisits=unavailable newPlayouts=unavailable elapsedMs=111 (wall time includes GTP and inference overhead)
+10-15 12:12:56.098 I/KataGoBench(18473): MOVE id=16d1e109cd34475f_cpu backend=CPU board=9 iter=3 warmup=false ms=111 positionIter=3 vertex=D6
+10-15 12:12:56.099 I/KataGoBench(18473): PHASE id=16d1e109cd34475f_cpu stage=measure iter=4 backend=CPU
+10-15 12:12:56.100 I/KataGoBench(18473): POSITION id=16d1e109cd34475f_cpu backend=CPU board=9 iter=4 replayMs=1 stones=b:C7,w:E8,b:E5,w:G7,b:B2,w:C3
+10-15 12:12:56.205 I/KataGoEngine(18473): genmove color=black move=E3 rootVisits=unavailable newPlayouts=unavailable elapsedMs=104 (wall time includes GTP and inference overhead)
+10-15 12:12:56.205 I/KataGoBench(18473): MOVE id=16d1e109cd34475f_cpu backend=CPU board=9 iter=4 warmup=false ms=104 positionIter=4 vertex=E3
+10-15 12:12:56.205 I/KataGoBench(18473): PHASE id=16d1e109cd34475f_cpu stage=measure iter=5 backend=CPU
+10-15 12:12:56.206 I/KataGoBench(18473): POSITION id=16d1e109cd34475f_cpu backend=CPU board=9 iter=5 replayMs=0 stones=b:G3,w:B2,b:E2,w:H2,b:C3,w:E5,b:H5,w:B8
+10-15 12:12:56.298 I/KataGoEngine(18473): genmove color=black move=C5 rootVisits=unavailable newPlayouts=unavailable elapsedMs=92 (wall time includes GTP and inference overhead)
+10-15 12:12:56.298 I/KataGoBench(18473): MOVE id=16d1e109cd34475f_cpu backend=CPU board=9 iter=5 warmup=false ms=92 positionIter=5 vertex=C5
+10-15 12:12:56.298 I/KataGoBench(18473): PHASE id=16d1e109cd34475f_cpu stage=stop
+10-15 12:12:56.307 I/KataGoEngine(18473): KataGo JNI session stopped
+10-15 12:12:56.307 I/KataGoEngine(18473): KataGo stopped
+10-15 12:12:56.307 I/KataGoBench(18473): PASS id=16d1e109cd34475f_cpu backend=CPU board=9 measured=5 warmups=1

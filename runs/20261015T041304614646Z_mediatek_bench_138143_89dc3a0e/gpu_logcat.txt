@@ -1,0 +1,53 @@
+--------- beginning of main
+10-15 12:12:57.851 I/KataGoBench(18728): START id=16d1e109cd34475f_gpu backend=GPU board=9 visits=32 maxTime=12.0 warmups=1 repeats=5 human=false
+10-15 12:12:57.851 I/KataGoBench(18728): PHASE id=16d1e109cd34475f_gpu stage=engine_start
+10-15 12:12:57.851 I/KataGoEngine(18728): === JAVA KATAGO ENGINE / ANDROID ARM64 ===
+10-15 12:12:57.852 I/KataGoEngine(18728): STARTUP_TIMING phase=engine_backend_and_paths ms=0.382208
+10-15 12:12:57.861 I/KataGoEngine(18728): Native GTP defaultBoardSize=9
+10-15 12:12:57.861 I/KataGoEngine(18728): STARTUP_TIMING phase=engine_prepare_config ms=9.14432
+10-15 12:12:57.862 I/KataGoEngine(18728): Reusing installed model asset: /data/user/0/com.badukai.java.nputest/files/engine/10b.bin
+10-15 12:12:57.862 I/KataGoEngine(18728): STARTUP_TIMING phase=engine_prepare_model_asset ms=1.347968
+10-15 12:12:57.862 I/KataGoEngine(18728): STARTUP_TIMING phase=engine_find_human_model ms=0.01024
+10-15 12:12:57.862 I/KataGoEngine(18728): Model: /data/user/0/com.badukai.java.nputest/files/engine/10b.bin size=12003218
+10-15 12:12:57.862 I/KataGoEngine(18728): Config: /data/user/0/com.badukai.java.nputest/files/engine/default_gtp.cfg
+10-15 12:12:57.862 I/KataGoEngine(18728): Backend requested: GPU/OpenCL in-process JNI
+10-15 12:12:57.866 I/KataGoEngine(18728): STARTUP_TIMING phase=engine_gpu_native_create ms=3.69472
+10-15 12:12:57.866 I/KataGoEngine(18728): STARTUP_TIMING phase=engine_gpu_reader_setup ms=0.271872
+10-15 12:12:57.868 I/KataGoEngine(18728): STARTUP_TIMING phase=engine_gpu_gtp_name_send ms=1.409536
+10-15 12:12:58.042 I/KataGoEngine(18728): KataGo GTP ready response: = KataGo
+10-15 12:12:58.042 I/KataGoEngine(18728): STARTUP_TIMING phase=engine_gpu_gtp_name_wait ms=173.625344
+10-15 12:12:58.042 I/KataGoEngine(18728): STARTUP_TIMING phase=engine_java_start_total ms=190.370816
+10-15 12:12:58.042 I/KataGoEngine(18728): === GPU/OPENCL JNI ENGINE STARTED SUCCESSFULLY ===
+10-15 12:12:58.042 I/KataGoBench(18728): READY id=16d1e109cd34475f_gpu backend=GPU board=9 actual=GPU/OpenCL_JNI startupMs=190
+10-15 12:12:58.042 I/KataGoBench(18728): PHASE id=16d1e109cd34475f_gpu stage=gtp_setup
+10-15 12:12:58.042 I/KataGoEngine(18728): GTP boardsize=9 ok=true elapsedMs=0
+10-15 12:12:58.043 I/KataGoEngine(18728): Chinese rules verified=true rules={"friendlyPassOk":true,"hasButton":false,"ko":"SIMPLE","scoring":"AREA","suicide":false,"tax":"NONE","whiteHandicapBonus":"N"}
+10-15 12:12:58.044 I/KataGoEngine(18728): Search limits verified=true requested: maxVisits=32 maxTime=12.000 readback: maxVisits=32 maxTime=12.0
+10-15 12:12:58.044 I/KataGoBench(18728): PHASE id=16d1e109cd34475f_gpu stage=warmup iter=0 backend=GPU
+10-15 12:12:58.045 I/KataGoBench(18728): POSITION id=16d1e109cd34475f_gpu backend=GPU board=9 iter=0 replayMs=0 stones=b:B5,w:C3,b:E2,w:B8
+10-15 12:12:58.208 I/KataGoEngine(18728): genmove color=black move=D4 rootVisits=unavailable newPlayouts=unavailable elapsedMs=162 (wall time includes GTP and inference overhead)
+10-15 12:12:58.208 I/KataGoBench(18728): MOVE id=16d1e109cd34475f_gpu backend=GPU board=9 iter=0 warmup=true ms=162 positionIter=0 vertex=D4
+10-15 12:12:58.208 I/KataGoBench(18728): PHASE id=16d1e109cd34475f_gpu stage=measure iter=1 backend=GPU
+10-15 12:12:58.209 I/KataGoBench(18728): POSITION id=16d1e109cd34475f_gpu backend=GPU board=9 iter=1 replayMs=1 stones=b:E5,w:C3,b:B2,w:E8,b:G3,w:C7
+10-15 12:12:58.349 I/KataGoEngine(18728): genmove color=black move=C5 rootVisits=unavailable newPlayouts=unavailable elapsedMs=139 (wall time includes GTP and inference overhead)
+10-15 12:12:58.349 I/KataGoBench(18728): MOVE id=16d1e109cd34475f_gpu backend=GPU board=9 iter=1 warmup=false ms=139 positionIter=1 vertex=C5
+10-15 12:12:58.349 I/KataGoBench(18728): PHASE id=16d1e109cd34475f_gpu stage=measure iter=2 backend=GPU
+10-15 12:12:58.350 I/KataGoBench(18728): POSITION id=16d1e109cd34475f_gpu backend=GPU board=9 iter=2 replayMs=1 stones=b:H5,w:C7,b:B5,w:G7,b:H2,w:E5,b:B2,w:B8
+10-15 12:12:58.518 I/KataGoEngine(18728): genmove color=black move=F6 rootVisits=unavailable newPlayouts=unavailable elapsedMs=167 (wall time includes GTP and inference overhead)
+10-15 12:12:58.519 I/KataGoBench(18728): MOVE id=16d1e109cd34475f_gpu backend=GPU board=9 iter=2 warmup=false ms=168 positionIter=2 vertex=F6
+10-15 12:12:58.519 I/KataGoBench(18728): PHASE id=16d1e109cd34475f_gpu stage=measure iter=3 backend=GPU
+10-15 12:12:58.520 I/KataGoBench(18728): POSITION id=16d1e109cd34475f_gpu backend=GPU board=9 iter=3 replayMs=1 stones=b:E8,w:C7,b:E2,w:B2
+10-15 12:12:58.694 I/KataGoEngine(18728): genmove color=black move=D6 rootVisits=unavailable newPlayouts=unavailable elapsedMs=173 (wall time includes GTP and inference overhead)
+10-15 12:12:58.694 I/KataGoBench(18728): MOVE id=16d1e109cd34475f_gpu backend=GPU board=9 iter=3 warmup=false ms=173 positionIter=3 vertex=D6
+10-15 12:12:58.694 I/KataGoBench(18728): PHASE id=16d1e109cd34475f_gpu stage=measure iter=4 backend=GPU
+10-15 12:12:58.696 I/KataGoBench(18728): POSITION id=16d1e109cd34475f_gpu backend=GPU board=9 iter=4 replayMs=1 stones=b:C7,w:E8,b:E5,w:G7,b:B2,w:C3
+10-15 12:12:58.851 I/KataGoEngine(18728): genmove color=black move=E3 rootVisits=unavailable newPlayouts=unavailable elapsedMs=155 (wall time includes GTP and inference overhead)
+10-15 12:12:58.851 I/KataGoBench(18728): MOVE id=16d1e109cd34475f_gpu backend=GPU board=9 iter=4 warmup=false ms=155 positionIter=4 vertex=E3
+10-15 12:12:58.851 I/KataGoBench(18728): PHASE id=16d1e109cd34475f_gpu stage=measure iter=5 backend=GPU
+10-15 12:12:58.854 I/KataGoBench(18728): POSITION id=16d1e109cd34475f_gpu backend=GPU board=9 iter=5 replayMs=2 stones=b:G3,w:B2,b:E2,w:H2,b:C3,w:E5,b:H5,w:B8
+10-15 12:12:58.982 I/KataGoEngine(18728): genmove color=black move=C5 rootVisits=unavailable newPlayouts=unavailable elapsedMs=127 (wall time includes GTP and inference overhead)
+10-15 12:12:58.982 I/KataGoBench(18728): MOVE id=16d1e109cd34475f_gpu backend=GPU board=9 iter=5 warmup=false ms=127 positionIter=5 vertex=C5
+10-15 12:12:58.982 I/KataGoBench(18728): PHASE id=16d1e109cd34475f_gpu stage=stop
+10-15 12:12:58.991 I/KataGoEngine(18728): GPU/OpenCL JNI session stopped
+10-15 12:12:58.991 I/KataGoEngine(18728): KataGo stopped
+10-15 12:12:58.991 I/KataGoBench(18728): PASS id=16d1e109cd34475f_gpu backend=GPU board=9 measured=5 warmups=1

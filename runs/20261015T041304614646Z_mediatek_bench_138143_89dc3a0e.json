@@ -1,0 +1,279 @@
+{
+  "test": "Vivo KataGo CPU GPU MediaTek GTP wall time benchmark",
+  "run_id": "16d1e109cd34475f",
+  "board": 9,
+  "backends": [
+    "CPU",
+    "GPU",
+    "NPU"
+  ],
+  "visits": 32,
+  "maxTimeSeconds": 12.0,
+  "warmup": 1,
+  "repeats": 5,
+  "humanSL": false,
+  "timingScope": "Full genmove GTP wall time (model inference + search + IPC)",
+  "hardwareExecution": "UNVERIFIED",
+  "status": "PASS",
+  "results": {
+    "CPU": {
+      "status": "PASS",
+      "backend": "CPU",
+      "board": 9,
+      "startupMs": 200,
+      "latencyMs": {
+        "meanMs": 103.4,
+        "medianMs": 104,
+        "minMs": 92,
+        "maxMs": 111,
+        "p95NearestRankMs": 111
+      },
+      "positions": [
+        "b:B5,w:C3,b:E2,w:B8",
+        "b:E5,w:C3,b:B2,w:E8,b:G3,w:C7",
+        "b:H5,w:C7,b:B5,w:G7,b:H2,w:E5,b:B2,w:B8",
+        "b:E8,w:C7,b:E2,w:B2",
+        "b:C7,w:E8,b:E5,w:G7,b:B2,w:C3",
+        "b:G3,w:B2,b:E2,w:H2,b:C3,w:E5,b:H5,w:B8"
+      ],
+      "measuredMoves": [
+        {
+          "iter": 1,
+          "move": "C5",
+          "elapsedMs": 101,
+          "warmup": false,
+          "position": "b:E5,w:C3,b:B2,w:E8,b:G3,w:C7",
+          "positionReplayMs": 0,
+          "litertInferenceCalls": null
+        },
+        {
+          "iter": 2,
+          "move": "F6",
+          "elapsedMs": 109,
+          "warmup": false,
+          "position": "b:H5,w:C7,b:B5,w:G7,b:H2,w:E5,b:B2,w:B8",
+          "positionReplayMs": 0,
+          "litertInferenceCalls": null
+        },
+        {
+          "iter": 3,
+          "move": "D6",
+          "elapsedMs": 111,
+          "warmup": false,
+          "position": "b:E8,w:C7,b:E2,w:B2",
+          "positionReplayMs": 0,
+          "litertInferenceCalls": null
+        },
+        {
+          "iter": 4,
+          "move": "E3",
+          "elapsedMs": 104,
+          "warmup": false,
+          "position": "b:C7,w:E8,b:E5,w:G7,b:B2,w:C3",
+          "positionReplayMs": 1,
+          "litertInferenceCalls": null
+        },
+        {
+          "iter": 5,
+          "move": "C5",
+          "elapsedMs": 92,
+          "warmup": false,
+          "position": "b:G3,w:B2,b:E2,w:H2,b:C3,w:E5,b:H5,w:B8",
+          "positionReplayMs": 0,
+          "litertInferenceCalls": null
+        }
+      ],
+      "warmupMoves": [
+        {
+          "iter": 0,
+          "move": "D4",
+          "elapsedMs": 163,
+          "warmup": true,
+          "position": "b:B5,w:C3,b:E2,w:B8",
+          "positionReplayMs": 0,
+          "litertInferenceCalls": null
+        }
+      ],
+      "liteRtInferenceCalls": null,
+      "liteRtMeanInferenceMs": null,
+      "errors": []
+    },
+    "GPU": {
+      "status": "PASS",
+      "backend": "GPU",
+      "board": 9,
+      "startupMs": 190,
+      "latencyMs": {
+        "meanMs": 152.4,
+        "medianMs": 155,
+        "minMs": 127,
+        "maxMs": 173,
+        "p95NearestRankMs": 173
+      },
+      "positions": [
+        "b:B5,w:C3,b:E2,w:B8",
+        "b:E5,w:C3,b:B2,w:E8,b:G3,w:C7",
+        "b:H5,w:C7,b:B5,w:G7,b:H2,w:E5,b:B2,w:B8",
+        "b:E8,w:C7,b:E2,w:B2",
+        "b:C7,w:E8,b:E5,w:G7,b:B2,w:C3",
+        "b:G3,w:B2,b:E2,w:H2,b:C3,w:E5,b:H5,w:B8"
+      ],
+      "measuredMoves": [
+        {
+          "iter": 1,
+          "move": "C5",
+          "elapsedMs": 139,
+          "warmup": false,
+          "position": "b:E5,w:C3,b:B2,w:E8,b:G3,w:C7",
+          "positionReplayMs": 1,
+          "litertInferenceCalls": null
+        },
+        {
+          "iter": 2,
+          "move": "F6",
+          "elapsedMs": 168,
+          "warmup": false,
+          "position": "b:H5,w:C7,b:B5,w:G7,b:H2,w:E5,b:B2,w:B8",
+          "positionReplayMs": 1,
+          "litertInferenceCalls": null
+        },
+        {
+          "iter": 3,
+          "move": "D6",
+          "elapsedMs": 173,
+          "warmup": false,
+          "position": "b:E8,w:C7,b:E2,w:B2",
+          "positionReplayMs": 1,
+          "litertInferenceCalls": null
+        },
+        {
+          "iter": 4,
+          "move": "E3",
+          "elapsedMs": 155,
+          "warmup": false,
+          "position": "b:C7,w:E8,b:E5,w:G7,b:B2,w:C3",
+          "positionReplayMs": 1,
+          "litertInferenceCalls": null
+        },
+        {
+          "iter": 5,
+          "move": "C5",
+          "elapsedMs": 127,
+          "warmup": false,
+          "position": "b:G3,w:B2,b:E2,w:H2,b:C3,w:E5,b:H5,w:B8",
+          "positionReplayMs": 2,
+          "litertInferenceCalls": null
+        }
+      ],
+      "warmupMoves": [
+        {
+          "iter": 0,
+          "move": "D4",
+          "elapsedMs": 162,
+          "warmup": true,
+          "position": "b:B5,w:C3,b:E2,w:B8",
+          "positionReplayMs": 0,
+          "litertInferenceCalls": null
+        }
+      ],
+      "liteRtInferenceCalls": null,
+      "liteRtMeanInferenceMs": null,
+      "errors": []
+    },
+    "NPU": {
+      "status": "PASS",
+      "backend": "NPU",
+      "board": 9,
+      "startupMs": 421,
+      "latencyMs": {
+        "meanMs": 77.4,
+        "medianMs": 79,
+        "minMs": 74,
+        "maxMs": 80,
+        "p95NearestRankMs": 80
+      },
+      "positions": [
+        "b:B5,w:C3,b:E2,w:B8",
+        "b:E5,w:C3,b:B2,w:E8,b:G3,w:C7",
+        "b:H5,w:C7,b:B5,w:G7,b:H2,w:E5,b:B2,w:B8",
+        "b:E8,w:C7,b:E2,w:B2",
+        "b:C7,w:E8,b:E5,w:G7,b:B2,w:C3",
+        "b:G3,w:B2,b:E2,w:H2,b:C3,w:E5,b:H5,w:B8"
+      ],
+      "measuredMoves": [
+        {
+          "iter": 1,
+          "move": "C6",
+          "elapsedMs": 75,
+          "warmup": false,
+          "position": "b:E5,w:C3,b:B2,w:E8,b:G3,w:C7",
+          "positionReplayMs": 0,
+          "litertInferenceCalls": 35
+        },
+        {
+          "iter": 2,
+          "move": "F6",
+          "elapsedMs": 74,
+          "warmup": false,
+          "position": "b:H5,w:C7,b:B5,w:G7,b:H2,w:E5,b:B2,w:B8",
+          "positionReplayMs": 1,
+          "litertInferenceCalls": 35
+        },
+        {
+          "iter": 3,
+          "move": "D6",
+          "elapsedMs": 79,
+          "warmup": false,
+          "position": "b:E8,w:C7,b:E2,w:B2",
+          "positionReplayMs": 0,
+          "litertInferenceCalls": 35
+        },
+        {
+          "iter": 4,
+          "move": "E3",
+          "elapsedMs": 79,
+          "warmup": false,
+          "position": "b:C7,w:E8,b:E5,w:G7,b:B2,w:C3",
+          "positionReplayMs": 1,
+          "litertInferenceCalls": 35
+        },
+        {
+          "iter": 5,
+          "move": "C5",
+          "elapsedMs": 80,
+          "warmup": false,
+          "position": "b:G3,w:B2,b:E2,w:H2,b:C3,w:E5,b:H5,w:B8",
+          "positionReplayMs": 2,
+          "litertInferenceCalls": 33
+        }
+      ],
+      "warmupMoves": [
+        {
+          "iter": 0,
+          "move": "E5",
+          "elapsedMs": 74,
+          "warmup": true,
+          "position": "b:B5,w:C3,b:E2,w:B8",
+          "positionReplayMs": 1,
+          "litertInferenceCalls": 35
+        }
+      ],
+      "liteRtInferenceCalls": 208,
+      "liteRtMeanInferenceMs": 1.385,
+      "errors": []
+    }
+  },
+  "errors": [],
+  "startedUtc": "2026-10-15T04:12:57.159254+00:00",
+  "serial": "10AFB21HP5002ZK",
+  "socModel": "MT6993",
+  "comparison": {
+    "reference": "GPU",
+    "target": "NPU",
+    "gpuMedianMs": 155,
+    "npuMedianMs": 79,
+    "gpuOverNpuSpeedup": 1.962,
+    "meaning": "Full GTP genmove median ratio; not standalone silicon inference speed"
+  },
+  "finishedUtc": "2026-10-15T04:13:04.600506+00:00"
+}
