@@ -19,7 +19,7 @@ def example_log(sizes=DEFAULT_SIZES, human=True, include_final=True):
             "startupMs=202 black=D4 blackMs=42 white=F5 whiteMs=39",
         ])
     if include_final:
-        lines.append(f"I/NpuSmoke: PASS id={run_id} steps={len(sizes)} sizes={",".join(map(str,sizes))}")
+        lines.append("I/NpuSmoke: PASS id=%s steps=%d sizes=%s" % (run_id, len(sizes), ",".join(map(str, sizes))))
     return "\n".join(lines)
 
 
