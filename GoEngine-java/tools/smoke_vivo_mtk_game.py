@@ -291,6 +291,23 @@ def main(argv=None):
         log = run_cmd([args.adb, "-s", serial, "logcat", "-d", "-v", "time", "-s", *tags],
                       timeout=30, check=False)
         (folder / "logcat.txt").write_text(log, encoding="utf-8")
+        if "Fatal signal" in log or "FATAL EXCEPTION" in log:
+            # Capture the crash buffer separately: the normal filtered app log
+            # only contains SIGABRT, not its abort message/native stack.
+            crash = run_cmd([args.adb, "-s", serial, "logcat", "-d", "-b", "crash",
+                             "-v", "time"], timeout=35, check=False)
+            crash_lines = crash.splitlines()
+            # Avoid uploading unrelated prior process crashes.
+            crash_lines = [line[:1600] for line in crash_lines
+                           if any(token in line for token in
+                                  (PACKAGE, "KataGo", "Abort message", "backtrace",
+                                   "signal 6", "SIGABRT", "DEBUG", "#00", "#01",
+                                   "#02", "#03", "#04", "#05", "#06", "#07",
+                                   "#08", "#09", "#10", "#11", "pid:", "tid:",
+                                   "Build fingerprint", "ABI:"))]
+            (folder / "native_crash_diagnostics.txt").write_text(
+                "\\n".join(crash_lines[-160:]) + "\\n", encoding="utf-8")
+            print("Native crash frames captured:", len(crash_lines), flush=True)
         if args.diagnose_compiler:
             # Only compiler-related system messages, never a raw all-app log.
             # Vendor services log outside our app PID/tag: previous captures
