@@ -50,6 +50,7 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
     private final int[] outputPositions;
     private final boolean spatialIsNchw;
     private final int size;
+    private final float outputScaleMultiplier;
 
     public static boolean isMediaTek() { return NpuHardware.canProbeMediaTekLiteRt(); }
 
@@ -67,6 +68,17 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
                 "g170-b10c128-s1141046784-d204142634") ||
                 !"PASS".equals(metadata.getString("cpu_inference")))
             throw new IllegalArgumentException("KataGo graph is not validated for this board/weights");
+        // KataGo dumponnx defaults to scale8. Its outputs are raw and have
+        // to be unscaled before neuralnet/nneval.cpp postprocessing.
+        // Legacy release manifests omitted the field; only their exact SHA256
+        // model graphs can use the documented scale8 compatibility path.
+        Double declaredScale = metadata.has("outputScaleMultiplier")
+                ? metadata.getDouble("outputScaleMultiplier") : null;
+        String graphHash = KataGoLiteRtOutputScale.sha256(file);
+        double scale = KataGoLiteRtOutputScale.resolve(board, declaredScale, graphHash);
+        if (metadata.has("scale8Applied") && metadata.getBoolean("scale8Applied") != (scale == 8.0))
+            throw new IllegalArgumentException("ONNX scale8Applied and output multiplier disagree");
+        outputScaleMultiplier = (float) scale;
         inputNames = new String[INPUT.length];
         outputNames = new String[OUTPUT.length];
         inputCounts = new int[INPUT.length];
@@ -136,7 +148,9 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
         model = candidate;
         inputs = in;
         outputs = out;
-        Log.i(TAG, "MTK_LITERT_INIT board=" + board + " npuRequested=true graph=" + file.getName());
+        Log.i(TAG, "MTK_LITERT_INIT board=" + board + " npuRequested=true graph=" + file.getName()
+                + " outputScaleMultiplier=" + outputScaleMultiplier
+                + " scaleSource=" + (declaredScale == null ? "pinned_legacy_graph" : "onnx_manifest"));
     }
 
     /**
@@ -166,6 +180,7 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
             for (float v : result[i])
                 if (!Float.isFinite(v)) throw new IllegalStateException("NaN/Inf from " + OUTPUT[i]);
         }
+        KataGoLiteRtOutputScale.restore(result, outputScaleMultiplier);
         long elapsedMs = (SystemClock.elapsedRealtimeNanos() - start) / 1000000L;
         Log.i(TAG, "MTK_LITERT_INFER board=" + size + " ms=" + elapsedMs
                 + " npuRequested=true hardwareExecution=UNVERIFIED");
