@@ -149,6 +149,25 @@ def parse_game_log(raw, run_id, sizes, human=True, require_human_npu=False):
     return {"status": "PASS" if not errors else "FAIL", "steps": steps, "errors": errors}
 
 
+def capture_activity_launch_diagnostics(adb, serial, folder, run_id):
+    """Identify app crash, unlaunched activity or missing filtered log tags."""
+    pid = run_cmd([adb, "-s", serial, "shell", "pidof", PACKAGE], check=False).strip()
+    raw = run_cmd([adb, "-s", serial, "logcat", "-d", "-b", "all", "-v", "time"],
+                  timeout=35, check=False)
+    pattern = re.compile(r"(?i)(com\\.badukai|NpuSmoke|AndroidRuntime|"
+                         r"FATAL EXCEPTION|am_crash|am_anr|neuron.*compile)")
+    lines = [line[:1500] for line in raw.splitlines() if pattern.search(line)]
+    file = folder / "activity_launch_diagnostics.txt"
+    file.write_text("app_pid=" + (pid or "NOT_RUNNING") + "\n" +
+                    "\n".join(lines[-180:]) + "\n", encoding="utf-8")
+    print("No NpuSmoke START observed: app PID=" + (pid or "NOT_RUNNING") +
+          ", matched system lines=" + str(len(lines)), flush=True)
+    for line in lines[-10:]:
+        print("  Android:", line[-350:], flush=True)
+    print("Startup diagnostics:", file, flush=True)
+    return bool(pid)
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--adb", default=shutil.which("adb"))
@@ -216,6 +235,7 @@ def main(argv=None):
         started_at = last_progress_at = last_heartbeat = time.monotonic()
         end = started_at + args.timeout
         last_progress = ""
+        launch_checked = False
         tags = ["NpuSmoke:V", "KataGoMTK:V", "KataGoEngine:V", "AndroidRuntime:E", "libc:F"]
         print("Tracking CPU preload, NPU initialization and Human SL moves"
               " (overall timeout=%ds; stall timeout=%ds)" %
@@ -245,6 +265,17 @@ def main(argv=None):
                        last_progress.split("NpuSmoke:", 1)[-1].strip() if last_progress else "Activity launch"),
                       flush=True)
                 last_heartbeat = now
+            if not newest and not launch_checked and now - started_at >= 20:
+                launch_checked = True
+                try:
+                    app_running = capture_activity_launch_diagnostics(
+                        args.adb, serial, folder, run_id)
+                    if not app_running:
+                        report["errors"].append(
+                            "Android game process is not running; check activity_launch_diagnostics.txt")
+                        break
+                except (OSError, RuntimeError, subprocess.TimeoutExpired) as ex:
+                    print("Could not capture startup diagnostics:", ex, flush=True)
             if re.search(r"\b(?:PASS|FAIL) id=" + re.escape(run_id) + r"(?:\s|$)", logs):
                 break
             if "Fatal signal" in logs or "FATAL EXCEPTION" in logs: break
