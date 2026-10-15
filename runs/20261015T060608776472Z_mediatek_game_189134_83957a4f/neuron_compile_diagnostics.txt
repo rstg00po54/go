@@ -1,0 +1,699 @@
+10-15 14:06:01.787 D/nativeloader(18789): Configuring clns-9 for other apk /data/app/~~CHbrBC3w9ZzrezRY9ZYk8w==/com.badukai.java.nputest-mxXcGMcMj5mmk2fAAbf69w==/base.apk. target_sdk_version=34, uses_libraries=libOpenCL.so:libneuron_sys_util.mtk.so:libneuronusdk_adapter.mtk.so:libneuronusdk_adapter.9.mtk.so:libapuwareutils_v2.mtk.so:libapuwareapusys_v2.mtk.so:libmvpuop_mtk_nn.mtk.so:libmvpuop_mtk_cv.mtk.so:libmvpu_runtime_pub.mtk.so:libmvpu_engine_pub.mtk.so:libmvpu_pattern_pub.mtk.so:libmvpuop25_mtk_nn.mtk.so:libmvpuop25_mtk_cv.mtk.so:libmvpu_runtime_25_pub.mtk.so:libmvpu_engine_25_pub.mtk.so:libmvpu_pattern_25_pub.mtk.so:libmvpu_config.mtk.so:libmvpu_runtime_30.mtk.so:libmvpu_engine_30.mtk.so:libmvpu_pattern_30.mtk.so:libmvpuop30_mtk_nn.mtk.so, library_path=/data/app/~~CHbrBC3w9ZzrezRY9ZYk8w==/com.badukai.java.nputest-mxXcGMcMj5mmk2fAAbf69w==/lib/arm64:/data/app/~~CHbrBC3w9ZzrezRY9ZYk8w==/com.badukai.java.nputest-mxXcGMcMj5mmk2fAAbf69w==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/0/com.badukai.java.nputest
+10-15 14:06:01.787 D/nativeloader(18789): Extending system_exposed_libraries: libneuron_sys_util.mtk.so:libneuronusdk_adapter.mtk.so:libneuronusdk_adapter.9.mtk.so:libapuwareutils_v2.mtk.so:libapuwareapusys_v2.mtk.so:libmvpuop_mtk_nn.mtk.so:libmvpuop_mtk_cv.mtk.so:libmvpu_runtime_pub.mtk.so:libmvpu_engine_pub.mtk.so:libmvpu_pattern_pub.mtk.so:libmvpuop25_mtk_nn.mtk.so:libmvpuop25_mtk_cv.mtk.so:libmvpu_runtime_25_pub.mtk.so:libmvpu_engine_25_pub.mtk.so:libmvpu_pattern_25_pub.mtk.so:libmvpu_config.mtk.so:libmvpu_runtime_30.mtk.so:libmvpu_engine_30.mtk.so:libmvpu_pattern_30.mtk.so:libmvpuop30_mtk_nn.mtk.so
+10-15 14:06:03.036 I/litert  (18789): [compiled_model.cc:750] NPU JIT compilation caching enabled with cache dir: /data/user/0/com.badukai.java.nputest/cache
+10-15 14:06:03.036 I/litert  (18789): [compiler_plugin.cc:308] Attempting to load plugin at: /data/app/~~CHbrBC3w9ZzrezRY9ZYk8w==/com.badukai.java.nputest-mxXcGMcMj5mmk2fAAbf69w==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 14:06:03.037 I/litert  (18789): [compiler_plugin.cc:250] Loading plugin at: /data/app/~~CHbrBC3w9ZzrezRY9ZYk8w==/com.badukai.java.nputest-mxXcGMcMj5mmk2fAAbf69w==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 14:06:03.037 W/linker  (18789): Warning: "/data/app/~~CHbrBC3w9ZzrezRY9ZYk8w==/com.badukai.java.nputest-mxXcGMcMj5mmk2fAAbf69w==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so" unused DT entry: DT_RPATH (type 0xf arg 0x761) (ignoring)
+10-15 14:06:03.038 I/litert  (18789): [compiler_plugin.cc:260] Loaded plugin at: /data/app/~~CHbrBC3w9ZzrezRY9ZYk8w==/com.badukai.java.nputest-mxXcGMcMj5mmk2fAAbf69w==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 14:06:03.038 I/litert  (18789): [compiler_plugin.cc:263] Resolved plugin api at: /data/app/~~CHbrBC3w9ZzrezRY9ZYk8w==/com.badukai.java.nputest-mxXcGMcMj5mmk2fAAbf69w==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 14:06:03.038 I/litert  (18789): [compiler_plugin.cc:268] Initialize plugin at: /data/app/~~CHbrBC3w9ZzrezRY9ZYk8w==/com.badukai.java.nputest-mxXcGMcMj5mmk2fAAbf69w==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 14:06:03.057 I/litert  (18789): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 14:06:03.169 I/litert  (18789): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 14:06:03.170 I/litert  (18789): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 14:06:03.170 W/litert  (18789): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 14:06:03.170 I/litert  (18789): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 14:06:03.170 I/litert  (18789): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 14:06:03.173 I/litert  (18789): [compiled_model.cc:1380] Flatbuffer model initialized from cached model.
+10-15 14:06:03.177 I/litert  (18789): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 14:06:03.177 I/litert  (18789): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 14:06:03.178 I/litert  (18789): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 14:06:03.178 W/litert  (18789): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 14:06:03.178 I/litert  (18789): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 14:06:03.178 I/litert  (18789): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 14:06:03.178 I/litert  (18789): [dispatch_api.cc:133] Neuron SDK version: 9.0.11
+10-15 14:06:03.178 I/litert  (18789): [dispatch_api.cc:368] Runtime compatibility check: Neuron SDK version 9.0.11
+10-15 14:06:03.178 I/litert  (18789): [compiled_model.cc:1065] Accelerator returned null hooks.
+10-15 14:06:03.178 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.0.11, runtime 9.0.11
+10-15 14:06:03.187 I/HidlServiceManagement(18789): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 14:06:03.192 I/HidlServiceManagement(18789): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 14:06:03.192 E/apuware_hidl(18789): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 14:06:03.197 I/HidlServiceManagement(18789): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 14:06:03.197 E/apuware_hidl(18789): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 14:06:03.202 I/HidlServiceManagement(18789): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 14:06:03.202 E/apuware_hidl(18789): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 14:06:03.202 E/apuware_hidl(18789): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 14:06:03.208 I/apuware_hidl(18789): AidlNeuronClient get aidl version=5
+10-15 14:06:03.217 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 7128 bytes for Float32 tensor at index 0
+10-15 14:06:03.217 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 76 bytes for Float32 tensor at index 1
+10-15 14:06:03.217 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 2
+10-15 14:06:03.217 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.217 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 4 bytes for Float32 tensor at index 1
+10-15 14:06:03.217 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 12 bytes for Float32 tensor at index 2
+10-15 14:06:03.217 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 16 bytes for Float32 tensor at index 3
+10-15 14:06:03.217 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 324 bytes for Float32 tensor at index 4
+10-15 14:06:03.273 W/litert  (18789): [compiled_model.cc:815] Compiler plugin path is provided in the environment, but the model is pre-compiled. Plugins won't be applied.
+10-15 14:06:03.273 I/litert  (18789): [compiled_model.cc:829] Flatbuffer model initialized directly from incoming litert model.
+10-15 14:06:03.273 I/litert  (18789): [dispatch_api.cc:368] Runtime compatibility check: Neuron SDK version 9.0.11
+10-15 14:06:03.273 I/litert  (18789): [compiled_model.cc:1065] Accelerator returned null hooks.
+10-15 14:06:03.276 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.282 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 7128 bytes for Float32 tensor at index 0
+10-15 14:06:03.282 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 76 bytes for Float32 tensor at index 1
+10-15 14:06:03.282 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 768 bytes for Float32 tensor at index 2
+10-15 14:06:03.282 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 3
+10-15 14:06:03.282 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.282 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 4 bytes for Float32 tensor at index 1
+10-15 14:06:03.282 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 1536 bytes for Float32 tensor at index 2
+10-15 14:06:03.282 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 324 bytes for Float32 tensor at index 3
+10-15 14:06:03.282 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 4 bytes for Float32 tensor at index 4
+10-15 14:06:03.282 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 5
+10-15 14:06:03.283 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.285 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 1536 bytes for Float32 tensor at index 0
+10-15 14:06:03.285 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 1536 bytes for Float32 tensor at index 0
+10-15 14:06:03.285 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.288 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 4 bytes for Float32 tensor at index 0
+10-15 14:06:03.288 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 1536 bytes for Float32 tensor at index 1
+10-15 14:06:03.288 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 1536 bytes for Float32 tensor at index 2
+10-15 14:06:03.288 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 4 bytes for Float32 tensor at index 0
+10-15 14:06:03.288 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 1536 bytes for Float32 tensor at index 1
+10-15 14:06:03.288 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 4 bytes for Float32 tensor at index 2
+10-15 14:06:03.288 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.291 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 1536 bytes for Float32 tensor at index 0
+10-15 14:06:03.291 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 1536 bytes for Float32 tensor at index 0
+10-15 14:06:03.292 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.294 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 1536 bytes for Float32 tensor at index 0
+10-15 14:06:03.294 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 1536 bytes for Float32 tensor at index 1
+10-15 14:06:03.294 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 2
+10-15 14:06:03.294 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.294 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 1
+10-15 14:06:03.294 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 2
+10-15 14:06:03.294 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.296 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.296 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.297 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.299 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.299 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 1
+10-15 14:06:03.299 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 2
+10-15 14:06:03.299 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.299 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.299 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.299 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.302 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.302 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.302 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.305 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.305 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.305 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.305 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.305 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.306 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.308 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.308 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.309 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.312 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.312 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.312 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.312 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 3
+10-15 14:06:03.312 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.312 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.312 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.312 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.314 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.314 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.315 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.318 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.318 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.318 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.318 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.318 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.319 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.322 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.322 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.322 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.326 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.326 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.326 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.326 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 3
+10-15 14:06:03.326 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.326 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.327 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.330 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.330 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.330 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.334 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.334 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.334 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.334 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 3
+10-15 14:06:03.334 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.334 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 1
+10-15 14:06:03.334 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 2
+10-15 14:06:03.334 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.336 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.336 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.336 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.339 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.339 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 1
+10-15 14:06:03.339 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 2
+10-15 14:06:03.339 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.339 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.339 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.339 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.342 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.342 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.343 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.346 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.346 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.346 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.346 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.346 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.347 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.349 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.349 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.350 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.353 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.353 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.353 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.353 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 3
+10-15 14:06:03.353 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.353 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.353 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.353 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.356 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.356 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.357 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.359 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.359 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.359 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.359 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.359 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.360 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.362 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.362 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.363 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.366 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.366 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.366 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.366 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 3
+10-15 14:06:03.366 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.366 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.367 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.370 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.370 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.370 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.373 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.373 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.373 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.373 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 3
+10-15 14:06:03.373 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.373 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 1
+10-15 14:06:03.373 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 2
+10-15 14:06:03.374 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.376 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.376 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.377 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.380 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.380 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 1
+10-15 14:06:03.380 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 2
+10-15 14:06:03.380 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.380 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.380 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.380 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.383 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.383 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.383 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.387 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.387 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.387 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.387 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 41472 bytes for Float32 tensor at index 0
+10-15 14:06:03.387 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 20736 bytes for Float32 tensor at index 1
+10-15 14:06:03.387 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 20736 bytes for Float32 tensor at index 2
+10-15 14:06:03.388 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.390 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 20736 bytes for Float32 tensor at index 0
+10-15 14:06:03.390 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 20736 bytes for Float32 tensor at index 0
+10-15 14:06:03.390 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.393 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.393 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 20736 bytes for Float32 tensor at index 1
+10-15 14:06:03.393 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 20736 bytes for Float32 tensor at index 2
+10-15 14:06:03.393 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 3
+10-15 14:06:03.393 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 4 bytes for Float32 tensor at index 4
+10-15 14:06:03.393 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 4 bytes for Float32 tensor at index 5
+10-15 14:06:03.393 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 41472 bytes for Float32 tensor at index 6
+10-15 14:06:03.393 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.393 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 41472 bytes for Float32 tensor at index 1
+10-15 14:06:03.393 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 41472 bytes for Float32 tensor at index 2
+10-15 14:06:03.394 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.396 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 41472 bytes for Float32 tensor at index 0
+10-15 14:06:03.396 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 41472 bytes for Float32 tensor at index 0
+10-15 14:06:03.396 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.400 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 41472 bytes for Float32 tensor at index 0
+10-15 14:06:03.400 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 41472 bytes for Float32 tensor at index 1
+10-15 14:06:03.400 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 2
+10-15 14:06:03.400 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 3
+10-15 14:06:03.400 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.400 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.400 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.400 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.403 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.403 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.403 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.406 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.406 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.406 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.406 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.406 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.407 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.410 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.410 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.411 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.413 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.413 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.413 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.413 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 3
+10-15 14:06:03.413 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.413 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.414 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.417 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.417 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.417 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.421 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.421 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.421 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.421 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 3
+10-15 14:06:03.421 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.421 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 1
+10-15 14:06:03.421 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 2
+10-15 14:06:03.421 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.423 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.423 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.424 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.427 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.427 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 1
+10-15 14:06:03.427 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 2
+10-15 14:06:03.427 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.427 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.427 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.427 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.430 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.430 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.431 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.434 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.434 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.434 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.434 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.434 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.434 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.437 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.437 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.438 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.442 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.442 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.442 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.442 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 3
+10-15 14:06:03.442 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.442 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.442 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.442 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.445 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.445 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.445 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.449 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.449 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.449 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.449 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.449 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.449 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.452 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.452 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.452 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.455 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.455 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.455 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.455 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 3
+10-15 14:06:03.455 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.455 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.456 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.459 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.459 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.460 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.463 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.463 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.463 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.463 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 3
+10-15 14:06:03.463 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.463 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 1
+10-15 14:06:03.463 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 2
+10-15 14:06:03.464 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.467 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.467 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.468 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.472 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.472 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 1
+10-15 14:06:03.472 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 2
+10-15 14:06:03.472 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.472 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.472 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.472 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.474 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.474 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.475 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.478 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.478 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.478 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.478 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.478 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.479 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.481 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.481 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.482 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.485 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.485 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.485 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.485 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 3
+10-15 14:06:03.485 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.485 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.485 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.485 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.488 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.488 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.488 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.491 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.491 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.491 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.491 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.491 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.491 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.493 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.493 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.494 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.497 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.497 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.497 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.497 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 3
+10-15 14:06:03.497 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.497 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.498 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.500 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.500 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.501 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.504 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.504 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.504 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.504 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 3
+10-15 14:06:03.504 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.504 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 1
+10-15 14:06:03.504 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 2
+10-15 14:06:03.504 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.507 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.507 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.507 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.510 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.510 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 1
+10-15 14:06:03.510 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 2
+10-15 14:06:03.510 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.510 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.510 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.511 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.513 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.513 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.514 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.517 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.517 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.517 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.517 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 41472 bytes for Float32 tensor at index 0
+10-15 14:06:03.517 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 20736 bytes for Float32 tensor at index 1
+10-15 14:06:03.517 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 20736 bytes for Float32 tensor at index 2
+10-15 14:06:03.517 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.520 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 20736 bytes for Float32 tensor at index 0
+10-15 14:06:03.520 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 20736 bytes for Float32 tensor at index 0
+10-15 14:06:03.521 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.523 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.523 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 20736 bytes for Float32 tensor at index 1
+10-15 14:06:03.523 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 20736 bytes for Float32 tensor at index 2
+10-15 14:06:03.523 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 3
+10-15 14:06:03.523 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 4 bytes for Float32 tensor at index 4
+10-15 14:06:03.523 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 4 bytes for Float32 tensor at index 5
+10-15 14:06:03.523 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 41472 bytes for Float32 tensor at index 6
+10-15 14:06:03.523 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 41472 bytes for Float32 tensor at index 0
+10-15 14:06:03.523 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 41472 bytes for Float32 tensor at index 1
+10-15 14:06:03.524 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.526 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 41472 bytes for Float32 tensor at index 0
+10-15 14:06:03.526 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 41472 bytes for Float32 tensor at index 0
+10-15 14:06:03.527 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.530 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 41472 bytes for Float32 tensor at index 0
+10-15 14:06:03.530 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 41472 bytes for Float32 tensor at index 1
+10-15 14:06:03.530 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 2
+10-15 14:06:03.530 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 3
+10-15 14:06:03.530 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.530 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.530 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.530 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.533 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.533 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.534 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.537 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.537 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.537 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.537 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.537 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.537 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.540 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.540 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.541 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.544 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.544 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.544 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.544 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 3
+10-15 14:06:03.544 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.544 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.545 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.547 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.547 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.548 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.551 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.551 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.551 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.551 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 3
+10-15 14:06:03.551 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.551 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 1
+10-15 14:06:03.551 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 2
+10-15 14:06:03.551 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.554 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.554 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.555 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.558 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.558 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 1
+10-15 14:06:03.558 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 2
+10-15 14:06:03.558 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.558 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.558 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.559 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.561 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.561 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.562 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.565 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.565 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.565 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.565 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.565 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.566 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.568 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.568 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.569 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.572 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.572 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.572 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.572 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 3
+10-15 14:06:03.572 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.572 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.572 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.573 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.575 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.575 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.575 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.580 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.580 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.580 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.580 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.580 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.581 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.583 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.583 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.584 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.587 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.587 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.587 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.587 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 3
+10-15 14:06:03.587 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.587 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.587 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.589 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.589 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.590 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.593 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.593 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.593 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.593 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 3
+10-15 14:06:03.593 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.593 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 1
+10-15 14:06:03.593 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 2
+10-15 14:06:03.594 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.596 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.596 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.596 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.599 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.599 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 1
+10-15 14:06:03.600 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 2
+10-15 14:06:03.600 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.600 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.600 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.600 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.603 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.603 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.603 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.607 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.607 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.607 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.607 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.607 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.608 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.610 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.610 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.611 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.615 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.615 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.615 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.615 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 3
+10-15 14:06:03.615 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.615 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.615 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.615 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.618 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.618 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.619 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.623 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.623 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.623 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.623 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.623 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.623 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.626 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.626 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.627 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.631 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.631 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.631 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.631 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 3
+10-15 14:06:03.631 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.631 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.632 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.635 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.635 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.635 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.638 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.639 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.639 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.639 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 3
+10-15 14:06:03.639 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.639 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 1
+10-15 14:06:03.639 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 2
+10-15 14:06:03.639 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.642 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.642 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.642 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.646 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.646 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 1
+10-15 14:06:03.646 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 2
+10-15 14:06:03.646 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.646 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.646 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.646 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.649 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.649 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.650 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.654 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.654 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.654 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.654 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 41472 bytes for Float32 tensor at index 0
+10-15 14:06:03.654 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 20736 bytes for Float32 tensor at index 1
+10-15 14:06:03.654 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 20736 bytes for Float32 tensor at index 2
+10-15 14:06:03.654 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.657 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 20736 bytes for Float32 tensor at index 0
+10-15 14:06:03.657 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 20736 bytes for Float32 tensor at index 0
+10-15 14:06:03.658 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.660 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.660 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 20736 bytes for Float32 tensor at index 1
+10-15 14:06:03.660 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 20736 bytes for Float32 tensor at index 2
+10-15 14:06:03.660 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 3
+10-15 14:06:03.660 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 4 bytes for Float32 tensor at index 4
+10-15 14:06:03.660 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 4 bytes for Float32 tensor at index 5
+10-15 14:06:03.660 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 41472 bytes for Float32 tensor at index 6
+10-15 14:06:03.660 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 41472 bytes for Float32 tensor at index 0
+10-15 14:06:03.660 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 41472 bytes for Float32 tensor at index 1
+10-15 14:06:03.660 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.664 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 41472 bytes for Float32 tensor at index 0
+10-15 14:06:03.664 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 41472 bytes for Float32 tensor at index 0
+10-15 14:06:03.665 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.669 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 41472 bytes for Float32 tensor at index 0
+10-15 14:06:03.669 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 41472 bytes for Float32 tensor at index 1
+10-15 14:06:03.669 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 2
+10-15 14:06:03.669 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 3
+10-15 14:06:03.669 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.669 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.669 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.669 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.673 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.673 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.673 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.677 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.677 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.677 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.677 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.677 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.678 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.682 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.682 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.682 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.686 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.686 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.686 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.686 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 3
+10-15 14:06:03.686 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.686 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.687 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.690 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.690 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.691 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.695 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.695 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.695 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.695 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 3
+10-15 14:06:03.695 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.695 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 1
+10-15 14:06:03.695 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 2
+10-15 14:06:03.695 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.699 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.699 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 124416 bytes for Float32 tensor at index 0
+10-15 14:06:03.699 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.703 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 14:06:03.703 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 1
+10-15 14:06:03.703 W/litert  (18789): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 124416 bytes for Float32 tensor at index 2
+10-15 14:06:03.703 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 0
+10-15 14:06:03.703 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 1
+10-15 14:06:03.703 W/litert  (18789): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 62208 bytes for Float32 tensor at index 2
+10-15 14:06:03.704 I/litert  (18789): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.2.1, runtime 9.0.11
+10-15 14:06:03.892 E/apuware_hidl(18789): AidlNeuronClient session_createInstance fail
+10-15 14:06:03.892 E/neuron  (18789): APUSysEngine::createInstance() failed
+10-15 14:06:03.892 E/neuron  (18789): APUSysEngine initialization failed.
+10-15 14:06:03.892 W/neuron  (18789): Cannot create device for APUSYS_2_0
+10-15 14:06:03.892 W/neuron  (18789): Found an unsupported target: APUSYS_2_0
+10-15 14:06:03.892 W/neuron  (18789): Fail to revise dla::CompiledResult
+10-15 14:06:03.892 W/neuron  (18789): Fail to preprocess dla::CompiledGraph
+10-15 14:06:03.892 W/neuron  (18789): Fail to preprocess dla::CompiledNetwork
+10-15 14:06:03.892 E/neuron  (18789): Cannot prepare execution.
+10-15 14:06:03.892 E/neuron  (18789): Successfully open network but cannot start execution.
+10-15 14:06:03.892 E/neuron  (18789): NeuronModel_restoreFromCompiledNetwork - Failed to load compiled network from the given buffer
+10-15 14:06:03.893 E/neuron  (18789): The header of DLA is invalid
+10-15 14:06:03.893 E/neuron  (18789): Cannot set a nullptr compiled network.
+10-15 14:06:03.893 E/neuron  (18789): Cannot set compiled network.
+10-15 14:06:03.894 E/neuron  (18789): NeuronModel_restoreFromCompiledNetwork - Failed to load compiled network from the given buffer
+10-15 14:06:03.895 E/neuron  (18789): PrepareTensors: Currently we can't support dynamic shape, the dimension size of a tensor Operand type 3 should not be zero
+10-15 14:06:03.895 E/neuron  (18789): Fail to convert model
+10-15 14:06:03.896 E/litert  (18789): [dispatch_api.cc:257] Failed to create context from context binary: Failed to finish compilation
+10-15 14:06:04.071 E/litert  (18789): [litert_compiled_model_jni.cc:816] Failed to create compiled model: Failed to compile model
+10-15 14:06:04.073 W/KataGoMTK(18789): com.google.ai.edge.litert.LiteRtException: Failed to compile model
+10-15 14:06:04.073 W/KataGoMTK(18789): 	at com.google.ai.edge.litert.CompiledModel.nativeCreateFromFile(Native Method)
+10-15 14:06:04.073 W/KataGoMTK(18789): 	at com.google.ai.edge.litert.CompiledModel.access$nativeCreateFromFile(Model.kt:56)
+10-15 14:06:04.073 W/KataGoMTK(18789): 	at com.google.ai.edge.litert.CompiledModel$Companion.nativeCreateFromFile(Model.kt:0)
+10-15 14:06:04.073 W/KataGoMTK(18789): 	at com.google.ai.edge.litert.CompiledModel$Companion.createFromFile(Model.kt:564)
+10-15 14:06:04.073 W/KataGoMTK(18789): 	at com.google.ai.edge.litert.CompiledModel$Companion.createFromFile$default(Model.kt:544)
+10-15 14:06:04.073 W/KataGoMTK(18789): 	at com.google.ai.edge.litert.CompiledModel$Companion.create(Model.kt:600)
+10-15 14:06:04.073 W/KataGoMTK(18789): 	at com.google.ai.edge.litert.CompiledModel.create(Model.kt:2)

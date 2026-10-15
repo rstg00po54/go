@@ -1,0 +1,37 @@
+{
+  "test": "vivo MediaTek KataGo real game backend with Human SL",
+  "run_id": "fd196aad96fa43de",
+  "sizes": [
+    9
+  ],
+  "humanSL": true,
+  "requireHumanNpu": true,
+  "hardwareExecution": "UNVERIFIED",
+  "status": "FAIL",
+  "errors": [
+    "Step 0: No separately compiled b18 Human LiteRT graph",
+    "Step 0: Human SL still executed on CPU/Eigen",
+    "Step 0: Missing actual Human CPU/LiteRT 5-head parity",
+    "Step 0: Human SL NPU graph fell back to CPU"
+  ],
+  "steps": [
+    {
+      "index": 0,
+      "board": 9,
+      "status": "FAIL",
+      "errors": [
+        "No separately compiled b18 Human LiteRT graph",
+        "Human SL still executed on CPU/Eigen",
+        "Missing actual Human CPU/LiteRT 5-head parity",
+        "Human SL NPU graph fell back to CPU"
+      ],
+      "litertInferenceCount": 68,
+      "humanLiteRtInferenceCount": 0,
+      "humanParitySampleCount": 0,
+      "black": "G5",
+      "white": "F4"
+    }
+  ],
+  "serial": "10AFB21HP5002ZK",
+  "socModel": "MT6993"
+}
