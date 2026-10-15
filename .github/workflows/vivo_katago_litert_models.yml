@@ -92,9 +92,11 @@ jobs:
             test -s "verified-models/katago_10b_${size}x${size}.tflite"
             test -s "verified-models/katago_10b_${size}x${size}.json"
           done
-          TAG="vivo-litert-10b-9-13-19-v1"
+          # New signatures record ONNX output scaling. Do NOT overwrite the
+          # original v1 release: prepare_vivo_litert.sh pins its SHA256 hashes.
+          TAG="vivo-litert-10b-9-13-19-v2"
           if ! gh release view "$TAG" >/dev/null 2>&1; then
             gh release create "$TAG" --title "Experimental KataGo LiteRT 10b model set for MediaTek" \
-              --notes "9/13/19 per-board KataGo g170 weights converted from official ONNX. CPU graph smoke validated. NPU hardware execution and head parity still require Vivo device tests."
+              --notes "v2 manifests preserve ONNX outputScaleMultiplier/scale8Applied. Original v1 graphs and pinned v1 hashes remain intact. CPU graph inference smoke validated; numerical parity still requires vivo testing."
           fi
           gh release upload "$TAG" verified-models/*.tflite verified-models/*.json --clobber
