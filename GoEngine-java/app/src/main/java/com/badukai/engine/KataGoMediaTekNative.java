@@ -101,6 +101,8 @@ public final class KataGoMediaTekNative {
             this.humanRunner = humanRunner;
         }
 
+        public boolean usesHumanLiteRt() { return humanRunner != null; }
+
         public boolean send(String command) {
             long id = handle;
             return id != 0 && nativeSendCommand(id, command);
