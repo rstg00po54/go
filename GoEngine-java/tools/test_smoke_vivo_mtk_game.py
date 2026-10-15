@@ -16,7 +16,7 @@ def example_log(sizes=DEFAULT_SIZES, human=True, include_final=True):
             f"I/KataGoEngine: MTK_GAME_BACKEND_READY board={size} humanSL={str(human).lower()} backend=NPU/MediaTek",
             f"I/KataGoMTK: MTK_GTP_INFER board={size}",
             f"I/NpuSmoke: STEP_PASS id={run_id} index={idx} board={size} active={size} "
-            "startupMs=202 black=D4 blackMs=42 white=F5 whiteMs=39",
+            "startupMs=202 setupMs=15 black=D4 blackMs=42 white=F5 whiteMs=39",
         ])
     if include_final:
         lines.append("I/NpuSmoke: PASS id=%s steps=%d sizes=%s" % (run_id, len(sizes), ",".join(map(str, sizes))))
@@ -72,6 +72,8 @@ class MtkRealGameTests(unittest.TestCase):
         self.assertEqual(result["status"], "PASS", result["errors"])
         self.assertEqual(result["steps"][0]["inferenceTiming"]["10b"]["meanMs"], 2)
         self.assertEqual(result["steps"][0]["inferenceTiming"]["human"]["meanMs"], 8)
+        self.assertEqual(result["steps"][0]["phaseTimingMs"]["setupMs"], 15)
+        self.assertEqual(result["steps"][0]["phaseTimingMs"]["blackMs"], 42)
 
     def test_cpu_to_npu_switch_is_required(self):
         raw = example_log()
