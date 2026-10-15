@@ -58,7 +58,7 @@ public final class KataGoMediaTekGtpSmoke {
     public static void run(Context app, String id, int boardSize) {
         Log.i(TAG, "MTK_GTP_SMOKE_BEGIN id=" + id + " board=" + boardSize);
         try {
-            if (boardSize != 9 && boardSize != 13 && boardSize != 19)
+            if (boardSize != 9 && boardSize != 11 && boardSize != 13 && boardSize != 15 && boardSize != 19)
                 throw new IllegalArgumentException("Unsupported GTP board");
             if (!KataGoMediaTekLiteRt.isMediaTek())
                 throw new IllegalStateException("Not a MediaTek device");
