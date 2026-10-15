@@ -73,7 +73,7 @@ cmake -Wno-deprecated -S "$SOURCE_DIR/cpp" -B "$BUILD_DIR" -G Ninja \
     -DEigen3_DIR="$EIGEN_CMAKE_DIR" -DBUILD_DISTRIBUTED=OFF \
     -DNO_GIT_REVISION=ON -DUSE_AVX2=OFF -DUSE_TCMALLOC=OFF \
     -DCMAKE_CXX_FLAGS="-DLITTLE_ENDIAN=1234 -DBIG_ENDIAN=4321 -DBYTE_ORDER=1234"
-cmake --build "$BUILD_DIR" --parallel "${KATAGO_JOBS:-2}"
+cmake --build "$BUILD_DIR" --parallel "${KATAGO_JOBS:-8}"
 
 BINARY="$BUILD_DIR/katago"
 if [[ ! -f "$BINARY" ]]; then
