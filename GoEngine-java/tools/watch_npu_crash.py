@@ -22,7 +22,7 @@ import time
 PROJECT = Path(__file__).resolve().parents[1]
 SYMBOLIZER = Path(__file__).with_name("symbolize_npu_crash.sh")
 FATAL = re.compile(r"^.*\bFatal signal\s+\d+\b.*$", re.MULTILINE)
-APP = "com.badukai.java"
+APP = "com.badukai.java.nputest"
 
 
 def latest_crash(raw):
