@@ -67,6 +67,10 @@ def parse_game_log(raw, run_id, sizes, human=True):
                "STEP_BEGIN id=" + run_id in line]
     end_ok = any(prefix in line and re.search(r"\bPASS id=" + re.escape(run_id) + r"(?:\s|$)", line) for line in lines)
     errors, steps = [], []
+    precheck = [line for line in lines if prefix in line
+                and "MTK_CPU_TO_NPU_PRECHECK_READY id=" + run_id in line]
+    if len(precheck) != 1 or "backend=CPU/" not in precheck[0]:
+        errors.append("CPU JNI preload and CPU-to-MediaTek switch precheck missing")
     if len(indexes) != len(sizes): errors.append("Expected %d steps; saw %d" % (len(sizes), len(indexes)))
     for index, begin in enumerate(indexes):
         requested = sizes[index] if index < len(sizes) else None
