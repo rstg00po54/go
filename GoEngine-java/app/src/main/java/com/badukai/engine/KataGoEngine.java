@@ -82,6 +82,7 @@ public class KataGoEngine {
     private volatile KataGoNative.GtpSession jniSession;
     private volatile KataGoGpuNative.GtpSession gpuSession;
     private volatile KataGoNpuNative.GtpSession npuSession;
+    private volatile KataGoMediaTekNative.GtpSession mediaTekSession;
     private volatile int activeNpuBoardSize = -1;
     public enum BackendPreference { CPU, GPU, NPU }
     private volatile BackendPreference backendPreference = BackendPreference.CPU;
@@ -130,10 +131,10 @@ public class KataGoEngine {
     public static boolean supportsRknnHardware() { return NpuHardware.canRunRknn(); }
 
     /** Board size of the RKNN model loaded by the active native GTP session. */
-    public int getActiveNpuBoardSize() { return npuSession != null ? activeNpuBoardSize : -1; }
+    public int getActiveNpuBoardSize() { return npuSession != null || mediaTekSession != null ? activeNpuBoardSize : -1; }
 
     public String getBackendName() {
-        return npuSession != null ? (humanSLRunning ? "NPU 10b + CPU Human SL" : "NPU/RKNN JNI") : gpuSession != null ? "GPU/OpenCL JNI" : jniSession != null ? "CPU/Eigen JNI" : "PIE/ProcessBuilder";
+        return mediaTekSession != null ? (humanSLRunning ? "NPU/MediaTek LiteRT + CPU Human SL" : "NPU/MediaTek LiteRT JNI") : npuSession != null ? (humanSLRunning ? "NPU 10b + CPU Human SL" : "NPU/RKNN JNI") : gpuSession != null ? "GPU/OpenCL JNI" : jniSession != null ? "CPU/Eigen JNI" : "PIE/ProcessBuilder";
     }
 
     /**
@@ -171,7 +172,7 @@ public class KataGoEngine {
         if (!preferJni) return;
         if (preference == null) preference = BackendPreference.CPU;
         if (backendPreference != preference || (preference == BackendPreference.GPU && running.get() && gpuSession == null)
-                || (preference == BackendPreference.NPU && running.get() && npuSession == null))
+                || (preference == BackendPreference.NPU && running.get() && npuSession == null && mediaTekSession == null))
             stop();
         backendPreference = preference;
         if (preference == BackendPreference.GPU) gpuDisabledForProcess = false;
@@ -186,7 +187,7 @@ public class KataGoEngine {
         if (running.get()) {
             // RKNN graphs are fixed-shape; a different board needs a fresh session.
             if (isReady() && humanSLRunning == useHumanSL
-                    && (npuSession == null || activeNpuBoardSize == startupBoardSize)) return true;
+                    && ((npuSession == null && mediaTekSession == null) || activeNpuBoardSize == startupBoardSize)) return true;
             stop(); // Different engine mode or an engine process/session died.
         }
         configuredBoardSize = -1;
@@ -213,12 +214,20 @@ public class KataGoEngine {
                     // Only enable RKNN for models actually included in this APK.
                 }
             }
-            boolean npuAvailable = new File(nativeLibDir, "libkatago_npu.so").isFile()
+            boolean rknnAvailable = new File(nativeLibDir, "libkatago_npu.so").isFile()
                     && new File(nativeLibDir, "librknnrt.so").isFile() && rknnModelAvailable && supportsRknnHardware();
-            boolean useNpu = preferJni && backendPreference == BackendPreference.NPU
-                    && !npuDisabledForProcess && npuAvailable;
+            String liteRtStem = "katago_10b_" + startupBoardSize + "x" + startupBoardSize;
+            boolean mtkAvailable = NpuHardware.canProbeMediaTekLiteRt() && npuSizeSupported
+                    && new File(nativeLibDir, "libkatago_mtk.so").isFile()
+                    && hasAsset("engine/" + liteRtStem + ".tflite")
+                    && hasAsset("engine/" + liteRtStem + ".json");
+            boolean useRknn = preferJni && backendPreference == BackendPreference.NPU
+                    && !npuDisabledForProcess && rknnAvailable;
+            boolean useMediaTek = preferJni && backendPreference == BackendPreference.NPU
+                    && !npuDisabledForProcess && mtkAvailable;
+            boolean useNpu = useRknn || useMediaTek;
             if (preferJni && backendPreference == BackendPreference.NPU && !useNpu)
-                Log.w(TAG, "NPU/RKNN model unavailable for board=" + startupBoardSize + "; falling back to CPU");
+                Log.w(TAG, "NPU model/runtime unavailable for board=" + startupBoardSize + "; falling back to CPU");
             boolean gpuAvailable = new File(nativeLibDir, "libkatago_gpu.so").isFile();
             boolean useGpu = preferJni && backendPreference == BackendPreference.GPU && !gpuDisabledForProcess && gpuAvailable;
             if (preferJni && backendPreference == BackendPreference.GPU && !gpuAvailable)
@@ -244,7 +253,7 @@ public class KataGoEngine {
                         java.nio.charset.StandardCharsets.UTF_8);
                 cfg = cfg.replace("logDir = gtp_logs", "logDir = " + logsDir.getAbsolutePath());
                 cfg += "\n" + "homeDataDir = " + homeDir.getAbsolutePath() + "\n";
-                if (useNpu) cfg += "nnMaxBatchSize = 1\n";
+                if (useNpu) cfg = KataGoGtpConfig.set(cfg, "nnMaxBatchSize", "1");
                 java.nio.file.Files.write(configFile.toPath(), cfg.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             }
             if ("engine_winrate".equals(engineDirectoryName)) {
@@ -273,7 +282,13 @@ public class KataGoEngine {
                 modelFile = new File(engineDir, "10b.bin");
                 copyAssetToFile(DEFAULT_MODEL_ASSET, modelFile);
             }
-            if (useNpu) copyAssetToFile(rknnAssetPath, new File(engineDir, rknnModelName));
+            if (useRknn) copyAssetToFile(rknnAssetPath, new File(engineDir, rknnModelName));
+            File liteRtGraph = new File(engineDir, liteRtStem + ".tflite");
+            File liteRtManifest = new File(engineDir, liteRtStem + ".json");
+            if (useMediaTek) {
+                copyAssetToFile("engine/" + liteRtStem + ".tflite", liteRtGraph);
+                copyAssetToFile("engine/" + liteRtStem + ".json", liteRtManifest);
+            }
             startupTiming("engine_prepare_model_asset", phaseNs);
             phaseNs = System.nanoTime();
 
@@ -287,10 +302,36 @@ public class KataGoEngine {
 
             Log.i(TAG, "Model: " + modelFile.getAbsolutePath() + " size=" + modelFile.length());
             Log.i(TAG, "Config: " + configFile.getAbsolutePath());
-            Log.i(TAG, "Backend requested: " + (useNpu ? "NPU/RKNN in-process JNI" :
+            Log.i(TAG, "Backend requested: " + (useMediaTek ? "NPU/MediaTek LiteRT in-process JNI" : useRknn ? "NPU/RKNN in-process JNI" :
                     useGpu ? "GPU/OpenCL in-process JNI" : useJni ? "CPU/JNI Eigen" : "PIE/ProcessBuilder"));
 
-            if (useNpu) {
+            if (useMediaTek) {
+                try {
+                    phaseNs = System.nanoTime();
+                    mediaTekSession = KataGoMediaTekNative.createSession(context, modelFile, configFile,
+                            humanFile, liteRtGraph, liteRtManifest, startupBoardSize);
+                    startupTiming("engine_mtk_native_create", phaseNs);
+                    if (mediaTekSession == null) throw new IOException("MediaTek GTP returned null");
+                    activeNpuBoardSize = startupBoardSize;
+                    running.set(true);
+                    humanSLRunning = useHumanSL;
+                    startReaderThread();
+                    responseQueue.clear();
+                    if (!sendCommandSync("name") || !waitForStartupResponse(120000))
+                        throw new IOException("MediaTek LiteRT GTP did not become ready");
+                    Log.i(TAG, "MTK_GAME_BACKEND_READY board=" + activeNpuBoardSize
+                            + " humanSL=" + useHumanSL + " backend=" + getBackendName());
+                    startupTiming("engine_mtk_ready", totalStartNs);
+                    return true;
+                } catch (Exception | LinkageError e) {
+                    Log.e(TAG, "MediaTek LiteRT GTP startup failed; reverting to CPU", e);
+                    npuDisabledForProcess = true;
+                    stop();
+                    return start(model, useHumanSL);
+                }
+            }
+
+            if (useRknn) {
                 try {
                     phaseNs = System.nanoTime();
                     npuSession = KataGoNpuNative.createSession(modelFile, configFile, humanFile,
@@ -444,7 +485,8 @@ public class KataGoEngine {
             if (jniSession != null && !jniSession.isAlive()) return false;
             if (gpuSession != null && !gpuSession.isAlive()) return false;
             if (npuSession != null && !npuSession.isAlive()) return false;
-            if (jniSession == null && gpuSession == null && npuSession == null && (process == null || !process.isAlive())) return false;
+            if (mediaTekSession != null && !mediaTekSession.isAlive()) return false;
+            if (jniSession == null && gpuSession == null && npuSession == null && mediaTekSession == null && (process == null || !process.isAlive())) return false;
             try {
                 String response = responseQueue.poll(200, TimeUnit.MILLISECONDS);
                 if (response != null) {
@@ -465,6 +507,7 @@ public class KataGoEngine {
 
     private void startReaderThread() {
         DebugLog.enter(TAG, "startReaderThread in");
+        if (mediaTekSession != null) { startMediaTekReaderThread(); return; }
         if (npuSession != null) { startNpuReaderThread(); return; }
         if (gpuSession != null) { startGpuReaderThread(); return; }
         if (jniSession != null) { startJniReaderThread(); return; }
@@ -551,6 +594,33 @@ public class KataGoEngine {
         readerThread.start();
     }
 
+    private void startMediaTekReaderThread() {
+        final KataGoMediaTekNative.GtpSession session = mediaTekSession;
+        final long generation = sessionGeneration;
+        final LinkedBlockingQueue<String> sessionResponses = responseQueue;
+        readerThread = new Thread(() -> {
+            StringBuilder buffer = new StringBuilder();
+            try {
+                while (running.get() && generation == sessionGeneration && mediaTekSession == session) {
+                    String chunk = session.read(1000);
+                    if (chunk == null || !running.get() || generation != sessionGeneration || mediaTekSession != session) break;
+                    buffer.append(chunk.replace("\\r\\n", "\\n"));
+                    int end;
+                    while ((end = buffer.indexOf("\\n\\n")) >= 0) {
+                        String response = buffer.substring(0, end + 2);
+                        buffer.delete(0, end + 2);
+                        Log.d(TAG, "MediaTek JNI GTP response: " + response.trim());
+                        sessionResponses.offer(response);
+                    }
+                    if (buffer.length() > 8 * 1024 * 1024) throw new IOException("MediaTek GTP reply too large");
+                }
+            } catch (Exception | LinkageError e) {
+                if (running.get()) Log.e(TAG, "MediaTek GTP output reader failed", e);
+            }
+        }, "KataGo-MediaTek-JNI-stdout");
+        readerThread.start();
+    }
+
     private void startNpuReaderThread() {
         final KataGoNpuNative.GtpSession session = npuSession;
         final long generation = sessionGeneration;
@@ -618,13 +688,20 @@ public class KataGoEngine {
 
     public synchronized void stop() {
         DebugLog.enter(TAG, "stop in, running=" + running.get() + ", process=" + process);
-        if (!running.get() && process == null && jniSession == null && gpuSession == null && npuSession == null) return;
+        if (!running.get() && process == null && jniSession == null && gpuSession == null && npuSession == null && mediaTekSession == null) return;
         sessionGeneration++;
         try { sendCommandSync("quit"); } catch (Exception ignored) {}
         running.set(false);
         humanSLRunning = false;
         configuredBoardSize = -1;
         activeNpuBoardSize = -1;
+        if (mediaTekSession != null) {
+            KataGoMediaTekNative.GtpSession old = mediaTekSession;
+            mediaTekSession = null;
+            try { old.close(); } catch (Exception | LinkageError e) { Log.w(TAG, "MediaTek session cleanup failed", e); }
+            responseQueue.clear();
+            Log.i(TAG, "NPU/MediaTek LiteRT JNI session stopped");
+        }
         if (npuSession != null) {
             KataGoNpuNative.GtpSession old = npuSession;
             npuSession = null;
@@ -844,7 +921,8 @@ public class KataGoEngine {
         KataGoNative.GtpSession session = jniSession;
         KataGoGpuNative.GtpSession remote = gpuSession;
         KataGoNpuNative.GtpSession npu = npuSession;
-        return running.get() && (npu != null ? npu.isAlive() : remote != null ? remote.isAlive()
+        KataGoMediaTekNative.GtpSession mtk = mediaTekSession;
+        return running.get() && (mtk != null ? mtk.isAlive() : npu != null ? npu.isAlive() : remote != null ? remote.isAlive()
                 : session != null ? session.isAlive() : (process != null && process.isAlive()));
     }
 
@@ -903,7 +981,7 @@ public class KataGoEngine {
         long startedNs = System.nanoTime();
         try {
             // KataGo v1.14.1: same move as genmove, with exact root visit stats on stderr.
-            boolean isJni = jniSession != null || gpuSession != null || npuSession != null;
+            boolean isJni = jniSession != null || gpuSession != null || npuSession != null || mediaTekSession != null;
             if (!sendCommandSync((isJni ? "genmove " : "genmove_debug ") + color)) return null;
             String response = waitForResponse(60000);
             long elapsedMs = (System.nanoTime() - startedNs) / 1000000L;
@@ -953,7 +1031,7 @@ public class KataGoEngine {
         DebugLog.enter(TAG, "setBoardSize in, size=" + size);
         // Never resize an active RKNN model to a different graph shape:
         // MainActivity must restart GTP and choose that board's RKNN asset.
-        if (npuSession != null && activeNpuBoardSize != size) {
+        if ((npuSession != null || mediaTekSession != null) && activeNpuBoardSize != size) {
             Log.e(TAG, "NPU_BOARD_SIZE_MISMATCH activeModel=" + activeNpuBoardSize
                     + " requested=" + size + "; restart NPU engine first");
             return false;
@@ -963,7 +1041,7 @@ public class KataGoEngine {
             return true;
         }
         long startedNs = System.nanoTime();
-        boolean ok = simpleCommand("boardsize " + size, npuSession != null ? 120000 : gpuSession != null ? 360000 : jniSession != null ? 90000 : 5000);
+        boolean ok = simpleCommand("boardsize " + size, npuSession != null || mediaTekSession != null ? 120000 : gpuSession != null ? 360000 : jniSession != null ? 90000 : 5000);
         if (ok) configuredBoardSize = size;
         Log.i(TAG, "GTP boardsize=" + size + " ok=" + ok + " elapsedMs=" + (System.nanoTime() - startedNs) / 1000000L);
         return ok;
@@ -1293,6 +1371,11 @@ public class KataGoEngine {
     private synchronized boolean sendCommandSync(String command) {
         DebugLog.enter(TAG, "sendCommandSync in, command=" + command + ", running=" + running.get());
         if (!running.get() && !"quit".equals(command)) return false;
+        if (mediaTekSession != null) {
+            boolean queued = mediaTekSession.send(command);
+            Log.d(TAG, "MediaTek GTP send=" + queued + " command=" + command);
+            return queued;
+        }
         if (npuSession != null) {
             boolean queued = npuSession.send(command);
             Log.d(TAG, "NPU JNI GTP command=" + command + " queued=" + queued);
@@ -1337,6 +1420,8 @@ public class KataGoEngine {
                 long remainingMs = Math.max(1, TimeUnit.NANOSECONDS.toMillis(deadline - System.nanoTime()));
                 String response = responseQueue.poll(Math.min(200, remainingMs), TimeUnit.MILLISECONDS);
                 if (response != null) return response;
+                KataGoMediaTekNative.GtpSession mtk = mediaTekSession;
+                if (mtk != null) mtk.stopSearch();
                 KataGoNpuNative.GtpSession npu = npuSession;
                 if (npu != null && !npu.isAlive()) {
                     Log.e(TAG, "NPU JNI GTP worker stopped while waiting for a reply");
