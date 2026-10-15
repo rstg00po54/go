@@ -1,0 +1,275 @@
+{
+  "test": "vivo MediaTek KataGo real game backend with Human SL",
+  "run_id": "1e9d4888853d4975",
+  "sizes": [
+    9,
+    11,
+    13,
+    15,
+    19,
+    9
+  ],
+  "humanSL": true,
+  "requireHumanNpu": true,
+  "hardwareExecution": "UNVERIFIED",
+  "status": "PASS",
+  "errors": [],
+  "steps": [
+    {
+      "index": 0,
+      "board": 9,
+      "inferenceTiming": {
+        "10b": {
+          "count": 68,
+          "meanMs": 1.382,
+          "minMs": 1.0,
+          "maxMs": 4.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 8.25,
+          "minMs": 7.0,
+          "maxMs": 10.0
+        }
+      },
+      "status": "PASS",
+      "errors": [],
+      "litertInferenceCount": 72,
+      "humanLiteRtInferenceCount": 4,
+      "humanParitySampleCount": 20,
+      "black": "E5",
+      "white": "D4"
+    },
+    {
+      "index": 1,
+      "board": 11,
+      "inferenceTiming": {
+        "10b": {
+          "count": 54,
+          "meanMs": 1.852,
+          "minMs": 1.0,
+          "maxMs": 7.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 9.5,
+          "minMs": 7.0,
+          "maxMs": 11.0
+        }
+      },
+      "status": "PASS",
+      "errors": [],
+      "litertInferenceCount": 58,
+      "humanLiteRtInferenceCount": 4,
+      "humanParitySampleCount": 20,
+      "black": "J8",
+      "white": "C3"
+    },
+    {
+      "index": 2,
+      "board": 13,
+      "inferenceTiming": {
+        "10b": {
+          "count": 56,
+          "meanMs": 2.339,
+          "minMs": 1.0,
+          "maxMs": 6.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 14.0,
+          "minMs": 10.0,
+          "maxMs": 22.0
+        }
+      },
+      "status": "PASS",
+      "errors": [],
+      "litertInferenceCount": 60,
+      "humanLiteRtInferenceCount": 4,
+      "humanParitySampleCount": 20,
+      "black": "L10",
+      "white": "D4"
+    },
+    {
+      "index": 3,
+      "board": 15,
+      "inferenceTiming": {
+        "10b": {
+          "count": 51,
+          "meanMs": 1.961,
+          "minMs": 1.0,
+          "maxMs": 4.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 12.5,
+          "minMs": 11.0,
+          "maxMs": 13.0
+        }
+      },
+      "status": "PASS",
+      "errors": [],
+      "litertInferenceCount": 55,
+      "humanLiteRtInferenceCount": 4,
+      "humanParitySampleCount": 20,
+      "black": "N12",
+      "white": "C12"
+    },
+    {
+      "index": 4,
+      "board": 19,
+      "inferenceTiming": {
+        "10b": {
+          "count": 51,
+          "meanMs": 2.667,
+          "minMs": 2.0,
+          "maxMs": 4.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 18.75,
+          "minMs": 17.0,
+          "maxMs": 22.0
+        }
+      },
+      "status": "PASS",
+      "errors": [],
+      "litertInferenceCount": 55,
+      "humanLiteRtInferenceCount": 4,
+      "humanParitySampleCount": 20,
+      "black": "Q16",
+      "white": "D4"
+    },
+    {
+      "index": 5,
+      "board": 9,
+      "inferenceTiming": {
+        "10b": {
+          "count": 68,
+          "meanMs": 2.265,
+          "minMs": 1.0,
+          "maxMs": 4.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 13.5,
+          "minMs": 12.0,
+          "maxMs": 17.0
+        }
+      },
+      "status": "PASS",
+      "errors": [],
+      "litertInferenceCount": 72,
+      "humanLiteRtInferenceCount": 4,
+      "humanParitySampleCount": 20,
+      "black": "G7",
+      "white": "F6"
+    }
+  ],
+  "serial": "10AFB21HP5002ZK",
+  "socModel": "MT6993",
+  "performanceSummary": [
+    {
+      "board": 9,
+      "inferenceTiming": {
+        "10b": {
+          "count": 68,
+          "meanMs": 1.382,
+          "minMs": 1.0,
+          "maxMs": 4.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 8.25,
+          "minMs": 7.0,
+          "maxMs": 10.0
+        }
+      }
+    },
+    {
+      "board": 11,
+      "inferenceTiming": {
+        "10b": {
+          "count": 54,
+          "meanMs": 1.852,
+          "minMs": 1.0,
+          "maxMs": 7.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 9.5,
+          "minMs": 7.0,
+          "maxMs": 11.0
+        }
+      }
+    },
+    {
+      "board": 13,
+      "inferenceTiming": {
+        "10b": {
+          "count": 56,
+          "meanMs": 2.339,
+          "minMs": 1.0,
+          "maxMs": 6.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 14.0,
+          "minMs": 10.0,
+          "maxMs": 22.0
+        }
+      }
+    },
+    {
+      "board": 15,
+      "inferenceTiming": {
+        "10b": {
+          "count": 51,
+          "meanMs": 1.961,
+          "minMs": 1.0,
+          "maxMs": 4.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 12.5,
+          "minMs": 11.0,
+          "maxMs": 13.0
+        }
+      }
+    },
+    {
+      "board": 19,
+      "inferenceTiming": {
+        "10b": {
+          "count": 51,
+          "meanMs": 2.667,
+          "minMs": 2.0,
+          "maxMs": 4.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 18.75,
+          "minMs": 17.0,
+          "maxMs": 22.0
+        }
+      }
+    },
+    {
+      "board": 9,
+      "inferenceTiming": {
+        "10b": {
+          "count": 68,
+          "meanMs": 2.265,
+          "minMs": 1.0,
+          "maxMs": 4.0
+        },
+        "human": {
+          "count": 4,
+          "meanMs": 13.5,
+          "minMs": 12.0,
+          "maxMs": 17.0
+        }
+      }
+    }
+  ]
+}
