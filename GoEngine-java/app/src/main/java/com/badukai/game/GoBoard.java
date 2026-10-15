@@ -396,6 +396,7 @@ public class GoBoard {
         return result;
     }
 
+    public List<Point> getInitialHandicapSnapshot() { return new ArrayList<>(initialHandicapStones); }
     public List<Move> getMoveHistorySnapshot() { return new ArrayList<>(moveHistory); }
 
     public int getCapturedBlack() { DebugLog.v(TAG, "getCapturedBlack in, capturedBlack=" + capturedBlack); return capturedBlack; }
