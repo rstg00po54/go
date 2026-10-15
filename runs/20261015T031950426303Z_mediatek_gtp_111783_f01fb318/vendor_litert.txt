@@ -1,0 +1,64 @@
+10-15 11:19:46.107 I/litert  (18152): [accelerator_registry.cc:54] RegisterAccelerator: ptr=0xb400007302a147b0, name=NpuAccelerator
+10-15 11:19:46.107 I/litert  (18152): [npu_registry.cc:30] NPU accelerator registered.
+10-15 11:19:46.107 I/litert  (18152): [gpu_registry.cc:130] Attempting to load GPU accelerator(libLiteRtGpuAccelerator.so).
+10-15 11:19:46.108 I/litert  (18152): [gpu_registry.cc:130] Attempting to load GPU accelerator(libLiteRtClGlAccelerator.so).
+10-15 11:19:46.109 I/litert  (18152): [gpu_registry.cc:130] Attempting to load GPU accelerator(libLiteRtOpenClAccelerator.so).
+10-15 11:19:46.109 I/litert  (18152): [gpu_registry.cc:130] Attempting to load GPU accelerator(libLiteRtWebGpuAccelerator.so).
+10-15 11:19:46.109 I/litert  (18152): [gpu_registry.cc:130] Attempting to load GPU accelerator(libLiteRtVulkanAccelerator.so).
+10-15 11:19:46.110 W/litert  (18152): [gpu_registry.cc:160] GPU accelerator could not be loaded and registered.
+10-15 11:19:46.110 I/litert  (18152): [accelerator_registry.cc:54] RegisterAccelerator: ptr=0xb400007302a0bec0, name=CpuAccelerator
+10-15 11:19:46.110 I/litert  (18152): [cpu_registry.cc:75] XNNPACK CPU accelerator registered.
+10-15 11:19:46.111 I/litert  (18152): [compiler_plugin.cc:308] Attempting to load plugin at: /data/app/~~iNXcV-gMrHqraqcTsNMIUQ==/com.badukai.java.nputest-dldM_bNA3m-nd78uAThruQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 11:19:46.111 I/litert  (18152): [compiler_plugin.cc:250] Loading plugin at: /data/app/~~iNXcV-gMrHqraqcTsNMIUQ==/com.badukai.java.nputest-dldM_bNA3m-nd78uAThruQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 11:19:46.112 I/litert  (18152): [compiler_plugin.cc:260] Loaded plugin at: /data/app/~~iNXcV-gMrHqraqcTsNMIUQ==/com.badukai.java.nputest-dldM_bNA3m-nd78uAThruQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 11:19:46.112 I/litert  (18152): [compiler_plugin.cc:263] Resolved plugin api at: /data/app/~~iNXcV-gMrHqraqcTsNMIUQ==/com.badukai.java.nputest-dldM_bNA3m-nd78uAThruQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 11:19:46.112 I/litert  (18152): [compiler_plugin.cc:268] Initialize plugin at: /data/app/~~iNXcV-gMrHqraqcTsNMIUQ==/com.badukai.java.nputest-dldM_bNA3m-nd78uAThruQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 11:19:46.115 I/litert  (18152): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 11:19:46.242 I/litert  (18152): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 11:19:46.243 I/litert  (18152): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 11:19:46.243 W/litert  (18152): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 11:19:46.243 I/litert  (18152): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 11:19:46.243 I/litert  (18152): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 11:19:46.249 I/litert  (18152): [dispatch_delegate.cc:98] DispatchDelegate::DispatchDelegate
+10-15 11:19:46.249 I/litert  (18152): [dispatch_accelerator.cc:138] Dispatch delegate getting hooks.
+10-15 11:19:46.250 I/litert  (18152): [dispatch_delegate.cc:187] Lazy initializing Dispatch API for GetHooks.
+10-15 11:19:46.250 I/litert  (18152): [litert_dispatch.cc:186] Loading shared library: /data/app/~~iNXcV-gMrHqraqcTsNMIUQ==/com.badukai.java.nputest-dldM_bNA3m-nd78uAThruQ==/lib/arm64/libLiteRtDispatch_MediaTek.so
+10-15 11:19:46.253 I/litert  (18152): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 11:19:46.254 I/litert  (18152): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 11:19:46.254 I/litert  (18152): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 11:19:46.254 W/litert  (18152): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 11:19:46.254 I/litert  (18152): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 11:19:46.254 I/litert  (18152): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 11:19:46.254 I/litert  (18152): [dispatch_api.cc:133] Neuron SDK version: 9.0.11
+10-15 11:19:46.254 I/litert  (18152): [dispatch_api.cc:368] Runtime compatibility check: Neuron SDK version 9.0.11
+10-15 11:19:46.254 I/litert  (18152): [compiled_model.cc:1065] Accelerator returned null hooks.
+10-15 11:19:46.254 I/litert  (18152): [dispatch_delegate.cc:128] DispatchDelegate::Initialize katago_10b_19x19_batch1
+10-15 11:19:46.254 I/tflite  (18152): Replacing 1 out of 1 node(s) with delegate (DispatchDelegate) node, yielding 1 partitions for subgraph 0 (katago_10b_19x19_batch1).
+10-15 11:19:46.254 I/litert  (18152): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.0.11, runtime 9.0.11
+10-15 11:19:46.267 I/HidlServiceManagement(18152): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 11:19:46.272 I/HidlServiceManagement(18152): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 11:19:46.272 E/apuware_hidl(18152): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 11:19:46.277 I/HidlServiceManagement(18152): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 11:19:46.277 E/apuware_hidl(18152): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 11:19:46.283 I/HidlServiceManagement(18152): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 11:19:46.283 E/apuware_hidl(18152): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 11:19:46.283 E/apuware_hidl(18152): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 11:19:46.284 I/apuware_hidl(18152): AidlNeuronClient get aidl version=5
+10-15 11:19:46.293 W/litert  (18152): [litert_dispatch_invocation_context.cc:398] MediaTek GetInputRequirements called for index 0, tensor_type.element_type=1 (Float32=1)
+10-15 11:19:46.293 W/litert  (18152): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 31768 bytes for Float32 tensor at index 0
+10-15 11:19:46.293 W/litert  (18152): [litert_dispatch_invocation_context.cc:398] MediaTek GetInputRequirements called for index 1, tensor_type.element_type=1 (Float32=1)
+10-15 11:19:46.293 W/litert  (18152): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 76 bytes for Float32 tensor at index 1
+10-15 11:19:46.293 W/litert  (18152): [litert_dispatch_invocation_context.cc:398] MediaTek GetInputRequirements called for index 2, tensor_type.element_type=1 (Float32=1)
+10-15 11:19:46.293 W/litert  (18152): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 1444 bytes for Float32 tensor at index 2
+10-15 11:19:46.293 W/litert  (18152): [litert_dispatch_invocation_context.cc:460] MediaTek GetOutputRequirements called for index 0, tensor_type.element_type=1 (Float32=1)
+10-15 11:19:46.293 W/litert  (18152): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 1444 bytes for Float32 tensor at index 0
+10-15 11:19:46.293 W/litert  (18152): [litert_dispatch_invocation_context.cc:460] MediaTek GetOutputRequirements called for index 1, tensor_type.element_type=1 (Float32=1)
+10-15 11:19:46.293 W/litert  (18152): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 4 bytes for Float32 tensor at index 1
+10-15 11:19:46.293 W/litert  (18152): [litert_dispatch_invocation_context.cc:460] MediaTek GetOutputRequirements called for index 2, tensor_type.element_type=1 (Float32=1)
+10-15 11:19:46.293 W/litert  (18152): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 12 bytes for Float32 tensor at index 2
+10-15 11:19:46.293 W/litert  (18152): [litert_dispatch_invocation_context.cc:460] MediaTek GetOutputRequirements called for index 3, tensor_type.element_type=1 (Float32=1)
+10-15 11:19:46.293 W/litert  (18152): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 16 bytes for Float32 tensor at index 3
+10-15 11:19:46.293 W/litert  (18152): [litert_dispatch_invocation_context.cc:460] MediaTek GetOutputRequirements called for index 4, tensor_type.element_type=1 (Float32=1)
+10-15 11:19:46.293 W/litert  (18152): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 1444 bytes for Float32 tensor at index 4
+10-15 11:19:46.943 I/litert  (18152): [accelerator_registry.cc:43] DestroyAccelerator: ptr=0xb400007302a0bec0, name=CpuAccelerator
+10-15 11:19:46.943 I/litert  (18152): [accelerator_registry.cc:43] DestroyAccelerator: ptr=0xb400007302a147b0, name=NpuAccelerator
