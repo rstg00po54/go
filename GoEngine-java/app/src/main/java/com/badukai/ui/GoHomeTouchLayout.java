@@ -22,6 +22,7 @@ public class GoHomeTouchLayout extends FrameLayout {
         p.topMargin=Math.round(y*h);
         v.setLayoutParams(p);
     }
+    public void refreshPositions() { post(this::positionButtons); }
     private void positionButtons() {
         if (getWidth() == 0 || getHeight() == 0) return;
         // The background is a full-screen scene, while controls are independently rendered.
