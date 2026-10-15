@@ -1,0 +1,24 @@
+10-15 10:45:36.835 I/KataGoMTK(22886): MTK_GTP_SMOKE_BEGIN id=15a3c803adf346d7 board=9
+10-15 10:45:36.918 I/KataGoMTK(22886): MTK_GTP_ASSETS_READY id=15a3c803adf346d7 board=9
+10-15 10:45:36.948 I/litert  (22886): [compiler_plugin.cc:260] Loaded plugin at: /data/app/~~89zKqyIpIq0jg6y__ir0OQ==/com.badukai.java.nputest-f1FpreFb9LEf8x5hlJiiFA==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 10:45:37.127 W/litert  (22886): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 10:45:37.127 I/litert  (22886): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 10:45:37.138 W/litert  (22886): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 10:45:37.138 I/litert  (22886): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 10:45:37.138 I/litert  (22886): [dispatch_api.cc:133] Neuron SDK version: 9.0.11
+10-15 10:45:37.138 I/litert  (22886): [dispatch_api.cc:368] Runtime compatibility check: Neuron SDK version 9.0.11
+10-15 10:45:37.138 I/litert  (22886): [dispatch_delegate.cc:128] DispatchDelegate::Initialize katago_10b_9x9_batch1
+10-15 10:45:37.138 I/tflite  (22886): Replacing 1 out of 1 node(s) with delegate (DispatchDelegate) node, yielding 1 partitions for subgraph 0 (katago_10b_9x9_batch1).
+10-15 10:45:37.138 I/litert  (22886): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.0.11, runtime 9.0.11
+10-15 10:45:37.163 E/apuware_hidl(22886): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 10:45:37.168 E/apuware_hidl(22886): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 10:45:37.173 E/apuware_hidl(22886): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 10:45:37.173 E/apuware_hidl(22886): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 10:45:37.176 I/apuware_hidl(22886): AidlNeuronClient get aidl version=5
+10-15 10:45:37.201 I/KataGoMTK(22886): MTK_LITERT_INIT board=9 npuRequested=true graph=katago_10b_9x9.tflite
+10-15 10:45:37.201 I/KataGoMTK(22886): MTK_GTP_BRIDGE_INSTALLED
+10-15 10:45:37.201 I/KataGoMTK(22886): MTK_GTP_NATIVE_READY board=9 handle=1
+10-15 10:45:37.254 I/KataGoMTK(22886): MTK_GTP_BRIDGE_RELEASED
+10-15 10:45:37.259 I/KataGoMTK(22886): MTK_GTP_NATIVE_CLOSED
+10-15 10:45:37.259 E/KataGoMTK(22886): MTK_GTP_SMOKE_FAIL id=15a3c803adf346d7 board=9 reason=java.lang.IllegalStateException: GTP failure: name => ? JNI GTP exception: Key 'numSearchThreads' + was specified multiple times in /data/user/0/com.badukai.java.nputest/files/mtk_gtp_smoke/mtk_gtp.cfg, you probably didn't mean to do this, please delete one of them
+10-15 10:45:37.259 E/KataGoMTK(22886): java.lang.IllegalStateException: GTP failure: name => ? JNI GTP exception: Key 'numSearchThreads' + was specified multiple times in /data/user/0/com.badukai.java.nputest/files/mtk_gtp_smoke/mtk_gtp.cfg, you probably didn't mean to do this, please delete one of them

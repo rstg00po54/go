@@ -1,0 +1,39 @@
+{
+  "test": "Vivo KataGo real GTP MediaTek LiteRT",
+  "run_id": "15a3c803adf346d7",
+  "board": 9,
+  "serial": "10AFB21HP5002ZK",
+  "status": "FAIL",
+  "hardwareExecution": "UNVERIFIED",
+  "errors": [
+    "10-15 10:45:37.259 E/KataGoMTK(22886): MTK_GTP_SMOKE_FAIL id=15a3c803adf346d7 board=9 reason=java.lang.IllegalStateException: GTP failure: name => ? JNI GTP exception: Key 'numSearchThreads' + was specified multiple times in /data/user/0/com.badukai.java.nputest/files/mtk_gtp_smoke/mtk_gtp.cfg, you probably didn't mean to do this, please delete one of them",
+    "MediaTek GTP test failed"
+  ],
+  "soc": "MT6993",
+  "hardware": "mt6993",
+  "modelInferenceCount": 0,
+  "gtpNeuralInferenceCount": 0,
+  "searchMoves": {},
+  "vendorLogLineCount": 64,
+  "npuDiagnostics": {
+    "compilerPluginLoaded": true,
+    "dispatchInitialized": true,
+    "neuronApiVersion": "9.0.11",
+    "aidlVersion": "5",
+    "delegateStatus": "FULL_GRAPH_DELEGATED",
+    "delegatePartitions": [
+      {
+        "delegated": 1,
+        "total": 1,
+        "partitions": 1
+      }
+    ],
+    "inferenceTiming": {
+      "count": 0,
+      "samplesMs": []
+    },
+    "fallbackIndicators": [],
+    "hardwareExecution": "UNVERIFIED"
+  },
+  "fallbackWarnings": []
+}
