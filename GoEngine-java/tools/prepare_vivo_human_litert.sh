@@ -198,10 +198,90 @@ PY
   exit 0
 fi
 
+# Opt-in 11x11 exact-Mish JIT model validated by GitHub Actions.
+# The graph is *not* a precompiled Neuron AOT binary.
+if [[ "${1:-}" == "--mish11" ]]; then
+  base="https://github.com/rstg00po54/go/releases/download/vivo-human-b18-mish-exact-jit-11x11-mt6993-v1"
+  stem="katago_human_11x11"
+  graphTmp="$(mktemp "$DEST/.${stem}.mish.XXXXXX")"
+  manifestTmp="$(mktemp "$DEST/.${stem}.mish.json.XXXXXX")"
+  proofTmp="$(mktemp "$DEST/.${stem}.mish.proof.XXXXXX")"
+  trap 'rm -f -- "$graphTmp" "$manifestTmp" "$proofTmp"' EXIT
+  curl --fail --location --retry 3 --connect-timeout 15 -o "$graphTmp" "$base/${stem}.tflite"
+  curl --fail --location --retry 3 --connect-timeout 15 -o "$manifestTmp" "$base/${stem}.json"
+  curl --fail --location --retry 3 --connect-timeout 15 -o "$proofTmp" "$base/rewrite.json"
+  python3 - "$graphTmp" "$manifestTmp" "$proofTmp" <<'PY'
+import hashlib,json,pathlib,sys
+graph,manifest,proof=map(pathlib.Path,sys.argv[1:])
+doc=json.loads(manifest.read_text())
+rewrite=json.loads(proof.read_text())
+assert doc['modelType']=='human' and doc['weights']=='b18c384nbt-humanv0'
+assert doc['size']==11 and doc['cpu_inference']=='PASS'
+assert doc['numInputMetaChannels']==192 and doc['metaEncoderVersion']==1
+assert doc['numInputChannels']==22 and doc['numInputGlobalChannels']==19
+assert doc['numPolicyChannels']==2 and doc['numScoreValueChannels']==6
+assert set(doc['inputOrder'])=={'InputSpatial','InputGlobal','InputMeta','InputMask'}
+assert set(doc['outputOrder'])=={'OutputPolicyPass','OutputPolicy','OutputValue','OutputScoreValue','OutputOwnership'}
+assert rewrite['rewrittenChains']==120 and rewrite['gatedActivations']==118
+assert rewrite['allOriginalInitializersBitIdentical'] is True
+h=hashlib.sha256()
+with graph.open('rb') as f:
+    for b in iter(lambda:f.read(1<<20),b''):h.update(b)
+assert h.hexdigest()==doc['graphSha256'],'Human 11 JIT model/manifest digest mismatch'
+print('HUMAN_EXACT_MISH_JIT_GRAPH_VERIFIED board=11 bytes=%d sha256=%s'%(graph.stat().st_size,h.hexdigest()))
+PY
+  mv -f "$graphTmp" "$DEST/${stem}.tflite"
+  mv -f "$manifestTmp" "$DEST/${stem}.json"
+  trap - EXIT
+  rm -f -- "$proofTmp"
+  echo "HUMAN_EXACT_MISH_JIT_STAGED 11x11, device execution and parity NOT YET VERIFIED"
+  exit 0
+fi
+
+# Opt-in 15x15 exact-Mish JIT model validated by GitHub Actions.
+# The graph is *not* a precompiled Neuron AOT binary.
+if [[ "${1:-}" == "--mish15" ]]; then
+  base="https://github.com/rstg00po54/go/releases/download/vivo-human-b18-mish-exact-jit-15x15-mt6993-v1"
+  stem="katago_human_15x15"
+  graphTmp="$(mktemp "$DEST/.${stem}.mish.XXXXXX")"
+  manifestTmp="$(mktemp "$DEST/.${stem}.mish.json.XXXXXX")"
+  proofTmp="$(mktemp "$DEST/.${stem}.mish.proof.XXXXXX")"
+  trap 'rm -f -- "$graphTmp" "$manifestTmp" "$proofTmp"' EXIT
+  curl --fail --location --retry 3 --connect-timeout 15 -o "$graphTmp" "$base/${stem}.tflite"
+  curl --fail --location --retry 3 --connect-timeout 15 -o "$manifestTmp" "$base/${stem}.json"
+  curl --fail --location --retry 3 --connect-timeout 15 -o "$proofTmp" "$base/rewrite.json"
+  python3 - "$graphTmp" "$manifestTmp" "$proofTmp" <<'PY'
+import hashlib,json,pathlib,sys
+graph,manifest,proof=map(pathlib.Path,sys.argv[1:])
+doc=json.loads(manifest.read_text())
+rewrite=json.loads(proof.read_text())
+assert doc['modelType']=='human' and doc['weights']=='b18c384nbt-humanv0'
+assert doc['size']==15 and doc['cpu_inference']=='PASS'
+assert doc['numInputMetaChannels']==192 and doc['metaEncoderVersion']==1
+assert doc['numInputChannels']==22 and doc['numInputGlobalChannels']==19
+assert doc['numPolicyChannels']==2 and doc['numScoreValueChannels']==6
+assert set(doc['inputOrder'])=={'InputSpatial','InputGlobal','InputMeta','InputMask'}
+assert set(doc['outputOrder'])=={'OutputPolicyPass','OutputPolicy','OutputValue','OutputScoreValue','OutputOwnership'}
+assert rewrite['rewrittenChains']==120 and rewrite['gatedActivations']==118
+assert rewrite['allOriginalInitializersBitIdentical'] is True
+h=hashlib.sha256()
+with graph.open('rb') as f:
+    for b in iter(lambda:f.read(1<<20),b''):h.update(b)
+assert h.hexdigest()==doc['graphSha256'],'Human 15 JIT model/manifest digest mismatch'
+print('HUMAN_EXACT_MISH_JIT_GRAPH_VERIFIED board=15 bytes=%d sha256=%s'%(graph.stat().st_size,h.hexdigest()))
+PY
+  mv -f "$graphTmp" "$DEST/${stem}.tflite"
+  mv -f "$manifestTmp" "$DEST/${stem}.json"
+  trap - EXIT
+  rm -f -- "$proofTmp"
+  echo "HUMAN_EXACT_MISH_JIT_STAGED 15x15, device execution and parity NOT YET VERIFIED"
+  exit 0
+fi
+
 case "${1:---size}" in
   --all) SIZES=(9 13 19) ;;
   --size) SIZES=("${2:-9}") ;;
-  *) echo "Usage: bash tools/prepare_vivo_human_litert.sh --size 9|13|19 OR --all OR --aot9 OR --mish9 OR --mish13 OR --mish19" >&2; exit 2 ;;
+  *) echo "Usage: bash tools/prepare_vivo_human_litert.sh --size 9|13|19 OR --all OR --aot9 OR --mish9 OR --mish13 OR --mish19 OR --mish11 OR --mish15" >&2; exit 2 ;;
 esac
 for size in "${SIZES[@]}"; do
   case "$size" in 9|13|19) ;; *) echo "Unsupported board size: $size" >&2; exit 2;; esac
