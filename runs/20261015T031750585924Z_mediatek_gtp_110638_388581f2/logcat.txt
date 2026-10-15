@@ -1,0 +1,168 @@
+10-15 11:17:46.040 I/MainActivity(15325): NPU_PLATFORM detected=MediaTek / LiteRT probe mediatekGtpReady=false
+10-15 11:17:46.048 I/KataGoMTK(15325): MTK_GTP_SMOKE_BEGIN id=13c5d7440e504628 board=9
+10-15 11:17:46.165 I/KataGoMTK(15325): MTK_GTP_ASSETS_READY id=13c5d7440e504628 board=9
+10-15 11:17:46.200 I/litert  (15325): [litert_runtime_builtin.cc:63] Loaded runtime library and found kLiteRtRuntimeBuiltin.
+10-15 11:17:46.200 I/litert  (15325): [environment.cc:36] Creating LiteRT environment with options
+10-15 11:17:46.200 I/litert  (15325): [accelerator_registry.cc:54] RegisterAccelerator: ptr=0xb400007302a11db0, name=NpuAccelerator
+10-15 11:17:46.200 I/litert  (15325): [npu_registry.cc:30] NPU accelerator registered.
+10-15 11:17:46.200 I/litert  (15325): [gpu_registry.cc:130] Attempting to load GPU accelerator(libLiteRtGpuAccelerator.so).
+10-15 11:17:46.202 I/litert  (15325): [gpu_registry.cc:130] Attempting to load GPU accelerator(libLiteRtClGlAccelerator.so).
+10-15 11:17:46.203 I/litert  (15325): [gpu_registry.cc:130] Attempting to load GPU accelerator(libLiteRtOpenClAccelerator.so).
+10-15 11:17:46.204 I/litert  (15325): [gpu_registry.cc:130] Attempting to load GPU accelerator(libLiteRtWebGpuAccelerator.so).
+10-15 11:17:46.204 I/litert  (15325): [gpu_registry.cc:130] Attempting to load GPU accelerator(libLiteRtVulkanAccelerator.so).
+10-15 11:17:46.204 W/litert  (15325): [gpu_registry.cc:160] GPU accelerator could not be loaded and registered.
+10-15 11:17:46.204 I/litert  (15325): [accelerator_registry.cc:54] RegisterAccelerator: ptr=0xb400007302a17370, name=CpuAccelerator
+10-15 11:17:46.204 I/litert  (15325): [cpu_registry.cc:75] XNNPACK CPU accelerator registered.
+10-15 11:17:46.213 I/litert  (15325): [compiled_model.cc:750] NPU JIT compilation caching enabled with cache dir: /data/user/0/com.badukai.java.nputest/cache
+10-15 11:17:46.214 I/litert  (15325): [compiler_plugin.cc:308] Attempting to load plugin at: /data/app/~~iNXcV-gMrHqraqcTsNMIUQ==/com.badukai.java.nputest-dldM_bNA3m-nd78uAThruQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 11:17:46.214 I/litert  (15325): [compiler_plugin.cc:250] Loading plugin at: /data/app/~~iNXcV-gMrHqraqcTsNMIUQ==/com.badukai.java.nputest-dldM_bNA3m-nd78uAThruQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 11:17:46.215 W/linker  (15325): Warning: "/data/app/~~iNXcV-gMrHqraqcTsNMIUQ==/com.badukai.java.nputest-dldM_bNA3m-nd78uAThruQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so" unused DT entry: DT_RPATH (type 0xf arg 0x761) (ignoring)
+10-15 11:17:46.216 I/litert  (15325): [compiler_plugin.cc:260] Loaded plugin at: /data/app/~~iNXcV-gMrHqraqcTsNMIUQ==/com.badukai.java.nputest-dldM_bNA3m-nd78uAThruQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 11:17:46.217 I/litert  (15325): [compiler_plugin.cc:263] Resolved plugin api at: /data/app/~~iNXcV-gMrHqraqcTsNMIUQ==/com.badukai.java.nputest-dldM_bNA3m-nd78uAThruQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 11:17:46.217 I/litert  (15325): [compiler_plugin.cc:268] Initialize plugin at: /data/app/~~iNXcV-gMrHqraqcTsNMIUQ==/com.badukai.java.nputest-dldM_bNA3m-nd78uAThruQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 11:17:46.222 I/litert  (15325): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 11:17:46.238 I/HidlServiceManagement(15325): Trying to get transport of vendor.mediatek.hardware.apuware.utils@2.0::IApuwareUtils/default without hwservicemanager
+10-15 11:17:46.238 I/HidlServiceManagement(15325): Trying to get transport of vendor.mediatek.hardware.apuware.utils@2.0::IApuwareUtils/default without hwservicemanager
+10-15 11:17:46.360 I/litert  (15325): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 11:17:46.362 I/litert  (15325): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 11:17:46.362 W/litert  (15325): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 11:17:46.362 I/litert  (15325): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 11:17:46.362 I/litert  (15325): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 11:17:46.365 I/litert  (15325): [compiled_model.cc:1380] Flatbuffer model initialized from cached model.
+10-15 11:17:46.366 I/litert  (15325): [dispatch_delegate.cc:98] DispatchDelegate::DispatchDelegate
+10-15 11:17:46.366 I/litert  (15325): [dispatch_accelerator.cc:138] Dispatch delegate getting hooks.
+10-15 11:17:46.366 I/litert  (15325): [dispatch_delegate.cc:187] Lazy initializing Dispatch API for GetHooks.
+10-15 11:17:46.366 I/litert  (15325): [litert_dispatch.cc:186] Loading shared library: /data/app/~~iNXcV-gMrHqraqcTsNMIUQ==/com.badukai.java.nputest-dldM_bNA3m-nd78uAThruQ==/lib/arm64/libLiteRtDispatch_MediaTek.so
+10-15 11:17:46.369 I/litert  (15325): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 11:17:46.369 I/litert  (15325): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 11:17:46.369 I/litert  (15325): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 11:17:46.369 W/litert  (15325): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 11:17:46.370 I/litert  (15325): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 11:17:46.370 I/litert  (15325): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 11:17:46.370 I/litert  (15325): [dispatch_api.cc:133] Neuron SDK version: 9.0.11
+10-15 11:17:46.370 I/litert  (15325): [dispatch_api.cc:368] Runtime compatibility check: Neuron SDK version 9.0.11
+10-15 11:17:46.370 I/litert  (15325): [compiled_model.cc:1065] Accelerator returned null hooks.
+10-15 11:17:46.370 I/litert  (15325): [dispatch_delegate.cc:128] DispatchDelegate::Initialize katago_10b_9x9_batch1
+10-15 11:17:46.370 I/tflite  (15325): Replacing 1 out of 1 node(s) with delegate (DispatchDelegate) node, yielding 1 partitions for subgraph 0 (katago_10b_9x9_batch1).
+10-15 11:17:46.370 I/litert  (15325): [schema_resolver.h:107] Found graph: Partition_0
+10-15 11:17:46.370 I/litert  (15325): [schema_resolver.h:112] There are 1 subgraphs in the bytecode
+10-15 11:17:46.370 I/litert  (15325): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.0.11, runtime 9.0.11
+10-15 11:17:46.393 I/HidlServiceManagement(15325): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 11:17:46.398 I/HidlServiceManagement(15325): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 11:17:46.398 E/apuware_hidl(15325): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 11:17:46.403 I/HidlServiceManagement(15325): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 11:17:46.403 E/apuware_hidl(15325): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 11:17:46.408 I/HidlServiceManagement(15325): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 11:17:46.408 E/apuware_hidl(15325): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 11:17:46.408 E/apuware_hidl(15325): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 11:17:46.409 I/apuware_hidl(15325): AidlNeuronClient get aidl version=5
+10-15 11:17:46.416 W/litert  (15325): [litert_dispatch_invocation_context.cc:398] MediaTek GetInputRequirements called for index 0, tensor_type.element_type=1 (Float32=1)
+10-15 11:17:46.416 W/litert  (15325): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 7128 bytes for Float32 tensor at index 0
+10-15 11:17:46.416 W/litert  (15325): [litert_dispatch_invocation_context.cc:398] MediaTek GetInputRequirements called for index 1, tensor_type.element_type=1 (Float32=1)
+10-15 11:17:46.416 W/litert  (15325): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 76 bytes for Float32 tensor at index 1
+10-15 11:17:46.416 W/litert  (15325): [litert_dispatch_invocation_context.cc:398] MediaTek GetInputRequirements called for index 2, tensor_type.element_type=1 (Float32=1)
+10-15 11:17:46.416 W/litert  (15325): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 324 bytes for Float32 tensor at index 2
+10-15 11:17:46.416 W/litert  (15325): [litert_dispatch_invocation_context.cc:460] MediaTek GetOutputRequirements called for index 0, tensor_type.element_type=1 (Float32=1)
+10-15 11:17:46.416 W/litert  (15325): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 324 bytes for Float32 tensor at index 0
+10-15 11:17:46.416 W/litert  (15325): [litert_dispatch_invocation_context.cc:460] MediaTek GetOutputRequirements called for index 1, tensor_type.element_type=1 (Float32=1)
+10-15 11:17:46.416 W/litert  (15325): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 4 bytes for Float32 tensor at index 1
+10-15 11:17:46.416 W/litert  (15325): [litert_dispatch_invocation_context.cc:460] MediaTek GetOutputRequirements called for index 2, tensor_type.element_type=1 (Float32=1)
+10-15 11:17:46.416 W/litert  (15325): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 12 bytes for Float32 tensor at index 2
+10-15 11:17:46.416 W/litert  (15325): [litert_dispatch_invocation_context.cc:460] MediaTek GetOutputRequirements called for index 3, tensor_type.element_type=1 (Float32=1)
+10-15 11:17:46.416 W/litert  (15325): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 16 bytes for Float32 tensor at index 3
+10-15 11:17:46.416 W/litert  (15325): [litert_dispatch_invocation_context.cc:460] MediaTek GetOutputRequirements called for index 4, tensor_type.element_type=1 (Float32=1)
+10-15 11:17:46.416 W/litert  (15325): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 324 bytes for Float32 tensor at index 4
+10-15 11:17:46.430 I/KataGoMTK(15325): MTK_LITERT_INIT board=9 npuRequested=true graph=katago_10b_9x9.tflite outputScaleMultiplier=8.0 scaleSource=pinned_legacy_graph
+10-15 11:17:46.430 I/KataGoMTK(15325): MTK_GTP_BRIDGE_INSTALLED
+10-15 11:17:46.430 I/KataGoMTK(15325): MTK_GTP_NATIVE_READY board=9 handle=1
+10-15 11:17:46.620 I/KataGoMTK(15325): MTK_GTP_REPLY command=name reply== KataGo
+10-15 11:17:46.620 I/KataGoMTK(15325): MTK_GTP_REPLY command=boardsize 9 reply==
+10-15 11:17:46.620 I/KataGoMTK(15325): MTK_GTP_REPLY command=clear_board reply==
+10-15 11:17:46.620 I/KataGoMTK(15325): MTK_GTP_REPLY command=komi 7.5 reply==
+10-15 11:17:46.636 I/KataGoMTK(15325): MTK_PARITY_CPU handle=0xb400007302a15d20 sample=1 board=9 batch=1 ms=16
+10-15 11:17:46.642 I/KataGoMTK(15325): MTK_LITERT_INFER board=9 ms=4 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:17:46.642 I/KataGoMTK(15325): MTK_GTP_INFER board=9
+10-15 11:17:46.642 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=1 board=9 head=policyPass count=1 maxAbs=0.0076098442 mae=0.0076098442 maxRel=0.00094796639 worst=0 cpu=-7.0275464 npu=-7.0351562
+10-15 11:17:46.642 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=1 board=9 head=policy count=81 maxAbs=0.0077161789 mae=0.0024532183 maxRel=0.0037033253 worst=21 cpu=-1.2608385 npu=-1.2685547
+10-15 11:17:46.642 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=1 board=9 head=value count=3 maxAbs=0.00089883804 mae=0.0005976359 maxRel=0.00020614257 worst=1 cpu=3.3602738 npu=3.359375
+10-15 11:17:46.642 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=1 board=9 head=score count=4 maxAbs=0.00047418475 mae=0.00013967045 maxRel=0.0003410432 worst=1 cpu=-0.39039496 npu=-0.39086914
+10-15 11:17:46.642 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=1 board=9 head=ownership count=81 maxAbs=0.00064052641 mae=0.00015890883 maxRel=0.00053386147 worst=40 cpu=0.19979893 npu=0.20043945
+10-15 11:17:46.659 I/KataGoMTK(15325): MTK_PARITY_CPU handle=0xb400007302a314d0 sample=1 board=9 batch=1 ms=14
+10-15 11:17:46.662 I/KataGoMTK(15325): MTK_LITERT_INFER board=9 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:17:46.662 I/KataGoMTK(15325): MTK_GTP_INFER board=9
+10-15 11:17:46.662 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a314d0 sample=1 board=9 head=policyPass count=1 maxAbs=0.003683567 mae=0.003683567 maxRel=0.00053278166 worst=0 cpu=-5.9138398 npu=-5.9101562
+10-15 11:17:46.662 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a314d0 sample=1 board=9 head=policy count=81 maxAbs=0.011280775 mae=0.0054837922 maxRel=0.0073002759 worst=20 cpu=-0.89946437 npu=-0.88818359
+10-15 11:17:46.662 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a314d0 sample=1 board=9 head=value count=3 maxAbs=0.004966259 mae=0.003049771 maxRel=0.00091581958 worst=2 cpu=-5.7215962 npu=-5.7265625
+10-15 11:17:46.662 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a314d0 sample=1 board=9 head=score count=4 maxAbs=0.0010224879 mae=0.00053486135 maxRel=0.0007021362 worst=1 cpu=-0.4562529 npu=-0.45727539
+10-15 11:17:46.662 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a314d0 sample=1 board=9 head=ownership count=81 maxAbs=0.001149863 mae=0.0002655184 maxRel=0.0010928119 worst=51 cpu=-0.052205771 npu=-0.051055908
+10-15 11:17:46.674 I/KataGoMTK(15325): MTK_PARITY_CPU handle=0xb400007302a15d20 sample=2 board=9 batch=1 ms=12
+10-15 11:17:46.677 I/KataGoMTK(15325): MTK_LITERT_INFER board=9 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:17:46.677 I/KataGoMTK(15325): MTK_GTP_INFER board=9
+10-15 11:17:46.677 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=2 board=9 head=policyPass count=1 maxAbs=0.0094199181 mae=0.0094199181 maxRel=0.0011291965 worst=0 cpu=-7.3421426 npu=-7.3515625
+10-15 11:17:46.677 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=2 board=9 head=policy count=81 maxAbs=0.021812439 mae=0.0082944926 maxRel=0.0089320863 worst=31 cpu=-20.224937 npu=-20.203125
+10-15 11:17:46.677 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=2 board=9 head=value count=3 maxAbs=0.0018911362 mae=0.0014489492 maxRel=0.00037478733 worst=2 cpu=-5.8223276 npu=-5.8242188
+10-15 11:17:46.677 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=2 board=9 head=score count=4 maxAbs=0.00096353889 mae=0.00031383894 maxRel=0.00070500494 worst=1 cpu=-0.36671224 npu=-0.36767578
+10-15 11:17:46.677 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=2 board=9 head=ownership count=81 maxAbs=0.0020614117 mae=0.00061440431 maxRel=0.0016711426 worst=32 cpu=0.23353429 npu=0.2355957
+10-15 11:17:46.690 I/KataGoMTK(15325): MTK_PARITY_CPU handle=0xb400007302a314d0 sample=2 board=9 batch=1 ms=12
+10-15 11:17:46.694 I/KataGoMTK(15325): MTK_LITERT_INFER board=9 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:17:46.694 I/KataGoMTK(15325): MTK_GTP_INFER board=9
+10-15 11:17:46.694 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a314d0 sample=2 board=9 head=policyPass count=1 maxAbs=0.0056891441 mae=0.0056891441 maxRel=0.00070750064 worst=0 cpu=-7.0411859 npu=-7.046875
+10-15 11:17:46.694 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a314d0 sample=2 board=9 head=policy count=81 maxAbs=0.014187098 mae=0.003665665 maxRel=0.0059397618 worst=58 cpu=2.5512965 npu=2.5371094
+10-15 11:17:46.694 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a314d0 sample=2 board=9 head=value count=3 maxAbs=0.0044455528 mae=0.0020661354 maxRel=0.00067386297 worst=2 cpu=-5.5971169 npu=-5.6015625
+10-15 11:17:46.694 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a314d0 sample=2 board=9 head=score count=4 maxAbs=0.00069716573 mae=0.00049907994 maxRel=0.00061697551 worst=1 cpu=-0.41263291 npu=-0.41333008
+10-15 11:17:46.694 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a314d0 sample=2 board=9 head=ownership count=81 maxAbs=0.0013927221 mae=0.00039812878 maxRel=0.0010030409 worst=20 cpu=0.38849986 npu=0.38989258
+10-15 11:17:46.710 I/KataGoMTK(15325): MTK_PARITY_CPU handle=0xb400007302a15d20 sample=3 board=9 batch=1 ms=15
+10-15 11:17:46.713 I/KataGoMTK(15325): MTK_LITERT_INFER board=9 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:17:46.713 I/KataGoMTK(15325): MTK_GTP_INFER board=9
+10-15 11:17:46.713 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=3 board=9 head=policyPass count=1 maxAbs=0.002204895 mae=0.002204895 maxRel=0.0002848708 worst=0 cpu=-6.7399826 npu=-6.7421875
+10-15 11:17:46.713 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=3 board=9 head=policy count=81 maxAbs=0.016717911 mae=0.0067908734 maxRel=0.0058669906 worst=31 cpu=-12.49328 npu=-12.476562
+10-15 11:17:46.713 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=3 board=9 head=value count=3 maxAbs=0.0041265488 mae=0.0018812815 maxRel=0.0006280808 worst=2 cpu=-5.5700922 npu=-5.5742188
+10-15 11:17:46.713 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=3 board=9 head=score count=4 maxAbs=0.0007661283 mae=0.00033185165 maxRel=0.00055719788 worst=1 cpu=-0.37496629 npu=-0.37573242
+10-15 11:17:46.713 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=3 board=9 head=ownership count=81 maxAbs=0.0016188622 mae=0.00033124858 maxRel=0.0009411953 worst=49 cpu=1.2132249 npu=1.2148438
+10-15 11:17:46.727 I/KataGoMTK(15325): MTK_PARITY_CPU handle=0xb400007302a15d20 sample=4 board=9 batch=1 ms=13
+10-15 11:17:46.730 I/KataGoMTK(15325): MTK_LITERT_INFER board=9 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:17:46.730 I/KataGoMTK(15325): MTK_GTP_INFER board=9
+10-15 11:17:46.730 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=4 board=9 head=policyPass count=1 maxAbs=0.0020999908 mae=0.0020999908 maxRel=0.00028422328 worst=0 cpu=-6.388525 npu=-6.390625
+10-15 11:17:46.730 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=4 board=9 head=policy count=81 maxAbs=0.014347076 mae=0.0048593562 maxRel=0.0066746737 worst=56 cpu=1.1858482 npu=1.2001953
+10-15 11:17:46.730 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=4 board=9 head=value count=3 maxAbs=0.0061244965 mae=0.0041002433 maxRel=0.0014940186 worst=0 cpu=3.0993443 npu=3.1054688
+10-15 11:17:46.730 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=4 board=9 head=score count=4 maxAbs=0.0014940053 mae=0.00076674856 maxRel=0.0013908209 worst=3 cpu=-0.074189588 npu=-0.075683594
+10-15 11:17:46.730 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=4 board=9 head=ownership count=81 maxAbs=0.00089269876 mae=0.00024977977 maxRel=0.00072393567 worst=41 cpu=0.93709558 npu=0.93798828
+10-15 11:17:46.740 I/KataGoMTK(15325): MTK_PARITY_CPU handle=0xb400007302a314d0 sample=3 board=9 batch=1 ms=9
+10-15 11:17:46.742 I/KataGoMTK(15325): MTK_LITERT_INFER board=9 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:17:46.742 I/KataGoMTK(15325): MTK_GTP_INFER board=9
+10-15 11:17:46.742 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a314d0 sample=3 board=9 head=policyPass count=1 maxAbs=0.0013747215 mae=0.0013747215 maxRel=0.00017804318 worst=0 cpu=-6.7212815 npu=-6.7226562
+10-15 11:17:46.742 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a314d0 sample=3 board=9 head=policy count=81 maxAbs=0.024149895 mae=0.0067409939 maxRel=0.0091227826 worst=23 cpu=3.2258501 npu=3.25
+10-15 11:17:46.742 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a314d0 sample=3 board=9 head=value count=3 maxAbs=0.0010375977 mae=0.00052769979 maxRel=0.00030023135 worst=0 cpu=2.4559937 npu=2.4570312
+10-15 11:17:46.742 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a314d0 sample=3 board=9 head=score count=4 maxAbs=0.00024446845 mae=0.00012011826 maxRel=0.00017770062 worst=1 cpu=-0.37573209 npu=-0.37597656
+10-15 11:17:46.742 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a314d0 sample=3 board=9 head=ownership count=81 maxAbs=0.00084972382 mae=0.00024417355 maxRel=0.00076203568 worst=39 cpu=1.173955 npu=1.1748047
+10-15 11:17:46.754 I/KataGoMTK(15325): MTK_PARITY_CPU handle=0xb400007302a314d0 sample=4 board=9 batch=1 ms=11
+10-15 11:17:46.756 I/KataGoMTK(15325): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:17:46.756 I/KataGoMTK(15325): MTK_GTP_INFER board=9
+10-15 11:17:46.756 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a314d0 sample=4 board=9 head=policyPass count=1 maxAbs=0.0026750565 mae=0.0026750565 maxRel=0.0003189166 worst=0 cpu=-7.3879499 npu=-7.390625
+10-15 11:17:46.756 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a314d0 sample=4 board=9 head=policy count=81 maxAbs=0.013951302 mae=0.0025264893 maxRel=0.0038755786 worst=20 cpu=-14.662389 npu=-14.648438
+10-15 11:17:46.756 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a314d0 sample=4 board=9 head=value count=3 maxAbs=0.0012693405 mae=0.00055233637 maxRel=0.00018863173 worst=2 cpu=-5.7291994 npu=-5.7304688
+10-15 11:17:46.756 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a314d0 sample=4 board=9 head=score count=4 maxAbs=0.00038896501 mae=0.00028534606 maxRel=0.00034259383 worst=3 cpu=-0.13535322 npu=-0.13574219
+10-15 11:17:46.756 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a314d0 sample=4 board=9 head=ownership count=81 maxAbs=0.00065508485 mae=0.00025260798 maxRel=0.00046805788 worst=8 cpu=-0.39958087 npu=-0.39892578
+10-15 11:17:46.758 I/KataGoMTK(15325): MTK_GTP_REPLY command=genmove black reply== F5
+10-15 11:17:46.771 I/KataGoMTK(15325): MTK_PARITY_CPU handle=0xb400007302a15d20 sample=5 board=9 batch=1 ms=12
+10-15 11:17:46.774 I/KataGoMTK(15325): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:17:46.774 I/KataGoMTK(15325): MTK_GTP_INFER board=9
+10-15 11:17:46.774 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=5 board=9 head=policyPass count=1 maxAbs=0.004445076 mae=0.004445076 maxRel=0.00069350098 worst=0 cpu=-5.4096174 npu=-5.4140625
+10-15 11:17:46.774 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=5 board=9 head=policy count=81 maxAbs=0.012314081 mae=0.007334044 maxRel=0.010944516 worst=31 cpu=0.12513709 npu=0.13745117
+10-15 11:17:46.774 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=5 board=9 head=value count=3 maxAbs=0.0052137375 mae=0.0028528372 maxRel=0.00077479752 worst=2 cpu=-5.7291613 npu=-5.734375
+10-15 11:17:46.774 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=5 board=9 head=score count=4 maxAbs=0.00074991584 mae=0.00028178561 maxRel=0.00053776152 worst=1 cpu=-0.39451376 npu=-0.39526367
+10-15 11:17:46.774 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=5 board=9 head=ownership count=81 maxAbs=0.0021342337 mae=0.00042461926 maxRel=0.0020355892 worst=21 cpu=-0.048459917 npu=-0.046325684
+10-15 11:17:46.786 I/KataGoMTK(15325): MTK_PARITY_CPU handle=0xb400007302a15d20 sample=6 board=9 batch=1 ms=11
+10-15 11:17:46.788 I/KataGoMTK(15325): MTK_LITERT_INFER board=9 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:17:46.788 I/KataGoMTK(15325): MTK_GTP_INFER board=9
+10-15 11:17:46.788 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=6 board=9 head=policyPass count=1 maxAbs=0.0046806335 mae=0.0046806335 maxRel=0.00059966132 worst=0 cpu=-6.8054619 npu=-6.8007812
+10-15 11:17:46.788 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=6 board=9 head=policy count=81 maxAbs=0.023765564 mae=0.004240086 maxRel=0.0068343709 worst=60 cpu=-17.601891 npu=-17.578125
+10-15 11:17:46.788 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=6 board=9 head=value count=3 maxAbs=0.0068788528 mae=0.0044940313 maxRel=0.0014915613 worst=2 cpu=-5.5868711 npu=-5.59375
+10-15 11:17:46.788 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=6 board=9 head=score count=4 maxAbs=0.0012252182 mae=0.00058895955 maxRel=0.0011239045 worst=3 cpu=-0.090144411 npu=-0.091369629
+10-15 11:17:46.788 I/KataGoMTK(15325): MTK_PARITY_HEAD handle=0xb400007302a15d20 sample=6 board=9 head=ownership count=81 maxAbs=0.0014766455 mae=0.00042286037 maxRel=0.0012235838 worst=12 cpu=-0.26514852 npu=-0.26367188
+10-15 11:17:46.788 I/KataGoMTK(15325): MTK_GTP_REPLY command=genmove white reply== D5
+10-15 11:17:46.789 I/KataGoMTK(15325): MTK_GTP_SMOKE_PASS id=13c5d7440e504628 board=9 black=F5 blackMs=138 white=D5 whiteMs=29
+10-15 11:17:46.797 I/KataGoMTK(15325): MTK_GTP_BRIDGE_RELEASED
+10-15 11:17:46.804 I/litert  (15325): [accelerator_registry.cc:43] DestroyAccelerator: ptr=0xb400007302a17370, name=CpuAccelerator
+10-15 11:17:46.804 I/litert  (15325): [accelerator_registry.cc:43] DestroyAccelerator: ptr=0xb400007302a11db0, name=NpuAccelerator
+10-15 11:17:46.804 I/KataGoMTK(15325): MTK_GTP_NATIVE_CLOSED
