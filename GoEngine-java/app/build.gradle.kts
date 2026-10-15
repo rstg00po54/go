@@ -373,14 +373,15 @@ tasks.configureEach {
     }
 }
 
-// Keep the designer's original PNG in docs; stage it as a packaged Android asset.
+// Independently packaged home illustrations and tactile button artwork.
 val stageGreenHomeArtwork = tasks.register<Copy>("stageGreenHomeArtwork") {
-    from(rootProject.file("docs/a_vertical_mobile_app_ui_scene_in_a_warm_serene.png"))
     into(layout.buildDirectory.dir("generated/homeAssets/home"))
-    rename { "home_green.png" }
+    from("docs/home/月门竹影下的围棋雅室.png") { rename { "background.png" } }
+    from("docs/home/人机对弈翡翠金饰按钮.png") { rename { "play.png" } }
+    from("docs/home/玉韵棋谱复盘按钮.png") { rename { "record.png" } }
+    from("docs/home/玉璧雅韵_死活训练.png") { rename { "training.png" } }
+    from("docs/home/翡翠鎏金竹韵设置图标.png") { rename { "settings.png" } }
 }
 tasks.configureEach {
-    if (name.startsWith("merge") && name.endsWith("Assets")) {
-        dependsOn(stageGreenHomeArtwork)
-    }
+    if (name.startsWith("merge") && name.endsWith("Assets")) dependsOn(stageGreenHomeArtwork)
 }
