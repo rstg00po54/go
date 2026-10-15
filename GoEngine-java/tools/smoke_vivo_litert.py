@@ -105,6 +105,26 @@ def save_npu_diagnostics(folder, relevant, report, board):
           "average:", samples.get("meanMs", "unknown"), flush=True)
 
 
+
+def parse_gtp_events(events, ident):
+    """Validate real KataGo GTP moves and LiteRT bridge callbacks for one run."""
+    marker = "MTK_GTP_SMOKE_PASS id=" + ident
+    pass_line = next((line for line in events if marker in line), "")
+    failures = [line for line in events if "MTK_GTP_SMOKE_FAIL id=" + ident in line]
+    inference_count = sum("MTK_GTP_INFER board=" in line for line in events)
+    litert_count = sum("MTK_LITERT_INFER board=" in line for line in events)
+    black = re.search(r"\bblack=(\S+)", pass_line)
+    white = re.search(r"\bwhite=(\S+)", pass_line)
+    moves = {"black": black.group(1), "white": white.group(1)} if black and white else {}
+    ok = bool(pass_line and not failures and moves and inference_count >= 1 and
+              litert_count >= 1 and
+              any("MTK_GTP_BRIDGE_INSTALLED" in line for line in events) and
+              any("MTK_GTP_REPLY command=genmove black" in line for line in events) and
+              any("MTK_GTP_REPLY command=genmove white" in line for line in events))
+    return {"passed": ok, "searchMoves": moves, "gtpNeuralInferenceCount": inference_count,
+            "modelInferenceCount": litert_count, "errors": failures}
+
+
 def run(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--adb", default=shutil.which("adb"))
@@ -178,22 +198,16 @@ def run(argv=None):
         else:
             raise RuntimeError("Vivo LiteRT smoke timed out (%ds)" % args.timeout)
         (folder / "logcat.txt").write_text(txt, encoding="utf-8")
-        ok = any(pass_event + " id=" + ident in x for x in events)
-        failures = [x for x in events if fail_event + " id=" + ident in x]
-        inferences = [x for x in events if "MTK_LITERT_INFER board=" in x]
-        real_calls = [x for x in events if "MTK_GTP_INFER board=" in x]
-        final_line = next((x for x in events if pass_event + " id=" + ident in x), "")
-        black = re.search(r"\bblack=([^\s]+)", final_line)
-        white = re.search(r"\bwhite=([^\s]+)", final_line)
-        valid_gtp = bool(black and white and len(real_calls) >= 1
-                         and any("MTK_GTP_BRIDGE_INSTALLED" in x for x in events))
-        passed = ok and not failures and (valid_gtp if args.gtp else len(inferences) >= 3)
-        status = ("GTP_PASS" if args.gtp else "PROBE_PASS") if passed else "FAIL"
-        report.update(status=status, modelInferenceCount=len(inferences),
-                      gtpNeuralInferenceCount=len(real_calls),
-                      searchMoves={"black": black.group(1), "white": white.group(1)}
-                          if args.gtp and valid_gtp else {},
-                      errors=failures)
+        if args.gtp:
+            details = parse_gtp_events(events, ident)
+            passed = details.pop("passed")
+            report.update(details)
+        else:
+            failures = [x for x in events if fail_event + " id=" + ident in x]
+            inferences = [x for x in events if "MTK_LITERT_INFER board=" in x]
+            passed = any(pass_event + " id=" + ident in x for x in events) and len(inferences) >= 3 and not failures
+            report.update(modelInferenceCount=len(inferences), errors=failures)
+        report["status"] = ("GTP_PASS" if args.gtp else "PROBE_PASS") if passed else "FAIL"
         if not passed: raise RuntimeError("MediaTek GTP test failed" if args.gtp else "LiteRT graph probe failed")
         result = 0
     except (OSError, ValueError, subprocess.TimeoutExpired, RuntimeError) as err:
