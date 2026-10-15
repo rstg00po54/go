@@ -137,6 +137,8 @@ public class MainActivity extends AppCompatActivity {
     private Button aiSuggestionButton;
     private Button countTerritoryButton;
     private boolean hasBundledNpuModel(int size) {
+        if (NpuHardware.current() == NpuHardware.Vendor.MEDIATEK)
+            return KataGoEngine.supportsMediaTekGame(this, size);
         if (!KataGoEngine.supportsRknnHardware()) return false;
         if (size != 9 && size != 13 && size != 19) return false;
         String asset = "engine/katago_10b_" + size + "x" + size + ".rknn";
@@ -174,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
         engine = new KataGoEngine(getApplicationContext(), "engine", !forceLegacy);
         engine.setStartupBoardSize(boardSize);
         Log.i(TAG, "NPU_PLATFORM detected=" + NpuHardware.summary()
-                + " mediatekGtpReady=false");
+                + " mediatekGtpReady=" + KataGoEngine.supportsMediaTekGame(this, boardSize));
         String savedBackend = settings.getString("backend", "CPU");
         selectedBackend = "NPU".equals(savedBackend) && hasBundledNpuModel(boardSize)
                 ? KataGoEngine.BackendPreference.NPU
@@ -1374,9 +1376,12 @@ public class MainActivity extends AppCompatActivity {
         conditionSpinner.setSelection(gameCondition);
 
         boolean gpuBundled = new File(getApplicationInfo().nativeLibraryDir, "libkatago_gpu.so").isFile();
-        boolean npuBundled = KataGoEngine.supportsRknnHardware()
+        boolean mtkBundled = KataGoEngine.supportsMediaTekGame(this, 9)
+                && KataGoEngine.supportsMediaTekGame(this, 13)
+                && KataGoEngine.supportsMediaTekGame(this, 19);
+        boolean npuBundled = mtkBundled || (KataGoEngine.supportsRknnHardware()
                 && new File(getApplicationInfo().nativeLibraryDir, "libkatago_npu.so").isFile()
-                && new File(getApplicationInfo().nativeLibraryDir, "librknnrt.so").isFile();
+                && new File(getApplicationInfo().nativeLibraryDir, "librknnrt.so").isFile());
         deviceModelText.setText(DeviceHardwareInfo.deviceName());
         final String cpuName = DeviceHardwareInfo.cpuName();
         final String npuInfo = DeviceHardwareInfo.npuDescription(npuBundled);
@@ -1391,7 +1396,8 @@ public class MainActivity extends AppCompatActivity {
         }
         if (npuBundled) {
             backendChoices.add(KataGoEngine.BackendPreference.NPU);
-            backendNames.add("NPU / RKNN · " + DeviceHardwareInfo.socName());
+            backendNames.add(mtkBundled ? "NPU / MediaTek LiteRT · " + DeviceHardwareInfo.socName()
+                    : "NPU / RKNN · " + DeviceHardwareInfo.socName());
         }
         ArrayAdapter<String> backendAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, backendNames);
         backendAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -1422,7 +1428,8 @@ public class MainActivity extends AppCompatActivity {
             int selectedCondition = conditionSpinner.getSelectedItemPosition();
             KataGoEngine.BackendPreference requested = backendChoices.get(backendSpinner.getSelectedItemPosition());
             if (requested == KataGoEngine.BackendPreference.NPU && !hasBundledNpuModel(requestedBoardSize)) {
-                Toast.makeText(this, "当前 APK 没有 " + requestedBoardSize + " 路 RKNN 模型，请安装多尺寸版或选择 CPU/GPU", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "NPU 仅支持已打包模型的 9/13/19 路；当前 " + requestedBoardSize
+                        + " 路请使用 CPU/GPU", Toast.LENGTH_LONG).show();
                 return;
             }
             Runnable begin = () -> {
@@ -1531,7 +1538,9 @@ public class MainActivity extends AppCompatActivity {
         boolean reusingHumanEngine = engine.isHumanSLRunning() && !npuBoardChanged
                 && engine.getBackendName().startsWith(requestedBackend.name());
         render(reusingHumanEngine ? "正在初始化棋局..." : requestedBackend == KataGoEngine.BackendPreference.NPU
-                ? "NPU/RKNN 初始化中..." : requestedBackend == KataGoEngine.BackendPreference.GPU
+                ? (NpuHardware.current() == NpuHardware.Vendor.MEDIATEK
+                        ? "NPU/MediaTek LiteRT 初始化中..." : "NPU/RKNN 初始化中...")
+                : requestedBackend == KataGoEngine.BackendPreference.GPU
                 ? "GPU 初始化中，首次调优可能需要数分钟..." : "正在准备人类棋力模型...");
         if (!reusingHumanEngine) showGpuStartupScreen(size, requestedBackend);
 
@@ -1546,7 +1555,7 @@ public class MainActivity extends AppCompatActivity {
                 if (!engine.isHumanSLRunning() || restartNpuForBoard) {
                     if (restartNpuForBoard)
                         Log.i(TAG, "NPU_MODEL_SWITCH board=" + engine.getActiveNpuBoardSize() + " -> " + size
-                                + "; restarting native GTP for matching RKNN model");
+                                + "; restarting native GTP for matching NPU model");
                     engine.prepareHumanModel((done, total) -> {
                         int percent = (int) (done * 100 / total);
                         mainHandler.post(() -> {
