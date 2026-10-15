@@ -129,6 +129,62 @@ complete GTP latency is not raw NN throughput, and successful LiteRT
 Neuron delegation is not independent proof that physical NPU silicon
 performed the operations.
 
+## Experimental Human SL b18 LiteRT (two independent neural networks)
+
+Original official `b18c384nbt-humanv0` Human SL was converted to separate
+fixed-shape 9x9, 13x13 and 19x19 float32 LiteRT graphs with **192 SGF metadata
+channels**, **2 policy channels** and **6 score channels**. These are *not*
+10b graphs renamed as Human models. All three passed the conversion tool's
+LiteRT **CPU** numerical finiteness probe, and the outputs preserve KataGo
+ONNX `outputScaleMultiplier`. The full six-file release is pinned by SHA-256
+in `tools/prepare_vivo_human_litert.sh`.
+
+**Device delegation, CPU/Eigen-to-LiteRT five-head numerical parity, and
+actual Human SL rank fidelity have not yet passed a vivo device test.**
+Do not describe it as production NPU Human SL yet.
+
+The regular 10b MediaTek game remains unchanged. Its separate native JNI
+callback routes b18 NN calls to Human LiteRT only when all assets are present,
+the model graph SHA-256 and tensor contract match, and Android's NPU provider
+successfully compiles the Human graph. Otherwise Human remains on Eigen/CPU;
+the displayed backend explicitly distinguishes these cases. Native KataGo
+still computes the 192-dimensional rank-specific features, rather than
+constructing a fake rank vector in Java.
+
+**First 9x9 trial:** the extra Human file is about 102 MiB. To avoid adding
+three such graphs to the APK before validating NPU compilation, stage only 9x9:
+
+```bash
+git pull --ff-only
+bash tools/prepare_vivo_human_litert.sh --size 9
+bash tools/build_vivo_mtk_gtp.sh
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+python3 tools/smoke_vivo_mtk_game.py --skip-install --sizes 9 --require-human-npu
+```
+
+The last command enables *debug-only* Eigen parity for the first 16 NN
+evaluations per model. It requires actual `MTK_GTP_INFER ... model=human`
+entries and a complete, bounded five-head Human output comparison, so a CPU
+fallback **fails** the Human NPU smoke, even if normal gameplay succeeds.
+Use `--no-upload` if logs must stay local; by default the report and logcat
+are auto-uploaded with a unique name into `ui-test-results`.
+This is a provisional numerical tolerance, not yet proof of identical
+human ranks or neural silicon execution.
+
+After a 9x9 device test passes, opt into additional graphs:
+
+```bash
+bash tools/prepare_vivo_human_litert.sh --all
+bash tools/build_vivo_mtk_gtp.sh
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+python3 tools/smoke_vivo_mtk_game.py --skip-install --require-human-npu
+```
+
+The experimental release is
+`vivo-human-litert-9-13-19-experimental-v0`. Never silently include it in
+the standard release APK until a successful on-device parity and gameplay run
+has been reviewed.
+
 ## MediaTek NPU selectable in the playable Android game
 
 9x9, 13x13 and 19x19 real `genmove` tests and identical-feature CPU/Eigen
