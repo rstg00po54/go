@@ -7,6 +7,8 @@ on:
       - '.github/workflows/vivo_litert_android_compile.yml'
       - 'GoEngine-java/app/build.gradle.kts'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoMediaTekLiteRt.java'
+      - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoLiteRtOutputScale.java'
+      - 'GoEngine-java/tools/test_litert_output_scale.py'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoMediaTekNative.java'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoMediaTekGtpSmoke.java'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoGtpConfig.java'
@@ -36,6 +38,9 @@ jobs:
       - name: Verify runtime SoC selection on JVM
         working-directory: GoEngine-java
         run: python3 tools/test_npu_hardware_selector.py
+      - name: Verify KataGo ONNX scale8 reconstruction on JVM
+        working-directory: GoEngine-java
+        run: python3 tools/test_litert_output_scale.py
       - name: Check LiteRT smoke report parsing
         working-directory: GoEngine-java
         run: python3 tools/test_smoke_vivo_litert.py
