@@ -90,7 +90,7 @@ class MtkRealGameTests(unittest.TestCase):
                  "I/KataGoMTK: MTK_GTP_INFER board=9 model=human"]
         extra.extend("I/KataGoMTK: MTK_PARITY_HEAD board=9 model=human head=%s maxAbs=0.015" % head
                      for head in ("policyPass", "policy", "value", "score", "ownership"))
-        raw = raw.replace("I/NpuSmoke: STEP_PASS", "\\n".join(extra) + "\\nI/NpuSmoke: STEP_PASS")
+        raw = raw.replace("I/NpuSmoke: STEP_PASS", "\n".join(extra) + "\nI/NpuSmoke: STEP_PASS")
         result = parse_game_log(raw, "example1234", (9,), require_human_npu=True)
         self.assertEqual(result["status"], "PASS", result["errors"])
         self.assertEqual(result["steps"][0]["humanLiteRtInferenceCount"], 1)
