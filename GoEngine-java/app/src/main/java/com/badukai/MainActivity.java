@@ -319,6 +319,17 @@ public class MainActivity extends AppCompatActivity {
         engineExecutor.execute(() -> {
             try {
                 if (humanSL) engine.prepareHumanModel((done, total) -> {});
+                if (NpuHardware.current() == NpuHardware.Vendor.MEDIATEK) {
+                    // The normal app typically preloads CPU JNI before a user
+                    // switches to NPU. Verify both libraries coexist safely.
+                    engine.setBackendPreference(KataGoEngine.BackendPreference.CPU);
+                    if (!engine.start(KataGoEngine.Model.HUMAN, humanSL)
+                            || !engine.getBackendName().startsWith("CPU"))
+                        throw new IllegalStateException("cpu_preload_before_mtk_failed");
+                    Log.i("NpuSmoke", "MTK_CPU_TO_NPU_PRECHECK_READY id=" + id
+                            + " backend=" + engine.getBackendName());
+                    engine.stop();
+                }
                 for (int i=0; i<sizes.length; i++) {
                     int size = sizes[i];
                     Log.i("NpuSmoke", "STEP_BEGIN id=" + id + " index=" + i + " board=" + size);
