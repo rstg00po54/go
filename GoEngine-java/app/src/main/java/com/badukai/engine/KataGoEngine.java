@@ -301,9 +301,22 @@ public class KataGoEngine {
             if (useRknn) copyAssetToFile(rknnAssetPath, new File(engineDir, rknnModelName));
             File liteRtGraph = new File(engineDir, liteRtStem + ".tflite");
             File liteRtManifest = new File(engineDir, liteRtStem + ".json");
+            // Optional experimental b18 Human NPU graphs. Never use a partially
+            // populated asset pair; KataGoMediaTekLiteRt validates the graph
+            // SHA-256 and exact 192 SGF feature tensor contract at start-up.
+            String humanStem = "katago_human_" + startupBoardSize + "x" + startupBoardSize;
+            File humanGraph = null, humanManifest = null;
             if (useMediaTek) {
                 copyAssetToFile("engine/" + liteRtStem + ".tflite", liteRtGraph);
                 copyAssetToFile("engine/" + liteRtStem + ".json", liteRtManifest);
+                if (useHumanSL && hasAsset("engine/" + humanStem + ".tflite")
+                        && hasAsset("engine/" + humanStem + ".json")) {
+                    humanGraph = new File(engineDir, humanStem + ".tflite");
+                    humanManifest = new File(engineDir, humanStem + ".json");
+                    copyAssetToFile("engine/" + humanStem + ".tflite", humanGraph);
+                    copyAssetToFile("engine/" + humanStem + ".json", humanManifest);
+                    Log.i(TAG, "MTK_HUMAN_GRAPH_STAGED board=" + startupBoardSize);
+                }
             }
             startupTiming("engine_prepare_model_asset", phaseNs);
             phaseNs = System.nanoTime();
@@ -325,7 +338,8 @@ public class KataGoEngine {
                 try {
                     phaseNs = System.nanoTime();
                     mediaTekSession = KataGoMediaTekNative.createSession(context, modelFile, configFile,
-                            humanFile, liteRtGraph, liteRtManifest, startupBoardSize);
+                            humanFile, liteRtGraph, liteRtManifest, startupBoardSize,
+                            false, humanGraph, humanManifest);
                     startupTiming("engine_mtk_native_create", phaseNs);
                     if (mediaTekSession == null) throw new IOException("MediaTek GTP returned null");
                     activeNpuBoardSize = startupBoardSize;
