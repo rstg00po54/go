@@ -10,7 +10,8 @@ import java.io.File;
  * Opt-in native library only; not exposed as a user-selectable backend until
  * a real game and CPU/NPU neural-output parity have passed on the vivo device.
  *
- * The g170 network runs through Java LiteRT, while Human SL uses native Eigen.
+ * The g170 and independently converted b18 Human SL models may each use a
+ * separate LiteRT instance. Incomplete Human graphs must fall back to Eigen.
  */
 public final class KataGoMediaTekNative {
     private static final String TAG = "KataGoMTK";
@@ -43,31 +44,61 @@ public final class KataGoMediaTekNative {
     public static GtpSession createSession(Context context, File model, File config,
                                            File humanModel, File graph, File manifest,
                                            int boardSize, boolean compareCpu) throws Exception {
+        return createSession(context, model, config, humanModel, graph, manifest,
+                boardSize, compareCpu, null, null);
+    }
+
+    public static GtpSession createSession(Context context, File model, File config,
+                                           File humanModel, File graph, File manifest,
+                                           int boardSize, boolean compareCpu,
+                                           File humanGraph, File humanManifest) throws Exception {
         if (!NpuHardware.canProbeMediaTekLiteRt())
             throw new IllegalStateException("MediaTek SoC required");
         load();
         KataGoMediaTekLiteRt runner = new KataGoMediaTekLiteRt(
                 context.getApplicationContext(), graph, manifest, boardSize);
+        KataGoMediaTekLiteRt humanRunner = null;
         long handle = 0;
         try {
+            if (humanModel != null && humanGraph != null && humanManifest != null
+                    && humanGraph.isFile() && humanManifest.isFile()) {
+                try {
+                    humanRunner = new KataGoMediaTekLiteRt(
+                            context.getApplicationContext(), humanGraph, humanManifest, boardSize, true);
+                    Log.i(TAG, "MTK_HUMAN_LITERT_READY board=" + boardSize + " graph=" + humanGraph.getName());
+                } catch (Exception | LinkageError unsupported) {
+                    Log.w(TAG, "MTK_HUMAN_CPU_FALLBACK reason=Human_LiteRT_unavailable board=" + boardSize,
+                            unsupported);
+                }
+            } else if (humanModel != null) {
+                Log.i(TAG, "MTK_HUMAN_CPU_FALLBACK reason=no_verified_human_graph board=" + boardSize);
+            }
             handle = nativeCreateSession(model.getAbsolutePath(), config.getAbsolutePath(),
-                    humanModel == null ? null : humanModel.getAbsolutePath(), runner, compareCpu);
+                    humanModel == null ? null : humanModel.getAbsolutePath(),
+                    runner, humanRunner, compareCpu);
             if (handle == 0)
                 throw new IllegalStateException("MediaTek JNI GTP session could not start");
-            Log.i(TAG, "MTK_GTP_NATIVE_READY board=" + boardSize + " handle=" + handle);
-            return new GtpSession(handle, runner);
+            Log.i(TAG, "MTK_GTP_NATIVE_READY board=" + boardSize + " handle=" + handle
+                    + " humanLiteRt=" + (humanRunner != null));
+            return new GtpSession(handle, runner, humanRunner);
         } finally {
-            if (handle == 0) runner.close();
+            if (handle == 0) {
+                if (humanRunner != null) humanRunner.close();
+                runner.close();
+            }
         }
     }
 
     public static final class GtpSession implements AutoCloseable {
         private volatile long handle;
         private final KataGoMediaTekLiteRt runner;
+        private final KataGoMediaTekLiteRt humanRunner;
 
-        private GtpSession(long handle, KataGoMediaTekLiteRt runner) {
+        private GtpSession(long handle, KataGoMediaTekLiteRt runner,
+                           KataGoMediaTekLiteRt humanRunner) {
             this.handle = handle;
             this.runner = runner;
+            this.humanRunner = humanRunner;
         }
 
         public boolean send(String command) {
@@ -99,7 +130,11 @@ public final class KataGoMediaTekNative {
                 // Java callback ref. Never close LiteRT while a search is active.
                 nativeDestroySession(old);
             } finally {
-                runner.close();
+                try {
+                    if (humanRunner != null) humanRunner.close();
+                } finally {
+                    runner.close();
+                }
             }
             Log.i(TAG, "MTK_GTP_NATIVE_CLOSED");
         }
@@ -108,7 +143,9 @@ public final class KataGoMediaTekNative {
     private static native String nativeBuildStatus();
     private static native long nativeCreateSession(String modelPath, String configPath,
                                                     String humanModelPath,
-                                                    KataGoMediaTekLiteRt runner, boolean compareCpu);
+                                                    KataGoMediaTekLiteRt runner,
+                                                    KataGoMediaTekLiteRt humanRunner,
+                                                    boolean compareCpu);
     private static native boolean nativeSendCommand(long handle, String command);
     private static native String nativeReadOutput(long handle, int timeoutMs);
     private static native boolean nativeIsSessionAlive(long handle);
