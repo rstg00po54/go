@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -1394,10 +1395,11 @@ public class MainActivity extends AppCompatActivity {
             backendChoices.add(KataGoEngine.BackendPreference.GPU);
             backendNames.add("GPU / OpenCL · 识别中…");
         }
-        if (npuBundled) {
+        final String npuLabel = mtkBundled ? "NPU / MediaTek LiteRT · " + DeviceHardwareInfo.socName()
+                : "NPU / RKNN · " + DeviceHardwareInfo.socName();
+        if (npuBundled && hasBundledNpuModel(boardSize)) {
             backendChoices.add(KataGoEngine.BackendPreference.NPU);
-            backendNames.add(mtkBundled ? "NPU / MediaTek LiteRT · " + DeviceHardwareInfo.socName()
-                    : "NPU / RKNN · " + DeviceHardwareInfo.socName());
+            backendNames.add(npuLabel);
         }
         ArrayAdapter<String> backendAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, backendNames);
         backendAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -1405,6 +1407,28 @@ public class MainActivity extends AppCompatActivity {
         int backendIndex = backendChoices.indexOf(selectedBackend);
         backendSpinner.setSelection(Math.max(0, backendIndex));
         backendSpinner.setEnabled(backendChoices.size() > 1 && !forceLegacyBackend);
+        // NPU model graphs exist only for 9/13/19. Hide the option entirely
+        // when switching to 11/15, rather than offering a false NPU choice.
+        sizeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                KataGoEngine.BackendPreference oldChoice = backendChoices.get(
+                        Math.max(0, Math.min(backendSpinner.getSelectedItemPosition(), backendChoices.size() - 1)));
+                boolean canUseNpu = npuBundled && hasBundledNpuModel(boardSizes[position]);
+                int index = backendChoices.indexOf(KataGoEngine.BackendPreference.NPU);
+                if (canUseNpu && index < 0) {
+                    backendChoices.add(KataGoEngine.BackendPreference.NPU);
+                    backendNames.add(npuLabel);
+                    backendAdapter.notifyDataSetChanged();
+                } else if (!canUseNpu && index >= 0) {
+                    backendChoices.remove(index);
+                    backendNames.remove(index);
+                    backendAdapter.notifyDataSetChanged();
+                }
+                backendSpinner.setSelection(Math.max(0, backendChoices.indexOf(oldChoice)));
+                backendSpinner.setEnabled(backendChoices.size() > 1 && !forceLegacyBackend);
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
+        });
 
         colorGroup.check(playerColor == StoneColor.WHITE ? R.id.whiteRadio : R.id.blackRadio);
         String[] kyuLabels = new String[18];
