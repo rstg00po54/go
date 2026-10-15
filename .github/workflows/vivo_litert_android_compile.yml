@@ -9,6 +9,9 @@ on:
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoMediaTekLiteRt.java'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoLiteRtOutputScale.java'
       - 'GoEngine-java/tools/test_litert_output_scale.py'
+      - 'GoEngine-java/tools/prepare_vivo_litert.sh'
+      - 'GoEngine-java/tools/verify_vivo_litert_apk.py'
+      - 'GoEngine-java/tools/test_verify_vivo_litert_apk.py'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoMediaTekNative.java'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoMediaTekGtpSmoke.java'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoGtpConfig.java'
@@ -38,6 +41,9 @@ jobs:
       - name: Verify runtime SoC selection on JVM
         working-directory: GoEngine-java
         run: python3 tools/test_npu_hardware_selector.py
+      - name: Check original and scale-aware APK manifest hashes
+        working-directory: GoEngine-java
+        run: python3 tools/test_verify_vivo_litert_apk.py
       - name: Verify KataGo ONNX scale8 reconstruction on JVM
         working-directory: GoEngine-java
         run: python3 tools/test_litert_output_scale.py
