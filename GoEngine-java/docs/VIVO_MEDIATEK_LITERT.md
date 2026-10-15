@@ -32,6 +32,11 @@ git pull --ff-only
 KATAGO_JOBS=2 bash tools/build_vivo_npu.sh
 ```
 
+The experimental APK uses Android application ID `com.badukai.java.nputest` and
+launcher label **BadukaiJ NPU测试**. It installs alongside the existing
+`com.badukai.java` app without replacing its data. Android Java/JNI class
+names remain under `com.badukai`.
+
 This **playable CPU/GPU APK** includes `libkatago_exec.so` (KataGo PIE),
 `libkatago.so` (CPU JNI), and `libkatago_gpu.so` (OpenCL JNI), plus three
 `.tflite` / `.json` model pairs and the MediaTek LiteRT vendor runtime.
