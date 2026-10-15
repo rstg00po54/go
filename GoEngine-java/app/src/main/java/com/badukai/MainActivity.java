@@ -385,11 +385,15 @@ public class MainActivity extends AppCompatActivity {
                     if (!engine.getBackendName().startsWith("NPU") || engine.getActiveNpuBoardSize() != size)
                         throw new IllegalStateException("wrong_backend_or_model_" + engine.getBackendName()
                                 + "_active_" + engine.getActiveNpuBoardSize());
+                    long setupNs = System.nanoTime();
                     if (!engine.setBoardSize(size) || !engine.clearBoard() || !engine.setChineseRules()
                             || !engine.setKomi(7.5f) || !engine.setSearchLimits(32, 2.0))
                         throw new IllegalStateException("gtp_setup_failed_board_" + size);
                     if (humanSL && !engine.setHumanRank(12))
                         throw new IllegalStateException("human_rank_setup_failed");
+                    long setupMs = (System.nanoTime() - setupNs) / 1000000L;
+                    Log.i("NpuSmoke", "PHASE_TIMING id=" + id + " index=" + i + " board=" + size
+                            + " phase=gtp_setup ms=" + setupMs);
                     Log.i("NpuSmoke", "STAGE id=" + id + " phase=genmove_black index=" + i + " board=" + size);
                     long firstNs = System.nanoTime();
                     String black = engine.generateMove("black");
@@ -398,10 +402,15 @@ public class MainActivity extends AppCompatActivity {
                     long secondNs = System.nanoTime();
                     String white = engine.generateMove("white");
                     long whiteMs = (System.nanoTime() - secondNs) / 1000000L;
+                    Log.i("NpuSmoke", "PHASE_TIMING id=" + id + " index=" + i + " board=" + size
+                            + " phase=genmove_black ms=" + blackMs);
+                    Log.i("NpuSmoke", "PHASE_TIMING id=" + id + " index=" + i + " board=" + size
+                            + " phase=genmove_white ms=" + whiteMs);
                     if (!isValidNpuSmokeMove(black, size) || !isValidNpuSmokeMove(white, size))
                         throw new IllegalStateException("invalid_moves_" + black + "_" + white);
                     Log.i("NpuSmoke", "STEP_PASS id=" + id + " index=" + i + " board=" + size
                             + " active=" + engine.getActiveNpuBoardSize() + " startupMs=" + startupMs
+                            + " setupMs=" + setupMs
                             + " black=" + black + " blackMs=" + blackMs
                             + " white=" + white + " whiteMs=" + whiteMs);
                 }
