@@ -28,7 +28,7 @@ endif()
 set(BUILD_DISTRIBUTED 0 CACHE BOOL "Build with http support for contributing to distributed training")
 set(USE_BACKEND CACHE STRING "Neural net backend")
 string(TOUPPER "${USE_BACKEND}" USE_BACKEND)
-set_property(CACHE USE_BACKEND PROPERTY STRINGS "" CUDA TENSORRT OPENCL EIGEN RKNN)
+set_property(CACHE USE_BACKEND PROPERTY STRINGS "" CUDA TENSORRT OPENCL EIGEN RKNN MEDIATEK)
 
 set(USE_TCMALLOC 0 CACHE BOOL "Use TCMalloc")
 set(NO_GIT_REVISION 0 CACHE BOOL "Disable embedding the git revision into the compiled exe")
@@ -100,6 +100,15 @@ elseif(USE_BACKEND STREQUAL "RKNN")
   set(NEURALNET_BACKEND_SOURCES
     neuralnet/eigenbackend.cpp
     neuralnet/rknnbackend.cpp
+  )
+elseif(USE_BACKEND STREQUAL "MEDIATEK")
+  if(NOT KATAGO_BUILD_JNI_LIBRARY OR NOT ANDROID)
+    message(FATAL_ERROR "MediaTek backend requires Android JNI GTP sessions")
+  endif()
+  message(STATUS "-DUSE_BACKEND=MEDIATEK: LiteRT for g170 and Eigen for Human SL.")
+  set(NEURALNET_BACKEND_SOURCES
+    neuralnet/eigenbackend.cpp
+    neuralnet/mediatekbackend.cpp
   )
 elseif(USE_BACKEND STREQUAL "EIGEN")
   message(STATUS "-DUSE_BACKEND=EIGEN, using Eigen CPU backend.")
@@ -311,6 +320,8 @@ if(KATAGO_BUILD_JNI_LIBRARY)
   set_target_properties(katago PROPERTIES CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN YES)
   if(USE_BACKEND STREQUAL "RKNN")
     set_target_properties(katago PROPERTIES OUTPUT_NAME katago_npu)
+  elseif(USE_BACKEND STREQUAL "MEDIATEK")
+    set_target_properties(katago PROPERTIES OUTPUT_NAME katago_mtk)
   elseif(USE_BACKEND STREQUAL "OPENCL")
     # In-process GPU and CPU JNI libraries must have distinct ELF SONAMEs.
     # Previously the GPU APK only renamed libkatago.so, which is unsafe when
@@ -390,6 +401,11 @@ elseif(USE_BACKEND STREQUAL "RKNN")
   endif()
   target_include_directories(katago PRIVATE "${RKNN_INCLUDE_DIR}")
   target_link_libraries(katago "${RKNN_LIBRARY}" log)
+elseif(USE_BACKEND STREQUAL "MEDIATEK")
+  target_compile_definitions(katago PRIVATE USE_EIGEN_BACKEND USE_MEDIATEK_BACKEND)
+  find_package(Eigen3 REQUIRED)
+  include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
+  target_link_libraries(katago log)
 elseif(USE_BACKEND STREQUAL "EIGEN")
   target_compile_definitions(katago PRIVATE USE_EIGEN_BACKEND)
   if(NOT (MSVC OR MINGW))
