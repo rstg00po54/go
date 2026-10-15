@@ -13,6 +13,7 @@ def example_log(sizes=DEFAULT_SIZES, human=True, include_final=True):
             f"I/NpuSmoke: STEP_BEGIN id={run_id} index={idx} board={size}",
             f"I/KataGoMTK: MTK_LITERT_INIT board={size} npuRequested=true graph=katago_10b_{size}x{size}.tflite",
             f"I/KataGoEngine: MTK_GAME_BACKEND_READY board={size} humanSL={str(human).lower()} backend=NPU/MediaTek",
+            f"I/KataGoMTK: MTK_GTP_INFER board={size}",
             f"I/NpuSmoke: STEP_PASS id={run_id} index={idx} board={size} active={size} "
             "startupMs=202 black=D4 blackMs=42 white=F5 whiteMs=39",
         ])
@@ -35,6 +36,8 @@ class MtkRealGameTests(unittest.TestCase):
         self.assertEqual(parse_game_log(raw.replace("humanSL=true", "humanSL=false"),
                                         "example1234", DEFAULT_SIZES)["status"], "FAIL")
         self.assertEqual(parse_game_log(raw.replace("MTK_LITERT_INIT", "CPU_INIT"),
+                                        "example1234", DEFAULT_SIZES)["status"], "FAIL")
+        self.assertEqual(parse_game_log(raw.replace("MTK_GTP_INFER", "CPU_INFER"),
                                         "example1234", DEFAULT_SIZES)["status"], "FAIL")
 
     def test_partial_step_is_not_final_success(self):
