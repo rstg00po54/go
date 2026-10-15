@@ -43,7 +43,6 @@ import com.badukai.game.StoneColor;
 import com.badukai.ui.GoBoardView;
 import com.badukai.ui.InkLoadingView;
 import com.badukai.ui.WinRateChartView;
-import com.badukai.ui.TencentHomeScaler;
 import com.badukai.util.DebugLog;
 
 import java.io.File;
@@ -190,7 +189,6 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "Game engine preference=" + (forceLegacy ? "PIE forced" : "JNI if bundled")
                 + "; preload boardSize=" + boardSize + "; backend=" + selectedBackend + "; winrate engine=PIE");
         bindViews();
-        TencentHomeScaler.install((ViewGroup) mainPageContainer);
         boardView.setOnIntersectionClickListener(this::onBoardTap);
         aiWinRateText.setOnClickListener(v -> showWinRateChart());
         playerWinRateText.setOnClickListener(v -> showWinRateChart());
