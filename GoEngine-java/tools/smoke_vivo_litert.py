@@ -95,7 +95,7 @@ def save_npu_diagnostics(folder, relevant, report, board):
         r"FATAL EXCEPTION|Fatal signal", line, re.IGNORECASE)]
     (folder / "npu_diagnostics.txt").write_text("\n".join(diagnostic) + "\n", encoding="utf-8")
     report["vendorLogLineCount"] = len(vendor)
-    report["npuDiagnostics"] = summarize_npu_logs(relevant, args.size)
+    report["npuDiagnostics"] = summarize_npu_logs(relevant, board)
     report["fallbackWarnings"] = report["npuDiagnostics"]["fallbackIndicators"]
     info = report["npuDiagnostics"]
     print("Delegate:", info["delegateStatus"], "Neuron SDK:", info["neuronApiVersion"],
