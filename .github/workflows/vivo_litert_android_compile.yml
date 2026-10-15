@@ -19,6 +19,9 @@ on:
       - 'GoEngine-java/tools/smoke_vivo_litert.py'
       - 'GoEngine-java/tools/test_smoke_vivo_litert.py'
       - 'GoEngine-java/app/src/main/java/com/badukai/MainActivity.java'
+      - 'GoEngine-java/app/src/main/java/com/badukai/ui/GoBoardView.java'
+      - 'GoEngine-java/app/src/main/java/com/badukai/game/FastEndgameScorer.java'
+      - 'GoEngine-java/tools/test_endgame_dead_mark_overlay.py'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoEngine.java'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoBackendBenchmark.java'
       - 'GoEngine-java/tools/bench_vivo_backends.py'
@@ -53,6 +56,11 @@ jobs:
       - name: Verify KataGo ONNX scale8 reconstruction on JVM
         working-directory: GoEngine-java
         run: python3 tools/test_litert_output_scale.py
+      - name: Verify endgame NN dead-stone overlay visibility
+        working-directory: GoEngine-java
+        run: |
+          python3 tools/test_endgame_dead_mark_overlay.py
+          python3 tools/test_fast_endgame_scorer.py
       - name: Verify CPU GPU NPU performance benchmarking and timing
         working-directory: GoEngine-java
         run: python3 tools/test_bench_vivo_backends.py
