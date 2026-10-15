@@ -65,7 +65,7 @@ def parse_game_log(raw, run_id, sizes, human=True):
     lines = lines[start:]
     indexes = [idx for idx, line in enumerate(lines) if prefix in line and
                "STEP_BEGIN id=" + run_id in line]
-    end_ok = any(prefix in line and "PASS id=" + run_id in line for line in lines)
+    end_ok = any(prefix in line and re.search(r"\\bPASS id=" + re.escape(run_id) + r"(?:\\s|$)", line) for line in lines)
     errors, steps = [], []
     if len(indexes) != len(sizes): errors.append("Expected %d steps; saw %d" % (len(sizes), len(indexes)))
     for index, begin in enumerate(indexes):
@@ -75,8 +75,8 @@ def parse_game_log(raw, run_id, sizes, human=True):
         prepared = [line for line in part if "MTK_LITERT_INIT board=" in line]
         ready = [line for line in part if "MTK_GAME_BACKEND_READY board=" in line]
         terminal = [line for line in part if prefix in line and "STEP_PASS id=" + run_id in line]
-        fallback = [line for line in part if "falling back to CPU" in line.lower()
-                    or "fallback" in line.lower() and "NPU" in line
+        fallback = [line for line in part if "falling back to cpu" in line.lower()
+                    or ("fallback" in line.lower() and "npu" in line.lower())
                     or "MTK_GTP_SMOKE_FAIL" in line]
         part_errors = []
         if field(begin_line, "index") != str(index) or field(begin_line, "board") != str(requested):
@@ -149,7 +149,7 @@ def main(argv=None):
         while time.monotonic() < end:
             logs = run_cmd([args.adb, "-s", serial, "logcat", "-d", "-v", "time", "-s", *tags],
                            timeout=30, check=False)
-            if "PASS id=" + run_id in logs or "FAIL id=" + run_id in logs:
+            if re.search(r"\\b(?:PASS|FAIL) id=" + re.escape(run_id) + r"(?:\\s|$)", logs):
                 break
             if "Fatal signal" in logs or "FATAL EXCEPTION" in logs: break
             time.sleep(2)
