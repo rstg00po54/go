@@ -65,8 +65,8 @@ class MtkRealGameTests(unittest.TestCase):
     def test_five_size_timing_summary(self):
         raw = example_log((11, 15))
         raw = raw.replace("I/NpuSmoke: STEP_PASS id=example1234 index=0",
-            "I/KataGoMTK: MTK_LITERT_INFER board=11 model=10b ms=2\\n"
-            "I/KataGoMTK: MTK_LITERT_INFER board=11 model=human ms=8\\n"
+            "I/KataGoMTK: MTK_LITERT_INFER board=11 model=10b ms=2\n"
+            "I/KataGoMTK: MTK_LITERT_INFER board=11 model=human ms=8\n"
             "I/NpuSmoke: STEP_PASS id=example1234 index=0")
         result = parse_game_log(raw, "example1234", (11, 15))
         self.assertEqual(result["status"], "PASS", result["errors"])
