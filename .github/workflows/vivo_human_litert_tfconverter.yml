@@ -1,0 +1,94 @@
+name: Diagnose b18 Human SL Neuron graph with independent TF converter
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/rk3588-rknn]
+    paths:
+      - '.github/workflows/vivo_human_litert_tfconverter.yml'
+      - 'GoEngine-java/tools/convert_katago_human_litert.py'
+
+permissions:
+  contents: write
+
+jobs:
+  tfconverter-9:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install independent TensorFlow/onnx2tf conversion runtime
+        run: |
+          python -m pip install -U pip
+          python -m pip install 'onnx2tf[tensorflow]==2.6.9'
+          python -c "import tensorflow as tf; print('TF version', tf.__version__)"
+      - name: Download original Human SL and official KataGo ONNX exporter
+        run: |
+          set -euo pipefail
+          mkdir -p models kata-dist
+          curl -fL --retry 3 -o models/b18c384nbt-humanv0.bin.gz \
+            'https://github.com/lightvector/KataGo/releases/download/v1.15.0/b18c384nbt-humanv0.bin.gz'
+          gzip -t models/b18c384nbt-humanv0.bin.gz
+          gzip -dc models/b18c384nbt-humanv0.bin.gz > models/b18c384nbt-humanv0.bin
+          test "$(wc -c < models/b18c384nbt-humanv0.bin)" -eq 107185997
+          curl -fL --retry 3 -o kata-dist.zip \
+            'https://github.com/lightvector/KataGo/releases/download/v1.18.1/katago-v1.18.1-onnx-openvino-linux-x64.zip'
+          unzip -q kata-dist.zip -d kata-dist
+          KATAGO_BIN="$(find "$PWD/kata-dist" -type f -name katago -print -quit)"
+          test -n "$KATAGO_BIN"
+          chmod +x "$KATAGO_BIN"
+          echo "KATAGO_BIN=$KATAGO_BIN" >> "$GITHUB_ENV"
+          LIBPATH="$(find "$PWD/kata-dist" -type f -name '*.so*' -printf '%h\n' | sort -u | paste -sd: -)"
+          echo "LD_LIBRARY_PATH=$LIBPATH" >> "$GITHUB_ENV"
+      - name: Export original Human SL 9x9 ONNX (no simplification or relabeling)
+        run: |
+          "$KATAGO_BIN" dumponnx -model models/b18c384nbt-humanv0.bin \
+            -out models/human_9x9.onnx -nn-x-len 9 -nn-y-len 9
+      - name: Convert through TensorFlow Lite converter and audit all raw tensors
+        run: |
+          python -u GoEngine-java/tools/convert_katago_human_litert.py \
+            --size 9 --onnx models/human_9x9.onnx \
+            --converter-backend tf_converter \
+            --output models/katago_human_9x9.tflite \
+            --signature models/katago_human_9x9.json \
+            2>&1 | tee models/convert_tfconverter.log
+          python - <<'PY'
+          import json
+          p = json.load(open('models/katago_human_9x9.json'))
+          assert p['converterBackend'] == 'tf_converter'
+          assert p['cpu_inference'] == 'PASS'
+          assert p['flatbufferAudit']['rawTensorShapeIssueCount'] == 0
+          assert p['flatbufferAudit']['rawDynamicSignatureCount'] == 0
+          print('HUMAN_ALT_MODEL_STATIC_READY', p['graphSha256'])
+          PY
+          sha256sum models/katago_human_9x9.tflite models/katago_human_9x9.json \
+            > models/HUMAN_ALT_SHA256SUMS
+          cat models/HUMAN_ALT_SHA256SUMS
+      - name: Keep conversion logs on failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vivo-human-9x9-tfconverter-compiler-experiment
+          path: |
+            models/katago_human_9x9.tflite
+            models/katago_human_9x9.json
+            models/convert_tfconverter.log
+            models/HUMAN_ALT_SHA256SUMS
+          if-no-files-found: warn
+      - name: Publish experimental alternative only when all static/CPU tests pass
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          TAG="vivo-human-9x9-tfconverter-neuron-test-v1"
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --prerelease \
+              --title "Experimental alternate b18 Human SL 9x9 TF conversion (Neuron probe)" \
+              --notes "Same official b18 Human SL weights and metadata. Independent TensorFlow Lite converter graph lowering; static flatbuffer validated, CPU finiteness checked. Neuron NPU compile and parity NOT YET validated. Use only in experimental build."
+          fi
+          gh release upload "$TAG" models/katago_human_9x9.tflite models/katago_human_9x9.json \
+            models/HUMAN_ALT_SHA256SUMS --clobber
