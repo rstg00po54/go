@@ -64,10 +64,56 @@ PY
   exit 0
 fi
 
+# Opt-in optimized but NOT precompiled JIT LiteRT graph for actual Vivo
+# Neuron runtime test. The b18 weights and 192 rank metadata stay intact.
+# CPU fallbacks keep normal gameplay safe if Neuron rejects the new graph.
+if [[ "${1:-}" == "--mish9" ]]; then
+  base="https://github.com/rstg00po54/go/releases/download/vivo-human-b18-mish-exact-jit-9x9-mt6993-v1"
+  stem="katago_human_9x9"
+  graphTmp="$(mktemp "$DEST/.${stem}.mish.XXXXXX")"
+  manifestTmp="$(mktemp "$DEST/.${stem}.mish.json.XXXXXX")"
+  proofTmp="$(mktemp "$DEST/.${stem}.mish.proof.XXXXXX")"
+  trap 'rm -f -- "$graphTmp" "$manifestTmp" "$proofTmp"' EXIT
+  curl --fail --location --retry 3 --connect-timeout 15 \
+    -o "$graphTmp" "$base/human9_mish_equiv.tflite"
+  curl --fail --location --retry 3 --connect-timeout 15 \
+    -o "$manifestTmp" "$base/human9_mish_equiv.json"
+  curl --fail --location --retry 3 --connect-timeout 15 \
+    -o "$proofTmp" "$base/rewrite.json"
+  python3 - "$graphTmp" "$manifestTmp" "$proofTmp" <<'PY'
+import hashlib, json, pathlib, sys
+graph, manifest, proof = [pathlib.Path(x) for x in sys.argv[1:]]
+doc=json.loads(manifest.read_text())
+rewrite=json.loads(proof.read_text())
+assert doc['modelType']=='human' and doc['weights']=='b18c384nbt-humanv0'
+assert doc['size']==9 and doc['cpu_inference']=='PASS'
+assert doc['numInputMetaChannels']==192 and doc['metaEncoderVersion']==1
+assert doc['numInputChannels']==22 and doc['numInputGlobalChannels']==19
+assert doc['numPolicyChannels']==2 and doc['numScoreValueChannels']==6
+assert set(doc['inputOrder'])=={'InputSpatial','InputGlobal','InputMeta','InputMask'}
+assert set(doc['outputOrder'])=={'OutputPolicyPass','OutputPolicy',
+                                'OutputValue','OutputScoreValue','OutputOwnership'}
+assert rewrite['rewrittenChains']==120 and rewrite['gatedActivations']==118
+assert rewrite['allOriginalInitializersBitIdentical'] is True
+h=hashlib.sha256()
+with graph.open('rb') as src:
+    for buf in iter(lambda:src.read(1024*1024),b''):h.update(buf)
+assert h.hexdigest()==doc['graphSha256'],'Experimental Human graph hash mismatch'
+print('HUMAN_EXACT_MISH_JIT_GRAPH_VERIFIED bytes=%d sha256=%s' %
+      (graph.stat().st_size,h.hexdigest()))
+PY
+  mv -f "$graphTmp" "$DEST/${stem}.tflite"
+  mv -f "$manifestTmp" "$DEST/${stem}.json"
+  trap - EXIT
+  rm -f -- "$proofTmp"
+  echo "HUMAN_EXACT_MISH_JIT_STAGED 9x9, real-device NPU/eigen parity NOT YET VERIFIED"
+  exit 0
+fi
+
 case "${1:---size}" in
   --all) SIZES=(9 13 19) ;;
   --size) SIZES=("${2:-9}") ;;
-  *) echo "Usage: bash tools/prepare_vivo_human_litert.sh --size 9|13|19 OR --all OR --aot9" >&2; exit 2 ;;
+  *) echo "Usage: bash tools/prepare_vivo_human_litert.sh --size 9|13|19 OR --all OR --aot9 OR --mish9" >&2; exit 2 ;;
 esac
 for size in "${SIZES[@]}"; do
   case "$size" in 9|13|19) ;; *) echo "Unsupported board size: $size" >&2; exit 2;; esac
