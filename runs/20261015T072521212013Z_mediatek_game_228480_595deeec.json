@@ -1,0 +1,41 @@
+{
+  "test": "vivo MediaTek KataGo real game backend with Human SL",
+  "run_id": "2dbfb78d755e4d14",
+  "sizes": [
+    11
+  ],
+  "humanSL": true,
+  "requireHumanNpu": true,
+  "hardwareExecution": "UNVERIFIED",
+  "status": "FAIL",
+  "errors": [
+    "Step 0: No genuine MediaTek game session",
+    "Step 0: MediaTek game session did not actually invoke LiteRT evaluator",
+    "Step 0: No matching STEP_PASS/active board",
+    "Step 0: Human SL still executed on CPU/Eigen",
+    "Step 0: Missing actual Human CPU/LiteRT 5-head parity",
+    "Missing overall NpuSmoke PASS",
+    "Android/native crash"
+  ],
+  "steps": [
+    {
+      "index": 0,
+      "board": 11,
+      "status": "FAIL",
+      "errors": [
+        "No genuine MediaTek game session",
+        "MediaTek game session did not actually invoke LiteRT evaluator",
+        "No matching STEP_PASS/active board",
+        "Human SL still executed on CPU/Eigen",
+        "Missing actual Human CPU/LiteRT 5-head parity"
+      ],
+      "litertInferenceCount": 0,
+      "humanLiteRtInferenceCount": 0,
+      "humanParitySampleCount": 0,
+      "black": null,
+      "white": null
+    }
+  ],
+  "serial": "10AFB21HP5002ZK",
+  "socModel": "MT6993"
+}

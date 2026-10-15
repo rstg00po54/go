@@ -1,0 +1,74 @@
+--------- beginning of main
+10-15 15:25:10.555 D/KataGoEngine(29381): stop in, running=false, process=null
+10-15 15:25:10.562 I/NpuSmoke(29381): START id=2dbfb78d755e4d14 sizes=11 humanSL=true
+10-15 15:25:10.566 I/NpuSmoke(29381): STAGE id=2dbfb78d755e4d14 phase=human_model_prepare
+10-15 15:25:10.566 I/KataGoEngine(29381): Human SL model ready: /data/user/0/com.badukai.java.nputest/files/engine/b18c384nbt-humanv0.bin
+10-15 15:25:10.566 I/NpuSmoke(29381): STAGE id=2dbfb78d755e4d14 phase=human_model_ready
+10-15 15:25:10.566 I/NpuSmoke(29381): STAGE id=2dbfb78d755e4d14 phase=cpu_preload
+10-15 15:25:10.566 D/KataGoEngine(29381): stop in, running=false, process=null
+10-15 15:25:10.566 D/KataGoEngine(29381): Model in, displayName=Human, fileName=10b.bin, description=10-block
+10-15 15:25:10.566 D/KataGoEngine(29381): Model in, displayName=Superhuman, fileName=18b.bin, description=18-block
+10-15 15:25:10.566 D/KataGoEngine(29381): Model in, displayName=Godlike, fileName=28b.bin, description=28-block
+10-15 15:25:10.566 D/KataGoEngine(29381): start in, model=HUMAN, running=false
+10-15 15:25:10.566 I/KataGoEngine(29381): === JAVA KATAGO ENGINE / ANDROID ARM64 ===
+10-15 15:25:10.566 I/KataGoEngine(29381): STARTUP_TIMING phase=engine_backend_and_paths ms=0.300544
+10-15 15:25:10.566 D/KataGoEngine(29381): copyAssetToFile in, assetPath=engine/human_gtp.cfg, dest=/data/user/0/com.badukai.java.nputest/files/engine/human_gtp.cfg
+10-15 15:25:10.599 I/KataGoEngine(29381): Native GTP defaultBoardSize=19
+10-15 15:25:10.599 I/KataGoEngine(29381): STARTUP_TIMING phase=engine_prepare_config ms=32.668416
+10-15 15:25:10.599 D/KataGoEngine(29381): copyAssetToFile in, assetPath=engine/10b.bin, dest=/data/user/0/com.badukai.java.nputest/files/engine/10b.bin
+10-15 15:25:10.615 I/KataGoEngine(29381): STARTUP_TIMING phase=engine_prepare_model_asset ms=16.310144
+10-15 15:25:10.615 I/KataGoEngine(29381): Human SL model: /data/user/0/com.badukai.java.nputest/files/engine/b18c384nbt-humanv0.bin size=107185997
+10-15 15:25:10.616 I/KataGoEngine(29381): STARTUP_TIMING phase=engine_find_human_model ms=0.13952
+10-15 15:25:10.616 I/KataGoEngine(29381): Model: /data/user/0/com.badukai.java.nputest/files/engine/10b.bin size=12003218
+10-15 15:25:10.616 I/KataGoEngine(29381): Config: /data/user/0/com.badukai.java.nputest/files/engine/human_gtp.cfg
+10-15 15:25:10.616 I/KataGoEngine(29381): Backend requested: CPU/JNI Eigen
+10-15 15:25:10.619 I/KataGoEngine(29381): STARTUP_TIMING phase=engine_cpu_jni_create ms=3.705344
+10-15 15:25:10.619 D/KataGoEngine(29381): startReaderThread in
+10-15 15:25:10.619 D/KataGoEngine(29381): sendCommandSync in, command=name, running=true
+10-15 15:25:10.620 D/KataGoEngine(29381): JNI GTP command=name queued=true enqueueMs=0
+10-15 15:25:10.620 I/KataGoEngine(29381): STARTUP_TIMING phase=engine_cpu_gtp_name_send ms=0.070656
+10-15 15:25:11.774 D/KataGoEngine(29381): KataGo JNI GTP response: = KataGo
+10-15 15:25:11.777 I/KataGoEngine(29381): KataGo GTP ready response: = KataGo
+10-15 15:25:11.777 I/KataGoEngine(29381): STARTUP_TIMING phase=engine_cpu_gtp_name_wait ms=1157.132288
+10-15 15:25:11.777 I/KataGoEngine(29381): STARTUP_TIMING phase=engine_java_start_total ms=1210.805376
+10-15 15:25:11.777 I/KataGoEngine(29381): === JNI/EIGEN ENGINE STARTED SUCCESSFULLY ===
+10-15 15:25:11.777 I/NpuSmoke(29381): MTK_CPU_TO_NPU_PRECHECK_READY id=2dbfb78d755e4d14 backend=CPU/Eigen JNI
+10-15 15:25:11.777 D/KataGoEngine(29381): stop in, running=true, process=null
+10-15 15:25:11.777 D/KataGoEngine(29381): sendCommandSync in, command=quit, running=true
+10-15 15:25:11.777 D/KataGoEngine(29381): JNI GTP command=quit queued=true enqueueMs=0
+10-15 15:25:11.816 I/KataGoEngine(29381): KataGo JNI session stopped
+10-15 15:25:11.816 I/KataGoEngine(29381): KataGo stopped
+10-15 15:25:11.816 I/NpuSmoke(29381): STAGE id=2dbfb78d755e4d14 phase=cpu_closed
+10-15 15:25:11.816 I/NpuSmoke(29381): STEP_BEGIN id=2dbfb78d755e4d14 index=0 board=11
+10-15 15:25:11.816 D/KataGoEngine(29381): stop in, running=false, process=null
+10-15 15:25:11.816 I/NpuSmoke(29381): STAGE id=2dbfb78d755e4d14 phase=npu_start index=0 board=11
+10-15 15:25:11.816 D/KataGoEngine(29381): start in, model=HUMAN, running=false
+10-15 15:25:11.816 I/KataGoEngine(29381): === JAVA KATAGO ENGINE / ANDROID ARM64 ===
+10-15 15:25:11.816 I/KataGoEngine(29381): STARTUP_TIMING phase=engine_backend_and_paths ms=0.340608
+10-15 15:25:11.816 D/KataGoEngine(29381): copyAssetToFile in, assetPath=engine/human_gtp.cfg, dest=/data/user/0/com.badukai.java.nputest/files/engine/human_gtp.cfg
+10-15 15:25:11.819 I/KataGoEngine(29381): Native GTP defaultBoardSize=11
+10-15 15:25:11.819 I/KataGoEngine(29381): STARTUP_TIMING phase=engine_prepare_config ms=2.613504
+10-15 15:25:11.819 D/KataGoEngine(29381): copyAssetToFile in, assetPath=engine/10b.bin, dest=/data/user/0/com.badukai.java.nputest/files/engine/10b.bin
+10-15 15:25:11.820 I/KataGoEngine(29381): Reusing installed model asset: /data/user/0/com.badukai.java.nputest/files/engine/10b.bin
+10-15 15:25:11.820 D/KataGoEngine(29381): copyAssetToFile in, assetPath=engine/katago_10b_11x11.tflite, dest=/data/user/0/com.badukai.java.nputest/files/engine/katago_10b_11x11.tflite
+10-15 15:25:11.828 D/KataGoEngine(29381): copyAssetToFile in, assetPath=engine/katago_10b_11x11.json, dest=/data/user/0/com.badukai.java.nputest/files/engine/katago_10b_11x11.json
+10-15 15:25:11.829 D/KataGoEngine(29381): copyAssetToFile in, assetPath=engine/katago_human_11x11.tflite, dest=/data/user/0/com.badukai.java.nputest/files/engine/katago_human_11x11.tflite
+10-15 15:25:11.877 D/KataGoEngine(29381): copyAssetToFile in, assetPath=engine/katago_human_11x11.json, dest=/data/user/0/com.badukai.java.nputest/files/engine/katago_human_11x11.json
+10-15 15:25:11.878 I/KataGoEngine(29381): MTK_HUMAN_GRAPH_STAGED board=11
+10-15 15:25:11.878 I/KataGoEngine(29381): STARTUP_TIMING phase=engine_prepare_model_asset ms=58.78208
+10-15 15:25:11.878 I/KataGoEngine(29381): Human SL model: /data/user/0/com.badukai.java.nputest/files/engine/b18c384nbt-humanv0.bin size=107185997
+10-15 15:25:11.878 I/KataGoEngine(29381): STARTUP_TIMING phase=engine_find_human_model ms=0.042368
+10-15 15:25:11.878 I/KataGoEngine(29381): Model: /data/user/0/com.badukai.java.nputest/files/engine/10b.bin size=12003218
+10-15 15:25:11.878 I/KataGoEngine(29381): Config: /data/user/0/com.badukai.java.nputest/files/engine/human_gtp.cfg
+10-15 15:25:11.878 I/KataGoEngine(29381): Backend requested: NPU/MediaTek LiteRT in-process JNI
+10-15 15:25:12.742 I/KataGoMTK(29381): MTK_LITERT_INIT board=11 model=10b npuRequested=true graph=katago_10b_11x11.tflite aotTarget=none outputScaleMultiplier=8.0 scaleSource=onnx_manifest
+10-15 15:25:17.632 I/KataGoMTK(29381): MTK_LITERT_INIT board=11 model=human npuRequested=true graph=katago_human_11x11.tflite aotTarget=none outputScaleMultiplier=8.0 scaleSource=onnx_manifest
+10-15 15:25:17.632 I/KataGoMTK(29381): MTK_HUMAN_LITERT_READY board=11 graph=katago_human_11x11.tflite
+10-15 15:25:17.632 I/KataGoMTK(29381): MTK_GTP_BRIDGE_INSTALLED
+10-15 15:25:17.632 I/KataGoMTK(29381): MTK_GTP_NATIVE_READY board=11 handle=1 humanLiteRt=true
+10-15 15:25:17.632 I/KataGoEngine(29381): STARTUP_TIMING phase=engine_mtk_native_create ms=5754.179456
+10-15 15:25:17.632 D/KataGoEngine(29381): startReaderThread in
+10-15 15:25:17.632 D/KataGoEngine(29381): sendCommandSync in, command=name, running=true
+10-15 15:25:17.632 D/KataGoEngine(29381): MediaTek GTP send=true command=name
+--------- beginning of crash
+10-15 15:25:17.783 F/libc    (29381): Fatal signal 6 (SIGABRT), code -1 (SI_QUEUE) in tid 30090 (pool-4-thread-1), pid 29381 (ai.java.nputest)

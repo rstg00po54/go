@@ -1,0 +1,147 @@
+10-15 15:25:10.363 D/nativeloader(29381): Configuring clns-9 for other apk /data/app/~~ja9dn-rOWjWH9k0jujWVEA==/com.badukai.java.nputest-ma7SF83wRh0r47yufXMJCQ==/base.apk. target_sdk_version=34, uses_libraries=libOpenCL.so:libneuron_sys_util.mtk.so:libneuronusdk_adapter.mtk.so:libneuronusdk_adapter.9.mtk.so:libapuwareutils_v2.mtk.so:libapuwareapusys_v2.mtk.so:libmvpuop_mtk_nn.mtk.so:libmvpuop_mtk_cv.mtk.so:libmvpu_runtime_pub.mtk.so:libmvpu_engine_pub.mtk.so:libmvpu_pattern_pub.mtk.so:libmvpuop25_mtk_nn.mtk.so:libmvpuop25_mtk_cv.mtk.so:libmvpu_runtime_25_pub.mtk.so:libmvpu_engine_25_pub.mtk.so:libmvpu_pattern_25_pub.mtk.so:libmvpu_config.mtk.so:libmvpu_runtime_30.mtk.so:libmvpu_engine_30.mtk.so:libmvpu_pattern_30.mtk.so:libmvpuop30_mtk_nn.mtk.so, library_path=/data/app/~~ja9dn-rOWjWH9k0jujWVEA==/com.badukai.java.nputest-ma7SF83wRh0r47yufXMJCQ==/lib/arm64:/data/app/~~ja9dn-rOWjWH9k0jujWVEA==/com.badukai.java.nputest-ma7SF83wRh0r47yufXMJCQ==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/0/com.badukai.java.nputest
+10-15 15:25:10.363 D/nativeloader(29381): Extending system_exposed_libraries: libneuron_sys_util.mtk.so:libneuronusdk_adapter.mtk.so:libneuronusdk_adapter.9.mtk.so:libapuwareutils_v2.mtk.so:libapuwareapusys_v2.mtk.so:libmvpuop_mtk_nn.mtk.so:libmvpuop_mtk_cv.mtk.so:libmvpu_runtime_pub.mtk.so:libmvpu_engine_pub.mtk.so:libmvpu_pattern_pub.mtk.so:libmvpuop25_mtk_nn.mtk.so:libmvpuop25_mtk_cv.mtk.so:libmvpu_runtime_25_pub.mtk.so:libmvpu_engine_25_pub.mtk.so:libmvpu_pattern_25_pub.mtk.so:libmvpu_config.mtk.so:libmvpu_runtime_30.mtk.so:libmvpu_engine_30.mtk.so:libmvpu_pattern_30.mtk.so:libmvpuop30_mtk_nn.mtk.so
+10-15 15:25:11.903 I/litert  (29381): [compiled_model.cc:750] NPU JIT compilation caching enabled with cache dir: /data/user/0/com.badukai.java.nputest/cache
+10-15 15:25:11.903 I/litert  (29381): [compiler_plugin.cc:308] Attempting to load plugin at: /data/app/~~ja9dn-rOWjWH9k0jujWVEA==/com.badukai.java.nputest-ma7SF83wRh0r47yufXMJCQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 15:25:11.903 I/litert  (29381): [compiler_plugin.cc:250] Loading plugin at: /data/app/~~ja9dn-rOWjWH9k0jujWVEA==/com.badukai.java.nputest-ma7SF83wRh0r47yufXMJCQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 15:25:11.904 W/linker  (29381): Warning: "/data/app/~~ja9dn-rOWjWH9k0jujWVEA==/com.badukai.java.nputest-ma7SF83wRh0r47yufXMJCQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so" unused DT entry: DT_RPATH (type 0xf arg 0x761) (ignoring)
+10-15 15:25:11.904 I/litert  (29381): [compiler_plugin.cc:260] Loaded plugin at: /data/app/~~ja9dn-rOWjWH9k0jujWVEA==/com.badukai.java.nputest-ma7SF83wRh0r47yufXMJCQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 15:25:11.904 I/litert  (29381): [compiler_plugin.cc:263] Resolved plugin api at: /data/app/~~ja9dn-rOWjWH9k0jujWVEA==/com.badukai.java.nputest-ma7SF83wRh0r47yufXMJCQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 15:25:11.904 I/litert  (29381): [compiler_plugin.cc:268] Initialize plugin at: /data/app/~~ja9dn-rOWjWH9k0jujWVEA==/com.badukai.java.nputest-ma7SF83wRh0r47yufXMJCQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 15:25:11.907 I/litert  (29381): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 15:25:12.016 I/litert  (29381): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 15:25:12.016 I/litert  (29381): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 15:25:12.017 W/litert  (29381): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 15:25:12.017 I/litert  (29381): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 15:25:12.017 I/litert  (29381): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 15:25:12.020 I/litert  (29381): [compiler_plugin.cc:948] Applying plugin with SDK version: np9.0.11
+10-15 15:25:12.020 I/litert  (29381): [compiler_plugin.cc:706] SoC model name is not specified
+10-15 15:25:12.020 I/litert  (29381): [compiler_plugin.cc:929] Registered 1 transformations.
+10-15 15:25:12.020 I/litert  (29381): [compiler_plugin.cc:936] Applied transformations.
+10-15 15:25:12.021 I/litert  (29381): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 15:25:12.021 I/litert  (29381): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 15:25:12.022 I/litert  (29381): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 15:25:12.022 W/litert  (29381): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 15:25:12.022 I/litert  (29381): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 15:25:12.022 I/litert  (29381): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 15:25:12.022 I/litert  (29381): [compiler_plugin.cc:514] Use Get supported operations for partition.
+10-15 15:25:12.025 I/litert  (29381): [compile_model.cc:136] NeuronCompilation_setPreference being set with value: 2
+10-15 15:25:12.025 I/neuron  (29381): Validate optimization hint code: 0
+10-15 15:25:12.054 I/HidlServiceManagement(29381): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 15:25:12.059 I/HidlServiceManagement(29381): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 15:25:12.059 E/apuware_hidl(29381): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 15:25:12.064 I/HidlServiceManagement(29381): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 15:25:12.064 E/apuware_hidl(29381): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 15:25:12.073 I/HidlServiceManagement(29381): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 15:25:12.073 E/apuware_hidl(29381): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 15:25:12.073 E/apuware_hidl(29381): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 15:25:12.073 I/apuware_hidl(29381): AidlNeuronClient get aidl version=5
+10-15 15:25:12.138 I/litert  (29381): [compiler_plugin.cc:524] Partition strategy: 0
+10-15 15:25:12.139 I/litert  (29381): [compiler_plugin.cc:742] Partitioned subgraph<0>, selected 170 ops, from a total of 170 ops. resulted in 1 partitions.
+10-15 15:25:12.140 I/litert  (29381): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 15:25:12.140 I/litert  (29381): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 15:25:12.141 I/litert  (29381): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 15:25:12.141 W/litert  (29381): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 15:25:12.141 I/litert  (29381): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 15:25:12.141 I/litert  (29381): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 15:25:12.141 I/litert  (29381): [compiler_plugin.cc:624] Starting MediaTek Compilation for 1 subgraphs, soc_model=(null)
+10-15 15:25:12.141 I/litert  (29381): [compiler_plugin.cc:632] Recording Neuron SDK version in bytecode: 9.0.11
+10-15 15:25:12.142 I/litert  (29381): [compile_model.cc:136] NeuronCompilation_setPreference being set with value: 2
+10-15 15:25:12.142 I/neuron  (29381): Validate optimization hint code: 0
+10-15 15:25:12.157 I/HidlServiceManagement(29381): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 15:25:12.165 I/HidlServiceManagement(29381): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 15:25:12.165 E/apuware_hidl(29381): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 15:25:12.170 I/HidlServiceManagement(29381): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 15:25:12.170 E/apuware_hidl(29381): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 15:25:12.175 I/HidlServiceManagement(29381): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 15:25:12.175 E/apuware_hidl(29381): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 15:25:12.175 E/apuware_hidl(29381): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 15:25:12.175 I/apuware_hidl(29381): AidlNeuronClient get aidl version=5
+10-15 15:25:12.235 I/HidlServiceManagement(29381): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 15:25:12.240 I/HidlServiceManagement(29381): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 15:25:12.240 E/apuware_hidl(29381): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 15:25:12.245 I/HidlServiceManagement(29381): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 15:25:12.245 E/apuware_hidl(29381): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 15:25:12.250 I/HidlServiceManagement(29381): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 15:25:12.250 E/apuware_hidl(29381): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 15:25:12.250 E/apuware_hidl(29381): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 15:25:12.250 I/apuware_hidl(29381): AidlNeuronClient get aidl version=5
+10-15 15:25:12.686 I/litert  (29381): [compiled_model.cc:1397] 1 compiler plugins were applied successfully: MediaTek compiler plugin (ver 0.1.0)
+10-15 15:25:12.686 I/litert  (29381): [compiled_model.cc:1411] JIT compilation changed model, reserializing...
+10-15 15:25:12.701 I/litert  (29381): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 15:25:12.701 I/litert  (29381): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 15:25:12.702 I/litert  (29381): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 15:25:12.702 W/litert  (29381): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 15:25:12.702 I/litert  (29381): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 15:25:12.702 I/litert  (29381): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 15:25:12.702 I/litert  (29381): [dispatch_api.cc:133] Neuron SDK version: 9.0.11
+10-15 15:25:12.702 I/litert  (29381): [dispatch_api.cc:368] Runtime compatibility check: Neuron SDK version 9.0.11
+10-15 15:25:12.702 I/litert  (29381): [compiled_model.cc:1065] Accelerator returned null hooks.
+10-15 15:25:12.702 I/litert  (29381): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.0.11, runtime 9.0.11
+10-15 15:25:12.704 I/HidlServiceManagement(29381): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 15:25:12.709 I/HidlServiceManagement(29381): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 15:25:12.709 E/apuware_hidl(29381): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 15:25:12.714 I/HidlServiceManagement(29381): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 15:25:12.714 E/apuware_hidl(29381): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 15:25:12.719 I/HidlServiceManagement(29381): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 15:25:12.719 E/apuware_hidl(29381): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 15:25:12.719 E/apuware_hidl(29381): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 15:25:12.720 I/apuware_hidl(29381): AidlNeuronClient get aidl version=5
+10-15 15:25:12.732 W/litert  (29381): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 10648 bytes for Float32 tensor at index 0
+10-15 15:25:12.732 W/litert  (29381): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 76 bytes for Float32 tensor at index 1
+10-15 15:25:12.732 W/litert  (29381): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 484 bytes for Float32 tensor at index 2
+10-15 15:25:12.732 W/litert  (29381): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 484 bytes for Float32 tensor at index 0
+10-15 15:25:12.732 W/litert  (29381): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 4 bytes for Float32 tensor at index 1
+10-15 15:25:12.732 W/litert  (29381): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 12 bytes for Float32 tensor at index 2
+10-15 15:25:12.732 W/litert  (29381): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 16 bytes for Float32 tensor at index 3
+10-15 15:25:12.732 W/litert  (29381): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 484 bytes for Float32 tensor at index 4
+10-15 15:25:12.844 I/litert  (29381): [compiled_model.cc:750] NPU JIT compilation caching enabled with cache dir: /data/user/0/com.badukai.java.nputest/cache
+10-15 15:25:12.844 I/litert  (29381): [compiler_plugin.cc:308] Attempting to load plugin at: /data/app/~~ja9dn-rOWjWH9k0jujWVEA==/com.badukai.java.nputest-ma7SF83wRh0r47yufXMJCQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 15:25:12.844 I/litert  (29381): [compiler_plugin.cc:250] Loading plugin at: /data/app/~~ja9dn-rOWjWH9k0jujWVEA==/com.badukai.java.nputest-ma7SF83wRh0r47yufXMJCQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 15:25:12.845 I/litert  (29381): [compiler_plugin.cc:260] Loaded plugin at: /data/app/~~ja9dn-rOWjWH9k0jujWVEA==/com.badukai.java.nputest-ma7SF83wRh0r47yufXMJCQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 15:25:12.845 I/litert  (29381): [compiler_plugin.cc:263] Resolved plugin api at: /data/app/~~ja9dn-rOWjWH9k0jujWVEA==/com.badukai.java.nputest-ma7SF83wRh0r47yufXMJCQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 15:25:12.845 I/litert  (29381): [compiler_plugin.cc:268] Initialize plugin at: /data/app/~~ja9dn-rOWjWH9k0jujWVEA==/com.badukai.java.nputest-ma7SF83wRh0r47yufXMJCQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 15:25:12.847 I/litert  (29381): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 15:25:12.847 I/litert  (29381): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 15:25:12.847 I/litert  (29381): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 15:25:12.847 W/litert  (29381): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 15:25:12.847 I/litert  (29381): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 15:25:12.847 I/litert  (29381): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 15:25:12.860 I/litert  (29381): [compiler_plugin.cc:948] Applying plugin with SDK version: np9.0.11
+10-15 15:25:12.860 I/litert  (29381): [compiler_plugin.cc:706] SoC model name is not specified
+10-15 15:25:12.860 I/litert  (29381): [compiler_plugin.cc:929] Registered 1 transformations.
+10-15 15:25:12.860 I/litert  (29381): [compiler_plugin.cc:936] Applied transformations.
+10-15 15:25:12.863 I/litert  (29381): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 15:25:12.863 I/litert  (29381): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 15:25:12.863 I/litert  (29381): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 15:25:12.863 W/litert  (29381): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 15:25:12.863 I/litert  (29381): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 15:25:12.863 I/litert  (29381): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 15:25:12.863 I/litert  (29381): [compiler_plugin.cc:514] Use Get supported operations for partition.
+10-15 15:25:12.875 I/litert  (29381): [compile_model.cc:136] NeuronCompilation_setPreference being set with value: 2
+10-15 15:25:12.875 I/neuron  (29381): Validate optimization hint code: 0
+10-15 15:25:13.351 I/litert  (29381): [compiler_plugin.cc:524] Partition strategy: 0
+10-15 15:25:13.362 I/litert  (29381): [compiler_plugin.cc:742] Partitioned subgraph<0>, selected 1738 ops, from a total of 1738 ops. resulted in 1 partitions.
+10-15 15:25:13.364 I/litert  (29381): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 15:25:13.365 I/litert  (29381): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 15:25:13.365 I/litert  (29381): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 15:25:13.365 W/litert  (29381): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 15:25:13.365 I/litert  (29381): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 15:25:13.365 I/litert  (29381): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 15:25:13.365 I/litert  (29381): [compiler_plugin.cc:624] Starting MediaTek Compilation for 1 subgraphs, soc_model=(null)
+10-15 15:25:13.365 I/litert  (29381): [compiler_plugin.cc:632] Recording Neuron SDK version in bytecode: 9.0.11
+10-15 15:25:13.379 I/litert  (29381): [compile_model.cc:136] NeuronCompilation_setPreference being set with value: 2
+10-15 15:25:13.379 I/neuron  (29381): Validate optimization hint code: 0
+10-15 15:25:17.568 I/litert  (29381): [compiled_model.cc:1397] 1 compiler plugins were applied successfully: MediaTek compiler plugin (ver 0.1.0)
+10-15 15:25:17.568 I/litert  (29381): [compiled_model.cc:1411] JIT compilation changed model, reserializing...
+10-15 15:25:17.606 I/litert  (29381): [dispatch_api.cc:368] Runtime compatibility check: Neuron SDK version 9.0.11
+10-15 15:25:17.606 I/litert  (29381): [compiled_model.cc:1065] Accelerator returned null hooks.
+10-15 15:25:17.606 I/litert  (29381): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.0.11, runtime 9.0.11
+10-15 15:25:17.629 W/litert  (29381): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 10648 bytes for Float32 tensor at index 0
+10-15 15:25:17.629 W/litert  (29381): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 76 bytes for Float32 tensor at index 1
+10-15 15:25:17.629 W/litert  (29381): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 768 bytes for Float32 tensor at index 2
+10-15 15:25:17.629 W/litert  (29381): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 484 bytes for Float32 tensor at index 3
+10-15 15:25:17.629 W/litert  (29381): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 8 bytes for Float32 tensor at index 0
+10-15 15:25:17.629 W/litert  (29381): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 968 bytes for Float32 tensor at index 1
+10-15 15:25:17.629 W/litert  (29381): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 484 bytes for Float32 tensor at index 2
+10-15 15:25:17.629 W/litert  (29381): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 12 bytes for Float32 tensor at index 3
+10-15 15:25:17.629 W/litert  (29381): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 24 bytes for Float32 tensor at index 4
