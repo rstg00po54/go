@@ -150,7 +150,7 @@ def optimize_model(model, expected=120):
                 helper.make_node("Div", [names["numerator"], names["denominator"]],
                                  [names["ratio"]]),
                 helper.make_node("Mul", [item["x"], names["ratio"]], [item["out"]],
-                                 name="__b18_mish_equiv_output"),
+                                 name=names["sigmoid"]+"_mish_output_op"),
             ])
         elif id(node) not in remove:
             new_nodes.append(node)
