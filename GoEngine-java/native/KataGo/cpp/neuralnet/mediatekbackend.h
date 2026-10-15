@@ -19,7 +19,8 @@ class KataGoMediaTekRunner {
 // Install is called on the Java UI thread *before* GTP starts NN workers.
 // Reset is called only after the native GTP session has shut down.
 namespace KataGoMediaTekBridge {
-  bool install(JNIEnv* env, jobject javaRunner);
+  bool install(JNIEnv* env, jobject javaRunner, bool compareCpu);
+  bool parityEnabled();
   void reset(JNIEnv* env);
   bool ready();
 }
