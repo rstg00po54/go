@@ -154,13 +154,13 @@ def parse_parity_events(lines, board):
         key = (m.group(1), int(m.group(2)))
         sample = samples.setdefault(key, {"heads": {}, "cpuMs": None})
         head = m.group(4)
-        if head in sample["heads"]:
-            sample["heads"][head]["duplicate"] = True
+        duplicate = head in sample["heads"]
         sample["heads"][head] = {
             "count": int(m.group(5)), "maxAbs": float(m.group(6)),
             "mae": float(m.group(7)), "maxRel": float(m.group(8)),
             "worstIndex": int(m.group(9)),
-            "cpuAtWorst": float(m.group(10)), "npuAtWorst": float(m.group(11))
+            "cpuAtWorst": float(m.group(10)), "npuAtWorst": float(m.group(11)),
+            "duplicate": duplicate or sample["heads"].get(head, {}).get("duplicate", False)
         }
     groups = []
     totals = {head: {"count": 0, "weightedAbs": 0.0, "maxAbs": 0.0,
