@@ -16,6 +16,15 @@ EXPECTED = {
 }
 
 
+# The v1 release's graph binaries are unchanged, but scale8-aware manifests
+# now carry explicit ONNX output metadata. Old cached manifests stay accepted.
+ALTERNATE_SCALE_AWARE_JSON = {
+    "katago_10b_9x9.json": (1761, "4ed35051e22638a7c2ed43db2c022a5ceefb75f9c5b10d3704f7b05688dc2b2a"),
+    "katago_10b_13x13.json": (1773, "c6ad7043dc85d3cdd64fb7523ff03b9ded52c032d5ff3a410391763bce37739f"),
+    "katago_10b_19x19.json": (1773, "5ae0ccacaa62eb74060ef33b74db3a58e1f7dd7590c36bf055c5d42135aeafe1"),
+}
+
+
 def verify_apk(path, expected=None):
     if expected is None: expected = EXPECTED
     if not Path(path).is_file(): raise ValueError("APK missing: " + str(path))
@@ -27,16 +36,20 @@ def verify_apk(path, expected=None):
                 raise ValueError("Missing model inside APK: " + asset +
                                  " (build with -PvivoProbeApk=true)")
             info = archive.getinfo(asset)
-            if info.file_size != length:
-                raise ValueError("Incorrect model length in APK: %s actual=%d expected=%d" %
-                                 (asset, info.file_size, length))
+            # Only the known original manifests have a second accepted hash.
+            accepted = [(length, digest)]
+            if expected is EXPECTED and name in ALTERNATE_SCALE_AWARE_JSON:
+                accepted.append(ALTERNATE_SCALE_AWARE_JSON[name])
+            if info.file_size not in [item[0] for item in accepted]:
+                raise ValueError("Incorrect model length in APK: %s actual=%d accepted=%s" %
+                                 (asset, info.file_size, [item[0] for item in accepted]))
             sha = hashlib.sha256()
             with archive.open(info) as f:
                 for chunk in iter(lambda: f.read(1024 * 1024), b""):
                     sha.update(chunk)
-            if sha.hexdigest() != digest:
+            if (info.file_size, sha.hexdigest()) not in accepted:
                 raise ValueError("Incorrect model SHA256 in APK: " + asset)
-            print("APK_MODEL_OK %s bytes=%d" % (asset, length), flush=True)
+            print("APK_MODEL_OK %s bytes=%d" % (asset, info.file_size), flush=True)
         if any(name.endswith("/librknnrt.so") for name in seen):
             raise ValueError("Vivo APK contains Rockchip-only librknnrt.so")
     print("VIVO_LITERT_APK_PASS models=%d apk=%s" % (len(expected), path), flush=True)
