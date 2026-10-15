@@ -1118,6 +1118,52 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG,String.format(Locale.US,"ENDGAME_NN_RESULT moves=%d lead=%.3f elapsedMs=%d",
                         moves,result.whiteLead,nnMs));
                 render(finalScoreText);
+                new AlertDialog.Builder(this)
+                        .setTitle("终局 · 快速 NN 估分")
+                        .setMessage(finalScoreText + "\\n快速估分耗时：" + nnMs + " ms"
+                                + "\\n可选：运行旧版慢速 AI 终局判断，比较实际耗时。")
+                        .setPositiveButton("慢速 AI 复核", (dialog, which) -> runSlowEndgameComparison())
+                        .setNegativeButton("关闭", null).show();
+            });
+        });
+    }
+
+    /** Optional legacy GTP final_score / final_status_list benchmark. Never alters the board. */
+    private void runSlowEndgameComparison() {
+        if (evaluating || thinking || !engineReady || !board.isGameOver()
+                || board.getLastMove() instanceof Move.Resign) return;
+        final GoBoard snapshot = board;
+        final int moves = board.getMoveCount(), size = boardSize;
+        evaluating = true;
+        render("旧版 AI 终局判断中（可能较慢）...");
+        engineExecutor.execute(() -> {
+            long begin = SystemClock.elapsedRealtime();
+            String score = null, dead = null, failure = null;
+            try {
+                score = engine.getFinalScore();
+                dead = engine.getFinalDeadStones();
+            } catch (RuntimeException e) {
+                failure = e.toString();
+                Log.e(TAG, "LEGACY_ENDGAME_BENCH failed", e);
+            }
+            final long elapsed = SystemClock.elapsedRealtime() - begin;
+            final String backend = engine.getBackendName();
+            final String finalScore = score, finalDead = dead, finalFailure = failure;
+            Log.i(TAG, "LEGACY_ENDGAME_BENCH board=" + size + " moves=" + moves
+                    + " backend=" + backend + " elapsedMs=" + elapsed
+                    + " finalScore=" + score + " deadStones=" + dead + " error=" + failure);
+            mainHandler.post(() -> {
+                evaluating = false;
+                if (board != snapshot || boardSize != size || board.getMoveCount() != moves) return;
+                String message = "后端：" + backend + "\\n总耗时：" + elapsed + " ms"
+                        + "\\nfinal_score：" + (finalScore == null ? "未返回（可能不支持）" : finalScore)
+                        + "\\n疑似死子：" + (finalDead == null ? "未返回（可能不支持）"
+                                : finalDead.isEmpty() ? "无" : finalDead)
+                        + (finalFailure == null ? "" : "\\n错误：" + finalFailure)
+                        + "\\n注意：后端名称不等于每一步都已确认在 NPU 上执行。";
+                new AlertDialog.Builder(this).setTitle("旧版 AI 终局判断 · 耗时对照")
+                        .setMessage(message).setPositiveButton("确定", null).show();
+                render(finalScoreText == null ? "旧版终局判断已完成" : finalScoreText);
             });
         });
     }
