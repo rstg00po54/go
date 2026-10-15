@@ -85,6 +85,54 @@ def normalize_name(raw, choices):
     raise ValueError("Cannot identify LiteRT model input/head " + raw)
 
 
+def inspect_raw_flatbuffer(path):
+    """Audit TFLite schema before Interpreter.allocate_tensors reshapes it.
+
+    Neuron takes tensor dimension metadata from the original FlatBuffer, which
+    can differ from the concrete inference shapes exposed after CPU allocation.
+    """
+    import collections
+    from tensorflow.lite.python import schema_py_generated as schema
+    data = path.read_bytes()
+    model = schema.Model.GetRootAsModel(data, 0)
+    issues, signatures, types, ops = [], [], collections.Counter(), collections.Counter()
+    for sg_index in range(model.SubgraphsLength()):
+        sg = model.Subgraphs(sg_index)
+        for tensor_index in range(sg.TensorsLength()):
+            tensor = sg.Tensors(tensor_index)
+            shape = [int(tensor.Shape(i)) for i in range(tensor.ShapeLength())]
+            signature = [int(tensor.ShapeSignature(i))
+                         for i in range(tensor.ShapeSignatureLength())]
+            name = tensor.Name().decode("utf-8", "replace") if tensor.Name() else ""
+            types[int(tensor.Type())] += 1
+            record = {"subgraph": sg_index, "tensor": tensor_index,
+                      "name": name[:100], "shape": shape,
+                      "shape_signature": signature, "dtype": int(tensor.Type())}
+            if not shape or any(v <= 0 for v in shape):
+                issues.append(record)
+            if signature and any(v <= 0 for v in signature):
+                signatures.append(record)
+        for op_index in range(sg.OperatorsLength()):
+            op = sg.Operators(op_index)
+            opcode = model.OperatorCodes(op.OpcodeIndex())
+            ops[int(opcode.BuiltinCode())] += 1
+    print("KATAGO_HUMAN_RAW_FB_AUDIT subgraphs=%d zeroOrEmptyTensorShapes=%d "
+          "dynamicSignatures=%d dtypeCounts=%s opCounts=%s" %
+          (model.SubgraphsLength(), len(issues), len(signatures),
+           dict(types), dict(ops)), flush=True)
+    for record in issues[:50]:
+        print("KATAGO_HUMAN_RAW_FB_SHAPE_ISSUE " + json.dumps(record), flush=True)
+    for record in signatures[:15]:
+        print("KATAGO_HUMAN_RAW_FB_DYNAMIC_SIGNATURE " + json.dumps(record), flush=True)
+    return {"rawTensorShapeIssues": issues[:100],
+            "rawDynamicSignatures": signatures[:100],
+            "rawTensorShapeIssueCount": len(issues),
+            "rawDynamicSignatureCount": len(signatures),
+            "rawSubgraphCount": model.SubgraphsLength(),
+            "rawTensorTypes": dict(types),
+            "rawOpCodes": dict(ops)}
+
+
 def inspect_tflite(path, size, contract):
     import numpy as np
     from ai_edge_litert.interpreter import Interpreter
@@ -190,6 +238,7 @@ def main():
     files = list(outdir.rglob("*_float32.tflite"))
     if len(files) != 1: raise RuntimeError("Expected unique converted Human graph: " + str(files))
     shutil.copy2(files[0], args.output)
+    contract["flatbufferAudit"] = inspect_raw_flatbuffer(args.output)
     contract.update(inspect_tflite(args.output, args.size, contract))
     sha256 = hashlib.sha256()
     with args.output.open("rb") as reader:
