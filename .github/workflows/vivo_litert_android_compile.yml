@@ -7,6 +7,8 @@ on:
       - '.github/workflows/vivo_litert_android_compile.yml'
       - 'GoEngine-java/app/build.gradle.kts'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoMediaTekLiteRt.java'
+      - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoMediaTekNative.java'
+      - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoMediaTekGtpSmoke.java'
       - 'GoEngine-java/app/src/main/java/com/badukai/MainActivity.java'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/DeviceHardwareInfo.java'
       - 'GoEngine-java/app/src/main/res/layout/dialog_new_game.xml'
