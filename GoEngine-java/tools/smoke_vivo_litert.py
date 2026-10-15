@@ -110,7 +110,7 @@ def run(argv=None):
     p.add_argument("--adb", default=shutil.which("adb"))
     p.add_argument("--serial", default=os.environ.get("ANDROID_SERIAL"))
     p.add_argument("--size", type=int, choices=(9, 13, 19), default=9)
-    p.add_argument("--timeout", type=int, default=210)
+    p.add_argument("--timeout", type=int, default=None)
     p.add_argument("--skip-install", action="store_true")
     p.add_argument("--gtp", action="store_true", help="Run real KataGo GTP genmove instead of blank-board graph probe")
     p.add_argument("--no-upload", action="store_true")
@@ -136,6 +136,8 @@ def run(argv=None):
                 failed = True
                 print("Upload failed for", folder, ":", err, file=sys.stderr, flush=True)
         return 1 if failed else 0
+    if args.timeout is None: args.timeout = 480 if args.gtp else 210
+    if args.timeout < 1: p.error("--timeout must be positive")
     if not args.adb: p.error("adb executable not found")
     serial = detect(args)
     folder = ROOT / "build/vivo_litert_smoke" / datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
