@@ -84,6 +84,7 @@ def parse_backend_log(raw, run_id, backend, board, warmups, repeats):
     starts = [x for x in lines if has_event(x, "START", run_id)]
     ready = [x for x in lines if has_event(x, "READY", run_id)]
     moves = [x for x in lines if has_event(x, "MOVE", run_id)]
+    positions = [x for x in lines if has_event(x, "POSITION", run_id)]
     passes = [x for x in lines if has_event(x, "PASS", run_id)]
     failures = [x for x in lines if has_event(x, "FAIL", run_id)]
     errors = []
@@ -101,6 +102,39 @@ def parse_backend_log(raw, run_id, backend, board, warmups, repeats):
     if "FATAL EXCEPTION" in raw or "Fatal signal" in raw:
         errors.append("Android/native crash")
     measurements, warmup_samples = [], []
+    by_position = {}
+    for row in positions:
+        try:
+            iteration = int(field(row, "iter"))
+            replay_ms = int(field(row, "replayMs"))
+            stones = field(row, "stones")
+            if iteration in by_position or iteration < 0 or replay_ms < 0 or not stones:
+                raise ValueError("invalid position")
+            by_position[iteration] = {"stones": stones, "replayMs": replay_ms}
+        except (TypeError, ValueError):
+            errors.append("Invalid or repeated POSITION event")
+    if len(by_position) != warmups + repeats:
+        errors.append("Incomplete unique positions: %d/%d" %
+                      (len(by_position), warmups + repeats))
+    if len({entry["stones"] for entry in by_position.values()}) != len(by_position):
+        errors.append("Repeated benchmark board position detected")
+
+    # Match each GTP genmove to actual MediaTek neural executions occurring
+    # AFTER that trial's POSITION marker, not previous warmup/cache inferences.
+    per_move_inferences = {}
+    raw_lines = raw.splitlines()
+    for at, line in enumerate(raw_lines):
+        if not has_event(line, "POSITION", run_id):
+            continue
+        try:
+            iteration = int(field(line, "iter"))
+        except (ValueError, TypeError):
+            continue
+        tail = raw_lines[at+1:]
+        until = next((j for j, v in enumerate(tail) if
+                      has_event(v, "MOVE", run_id) or has_event(v, "POSITION", run_id)), len(tail))
+        per_move_inferences[iteration] = sum(
+            "MTK_GTP_INFER board=" + str(board) in entry for entry in tail[:until])
     found_iters = set()
     for row in moves:
         if field(row, "backend") != backend or field(row, "board") != str(board):
@@ -122,8 +156,15 @@ def parse_backend_log(raw, run_id, backend, board, warmups, repeats):
         move = field(row, "vertex")
         if not move or not re.fullmatch(r"(?:PASS|RESIGN|[A-HJ-T](?:1[0-9]|[1-9]))", move):
             errors.append("Invalid GTP move")
+        if iteration not in by_position:
+            errors.append("MOVE has no corresponding board POSITION")
+        if backend == "NPU" and per_move_inferences.get(iteration, 0) == 0:
+            errors.append("No LiteRT evaluator call during NPU move %d (NN cache hit)" % iteration)
         sample = {"iter": iteration, "move": move, "elapsedMs": elapsed,
-                  "warmup": warmup}
+                  "warmup": warmup, "position": by_position.get(iteration, {}).get("stones"),
+                  "positionReplayMs": by_position.get(iteration, {}).get("replayMs"),
+                  "litertInferenceCalls": per_move_inferences.get(iteration)
+                      if backend == "NPU" else None}
         (warmup_samples if warmup else measurements).append(sample)
     if len(measurements) != repeats or len(warmup_samples) != warmups:
         errors.append("Incomplete moves: %s/%s timed, %s/%s warm-up" %
@@ -162,6 +203,7 @@ def parse_backend_log(raw, run_id, backend, board, warmups, repeats):
         "backend": backend, "board": board,
         "startupMs": startup_ms,
         "latencyMs": summary,
+        "positions": [by_position.get(i, {}).get("stones") for i in range(warmups + repeats)],
         "measuredMoves": sorted(measurements, key=lambda s: s["iter"]),
         "warmupMoves": sorted(warmup_samples, key=lambda s: s["iter"]),
         "liteRtInferenceCalls": npu_calls if backend == "NPU" else None,
@@ -293,6 +335,23 @@ def main(argv=None):
                 report["errors"].append(backend + ": " + str(exc))
                 if log: (folder / (backend.lower() + "_logcat.txt")).write_text(log, encoding="utf-8")
         successful = [name for name, item in report["results"].items() if item["status"] == "PASS"]
+        report["status"] = ("PASS" if len(successful) == len(args.backends)
+                            else "PARTIAL" if successful else "FAIL")
+        # If a backend deviates from the other backends' scripted opening
+        # sequences, do not compare their latency numbers as equivalent.
+        reference_positions = None
+        for backend in args.backends:
+            entry = report["results"].get(backend, {})
+            if entry.get("status") != "PASS":
+                continue
+            if reference_positions is None:
+                reference_positions = entry.get("positions")
+            elif entry.get("positions") != reference_positions:
+                entry["status"] = "FAIL"
+                entry.setdefault("errors", []).append("Position sequences mismatch other backends")
+                report["errors"].append(backend + ": Mismatched input positions")
+        successful = [name for name, item in report["results"].items()
+                      if item["status"] == "PASS"]
         report["status"] = ("PASS" if len(successful) == len(args.backends)
                             else "PARTIAL" if successful else "FAIL")
         # Comparisons are valid only if BOTH backends ran with exact same settings.
