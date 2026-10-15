@@ -82,6 +82,29 @@ def summarize_npu_logs(lines, board):
             "hardwareExecution": "UNVERIFIED"}
 
 
+def save_npu_diagnostics(folder, relevant, report, board):
+    """Make compact summaries available both in local JSON and public result uploads."""
+    # Publish compact per-run delegate proof and neural inference timings.
+    vendor = [line for line in relevant if re.search(
+        r"Neuron|dispatch|compiler.plugin|delegate|accelerat", line, re.IGNORECASE)]
+    (folder / "vendor_litert.txt").write_text("\n".join(vendor) + "\n", encoding="utf-8")
+    diagnostic = [line for line in relevant if re.search(
+        r"MTK_LITERT_|MTK_SMOKE_|Loaded plugin at:|Neuron api version|Neuron SDK version|"
+        r"Replacing [0-9]+ out of [0-9]+|DispatchDelegate::Initialize|AidlNeuronClient|"
+        r"HidlNeuronClient|Failed to load symbol|fallback|failed to delegate|"
+        r"FATAL EXCEPTION|Fatal signal", line, re.IGNORECASE)]
+    (folder / "npu_diagnostics.txt").write_text("\n".join(diagnostic) + "\n", encoding="utf-8")
+    report["vendorLogLineCount"] = len(vendor)
+    report["npuDiagnostics"] = summarize_npu_logs(relevant, args.size)
+    report["fallbackWarnings"] = report["npuDiagnostics"]["fallbackIndicators"]
+    info = report["npuDiagnostics"]
+    print("Delegate:", info["delegateStatus"], "Neuron SDK:", info["neuronApiVersion"],
+          "AIDL:", info["aidlVersion"], flush=True)
+    samples = info["inferenceTiming"]
+    print("Inference times (ms):", samples["samplesMs"],
+          "average:", samples.get("meanMs", "unknown"), flush=True)
+
+
 def run(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--adb", default=shutil.which("adb"))
@@ -90,7 +113,28 @@ def run(argv=None):
     p.add_argument("--timeout", type=int, default=210)
     p.add_argument("--skip-install", action="store_true")
     p.add_argument("--no-upload", action="store_true")
+    p.add_argument("--upload-existing", type=Path, nargs="+", metavar="RUN_DIR",
+                   help="Upload saved diagnostics without connecting ADB or running inference")
     args = p.parse_args(argv)
+    if args.upload_existing:
+        if args.no_upload: p.error("--upload-existing cannot be combined with --no-upload")
+        failed = False
+        for folder in args.upload_existing:
+            try:
+                summary_path = folder / "report.json"
+                report = json.loads(summary_path.read_text(encoding="utf-8"))
+                board = int(report["board"])
+                if board not in (9, 13, 19): raise ValueError("Unsupported saved board size")
+                relevant = (folder / "logcat.txt").read_text(encoding="utf-8").splitlines()
+                save_npu_diagnostics(folder, relevant, report, board)
+                summary_path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n",
+                                        encoding="utf-8")
+                url = upload_referee_results(folder, report, run_kind="mediatek")
+                print("Uploaded:", url, flush=True)
+            except (OSError, ValueError, KeyError, UploadError) as err:
+                failed = True
+                print("Upload failed for", folder, ":", err, file=sys.stderr, flush=True)
+        return 1 if failed else 0
     if not args.adb: p.error("adb executable not found")
     serial = detect(args)
     folder = ROOT / "build/vivo_litert_smoke" / datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
@@ -146,25 +190,7 @@ def run(argv=None):
                 r"KataGoMTK|LiteRT|litert|MediaTek|neuron|Neuron|Dispatch|compiler.plugin|"
                 r"accelerator|FATAL.EXCEPTION|Fatal.signal|SIGABRT|SIGSEGV", line, re.IGNORECASE)]
             (folder / "logcat.txt").write_text("\n".join(relevant) + "\n", encoding="utf-8")
-            # Publish compact per-run delegate proof and neural inference timings.
-            vendor = [line for line in relevant if re.search(
-                r"Neuron|dispatch|compiler.plugin|delegate|accelerat", line, re.IGNORECASE)]
-            (folder / "vendor_litert.txt").write_text("\n".join(vendor) + "\n", encoding="utf-8")
-            diagnostic = [line for line in relevant if re.search(
-                r"MTK_LITERT_|MTK_SMOKE_|Loaded plugin at:|Neuron api version|Neuron SDK version|"
-                r"Replacing [0-9]+ out of [0-9]+|DispatchDelegate::Initialize|AidlNeuronClient|"
-                r"HidlNeuronClient|Failed to load symbol|fallback|failed to delegate|"
-                r"FATAL EXCEPTION|Fatal signal", line, re.IGNORECASE)]
-            (folder / "npu_diagnostics.txt").write_text("\n".join(diagnostic) + "\n", encoding="utf-8")
-            report["vendorLogLineCount"] = len(vendor)
-            report["npuDiagnostics"] = summarize_npu_logs(relevant, args.size)
-            report["fallbackWarnings"] = report["npuDiagnostics"]["fallbackIndicators"]
-            info = report["npuDiagnostics"]
-            print("Delegate:", info["delegateStatus"], "Neuron SDK:", info["neuronApiVersion"],
-                  "AIDL:", info["aidlVersion"], flush=True)
-            samples = info["inferenceTiming"]
-            print("Inference times (ms):", samples["samplesMs"],
-                  "average:", samples.get("meanMs", "unknown"), flush=True)
+            save_npu_diagnostics(folder, relevant, report, args.size)
             crash = adb(args, serial, "logcat", "-b", "crash", "-d", "-v", "brief")
             if crash.strip(): (folder / "crash.txt").write_text(crash, encoding="utf-8")
         except Exception as err:
