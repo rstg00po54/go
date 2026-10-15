@@ -188,10 +188,10 @@ def main(argv=None):
     if not args.adb: p.error("adb not installed")
     try:
         sizes = tuple(int(x) for x in args.sizes.split(","))
-        if not sizes or len(sizes) > 12 or any(x not in (9,13,19) for x in sizes):
+        if not sizes or len(sizes) > 12 or any(x not in (9,11,13,15,19) for x in sizes):
             raise ValueError("Invalid board sizes")
     except ValueError as exc:
-        p.error("--sizes accepts a comma-separated sequence of 9,13,19 only: " + str(exc))
+        p.error("--sizes accepts a comma-separated sequence of 9,11,13,15,19 only: " + str(exc))
     if args.require_human_npu and args.no_human_sl:
         p.error("--require-human-npu requires Human SL enabled")
     if args.timeout < 10 or args.stall_timeout < 10:
