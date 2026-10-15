@@ -22,6 +22,27 @@ public class GoHomeTouchLayout extends FrameLayout {
         p.topMargin=Math.round(y*h);
         v.setLayoutParams(p);
     }
+    private void placeArt(int id, float x, float centerY, float widthFraction, float maxHeightFraction) {
+        View v = findViewById(id);
+        if (v == null) return;
+        android.graphics.drawable.Drawable drawable = v.getBackground();
+        int sourceWidth = drawable == null ? 0 : drawable.getIntrinsicWidth();
+        int sourceHeight = drawable == null ? 0 : drawable.getIntrinsicHeight();
+        float ratio = sourceWidth > 0 && sourceHeight > 0
+                ? (float) sourceWidth / sourceHeight : 4.5f;
+        int width = Math.round(getWidth() * widthFraction);
+        int height = Math.round(width / ratio);
+        int limit = Math.round(getHeight() * maxHeightFraction);
+        if (height > limit) {
+            height = limit;
+            width = Math.round(height * ratio);
+        }
+        LayoutParams params = new LayoutParams(width, height);
+        params.leftMargin = Math.round(getWidth() * x)
+                + (Math.round(getWidth() * widthFraction) - width) / 2;
+        params.topMargin = Math.round(getHeight() * centerY) - height / 2;
+        v.setLayoutParams(params);
+    }
     public void refreshPositions() { post(this::positionButtons); }
     private void positionButtons() {
         if (getWidth() == 0 || getHeight() == 0) return;
@@ -29,9 +50,10 @@ public class GoHomeTouchLayout extends FrameLayout {
         place(com.badukai.R.id.homeTitle,.055f,.023f,.78f,.055f);
         place(com.badukai.R.id.homeSubtitle,.06f,.082f,.65f,.032f);
         place(com.badukai.R.id.homeSettingsButton,.865f,.018f,.115f,.066f);
-        place(com.badukai.R.id.aiBattleButton,.067f,.622f,.866f,.112f);
-        place(com.badukai.R.id.homeRecordButton,.052f,.751f,.422f,.101f);
-        place(com.badukai.R.id.homeTrainingButton,.526f,.751f,.422f,.101f);
+        // Preserve each artwork's intrinsic aspect ratio and center around its original position.
+        placeArt(com.badukai.R.id.aiBattleButton, .067f, .678f, .866f, .112f);
+        placeArt(com.badukai.R.id.homeRecordButton, .052f, .8015f, .422f, .101f);
+        placeArt(com.badukai.R.id.homeTrainingButton, .526f, .8015f, .422f, .101f);
         // Match the PNG's intrinsic aspect ratio. fitCenter inside a short box
         // previously shrank the artwork to a tiny strip.
         View nav = findViewById(com.badukai.R.id.homeNavBarArtwork);
