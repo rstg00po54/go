@@ -154,7 +154,10 @@ public class KataGoEngine {
     public int getActiveNpuBoardSize() { return npuSession != null || mediaTekSession != null ? activeNpuBoardSize : -1; }
 
     public String getBackendName() {
-        return mediaTekSession != null ? (humanSLRunning ? "NPU/MediaTek LiteRT + CPU Human SL" : "NPU/MediaTek LiteRT JNI") : npuSession != null ? (humanSLRunning ? "NPU 10b + CPU Human SL" : "NPU/RKNN JNI") : gpuSession != null ? "GPU/OpenCL JNI" : jniSession != null ? "CPU/Eigen JNI" : "PIE/ProcessBuilder";
+        return mediaTekSession != null ? (humanSLRunning
+                ? (mediaTekSession.usesHumanLiteRt() ? "NPU/MediaTek LiteRT + Human SL NPU"
+                        : "NPU/MediaTek LiteRT + CPU Human SL")
+                : "NPU/MediaTek LiteRT JNI") : npuSession != null ? (humanSLRunning ? "NPU 10b + CPU Human SL" : "NPU/RKNN JNI") : gpuSession != null ? "GPU/OpenCL JNI" : jniSession != null ? "CPU/Eigen JNI" : "PIE/ProcessBuilder";
     }
 
     /**
