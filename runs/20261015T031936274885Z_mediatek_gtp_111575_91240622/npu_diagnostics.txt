@@ -1,0 +1,53 @@
+10-15 11:19:31.923 I/KataGoMTK(17832): MTK_GTP_SMOKE_BEGIN id=0ac77c2ead4f493b board=13
+10-15 11:19:32.024 I/KataGoMTK(17832): MTK_GTP_ASSETS_READY id=0ac77c2ead4f493b board=13
+10-15 11:19:32.050 I/litert  (17832): [compiler_plugin.cc:260] Loaded plugin at: /data/app/~~iNXcV-gMrHqraqcTsNMIUQ==/com.badukai.java.nputest-dldM_bNA3m-nd78uAThruQ==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 11:19:32.184 W/litert  (17832): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 11:19:32.184 I/litert  (17832): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 11:19:32.192 W/litert  (17832): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 11:19:32.192 I/litert  (17832): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 11:19:32.192 I/litert  (17832): [dispatch_api.cc:133] Neuron SDK version: 9.0.11
+10-15 11:19:32.192 I/litert  (17832): [dispatch_api.cc:368] Runtime compatibility check: Neuron SDK version 9.0.11
+10-15 11:19:32.192 I/litert  (17832): [dispatch_delegate.cc:128] DispatchDelegate::Initialize katago_10b_13x13_batch1
+10-15 11:19:32.192 I/tflite  (17832): Replacing 1 out of 1 node(s) with delegate (DispatchDelegate) node, yielding 1 partitions for subgraph 0 (katago_10b_13x13_batch1).
+10-15 11:19:32.192 I/litert  (17832): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.0.11, runtime 9.0.11
+10-15 11:19:32.209 E/apuware_hidl(17832): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 11:19:32.214 E/apuware_hidl(17832): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 11:19:32.220 E/apuware_hidl(17832): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 11:19:32.220 E/apuware_hidl(17832): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 11:19:32.221 I/apuware_hidl(17832): AidlNeuronClient get aidl version=5
+10-15 11:19:32.234 I/KataGoMTK(17832): MTK_LITERT_INIT board=13 npuRequested=true graph=katago_10b_13x13.tflite outputScaleMultiplier=8.0 scaleSource=pinned_legacy_graph
+10-15 11:19:32.234 I/KataGoMTK(17832): MTK_GTP_BRIDGE_INSTALLED
+10-15 11:19:32.234 I/KataGoMTK(17832): MTK_GTP_NATIVE_READY board=13 handle=1
+10-15 11:19:32.441 I/KataGoMTK(17832): MTK_GTP_REPLY command=name reply== KataGo
+10-15 11:19:32.441 I/KataGoMTK(17832): MTK_GTP_REPLY command=boardsize 13 reply==
+10-15 11:19:32.441 I/KataGoMTK(17832): MTK_GTP_REPLY command=clear_board reply==
+10-15 11:19:32.442 I/KataGoMTK(17832): MTK_GTP_REPLY command=komi 7.5 reply==
+10-15 11:19:32.470 I/KataGoMTK(17832): MTK_LITERT_INFER board=13 ms=6 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:19:32.470 I/KataGoMTK(17832): MTK_GTP_INFER board=13
+10-15 11:19:32.500 I/KataGoMTK(17832): MTK_LITERT_INFER board=13 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:19:32.500 I/KataGoMTK(17832): MTK_GTP_INFER board=13
+10-15 11:19:32.525 I/KataGoMTK(17832): MTK_LITERT_INFER board=13 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:19:32.525 I/KataGoMTK(17832): MTK_GTP_INFER board=13
+10-15 11:19:32.548 I/KataGoMTK(17832): MTK_LITERT_INFER board=13 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:19:32.548 I/KataGoMTK(17832): MTK_GTP_INFER board=13
+10-15 11:19:32.574 I/KataGoMTK(17832): MTK_LITERT_INFER board=13 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:19:32.574 I/KataGoMTK(17832): MTK_GTP_INFER board=13
+10-15 11:19:32.599 I/KataGoMTK(17832): MTK_LITERT_INFER board=13 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:19:32.599 I/KataGoMTK(17832): MTK_GTP_INFER board=13
+10-15 11:19:32.623 I/KataGoMTK(17832): MTK_LITERT_INFER board=13 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:19:32.623 I/KataGoMTK(17832): MTK_GTP_INFER board=13
+10-15 11:19:32.647 I/KataGoMTK(17832): MTK_LITERT_INFER board=13 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:19:32.647 I/KataGoMTK(17832): MTK_GTP_INFER board=13
+10-15 11:19:32.648 I/KataGoMTK(17832): MTK_GTP_REPLY command=genmove black reply== K10
+10-15 11:19:32.676 I/KataGoMTK(17832): MTK_LITERT_INFER board=13 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:19:32.676 I/KataGoMTK(17832): MTK_GTP_INFER board=13
+10-15 11:19:32.700 I/KataGoMTK(17832): MTK_LITERT_INFER board=13 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:19:32.700 I/KataGoMTK(17832): MTK_GTP_INFER board=13
+10-15 11:19:32.725 I/KataGoMTK(17832): MTK_LITERT_INFER board=13 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:19:32.725 I/KataGoMTK(17832): MTK_GTP_INFER board=13
+10-15 11:19:32.749 I/KataGoMTK(17832): MTK_LITERT_INFER board=13 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 11:19:32.749 I/KataGoMTK(17832): MTK_GTP_INFER board=13
+10-15 11:19:32.751 I/KataGoMTK(17832): MTK_GTP_REPLY command=genmove white reply== D4
+10-15 11:19:32.751 I/KataGoMTK(17832): MTK_GTP_SMOKE_PASS id=0ac77c2ead4f493b board=13 black=K10 blackMs=206 white=D4 whiteMs=102
+10-15 11:19:32.760 I/KataGoMTK(17832): MTK_GTP_BRIDGE_RELEASED
+10-15 11:19:32.769 I/KataGoMTK(17832): MTK_GTP_NATIVE_CLOSED
