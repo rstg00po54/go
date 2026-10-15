@@ -1,0 +1,76 @@
+name: Export official Human SL b18 to MediaTek LiteRT
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/rk3588-rknn]
+    paths:
+      - '.github/workflows/vivo_human_litert_models.yml'
+      - 'GoEngine-java/tools/convert_katago_human_litert.py'
+
+permissions:
+  contents: read
+
+jobs:
+  export-human:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        size: [9]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install official ONNX converter and LiteRT CPU test runtime
+        run: |
+          python -m pip install -U pip
+          python -m pip install 'onnx2tf[tensorflow]==2.6.9'
+          python -c "import onnx; from ai_edge_litert.interpreter import Interpreter; print('ready')"
+      - name: Obtain genuine b18 Human SL and upstream KataGo dumponnx
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p models kata-dist
+          curl -fL --retry 3 -o models/b18c384nbt-humanv0.bin.gz \
+            'https://github.com/lightvector/KataGo/releases/download/v1.15.0/b18c384nbt-humanv0.bin.gz'
+          gzip -t models/b18c384nbt-humanv0.bin.gz
+          gzip -dc models/b18c384nbt-humanv0.bin.gz > models/b18c384nbt-humanv0.bin
+          test "$(wc -c < models/b18c384nbt-humanv0.bin)" -eq 107185997
+          curl -fL --retry 3 -o kata-dist.zip \
+            'https://github.com/lightvector/KataGo/releases/download/v1.18.1/katago-v1.18.1-onnx-openvino-linux-x64.zip'
+          unzip -q kata-dist.zip -d kata-dist
+          KATAGO_BIN="$(find "$PWD/kata-dist" -type f -name katago -print -quit)"
+          test -n "$KATAGO_BIN"
+          chmod +x "$KATAGO_BIN"
+          echo "KATAGO_BIN=$KATAGO_BIN" >> "$GITHUB_ENV"
+          LIBPATH="$(find "$PWD/kata-dist" -type f -name '*.so*' -printf '%h\n' | sort -u | paste -sd: -)"
+          echo "LD_LIBRARY_PATH=$LIBPATH" >> "$GITHUB_ENV"
+      - name: Export actual 192-metadata-input Human graph for requested board
+        run: |
+          "$KATAGO_BIN" dumponnx -model models/b18c384nbt-humanv0.bin \
+            -out models/human_${{ matrix.size }}x${{ matrix.size }}.onnx \
+            -nn-x-len ${{ matrix.size }} -nn-y-len ${{ matrix.size }}
+      - name: Validate Human model signature then convert and run LiteRT CPU probe
+        run: |
+          python -u GoEngine-java/tools/convert_katago_human_litert.py \
+            --size ${{ matrix.size }} \
+            --onnx models/human_${{ matrix.size }}x${{ matrix.size }}.onnx \
+            --output models/katago_human_${{ matrix.size }}x${{ matrix.size }}.tflite \
+            --signature models/katago_human_${{ matrix.size }}x${{ matrix.size }}.json \
+            2>&1 | tee models/human_convert_${{ matrix.size }}.log
+          test -s models/katago_human_${{ matrix.size }}x${{ matrix.size }}.json
+          sha256sum models/katago_human_* > models/HUMAN_SHA256SUMS
+      - name: Upload only experimental CPU-validated artifacts, not production model assets
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vivo-human-litert-${{ matrix.size }}x${{ matrix.size }}-experimental
+          path: |
+            models/katago_human_*.json
+            models/katago_human_*.tflite
+            models/human_convert_*.log
+            models/HUMAN_SHA256SUMS
+          if-no-files-found: warn
