@@ -75,6 +75,27 @@ Test **real KataGo GTP moves** on 9x9, without installing again:
 python3 tools/smoke_vivo_litert.py --gtp --size 9 --skip-install
 ```
 
+For 9x9, this experimental GTP smoke now also compares the first 16
+real KataGo NN evaluations per native compute handle against the **same**
+g170 10b network evaluated on CPU/Eigen. It measures the five raw output
+heads before normal KataGo postprocessing (`policyPass`, `policy`,
+`value`, `score`, `ownership`) and retains the LiteRT output for
+search, so it tests real gameplay rather than a separately generated input.
+Results include max absolute difference, element-weighted mean absolute
+difference, max normalized relative difference and the most different
+CPU/LiteRT element. It saves `parity_summary.json` in addition to the
+usual diagnostic log, and automatically uploads it to `ui-test-results`
+unless `--no-upload` is supplied.
+
+`GTP_PASS` and `cpuLiteRtParity.status` are separate conclusions:
+a legal GTP move is not proof of numerical agreement. The provisional
+maximum absolute error thresholds are 0.025 for policyPass, policy, value
+and ownership, and 0.20 for score; exceeding them yields `MISMATCH`,
+missing raw-head samples yields `INCOMPLETE`, and `NO_DATA` means this
+binary did not capture parity. These thresholds are smoke-test screening
+values, **not a scientific equivalence guarantee**; review the raw
+head statistics before exposing the NPU in the main game UI.
+
 The script launches a debug-only `mtk_gtp_smoke` intent. The app copies
 matching model/config/manifest files, initializes the in-process C++ GTP
 search engine, calls `name`, `boardsize`, `clear_board`, `komi`,
