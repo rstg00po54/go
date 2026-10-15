@@ -31,6 +31,7 @@ public class GoHomeTouchLayout extends FrameLayout {
         place(com.badukai.R.id.aiBattleButton,.067f,.622f,.866f,.112f);
         place(com.badukai.R.id.homeRecordButton,.052f,.751f,.422f,.101f);
         place(com.badukai.R.id.homeTrainingButton,.526f,.751f,.422f,.101f);
+        place(com.badukai.R.id.homeNavBarArtwork,.015f,.900f,.970f,.090f);
         place(com.badukai.R.id.homeTabButton,.014f,.908f,.184f,.072f);
         place(com.badukai.R.id.homeGameTabButton,.211f,.908f,.184f,.072f);
         place(com.badukai.R.id.homeRecordTabButton,.408f,.908f,.184f,.072f);
