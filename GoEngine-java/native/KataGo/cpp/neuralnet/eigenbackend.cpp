@@ -2054,8 +2054,9 @@ void NeuralNet::getOutput(
         }
         const double mae = counts[h] ? sumAbs / counts[h] : 0.0;
         __android_log_print(ANDROID_LOG_INFO,"KataGoMTK",
-          "MTK_PARITY_HEAD handle=%p sample=%d board=%d head=%s count=%zu maxAbs=%.8g mae=%.8g maxRel=%.8g worst=%zu cpu=%.8g npu=%.8g",
-          (void*)computeHandle,sample,nnXLen,headNames[h],counts[h],maxAbs,mae,maxRel,worst,
+          "MTK_PARITY_HEAD handle=%p sample=%d board=%d model=%s head=%s count=%zu maxAbs=%.8g mae=%.8g maxRel=%.8g worst=%zu cpu=%.8g npu=%.8g",
+          (void*)computeHandle,sample,nnXLen,computeHandle->model->name.find("human") != std::string::npos ? "human" : "10b",
+          headNames[h],counts[h],maxAbs,mae,maxRel,worst,
           counts[h] ? cpuHeads[h][worst] : 0.0f,
           counts[h] ? destinations[h][worst] : 0.0f);
       }
