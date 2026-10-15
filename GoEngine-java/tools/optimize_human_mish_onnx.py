@@ -62,59 +62,81 @@ def optimize_model(model, expected=120):
     matches = []
     claimed = set()
     rejected = Counter()
+
+    def record(chain, x, output, op_form):
+        if not x or not output or any(id(n) in claimed for n in chain):
+            rejected["missing_input_or_duplicate"] += 1
+            return False
+        if any(len(consumers[n.output[0]]) != 1 or n.output[0] in output_names
+               for n in chain[:-1]):
+            rejected["intermediate_shared"] += 1
+            return False
+        matches.append({"nodes": chain, "x": x, "out": output,
+                        "originalOpForm": op_form})
+        for node in chain:
+            claimed.add(id(node))
+        return True
+
+    # ONNX's standard Mish operator may be directly exported by KataGo.
+    # onnx2tf later lowers it to EXP/ADD/LOG/TANH/MUL. All variants use
+    # the exact same algebra, and all original weight tensors stay intact.
+    for node in nodes:
+        if node.op_type == "Mish" and len(node.input) == 1 and len(node.output) == 1:
+            record((node,), node.input[0], node.output[0], "Mish")
+
     for multiply in nodes:
         if multiply.op_type != "Mul" or len(multiply.input) != 2:
             continue
         for side in (0, 1):
-            tanh_name = multiply.input[side]
-            tanh = producers.get(tanh_name)
+            tanh = producers.get(multiply.input[side])
             if tanh is None or tanh.op_type != "Tanh" or len(tanh.input) != 1:
                 continue
-            log = producers.get(tanh.input[0])
-            if log is None or log.op_type != "Log" or len(log.input) != 1:
+            parent = producers.get(tanh.input[0])
+            if parent is None:
                 continue
-            add = producers.get(log.input[0])
-            if add is None or add.op_type != "Add" or len(add.input) != 2:
+            if parent.op_type == "Softplus" and len(parent.input) == 1:
+                x = parent.input[0]
+                chain = (parent, tanh, multiply)
+                op_form = "Softplus/Tanh/Mul"
+            elif parent.op_type == "Log" and len(parent.input) == 1:
+                add = producers.get(parent.input[0])
+                if add is None or add.op_type != "Add" or len(add.input) != 2:
+                    continue
+                exp = next((producers.get(name) for name in add.input
+                            if producers.get(name) is not None
+                            and producers[name].op_type == "Exp"), None)
+                if exp is None or len(exp.input) != 1 or len(exp.output) != 1:
+                    continue
+                x = exp.input[0]
+                one = next((name for name in add.input if name != exp.output[0]), None)
+                if one is None or not constant_scalar_one(one, consts, model.graph):
+                    rejected["not_plus_one"] += 1
+                    continue
+                chain = (exp, add, parent, tanh, multiply)
+                op_form = "Exp/Add/Log/Tanh/Mul"
+            else:
                 continue
-            exp = next((producers.get(name) for name in add.input
-                        if producers.get(name) is not None
-                        and producers[name].op_type == "Exp"), None)
-            if exp is None or len(exp.input) != 1 or len(exp.output) != 1:
-                continue
-            x = exp.input[0]
             if multiply.input[1-side] != x:
                 rejected["not_same_x"] += 1
                 continue
-            one = next((name for name in add.input if name != exp.output[0]), None)
-            if one is None or not constant_scalar_one(one, consts, model.graph):
-                rejected["not_plus_one"] += 1
-                continue
-            chain = (exp, add, log, tanh, multiply)
-            if any(id(n) in claimed for n in chain):
-                rejected["shared_node"] += 1
-                continue
-            if any(len(consumers[n.output[0]]) != 1 or n.output[0] in output_names
-                   for n in chain[:-1]):
-                rejected["intermediate_shared"] += 1
-                continue
-            if not multiply.output or len(multiply.output) != 1:
+            if len(multiply.output) != 1:
                 rejected["malformed_output"] += 1
                 continue
-            matches.append({"nodes": chain, "x": x, "out": multiply.output[0]})
-            for node in chain:
-                claimed.add(id(node))
-            break
+            if record(chain, x, multiply.output[0], op_form):
+                break
 
     if len(matches) != expected:
         raise ValueError("Expected %d safe Mish chains but found %d. Rejected=%s; "
-                         "model left unchanged." % (expected, len(matches), dict(rejected)))
+                         "model left unchanged. SourceOpTypes=%s" %
+                         (expected, len(matches), dict(rejected),
+                          dict(Counter(n.op_type for n in nodes))))
 
     all_value_names = (set(producers) | set(consts) |
                        {x.name for x in model.graph.input})
     replacement = {}
     remove = set()
     for i, item in enumerate(matches):
-        exp, add, log, tanh, mul = item["nodes"]
+        first = item["nodes"][0]
         remove.update(id(n) for n in item["nodes"])
         prefix = "__b18_mish_equiv_%03d" % i
         names = {suffix: prefix + "_" + suffix
@@ -125,7 +147,7 @@ def optimize_model(model, expected=120):
         all_value_names.update(names.values())
         # A scalar FLOAT initializer broadcasts to arbitrary NCHW activations.
         # Use one shared 1.0 constant. It is *not* a replacement for weights.
-        replacement[id(exp)] = (item, names)
+        replacement[id(first)] = (item, names)
 
     one_name = "__b18_mish_equiv_one"
     if one_name in all_value_names:
@@ -172,6 +194,7 @@ def optimize_model(model, expected=120):
         "opTypesBefore": dict(Counter(n.op_type for n in nodes)),
         "opTypesAfter": dict(Counter(n.op_type for n in new_nodes)),
         "rejected": dict(rejected),
+        "matchedSourceForms": dict(Counter(m["originalOpForm"] for m in matches)),
     }
 
 
