@@ -11,12 +11,12 @@ import watch_npu_crash as watcher
 class WatchCrashTests(unittest.TestCase):
     def setUp(self):
         self.first = (
-            "10-14 16:23:01.001 F libc: Fatal signal 11 (SIGSEGV), pid: 111 (com.badukai.java)\n"
+            "10-14 16:23:01.001 F libc: Fatal signal 11 (SIGSEGV), pid: 111 (com.badukai.java.nputest)\n"
             "10-14 16:23:01.222 F DEBUG: backtrace:\n"
             "10-14 16:23:01.222 F DEBUG: #00 pc 00000000000dc798 /lib/arm64/libkatago_npu.so (BuildId: abc)\n"
         )
         self.second = (
-            "10-14 16:24:09.205 F libc: Fatal signal 11 (SIGSEGV), pid: 9108 (com.badukai.java)\n"
+            "10-14 16:24:09.205 F libc: Fatal signal 11 (SIGSEGV), pid: 9108 (com.badukai.java.nputest)\n"
             "10-14 16:24:09.530 F DEBUG: backtrace:\n"
             "10-14 16:24:09.530 F DEBUG: #00 pc 00000000000dc798 /lib/arm64/libkatago_npu.so (BuildId: def)\n"
         )
