@@ -7,6 +7,8 @@ import unittest
 import zipfile
 
 from verify_vivo_litert_apk import verify_apk
+import verify_vivo_litert_apk as verifier
+from unittest.mock import patch
 
 
 class VivoModelPackageTests(unittest.TestCase):
@@ -37,6 +39,21 @@ class VivoModelPackageTests(unittest.TestCase):
         self.expected[self.name] = (len(wrong), self.expected[self.name][1])
         with self.assertRaisesRegex(ValueError, "SHA256"):
             verify_apk(self.apk, self.expected)
+
+    def test_scale_aware_and_legacy_manifests_are_both_checksum_pinned(self):
+        old = b'{"old":true}'
+        new = b'{"outputScaleMultiplier":8.0,"scale8Applied":true}'
+        filename = "katago_10b_9x9.json"
+        accepted_old = (len(old), hashlib.sha256(old).hexdigest())
+        accepted_new = (len(new), hashlib.sha256(new).hexdigest())
+        with patch.object(verifier, "EXPECTED", {filename: accepted_old}), \
+             patch.object(verifier, "ALTERNATE_SCALE_AWARE_JSON", {filename: accepted_new}):
+            for payload in (old, new):
+                self.build({"assets/engine/" + filename: payload})
+                verify_apk(self.apk)
+            self.build({"assets/engine/" + filename: b'{"outputScaleMultiplier":3.0}'})
+            with self.assertRaisesRegex(ValueError, "model length|model SHA256"):
+                verify_apk(self.apk)
 
     def test_rknn_runtime_must_not_be_in_vivo_apk(self):
         self.build({"assets/engine/" + self.name: self.data,
