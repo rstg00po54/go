@@ -1,0 +1,96 @@
+--------- beginning of main
+10-15 11:41:24.571 I/NpuSmoke( 4320): START id=8de0a5d154d54331 sizes=9,13,19,9 humanSL=true
+10-15 11:41:24.572 I/KataGoEngine( 4320): Human SL model ready: /data/user/0/com.badukai.java.nputest/files/engine/b18c384nbt-humanv0.bin
+10-15 11:41:24.572 I/KataGoEngine( 4320): === JAVA KATAGO ENGINE / ANDROID ARM64 ===
+10-15 11:41:24.572 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_backend_and_paths ms=0.380032
+10-15 11:41:24.579 I/KataGoEngine( 4320): Native GTP defaultBoardSize=9
+10-15 11:41:24.579 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_prepare_config ms=6.472576
+10-15 11:41:24.580 I/KataGoEngine( 4320): Reusing installed model asset: /data/user/0/com.badukai.java.nputest/files/engine/10b.bin
+10-15 11:41:24.580 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_prepare_model_asset ms=1.510144
+10-15 11:41:24.580 I/KataGoEngine( 4320): Human SL model: /data/user/0/com.badukai.java.nputest/files/engine/b18c384nbt-humanv0.bin size=107185997
+10-15 11:41:24.580 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_find_human_model ms=0.129664
+10-15 11:41:24.580 I/KataGoEngine( 4320): Model: /data/user/0/com.badukai.java.nputest/files/engine/10b.bin size=12003218
+10-15 11:41:24.580 I/KataGoEngine( 4320): Config: /data/user/0/com.badukai.java.nputest/files/engine/human_gtp.cfg
+10-15 11:41:24.580 I/KataGoEngine( 4320): Backend requested: CPU/JNI Eigen
+10-15 11:41:24.583 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_cpu_jni_create ms=2.748928
+10-15 11:41:24.586 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_cpu_gtp_name_send ms=2.24512
+10-15 11:41:25.485 I/KataGoEngine( 4320): KataGo GTP ready response: = KataGo
+10-15 11:41:25.485 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_cpu_gtp_name_wait ms=899.11616
+10-15 11:41:25.485 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_java_start_total ms=913.086592
+10-15 11:41:25.485 I/KataGoEngine( 4320): === JNI/EIGEN ENGINE STARTED SUCCESSFULLY ===
+10-15 11:41:25.485 I/NpuSmoke( 4320): MTK_CPU_TO_NPU_PRECHECK_READY id=8de0a5d154d54331 backend=CPU/Eigen JNI
+10-15 11:41:25.524 I/KataGoEngine( 4320): KataGo JNI session stopped
+10-15 11:41:25.524 I/KataGoEngine( 4320): KataGo stopped
+10-15 11:41:25.524 I/NpuSmoke( 4320): STEP_BEGIN id=8de0a5d154d54331 index=0 board=9
+10-15 11:41:25.524 I/KataGoEngine( 4320): === JAVA KATAGO ENGINE / ANDROID ARM64 ===
+10-15 11:41:25.525 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_backend_and_paths ms=0.367616
+10-15 11:41:25.528 I/KataGoEngine( 4320): Native GTP defaultBoardSize=9
+10-15 11:41:25.528 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_prepare_config ms=2.933504
+10-15 11:41:25.528 I/KataGoEngine( 4320): Reusing installed model asset: /data/user/0/com.badukai.java.nputest/files/engine/10b.bin
+10-15 11:41:25.544 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_prepare_model_asset ms=16.177664
+10-15 11:41:25.544 I/KataGoEngine( 4320): Human SL model: /data/user/0/com.badukai.java.nputest/files/engine/b18c384nbt-humanv0.bin size=107185997
+10-15 11:41:25.544 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_find_human_model ms=0.057984
+10-15 11:41:25.544 I/KataGoEngine( 4320): Model: /data/user/0/com.badukai.java.nputest/files/engine/10b.bin size=12003218
+10-15 11:41:25.544 I/KataGoEngine( 4320): Config: /data/user/0/com.badukai.java.nputest/files/engine/human_gtp.cfg
+10-15 11:41:25.544 I/KataGoEngine( 4320): Backend requested: NPU/MediaTek LiteRT in-process JNI
+10-15 11:41:25.687 I/KataGoMTK( 4320): MTK_LITERT_INIT board=9 npuRequested=true graph=katago_10b_9x9.tflite outputScaleMultiplier=8.0 scaleSource=pinned_legacy_graph
+10-15 11:41:25.687 I/KataGoMTK( 4320): MTK_GTP_BRIDGE_INSTALLED
+10-15 11:41:25.687 I/KataGoMTK( 4320): MTK_GTP_NATIVE_READY board=9 handle=1
+10-15 11:41:25.687 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_mtk_native_create ms=142.694016
+10-15 11:43:25.849 E/KataGoEngine( 4320): MediaTek LiteRT GTP startup failed; reverting to CPU
+10-15 11:43:25.849 E/KataGoEngine( 4320): java.io.IOException: MediaTek LiteRT GTP did not become ready
+10-15 11:43:25.849 E/KataGoEngine( 4320): 	at com.badukai.engine.KataGoEngine.start(KataGoEngine.java:337)
+10-15 11:43:25.849 E/KataGoEngine( 4320): 	at com.badukai.MainActivity.lambda$startDebugNpuSwitchSmoke$23(MainActivity.java:339)
+10-15 11:43:25.849 E/KataGoEngine( 4320): 	at com.badukai.MainActivity.$r8$lambda$hNNiRu9qSCvwgswiZUnN5ndIlVk(MainActivity.java:0)
+10-15 11:43:25.849 E/KataGoEngine( 4320): 	at com.badukai.MainActivity$$ExternalSyntheticLambda41.run(D8$$SyntheticClass:10)
+10-15 11:43:25.849 E/KataGoEngine( 4320): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1100)
+10-15 11:43:25.849 E/KataGoEngine( 4320): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+10-15 11:43:25.849 E/KataGoEngine( 4320): 	at java.lang.Thread.run(Thread.java:1603)
+10-15 11:43:25.921 I/KataGoMTK( 4320): MTK_GTP_BRIDGE_RELEASED
+10-15 11:43:25.943 I/KataGoMTK( 4320): MTK_GTP_NATIVE_CLOSED
+10-15 11:43:25.943 I/KataGoEngine( 4320): NPU/MediaTek LiteRT JNI session stopped
+10-15 11:43:25.943 I/KataGoEngine( 4320): KataGo stopped
+10-15 11:43:25.943 I/KataGoEngine( 4320): === JAVA KATAGO ENGINE / ANDROID ARM64 ===
+10-15 11:43:25.944 W/KataGoEngine( 4320): NPU model/runtime unavailable for board=9; falling back to CPU
+10-15 11:43:25.944 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_backend_and_paths ms=1.040512
+10-15 11:43:25.946 I/KataGoEngine( 4320): Native GTP defaultBoardSize=9
+10-15 11:43:25.947 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_prepare_config ms=2.34496
+10-15 11:43:25.948 I/KataGoEngine( 4320): Reusing installed model asset: /data/user/0/com.badukai.java.nputest/files/engine/10b.bin
+10-15 11:43:25.948 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_prepare_model_asset ms=1.88608
+10-15 11:43:25.949 I/KataGoEngine( 4320): Human SL model: /data/user/0/com.badukai.java.nputest/files/engine/b18c384nbt-humanv0.bin size=107185997
+10-15 11:43:25.949 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_find_human_model ms=0.09088
+10-15 11:43:25.949 I/KataGoEngine( 4320): Model: /data/user/0/com.badukai.java.nputest/files/engine/10b.bin size=12003218
+10-15 11:43:25.949 I/KataGoEngine( 4320): Config: /data/user/0/com.badukai.java.nputest/files/engine/human_gtp.cfg
+10-15 11:43:25.949 I/KataGoEngine( 4320): Backend requested: CPU/JNI Eigen
+10-15 11:43:25.949 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_cpu_jni_create ms=0.318592
+10-15 11:43:25.949 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_cpu_gtp_name_send ms=0.038656
+10-15 11:43:26.837 I/KataGoEngine( 4320): KataGo GTP ready response: = KataGo
+10-15 11:43:26.838 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_cpu_gtp_name_wait ms=888.34432
+10-15 11:43:26.838 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_java_start_total ms=894.563072
+10-15 11:43:26.838 I/KataGoEngine( 4320): === JNI/EIGEN ENGINE STARTED SUCCESSFULLY ===
+10-15 11:43:26.838 E/NpuSmoke( 4320): FAIL id=8de0a5d154d54331 stage=run reason=java.lang.IllegalStateException: wrong_backend_or_model_CPU/Eigen JNI_active_-1
+10-15 11:43:26.838 E/NpuSmoke( 4320): java.lang.IllegalStateException: wrong_backend_or_model_CPU/Eigen JNI_active_-1
+10-15 11:43:26.838 E/NpuSmoke( 4320): 	at com.badukai.MainActivity.lambda$startDebugNpuSwitchSmoke$23(MainActivity.java:344)
+10-15 11:43:26.838 E/NpuSmoke( 4320): 	at com.badukai.MainActivity.$r8$lambda$hNNiRu9qSCvwgswiZUnN5ndIlVk(MainActivity.java:0)
+10-15 11:43:26.838 E/NpuSmoke( 4320): 	at com.badukai.MainActivity$$ExternalSyntheticLambda41.run(D8$$SyntheticClass:10)
+10-15 11:43:26.838 E/NpuSmoke( 4320): 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1100)
+10-15 11:43:26.838 E/NpuSmoke( 4320): 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+10-15 11:43:26.838 E/NpuSmoke( 4320): 	at java.lang.Thread.run(Thread.java:1603)
+10-15 11:43:26.867 I/KataGoEngine( 4320): KataGo JNI session stopped
+10-15 11:43:26.867 I/KataGoEngine( 4320): KataGo stopped
+10-15 11:43:26.869 I/KataGoEngine( 4320): Human SL model reused from verified cache: /data/user/0/com.badukai.java.nputest/files/engine/b18c384nbt-humanv0.bin
+10-15 11:43:26.869 I/KataGoEngine( 4320): === JAVA KATAGO ENGINE / ANDROID ARM64 ===
+10-15 11:43:26.870 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_backend_and_paths ms=1.344896
+10-15 11:43:26.880 I/KataGoEngine( 4320): Native GTP defaultBoardSize=9
+10-15 11:43:26.880 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_prepare_config ms=9.786112
+10-15 11:43:26.881 I/KataGoEngine( 4320): Reusing installed model asset: /data/user/0/com.badukai.java.nputest/files/engine/10b.bin
+10-15 11:43:26.902 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_prepare_model_asset ms=21.413632
+10-15 11:43:26.902 I/KataGoEngine( 4320): Human SL model: /data/user/0/com.badukai.java.nputest/files/engine/b18c384nbt-humanv0.bin size=107185997
+10-15 11:43:26.902 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_find_human_model ms=0.0832
+10-15 11:43:26.902 I/KataGoEngine( 4320): Model: /data/user/0/com.badukai.java.nputest/files/engine/10b.bin size=12003218
+10-15 11:43:26.902 I/KataGoEngine( 4320): Config: /data/user/0/com.badukai.java.nputest/files/engine/human_gtp.cfg
+10-15 11:43:26.902 I/KataGoEngine( 4320): Backend requested: NPU/MediaTek LiteRT in-process JNI
+10-15 11:43:26.953 I/KataGoMTK( 4320): MTK_LITERT_INIT board=9 npuRequested=true graph=katago_10b_9x9.tflite outputScaleMultiplier=8.0 scaleSource=pinned_legacy_graph
+10-15 11:43:26.953 I/KataGoMTK( 4320): MTK_GTP_BRIDGE_INSTALLED
+10-15 11:43:26.953 I/KataGoMTK( 4320): MTK_GTP_NATIVE_READY board=9 handle=2
+10-15 11:43:26.953 I/KataGoEngine( 4320): STARTUP_TIMING phase=engine_mtk_native_create ms=50.761984

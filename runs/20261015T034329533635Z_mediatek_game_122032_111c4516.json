@@ -1,0 +1,41 @@
+{
+  "test": "vivo MediaTek KataGo real game backend with Human SL",
+  "run_id": "8de0a5d154d54331",
+  "sizes": [
+    9,
+    13,
+    19,
+    9
+  ],
+  "humanSL": true,
+  "hardwareExecution": "UNVERIFIED",
+  "status": "FAIL",
+  "errors": [
+    "Expected 4 steps; saw 1",
+    "Step 0: No size-matched MediaTek graph initialization",
+    "Step 0: No genuine MediaTek game session",
+    "Step 0: MediaTek game session did not actually invoke LiteRT evaluator",
+    "Step 0: No matching STEP_PASS/active board",
+    "Step 0: NPU fallback observed",
+    "Missing overall NpuSmoke PASS",
+    "App reported FAIL"
+  ],
+  "steps": [
+    {
+      "index": 0,
+      "board": 9,
+      "status": "FAIL",
+      "errors": [
+        "No size-matched MediaTek graph initialization",
+        "No genuine MediaTek game session",
+        "MediaTek game session did not actually invoke LiteRT evaluator",
+        "No matching STEP_PASS/active board",
+        "NPU fallback observed"
+      ],
+      "litertInferenceCount": 0,
+      "black": null,
+      "white": null
+    }
+  ],
+  "serial": "10AFB21HP5002ZK"
+}
