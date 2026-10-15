@@ -81,6 +81,31 @@ class MtkRealGameTests(unittest.TestCase):
         self.assertTrue(vertex("PASS", 9))
         self.assertEqual(field("STEP_PASS index=2 board=19", "board"), "19")
 
+    def test_human_litert_requires_real_evaluation_and_eigen_parity(self):
+        raw = example_log((9,))
+        raw = raw.replace("MTK_LITERT_INIT board=9 npuRequested",
+                          "MTK_LITERT_INIT board=9 model=10b npuRequested")
+        extra = ["I/KataGoMTK: MTK_HUMAN_LITERT_READY board=9",
+                 "I/KataGoMTK: MTK_LITERT_INIT board=9 model=human npuRequested=true",
+                 "I/KataGoMTK: MTK_GTP_INFER board=9 model=human"]
+        extra.extend("I/KataGoMTK: MTK_PARITY_HEAD board=9 model=human head=%s maxAbs=0.015" % head
+                     for head in ("policyPass", "policy", "value", "score", "ownership"))
+        raw = raw.replace("I/NpuSmoke: STEP_PASS", "\\n".join(extra) + "\\nI/NpuSmoke: STEP_PASS")
+        result = parse_game_log(raw, "example1234", (9,), require_human_npu=True)
+        self.assertEqual(result["status"], "PASS", result["errors"])
+        self.assertEqual(result["steps"][0]["humanLiteRtInferenceCount"], 1)
+        self.assertEqual(result["steps"][0]["humanParitySampleCount"], 5)
+        self.assertEqual(parse_game_log(raw.replace("model=human", "model=10b"),
+                                        "example1234", (9,), require_human_npu=True)["status"], "FAIL")
+        self.assertEqual(parse_game_log(raw.replace("maxAbs=0.015", "maxAbs=1.25"),
+                                        "example1234", (9,), require_human_npu=True)["status"], "FAIL")
+        self.assertEqual(parse_game_log(raw.replace("MTK_HUMAN_LITERT_READY", "HUMAN_CPU"),
+                                        "example1234", (9,), require_human_npu=True)["status"], "FAIL")
+        # CPU Human fallback remains a valid legacy game, but is NOT a Human
+        # NPU benchmark and must not be reported as one.
+        self.assertEqual(parse_game_log(example_log((9,)), "example1234",
+                                        (9,), require_human_npu=True)["status"], "FAIL")
+
     def test_npu_fallback_rejected(self):
         raw = example_log() + "\nI/KataGoEngine: NPU/MediaTek falling back to CPU"
         self.assertEqual(parse_game_log(raw, "example1234", DEFAULT_SIZES)["status"], "FAIL")
