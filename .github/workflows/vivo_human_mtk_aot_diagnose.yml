@@ -22,7 +22,7 @@ jobs:
       - name: Install public Neuron AOT plugin for MT6993
         run: |
           python -m pip install -U pip
-          python -m pip install 'ai-edge-litert==2.1.5' 'ai-edge-litert-sdk-mediatek==2.1.5'
+          python -m pip install 'ai-edge-litert==2.1.5' 'ai-edge-litert-sdk-mediatek==2.1.5' 'tflite>=2.10'
           python -c "from ai_edge_litert.aot import aot_compile; from ai_edge_litert.aot.vendors.mediatek import target; print('NEURON_AOT_HOST_READY')"
       - name: Download pinned official b18 Human 9x9 LiteRT graph
         run: |
@@ -82,6 +82,20 @@ jobs:
           assert manifest['weights']=='b18c384nbt-humanv0' and manifest['size']==9
           assert manifest['numInputMetaChannels']==192 and manifest['numPolicyChannels']==2
           output=Path('diagnostics/human_9x9_mediatek_mt6993_aot.tflite')
+          import math, tflite
+          tflite_model=tflite.Model.GetRootAsModel(output.read_bytes(),0)
+          sg=tflite_model.Subgraphs(0)
+          def tensors(inputs):
+              return [sg.Tensors(inputs(i)) for i in range(inputs.__self__.InputsLength())]
+          def shape(t):
+              return [int(t.Shape(i)) for i in range(t.ShapeLength())]
+          input_sizes=sorted(math.prod(shape(sg.Tensors(sg.Inputs(i)))) for i in range(sg.InputsLength()))
+          output_sizes=sorted(math.prod(shape(sg.Tensors(sg.Outputs(i)))) for i in range(sg.OutputsLength()))
+          assert input_sizes == sorted([22*81,19,192,81]), 'AOT modified four Human input tensor sizes'
+          assert output_sizes == sorted([2,2*81,3,6,81]), 'AOT modified Human output tensor sizes'
+          assert all(v > 0 for i in range(sg.InputsLength()) for v in shape(sg.Tensors(sg.Inputs(i))))
+          assert all(v > 0 for i in range(sg.OutputsLength()) for v in shape(sg.Tensors(sg.Outputs(i))))
+          print('HUMAN_AOT_IO_CONTRACT_PASS',input_sizes,output_sizes,flush=True)
           hash=hashlib.sha256(output.read_bytes()).hexdigest()
           manifest['sourceGraphSha256']=manifest['graphSha256']
           manifest['graphSha256']=hash
