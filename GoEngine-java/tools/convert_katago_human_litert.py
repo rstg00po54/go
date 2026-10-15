@@ -8,6 +8,7 @@ real CPU inference. Never relabels/reshapes the 10b graph as Human SL.
 Requires: onnx, numpy, ai-edge-litert, onnx2tf[tensorflow].
 """
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import shutil
@@ -165,6 +166,11 @@ def main():
     if len(files) != 1: raise RuntimeError("Expected unique converted Human graph: " + str(files))
     shutil.copy2(files[0], args.output)
     contract.update(inspect_tflite(args.output, args.size, contract))
+    sha256 = hashlib.sha256()
+    with args.output.open("rb") as reader:
+        for chunk in iter(lambda: reader.read(1024 * 1024), b""):
+            sha256.update(chunk)
+    contract["graphSha256"] = sha256.hexdigest()
     args.signature.write_text(json.dumps(contract, indent=2) + "\n", encoding="utf-8")
     print("KATAGO_HUMAN_LITERT_READY board=%d file=%s bytes=%d meta=192 policyChannels=%d" %
           (args.size, args.output, args.output.stat().st_size,
