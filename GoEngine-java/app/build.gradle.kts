@@ -48,7 +48,9 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.badukai.java"
+        // Side-by-side NPU development build; preserve the installed com.badukai.java app.
+        // Keep namespace=com.badukai so Java/JNI class names do not change.
+        applicationId = "com.badukai.java.nputest"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
