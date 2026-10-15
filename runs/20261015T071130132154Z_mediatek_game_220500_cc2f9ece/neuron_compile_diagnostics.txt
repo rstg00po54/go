@@ -1,0 +1,94 @@
+10-15 15:11:17.198 D/nativeloader(21149): Configuring clns-9 for other apk /data/app/~~fVpUq1XxhaGHiS4nmd7zNg==/com.badukai.java.nputest-9BehCsl8fwvuIiJ5V3ao9A==/base.apk. target_sdk_version=34, uses_libraries=libOpenCL.so:libneuron_sys_util.mtk.so:libneuronusdk_adapter.mtk.so:libneuronusdk_adapter.9.mtk.so:libapuwareutils_v2.mtk.so:libapuwareapusys_v2.mtk.so:libmvpuop_mtk_nn.mtk.so:libmvpuop_mtk_cv.mtk.so:libmvpu_runtime_pub.mtk.so:libmvpu_engine_pub.mtk.so:libmvpu_pattern_pub.mtk.so:libmvpuop25_mtk_nn.mtk.so:libmvpuop25_mtk_cv.mtk.so:libmvpu_runtime_25_pub.mtk.so:libmvpu_engine_25_pub.mtk.so:libmvpu_pattern_25_pub.mtk.so:libmvpu_config.mtk.so:libmvpu_runtime_30.mtk.so:libmvpu_engine_30.mtk.so:libmvpu_pattern_30.mtk.so:libmvpuop30_mtk_nn.mtk.so, library_path=/data/app/~~fVpUq1XxhaGHiS4nmd7zNg==/com.badukai.java.nputest-9BehCsl8fwvuIiJ5V3ao9A==/lib/arm64:/data/app/~~fVpUq1XxhaGHiS4nmd7zNg==/com.badukai.java.nputest-9BehCsl8fwvuIiJ5V3ao9A==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/0/com.badukai.java.nputest
+10-15 15:11:17.198 D/nativeloader(21149): Extending system_exposed_libraries: libneuron_sys_util.mtk.so:libneuronusdk_adapter.mtk.so:libneuronusdk_adapter.9.mtk.so:libapuwareutils_v2.mtk.so:libapuwareapusys_v2.mtk.so:libmvpuop_mtk_nn.mtk.so:libmvpuop_mtk_cv.mtk.so:libmvpu_runtime_pub.mtk.so:libmvpu_engine_pub.mtk.so:libmvpu_pattern_pub.mtk.so:libmvpuop25_mtk_nn.mtk.so:libmvpuop25_mtk_cv.mtk.so:libmvpu_runtime_25_pub.mtk.so:libmvpu_engine_25_pub.mtk.so:libmvpu_pattern_25_pub.mtk.so:libmvpu_config.mtk.so:libmvpu_runtime_30.mtk.so:libmvpu_engine_30.mtk.so:libmvpu_pattern_30.mtk.so:libmvpuop30_mtk_nn.mtk.so
+10-15 15:11:18.587 I/litert  (21149): [compiled_model.cc:750] NPU JIT compilation caching enabled with cache dir: /data/user/0/com.badukai.java.nputest/cache
+10-15 15:11:18.587 I/litert  (21149): [compiler_plugin.cc:308] Attempting to load plugin at: /data/app/~~fVpUq1XxhaGHiS4nmd7zNg==/com.badukai.java.nputest-9BehCsl8fwvuIiJ5V3ao9A==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 15:11:18.587 I/litert  (21149): [compiler_plugin.cc:250] Loading plugin at: /data/app/~~fVpUq1XxhaGHiS4nmd7zNg==/com.badukai.java.nputest-9BehCsl8fwvuIiJ5V3ao9A==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 15:11:18.587 W/linker  (21149): Warning: "/data/app/~~fVpUq1XxhaGHiS4nmd7zNg==/com.badukai.java.nputest-9BehCsl8fwvuIiJ5V3ao9A==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so" unused DT entry: DT_RPATH (type 0xf arg 0x761) (ignoring)
+10-15 15:11:18.588 I/litert  (21149): [compiler_plugin.cc:260] Loaded plugin at: /data/app/~~fVpUq1XxhaGHiS4nmd7zNg==/com.badukai.java.nputest-9BehCsl8fwvuIiJ5V3ao9A==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 15:11:18.588 I/litert  (21149): [compiler_plugin.cc:263] Resolved plugin api at: /data/app/~~fVpUq1XxhaGHiS4nmd7zNg==/com.badukai.java.nputest-9BehCsl8fwvuIiJ5V3ao9A==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 15:11:18.588 I/litert  (21149): [compiler_plugin.cc:268] Initialize plugin at: /data/app/~~fVpUq1XxhaGHiS4nmd7zNg==/com.badukai.java.nputest-9BehCsl8fwvuIiJ5V3ao9A==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 15:11:18.600 I/litert  (21149): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 15:11:18.694 I/litert  (21149): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 15:11:18.694 I/litert  (21149): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 15:11:18.694 W/litert  (21149): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 15:11:18.694 I/litert  (21149): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 15:11:18.694 I/litert  (21149): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 15:11:18.697 I/litert  (21149): [compiled_model.cc:1380] Flatbuffer model initialized from cached model.
+10-15 15:11:18.702 I/litert  (21149): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 15:11:18.702 I/litert  (21149): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 15:11:18.702 I/litert  (21149): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 15:11:18.702 W/litert  (21149): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 15:11:18.703 I/litert  (21149): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 15:11:18.703 I/litert  (21149): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 15:11:18.703 I/litert  (21149): [dispatch_api.cc:133] Neuron SDK version: 9.0.11
+10-15 15:11:18.703 I/litert  (21149): [dispatch_api.cc:368] Runtime compatibility check: Neuron SDK version 9.0.11
+10-15 15:11:18.703 I/litert  (21149): [compiled_model.cc:1065] Accelerator returned null hooks.
+10-15 15:11:18.703 I/litert  (21149): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.0.11, runtime 9.0.11
+10-15 15:11:18.710 I/HidlServiceManagement(21149): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 15:11:18.715 I/HidlServiceManagement(21149): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 15:11:18.715 E/apuware_hidl(21149): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 15:11:18.721 I/HidlServiceManagement(21149): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 15:11:18.721 E/apuware_hidl(21149): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 15:11:18.726 I/HidlServiceManagement(21149): Trying to get transport of vendor.mediatek.hardware.apuware.apusys@2.1::INeuronApusys/default without hwservicemanager
+10-15 15:11:18.726 E/apuware_hidl(21149): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 15:11:18.726 E/apuware_hidl(21149): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 15:11:18.729 I/apuware_hidl(21149): AidlNeuronClient get aidl version=5
+10-15 15:11:18.737 W/litert  (21149): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 31768 bytes for Float32 tensor at index 0
+10-15 15:11:18.737 W/litert  (21149): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 76 bytes for Float32 tensor at index 1
+10-15 15:11:18.737 W/litert  (21149): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 1444 bytes for Float32 tensor at index 2
+10-15 15:11:18.737 W/litert  (21149): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 1444 bytes for Float32 tensor at index 0
+10-15 15:11:18.737 W/litert  (21149): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 4 bytes for Float32 tensor at index 1
+10-15 15:11:18.737 W/litert  (21149): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 12 bytes for Float32 tensor at index 2
+10-15 15:11:18.737 W/litert  (21149): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 16 bytes for Float32 tensor at index 3
+10-15 15:11:18.737 W/litert  (21149): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 1444 bytes for Float32 tensor at index 4
+10-15 15:11:18.827 I/litert  (21149): [compiled_model.cc:750] NPU JIT compilation caching enabled with cache dir: /data/user/0/com.badukai.java.nputest/cache
+10-15 15:11:18.828 I/litert  (21149): [compiler_plugin.cc:308] Attempting to load plugin at: /data/app/~~fVpUq1XxhaGHiS4nmd7zNg==/com.badukai.java.nputest-9BehCsl8fwvuIiJ5V3ao9A==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 15:11:18.828 I/litert  (21149): [compiler_plugin.cc:250] Loading plugin at: /data/app/~~fVpUq1XxhaGHiS4nmd7zNg==/com.badukai.java.nputest-9BehCsl8fwvuIiJ5V3ao9A==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 15:11:18.828 I/litert  (21149): [compiler_plugin.cc:260] Loaded plugin at: /data/app/~~fVpUq1XxhaGHiS4nmd7zNg==/com.badukai.java.nputest-9BehCsl8fwvuIiJ5V3ao9A==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 15:11:18.828 I/litert  (21149): [compiler_plugin.cc:263] Resolved plugin api at: /data/app/~~fVpUq1XxhaGHiS4nmd7zNg==/com.badukai.java.nputest-9BehCsl8fwvuIiJ5V3ao9A==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 15:11:18.828 I/litert  (21149): [compiler_plugin.cc:268] Initialize plugin at: /data/app/~~fVpUq1XxhaGHiS4nmd7zNg==/com.badukai.java.nputest-9BehCsl8fwvuIiJ5V3ao9A==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 15:11:18.829 I/litert  (21149): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 15:11:18.829 I/litert  (21149): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 15:11:18.829 I/litert  (21149): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 15:11:18.829 W/litert  (21149): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 15:11:18.829 I/litert  (21149): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 15:11:18.829 I/litert  (21149): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 15:11:18.840 I/litert  (21149): [compiler_plugin.cc:948] Applying plugin with SDK version: np9.0.11
+10-15 15:11:18.840 I/litert  (21149): [compiler_plugin.cc:706] SoC model name is not specified
+10-15 15:11:18.840 I/litert  (21149): [compiler_plugin.cc:929] Registered 1 transformations.
+10-15 15:11:18.841 I/litert  (21149): [compiler_plugin.cc:936] Applied transformations.
+10-15 15:11:18.843 I/litert  (21149): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 15:11:18.843 I/litert  (21149): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 15:11:18.843 I/litert  (21149): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 15:11:18.843 W/litert  (21149): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 15:11:18.844 I/litert  (21149): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 15:11:18.844 I/litert  (21149): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 15:11:18.844 I/litert  (21149): [compiler_plugin.cc:514] Use Get supported operations for partition.
+10-15 15:11:18.854 I/litert  (21149): [compile_model.cc:136] NeuronCompilation_setPreference being set with value: 2
+10-15 15:11:18.854 I/neuron  (21149): Validate optimization hint code: 0
+10-15 15:11:19.327 I/litert  (21149): [compiler_plugin.cc:524] Partition strategy: 0
+10-15 15:11:19.337 I/litert  (21149): [compiler_plugin.cc:742] Partitioned subgraph<0>, selected 1738 ops, from a total of 1738 ops. resulted in 1 partitions.
+10-15 15:11:19.340 I/litert  (21149): [neuron_adapter_api.cc:342] Magic number: 300
+10-15 15:11:19.340 I/litert  (21149): [neuron_adapter_api.cc:148] Loading MediaTek NeuronAdapter .so from: libneuronusdk_adapter.9.mtk.so
+10-15 15:11:19.340 I/litert  (21149): [neuron_adapter_api.cc:158] Loaded NeuronAdapter shared library.
+10-15 15:11:19.340 W/litert  (21149): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 15:11:19.340 I/litert  (21149): [neuron_adapter_api.cc:226] NeuronAdapter symbols loaded
+10-15 15:11:19.340 I/litert  (21149): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 15:11:19.340 I/litert  (21149): [compiler_plugin.cc:624] Starting MediaTek Compilation for 1 subgraphs, soc_model=(null)
+10-15 15:11:19.340 I/litert  (21149): [compiler_plugin.cc:632] Recording Neuron SDK version in bytecode: 9.0.11
+10-15 15:11:19.355 I/litert  (21149): [compile_model.cc:136] NeuronCompilation_setPreference being set with value: 2
+10-15 15:11:19.355 I/neuron  (21149): Validate optimization hint code: 0
+10-15 15:11:23.623 I/litert  (21149): [compiled_model.cc:1397] 1 compiler plugins were applied successfully: MediaTek compiler plugin (ver 0.1.0)
+10-15 15:11:23.623 I/litert  (21149): [compiled_model.cc:1411] JIT compilation changed model, reserializing...
+10-15 15:11:23.662 I/litert  (21149): [dispatch_api.cc:368] Runtime compatibility check: Neuron SDK version 9.0.11
+10-15 15:11:23.662 I/litert  (21149): [compiled_model.cc:1065] Accelerator returned null hooks.
+10-15 15:11:23.662 I/litert  (21149): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.0.11, runtime 9.0.11
+10-15 15:11:23.685 W/litert  (21149): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 31768 bytes for Float32 tensor at index 0
+10-15 15:11:23.685 W/litert  (21149): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 76 bytes for Float32 tensor at index 1
+10-15 15:11:23.685 W/litert  (21149): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 768 bytes for Float32 tensor at index 2
+10-15 15:11:23.685 W/litert  (21149): [litert_dispatch_invocation_context.cc:419] MediaTek compilation_get_input_padded_size returned 1444 bytes for Float32 tensor at index 3
+10-15 15:11:23.685 W/litert  (21149): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 8 bytes for Float32 tensor at index 0
+10-15 15:11:23.685 W/litert  (21149): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 2888 bytes for Float32 tensor at index 1
+10-15 15:11:23.685 W/litert  (21149): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 1444 bytes for Float32 tensor at index 2
+10-15 15:11:23.685 W/litert  (21149): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 12 bytes for Float32 tensor at index 3
+10-15 15:11:23.685 W/litert  (21149): [litert_dispatch_invocation_context.cc:481] MediaTek compilation_get_output_padded_size returned 24 bytes for Float32 tensor at index 4
