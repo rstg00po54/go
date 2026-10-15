@@ -1,0 +1,195 @@
+name: Build equivalent Human SL b18 13x13 and 19x19 LiteRT graphs
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/rk3588-rknn]
+    paths:
+      - '.github/workflows/vivo_human_mish_graph_13_19.yml'
+      - 'GoEngine-java/tools/optimize_human_mish_onnx.py'
+      - 'GoEngine-java/tools/check_human_mish_onnx_parity.py'
+      - 'GoEngine-java/tools/convert_katago_human_litert.py'
+      - 'GoEngine-java/tools/check_human_litert_onnx_parity.py'
+
+permissions:
+  contents: write
+
+jobs:
+  validate-graphs:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        board: [13, 19]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install reproducible ONNX and LiteRT CPU conversion tools
+        run: |
+          python -m pip install -U pip
+          python -m pip install 'onnx2tf[tensorflow]==2.6.9' 'onnxruntime>=1.20,<2'
+      - name: Download upstream immutable Human weights and official KataGo exporter
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p models kata-dist reports
+          curl -fL --retry 3 -o models/b18c384nbt-humanv0.bin.gz \
+            'https://github.com/lightvector/KataGo/releases/download/v1.15.0/b18c384nbt-humanv0.bin.gz'
+          gzip -t models/b18c384nbt-humanv0.bin.gz
+          gzip -dc models/b18c384nbt-humanv0.bin.gz > models/b18c384nbt-humanv0.bin
+          test "$(wc -c < models/b18c384nbt-humanv0.bin)" -eq 107185997
+          curl -fL --retry 3 -o kata-dist.zip \
+            'https://github.com/lightvector/KataGo/releases/download/v1.18.1/katago-v1.18.1-onnx-openvino-linux-x64.zip'
+          unzip -q kata-dist.zip -d kata-dist
+          KATAGO_BIN="$(find "$PWD/kata-dist" -type f -name katago -print -quit)"
+          test -n "$KATAGO_BIN"
+          chmod +x "$KATAGO_BIN"
+          echo "KATAGO_BIN=$KATAGO_BIN" >> "$GITHUB_ENV"
+          LIBPATH="$(find "$PWD/kata-dist" -type f -name '*.so*' -printf '%h\n' | sort -u | paste -sd: -)"
+          echo "LD_LIBRARY_PATH=$LIBPATH" >> "$GITHUB_ENV"
+      - name: Export unchanged b18 Human ONNX ${{ matrix.board }}x${{ matrix.board }}
+        run: |
+          "$KATAGO_BIN" dumponnx -model models/b18c384nbt-humanv0.bin \
+            -out models/human_original.onnx \
+            -nn-x-len ${{ matrix.board }} -nn-y-len ${{ matrix.board }}
+      - name: Rewrite all 120 actual Mish/gated activation chains
+        run: |
+          set -euo pipefail
+          python3 -u GoEngine-java/tools/optimize_human_mish_onnx.py \
+            --input models/human_original.onnx \
+            --output models/human_mish_equiv.onnx \
+            --expected 120 --report reports/rewrite.json \
+            2>&1 | tee reports/rewrite.log
+      - name: Compare all Human policy/value/ownership heads and original weights
+        run: |
+          set -euo pipefail
+          python3 -u GoEngine-java/tools/check_human_mish_onnx_parity.py \
+            --original models/human_original.onnx \
+            --rewritten models/human_mish_equiv.onnx \
+            --size ${{ matrix.board }} --report reports/onnx_cpu_parity.json \
+            2>&1 | tee reports/onnx_cpu_parity.log
+      - name: Convert equivalent ONNX to ${{ matrix.board }} line LiteRT with 192 SGF channels
+        run: |
+          set -euo pipefail
+          python3 -u GoEngine-java/tools/convert_katago_human_litert.py \
+            --size ${{ matrix.board }} \
+            --onnx models/human_mish_equiv.onnx \
+            --converter-backend flatbuffer_direct \
+            --output models/human_mish_equiv.tflite \
+            --signature models/human_mish_equiv.json \
+            2>&1 | tee reports/convert.log
+          python3 -u GoEngine-java/tools/check_human_litert_onnx_parity.py \
+            --onnx models/human_mish_equiv.onnx \
+            --tflite models/human_mish_equiv.tflite \
+            --signature models/human_mish_equiv.json \
+            --size ${{ matrix.board }} \
+            --report reports/onnx_tflite_parity.json \
+            2>&1 | tee reports/onnx_tflite_parity.log
+          sha256sum models/human_mish_equiv.tflite models/human_mish_equiv.json \
+            > reports/MISH_SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: human-b18-mish-${{ matrix.board }}-reports
+          path: reports/
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        with:
+          name: human-b18-mish-${{ matrix.board }}-graphs
+          path: |
+            models/human_mish_equiv.tflite
+            models/human_mish_equiv.json
+          if-no-files-found: error
+
+  compile-and-release:
+    needs: validate-graphs
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        board: [13, 19]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install official public MT6993 AOT diagnostics
+        run: |
+          python -m pip install 'ai-edge-litert==2.1.5' 'ai-edge-litert-sdk-mediatek==2.1.5'
+      - uses: actions/download-artifact@v4
+        with:
+          name: human-b18-mish-${{ matrix.board }}-graphs
+          path: models/
+      - uses: actions/download-artifact@v4
+        with:
+          name: human-b18-mish-${{ matrix.board }}-reports
+          path: reports/
+      - name: Require original weights, rank features, five-head parity and successful single NPU partition
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -u - <<'PY' 2>&1 | tee reports/aot.log
+          import hashlib,json,pathlib,re
+          from ai_edge_litert.aot import aot_compile
+          from ai_edge_litert.aot.vendors.mediatek import target
+          size=${{ matrix.board }}
+          rewrite=json.load(open('reports/rewrite.json'))
+          parity=json.load(open('reports/onnx_cpu_parity.json'))
+          cpu_litert=json.load(open('reports/onnx_tflite_parity.json'))
+          manifest=json.load(open('models/human_mish_equiv.json'))
+          graph=pathlib.Path('models/human_mish_equiv.tflite')
+          assert rewrite['rewrittenChains']==120 and rewrite['gatedActivations']==118
+          assert rewrite['allOriginalInitializersBitIdentical']
+          assert parity['status']=='PASS' and parity['board']==size and len(parity['cases'])==4
+          assert cpu_litert['status']=='PASS'
+          assert manifest['weights']=='b18c384nbt-humanv0' and manifest['size']==size
+          assert manifest['metaEncoderVersion']==1 and manifest['numInputMetaChannels']==192
+          assert manifest['numPolicyChannels']==2 and manifest['numScoreValueChannels']==6
+          assert manifest['cpu_inference']=='PASS'
+          assert hashlib.sha256(graph.read_bytes()).hexdigest()==manifest['graphSha256']
+          result=aot_compile.aot_compile(
+              str(graph),target=[target.Target(target.SocModel.MT6993)],
+              output_dir='reports/aot_binary',keep_going=False)
+          assert not result.failed_backends and len(result.models_with_backend)==1
+          report=str(result.compilation_report())
+          print('HUMAN_MISH_MT6993_AOT',report,flush=True)
+          m=re.search(r'(\d+)\s*/\s*(\d+)\s+ops offloaded to\s+(\d+)\s+partitions',report)
+          if not m: raise RuntimeError('Missing MediaTek selection report')
+          off,total,parts=map(int,m.groups())
+          diag={'board':size,'selected':off,'total':total,'partitions':parts,
+                'sourceOriginalWeightsUnchanged':True,
+                'originalRankMetadataPreserved':True,
+                'deviceRuntimeVerified':False}
+          pathlib.Path('reports/aot_comparison.json').write_text(json.dumps(diag,indent=2)+'\n')
+          print('HUMAN_MISH_MT6993_SELECTION',json.dumps(diag),flush=True)
+          if off!=total or parts!=1:
+              raise RuntimeError('Equivalence passed, but MT6993 did not select one complete NPU partition')
+          PY
+      - name: Publish separate JIT-only diagnostic model, no APK modification
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          B=${{ matrix.board }}
+          TAG="vivo-human-b18-mish-exact-jit-${B}x${B}-mt6993-v1"
+          mv models/human_mish_equiv.tflite "models/katago_human_${B}x${B}.tflite"
+          mv models/human_mish_equiv.json "models/katago_human_${B}x${B}.json"
+          sha256sum "models/katago_human_${B}x${B}.tflite" \
+            "models/katago_human_${B}x${B}.json" > "models/HUMAN_MISH_${B}_SHA256SUMS"
+          cat "models/HUMAN_MISH_${B}_SHA256SUMS"
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --prerelease \
+              --title "Experimental unchanged-weight Human SL b18 ${B}x${B} Mish optimization" \
+              --notes "Equivalent 120 Mish/gated activation rewrites; all 504 original initializer tensors preserved; 192 human rank metadata channels. Original ONNX five-head and optimized TFLite CPU parity PASS, MT6993 one-partition AOT selection. Device runtime and hardware execution NOT TESTED for this board size. JIT graph ONLY, not previously incompatible AOT bytecode."
+          fi
+          gh release upload "$TAG" \
+            "models/katago_human_${B}x${B}.tflite" \
+            "models/katago_human_${B}x${B}.json" \
+            "models/HUMAN_MISH_${B}_SHA256SUMS" \
+            reports/rewrite.json reports/onnx_cpu_parity.json \
+            reports/onnx_tflite_parity.json reports/aot_comparison.json --clobber
