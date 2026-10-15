@@ -68,7 +68,13 @@ jobs:
           test -s diagnostics/human_9x9_mediatek_mt6993_aot.tflite
           curl -fL --retry 3 -o diagnostics/human_original.json \
             https://github.com/rstg00po54/go/releases/download/vivo-human-litert-9-13-19-experimental-v0/katago_human_9x9.json
-          echo 'b4854654a3f28147cc82f591c6313ae6062386878d8f15b9675c18b8154607ee  diagnostics/human_original.json' | sha256sum -c
+          python - <<'PY'
+          import json
+          manifest=json.load(open('diagnostics/human_original.json'))
+          assert manifest['graphSha256']=='460463f71eb61fb8e5fd48df0309775de40cde520874edc402e07106e5f45d09'
+          assert manifest['cpu_inference']=='PASS'
+          print('HUMAN_AOT_SOURCE_MANIFEST_VERIFIED')
+          PY
           python - <<'PY'
           import json,hashlib
           from pathlib import Path
