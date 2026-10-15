@@ -50,6 +50,46 @@ That special CI build deliberately omits normal KataGo game binaries. Do not
 use `-PvivoProbeApk=true` to build the playable phone app. The full local build
 uses `-PbundleVivoLiteRtModels=true` and includes native game engines.
 
+## Experimental real KataGo `genmove` (opt-in, **not yet device validated**)
+
+The `MEDIATEK` KataGo C++ backend uses Eigen for Human SL and a JNI callback
+to the Java LiteRT `CompiledModel` for the g170 10b neural evaluator.
+This is a separate `libkatago_mtk.so`; it does not replace CPU/GPU or RK3588
+RKNN. Normal game backend selection deliberately continues to hide MediaTek NPU
+until real GTP, neural numerical parity, and hardware execution are verified.
+
+To build the experimental APK (Android NDK/Eigen/CMake required):
+
+```bash
+git pull --ff-only
+KATAGO_JOBS=2 bash tools/build_vivo_mtk_gtp.sh
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+This keeps the separate Android application ID `com.badukai.java.nputest`
+so the existing working app remains installed.
+
+Test **real KataGo GTP moves** on 9x9, without installing again:
+
+```bash
+python3 tools/smoke_vivo_litert.py --gtp --size 9 --skip-install
+```
+
+The script launches a debug-only `mtk_gtp_smoke` intent. The app copies
+matching model/config/manifest files, initializes the in-process C++ GTP
+search engine, calls `name`, `boardsize`, `clear_board`, `komi`,
+`genmove black` and `genmove white`. It checks legal move strings and
+requires actual `MTK_GTP_INFER` callbacks before reporting `GTP_PASS`.
+On-device inference and vendor diagnostics are saved in
+`build/vivo_litert_smoke/<run>/` and uploaded automatically to the
+**PUBLIC** `ui-test-results` Git branch; use `--no-upload` to keep them local.
+The default GTP timeout is 480 seconds; probe-only default remains 210 seconds.
+
+`GTP_PASS` means the engine returned moves using its LiteRT evaluator,
+not that its move quality matches the CPU network or that the silicon NPU
+has been independently measured. Do not enable MediaTek NPU as a normal
+user-selectable gameplay option before those checks pass.
+
 ## Run the first MediaTek graph inference smoke
 
 Connect **vivo X300 Pro** using ADB USB or Wi-Fi. Replace the serial with the
