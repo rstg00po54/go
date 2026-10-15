@@ -116,7 +116,7 @@ def main():
     p.add_argument("--onnx", type=Path, required=True)
     p.add_argument("--tflite", type=Path, required=True)
     p.add_argument("--signature", type=Path, required=True)
-    p.add_argument("--size", type=int, choices=(9, 13, 19), required=True)
+    p.add_argument("--size", type=int, choices=(9, 11, 13, 15, 19), required=True)
     p.add_argument("--report", type=Path, required=True)
     args = p.parse_args()
     result = verify(args.onnx, args.tflite, args.signature, args.size)
