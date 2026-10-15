@@ -7,6 +7,9 @@ on:
       - '.github/workflows/vivo_litert_android_compile.yml'
       - 'GoEngine-java/app/build.gradle.kts'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoMediaTekLiteRt.java'
+      - 'GoEngine-java/tools/convert_katago_human_litert.py'
+      - 'GoEngine-java/tools/test_human_litert_integration.py'
+      - 'GoEngine-java/tools/prepare_vivo_human_litert.sh'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoLiteRtOutputScale.java'
       - 'GoEngine-java/tools/test_litert_output_scale.py'
       - 'GoEngine-java/tools/prepare_vivo_litert.sh'
@@ -47,6 +50,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: Guard b18 Human metadata-aware LiteRT and native JNI contracts
+        working-directory: GoEngine-java
+        run: python3 tools/test_human_litert_integration.py
       - name: Verify runtime SoC selection on JVM
         working-directory: GoEngine-java
         run: python3 tools/test_npu_hardware_selector.py
