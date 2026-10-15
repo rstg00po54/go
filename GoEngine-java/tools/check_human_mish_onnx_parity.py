@@ -83,7 +83,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("--original",type=Path,required=True)
     p.add_argument("--rewritten",type=Path,required=True)
-    p.add_argument("--size",type=int,choices=(9,13,19),required=True)
+    p.add_argument("--size",type=int,choices=(9,11,13,15,19),required=True)
     p.add_argument("--report",type=Path,required=True)
     args=p.parse_args()
     results=compare(args.original,args.rewritten,args.size)
