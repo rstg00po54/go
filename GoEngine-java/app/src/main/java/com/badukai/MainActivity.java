@@ -143,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
         if (NpuHardware.current() == NpuHardware.Vendor.MEDIATEK)
             return KataGoEngine.supportsMediaTekGame(this, size);
         if (!KataGoEngine.supportsRknnHardware()) return false;
-        if (size != 9 && size != 13 && size != 19) return false;
+        if (size != 9 && size != 11 && size != 13 && size != 15 && size != 19) return false;
         String asset = "engine/katago_10b_" + size + "x" + size + ".rknn";
         try (InputStream in = getAssets().open(asset)) { return in.read() != -1; }
         catch (java.io.IOException e) { return false; }
@@ -291,7 +291,7 @@ public class MainActivity extends AppCompatActivity {
         engineExecutor.execute(() -> {
             try {
                 if (!KataGoMediaTekLiteRt.isMediaTek()) throw new IllegalStateException("Not a MediaTek phone");
-                if (size != 9 && size != 13 && size != 19) throw new IllegalArgumentException("Unsupported board");
+                if (size != 9 && size != 11 && size != 13 && size != 15 && size != 19) throw new IllegalArgumentException("Unsupported board");
                 String filename = "katago_10b_" + size + "x" + size;
                 File dir = new File(getCacheDir(), "mtk_litert_smoke");
                 if (!dir.exists() && !dir.mkdirs()) throw new java.io.IOException("Failed to create model cache");
@@ -342,7 +342,7 @@ public class MainActivity extends AppCompatActivity {
             sizes = new int[values.length];
             for (int i=0; i<values.length; i++) {
                 sizes[i] = Integer.parseInt(values[i]);
-                if (sizes[i] != 9 && sizes[i] != 13 && sizes[i] != 19)
+                if (sizes[i] != 9 && sizes[i] != 11 && sizes[i] != 13 && sizes[i] != 15 && sizes[i] != 19)
                     throw new IllegalArgumentException("Unsupported_board_" + sizes[i]);
                 if (!hasBundledNpuModel(sizes[i])) throw new IllegalArgumentException("RKNN_asset_missing_" + sizes[i]);
             }
@@ -1492,7 +1492,7 @@ public class MainActivity extends AppCompatActivity {
         int backendIndex = backendChoices.indexOf(selectedBackend);
         backendSpinner.setSelection(Math.max(0, backendIndex));
         backendSpinner.setEnabled(backendChoices.size() > 1 && !forceLegacyBackend);
-        // NPU model graphs exist only for 9/13/19. Hide the option entirely
+        // Offer NPU only when board-matched models and runtime are bundled.
         // when switching to 11/15, rather than offering a false NPU choice.
         sizeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -1537,7 +1537,7 @@ public class MainActivity extends AppCompatActivity {
             int selectedCondition = conditionSpinner.getSelectedItemPosition();
             KataGoEngine.BackendPreference requested = backendChoices.get(backendSpinner.getSelectedItemPosition());
             if (requested == KataGoEngine.BackendPreference.NPU && !hasBundledNpuModel(requestedBoardSize)) {
-                Toast.makeText(this, "NPU 仅支持已打包模型的 9/13/19 路；当前 " + requestedBoardSize
+                Toast.makeText(this, "NPU 仅支持已打包 LiteRT 模型的棋盘尺寸；当前 " + requestedBoardSize
                         + " 路请使用 CPU/GPU", Toast.LENGTH_LONG).show();
                 return;
             }
