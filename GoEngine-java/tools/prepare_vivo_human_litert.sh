@@ -80,6 +80,14 @@ if [[ "${1:-}" == "--mish9" ]]; then
     -o "$manifestTmp" "$base/human9_mish_equiv.json"
   curl --fail --location --retry 3 --connect-timeout 15 \
     -o "$proofTmp" "$base/rewrite.json"
+  printf '%s  %s\n' '5a709779245b388806b10a928b98b4834ae8471fa332f7b817e362c5d9c9a382' "$graphTmp" | sha256sum -c --status || {
+    echo "ERROR: experimental optimized b18 LiteRT graph failed pinned SHA-256" >&2
+    exit 1
+  }
+  printf '%s  %s\n' '226db691d78f312a20860ffba21c81c5c3dccfe2e46673c3c7dcf02f45b795c6' "$manifestTmp" | sha256sum -c --status || {
+    echo "ERROR: exact-Mish b18 model manifest failed pinned SHA-256" >&2
+    exit 1
+  }
   python3 - "$graphTmp" "$manifestTmp" "$proofTmp" <<'PY'
 import hashlib, json, pathlib, sys
 graph, manifest, proof = [pathlib.Path(x) for x in sys.argv[1:]]
