@@ -129,6 +129,48 @@ complete GTP latency is not raw NN throughput, and successful LiteRT
 Neuron delegation is not independent proof that physical NPU silicon
 performed the operations.
 
+## Why Human SL b18 still cannot initialize on vivo MT6993
+
+**Measured on original 9x9 b18 float32 model, not a guess.** The
+`vivo_human_litert_partition_report.yml` and
+`vivo_human_mtk_partition_compile_report.yml` CI diagnostics give:
+
+| Source operators | MT6993 AOT-selected operators | Not selected | AOT partitions |
+|---:|---:|---:|---:|
+| 1278 in 13 builtin types | 1038 (81.2%) | 240 (18.8%) | 240 |
+
+The model's **120 real activation chains** are exactly
+`EXP → ADD → LOG → TANH → MUL` (Mish activation). All 120 EXP and
+120 LOG nodes belong to these chains. The post-AOT TFLite entry graph
+contains 120 EXP + 120 LOG + 240 ADD operators; the compiler report
+accounts for **240 non-offloaded original operators**, consistent with
+EXP and LOG each needing CPU participation. The 240 post-AOT ADD
+operators may include graph-boundary glue and must not be mislabeled
+as another 240 original CPU operations without verifying the compiler IR.
+
+In other words, the MediaTek compiler **already attempts a partial
+NPU+CPU execution plan**, rather than rejecting all 1278 operators.
+An independent issue prevents *execution* on this phone: the public AOT
+bytecode (Neuron compiler 9.2.1) is rejected by the device runtime
+(Neuron 9.0.11) with `AidlNeuronClient session_createInstance fail`,
+`unsupported target APUSYS_2_0`, and `DLA header is invalid`.
+The earlier raw graph also failed JIT with a zero-dimensional operand
+reported by vendor compiler; none of the original TFLite's 1888
+tensors has a zero dimension or dynamic shape signature.
+
+**Do not assume shrinking the number of CPU operators fixes the Neuron
+runtime's ABI/bytecode incompatibility.** Future work should:
+(a) isolate and numerically validate replacement or CPU-grouped Mish
+activation sections, (b) reduce the 240 NPU partitions without
+changing the source weights, (c) test a model compiled with a
+NeuronAdapter version actually compatible with this vivo runtime.
+All new modes are experimental, and `Human SL CPU/Eigen` remains the
+default fallback until real-device five-head parity passes.
+
+Verified CI logs:
+- [Static operator and Mish-chain map](https://github.com/rstg00po54/go/actions/runs/38691513757)
+- [Actual MT6993 AOT 1038/1278 partition report](https://github.com/rstg00po54/go/actions/runs/38691294447)
+
 ## Experimental Human SL b18 LiteRT (two independent neural networks)
 
 Original official `b18c384nbt-humanv0` Human SL was converted to separate
