@@ -221,7 +221,7 @@ def inspect_tflite(path, size, contract):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--onnx", type=Path, required=True)
-    parser.add_argument("--size", type=int, choices=(9, 13, 19), required=True)
+    parser.add_argument("--size", type=int, choices=(9, 11, 13, 15, 19), required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--signature", type=Path, required=True)
     parser.add_argument("--converter-backend", choices=("flatbuffer_direct", "tf_converter"),
