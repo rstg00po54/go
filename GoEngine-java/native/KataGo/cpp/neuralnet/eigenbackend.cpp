@@ -2000,8 +2000,8 @@ void NeuralNet::getOutput(
       for(size_t h = 0; h < cpuHeads.size(); h++)
         cpuHeads[h].assign(destinations[h], destinations[h] + counts[h]);
       __android_log_print(ANDROID_LOG_INFO,"KataGoMTK",
-        "MTK_PARITY_CPU sample=%d board=%d batch=%d ms=%ld",
-        sample,nnXLen,batchSize,cpuMs);
+        "MTK_PARITY_CPU handle=%p sample=%d board=%d batch=%d ms=%ld",
+        (void*)computeHandle,sample,nnXLen,batchSize,cpuMs);
     }
     for(int row = 0; row < batchSize; row++) {
       computeHandle->mediatek->infer(
@@ -2030,8 +2030,10 @@ void NeuralNet::getOutput(
         }
         const double mae = counts[h] ? sumAbs / counts[h] : 0.0;
         __android_log_print(ANDROID_LOG_INFO,"KataGoMTK",
-          "MTK_PARITY_HEAD sample=%d board=%d head=%s count=%zu maxAbs=%.8g mae=%.8g maxRel=%.8g worst=%zu",
-          sample,nnXLen,headNames[h],counts[h],maxAbs,mae,maxRel,worst);
+          "MTK_PARITY_HEAD handle=%p sample=%d board=%d head=%s count=%zu maxAbs=%.8g mae=%.8g maxRel=%.8g worst=%zu cpu=%.8g npu=%.8g",
+          (void*)computeHandle,sample,nnXLen,headNames[h],counts[h],maxAbs,mae,maxRel,worst,
+          counts[h] ? cpuHeads[h][worst] : 0.0f,
+          counts[h] ? destinations[h][worst] : 0.0f);
       }
       // Diagnostics do not affect the inference returned to KataGo: the
       // original outputs in destinations remain those from MediaTek LiteRT.
