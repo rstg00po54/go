@@ -138,7 +138,7 @@ public class KataGoEngine {
 
     /** A MediaTek GTP session also needs a working, size-matched LiteRT model. */
     public static boolean supportsMediaTekGame(Context context, int size) {
-        if (!NpuHardware.canProbeMediaTekLiteRt() || (size != 9 && size != 13 && size != 19)) return false;
+        if (!NpuHardware.canProbeMediaTekLiteRt() || (size != 9 && size != 11 && size != 13 && size != 15 && size != 19)) return false;
         if (!new File(context.getApplicationInfo().nativeLibraryDir, "libkatago_mtk.so").isFile()) return false;
         String stem = "engine/katago_10b_" + size + "x" + size;
         try (InputStream graph = context.getAssets().open(stem + ".tflite");
@@ -229,6 +229,7 @@ public class KataGoEngine {
             String rknnModelName = "katago_10b_" + startupBoardSize + "x" + startupBoardSize + ".rknn";
             String rknnAssetPath = "engine/" + rknnModelName;
             boolean npuSizeSupported = startupBoardSize == 9 || startupBoardSize == 13 || startupBoardSize == 19;
+            boolean mtkSizeSupported = npuSizeSupported || startupBoardSize == 11 || startupBoardSize == 15;
             boolean rknnModelAvailable = false;
             if (npuSizeSupported) {
                 try (InputStream ignored = context.getAssets().open(rknnAssetPath)) {
@@ -240,7 +241,7 @@ public class KataGoEngine {
             boolean rknnAvailable = new File(nativeLibDir, "libkatago_npu.so").isFile()
                     && new File(nativeLibDir, "librknnrt.so").isFile() && rknnModelAvailable && supportsRknnHardware();
             String liteRtStem = "katago_10b_" + startupBoardSize + "x" + startupBoardSize;
-            boolean mtkAvailable = NpuHardware.canProbeMediaTekLiteRt() && npuSizeSupported
+            boolean mtkAvailable = NpuHardware.canProbeMediaTekLiteRt() && mtkSizeSupported
                     && new File(nativeLibDir, "libkatago_mtk.so").isFile()
                     && hasAsset("engine/" + liteRtStem + ".tflite")
                     && hasAsset("engine/" + liteRtStem + ".json");
