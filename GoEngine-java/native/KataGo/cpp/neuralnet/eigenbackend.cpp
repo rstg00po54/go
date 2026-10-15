@@ -16,6 +16,11 @@
 #endif
 #ifdef USE_MEDIATEK_BACKEND
 #include "mediatekbackend.h"
+#include <android/log.h>
+#include <array>
+#include <atomic>
+#include <cmath>
+#include <chrono>
 #endif
 
 #include <Eigen/Dense>
@@ -1750,6 +1755,7 @@ struct ComputeHandle {
 #endif
 #ifdef USE_MEDIATEK_BACKEND
   std::unique_ptr<KataGoMediaTekRunner> mediatek;
+  std::atomic<int> paritySamples{0};
 #endif
 
   ComputeHandle() = delete;
@@ -1951,6 +1957,52 @@ void NeuralNet::getOutput(
 #endif
 #ifdef USE_MEDIATEK_BACKEND
   if(computeHandle->mediatek) {
+    // Compare the *identical* actual KataGo NN feature buffers with native
+    // Eigen, before normal KataGo policy/value postprocessing. Opt-in only.
+    // Keep a bounded number of samples so gameplay does not become CPU bound.
+    const int sample = KataGoMediaTekBridge::parityEnabled()
+      ? computeHandle->paritySamples.fetch_add(1) + 1 : 0;
+    const bool compare = sample > 0 && sample <= 16;
+    std::array<std::vector<float>,5> cpuHeads;
+    std::array<const char*,5> headNames = {{"policyPass","policy","value","score","ownership"}};
+    const size_t area = (size_t)nnXLen * nnYLen;
+    const std::array<size_t,5> counts = {{
+      (size_t)numPolicyChannels * batchSize,
+      (size_t)numPolicyChannels * area * batchSize,
+      (size_t)computeHandle->model->numValueChannels * batchSize,
+      (size_t)computeHandle->model->numScoreValueChannels * batchSize,
+      (size_t)computeHandle->model->numOwnershipChannels * area * batchSize
+    }};
+    const std::array<float*,5> destinations = {{
+      policyPass.data(),policy.data(),value.data(),scoreValue.data(),ownership.data()
+    }};
+    if(compare) {
+      const auto cpuStart = std::chrono::steady_clock::now();
+      // Uses the same input / global / mask and model weights as the NPU.
+      computeHandle->model->apply(
+        &computeHandle->handleInternal,
+        computeHandle->scratch.get(),
+        &input,
+        &inputGlobal,
+        (numMetaFeatures > 0 ? &inputMeta : NULL),
+        &trunk,
+        &policyPass,
+        &policy,
+        &value,
+        &scoreValue,
+        &ownership,
+        &mask,
+        maskSum.data(),
+        convWorkspace.data()
+      );
+      const long cpuMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - cpuStart).count();
+      for(size_t h = 0; h < cpuHeads.size(); h++)
+        cpuHeads[h].assign(destinations[h], destinations[h] + counts[h]);
+      __android_log_print(ANDROID_LOG_INFO,"KataGoMTK",
+        "MTK_PARITY_CPU sample=%d board=%d batch=%d ms=%ld",
+        sample,nnXLen,batchSize,cpuMs);
+    }
     for(int row = 0; row < batchSize; row++) {
       computeHandle->mediatek->infer(
         inputBuffers->spatialInput.data() + (size_t)row * inputBuffers->singleInputElts,
@@ -1961,6 +2013,28 @@ void NeuralNet::getOutput(
         scoreValue.data() + (size_t)row * computeHandle->model->numScoreValueChannels,
         ownership.data() + (size_t)row * computeHandle->model->numOwnershipChannels * nnXLen * nnYLen
       );
+    }
+    if(compare) {
+      for(size_t h = 0; h < cpuHeads.size(); h++) {
+        double sumAbs = 0.0;
+        double maxAbs = 0.0;
+        double maxRel = 0.0;
+        size_t worst = 0;
+        for(size_t j = 0; j < counts[h]; j++) {
+          const double reference = cpuHeads[h][j];
+          const double difference = std::abs(reference - destinations[h][j]);
+          const double relative = difference / (1.0 + std::abs(reference));
+          sumAbs += difference;
+          if(difference > maxAbs) { maxAbs = difference; worst = j; }
+          if(relative > maxRel) maxRel = relative;
+        }
+        const double mae = counts[h] ? sumAbs / counts[h] : 0.0;
+        __android_log_print(ANDROID_LOG_INFO,"KataGoMTK",
+          "MTK_PARITY_HEAD sample=%d board=%d head=%s count=%zu maxAbs=%.8g mae=%.8g maxRel=%.8g worst=%zu",
+          sample,nnXLen,headNames[h],counts[h],maxAbs,mae,maxRel,worst);
+      }
+      // Diagnostics do not affect the inference returned to KataGo: the
+      // original outputs in destinations remain those from MediaTek LiteRT.
     }
   }
   else
