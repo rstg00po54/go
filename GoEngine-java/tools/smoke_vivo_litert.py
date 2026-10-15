@@ -183,8 +183,8 @@ def run(argv=None):
         inferences = [x for x in events if "MTK_LITERT_INFER board=" in x]
         real_calls = [x for x in events if "MTK_GTP_INFER board=" in x]
         final_line = next((x for x in events if pass_event + " id=" + ident in x), "")
-        black = re.search(r"\\bblack=([^ ]+)", final_line)
-        white = re.search(r"\\bwhite=([^ ]+)", final_line)
+        black = re.search(r"\bblack=([^\s]+)", final_line)
+        white = re.search(r"\bwhite=([^\s]+)", final_line)
         valid_gtp = bool(black and white and len(real_calls) >= 1
                          and any("MTK_GTP_BRIDGE_INSTALLED" in x for x in events))
         passed = ok and not failures and (valid_gtp if args.gtp else len(inferences) >= 3)
