@@ -8,6 +8,8 @@ on:
       - 'GoEngine-java/app/build.gradle.kts'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoMediaTekLiteRt.java'
       - 'GoEngine-java/app/src/main/java/com/badukai/MainActivity.java'
+      - 'GoEngine-java/app/src/main/java/com/badukai/engine/DeviceHardwareInfo.java'
+      - 'GoEngine-java/app/src/main/res/layout/dialog_new_game.xml'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/NpuHardware.java'
       - 'GoEngine-java/tools/test_npu_hardware_selector.py'
   workflow_dispatch:
