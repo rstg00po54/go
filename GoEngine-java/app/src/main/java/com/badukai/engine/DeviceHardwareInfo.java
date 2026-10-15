@@ -60,7 +60,8 @@ public final class DeviceHardwareInfo {
     public static String npuDescription(boolean rknnGameAvailable) {
         NpuHardware.Vendor vendor = NpuHardware.current();
         if (vendor == NpuHardware.Vendor.MEDIATEK)
-            return "NPU：" + npuName() + " · LiteRT 测试可用，对弈适配中";
+            return "NPU：" + npuName() + (rknnGameAvailable
+                    ? " · LiteRT 对弈可选（9/13/19路）" : " · GTP 测试可用，未打包对弈后端");
         if (vendor == NpuHardware.Vendor.ROCKCHIP_RK3588)
             return "NPU：" + npuName() + (rknnGameAvailable ? " · RKNN 对弈可选" : " · 尚未打包对弈后端");
         return "NPU：系统未识别可用后端";
