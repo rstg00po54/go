@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from smoke_vivo_litert import parse_gtp_events, save_npu_diagnostics, summarize_npu_logs
+from smoke_vivo_litert import parse_gtp_events, parse_parity_events, save_npu_diagnostics, summarize_npu_logs
 from upload_referee_test_results import report_items
 
 
@@ -76,6 +76,37 @@ class VivoNpuDiagnosticsTests(unittest.TestCase):
             "MTK_GTP_REPLY command=genmove white reply== D5",
             "MTK_GTP_SMOKE_FAIL id=test123 board=9 reason=error"], ident)["passed"])
 
+    def test_cpu_eigen_litert_neural_parity_five_heads(self):
+        lines = ["I/KataGoMTK: MTK_PARITY_CPU handle=0x100 sample=1 board=9 batch=1 ms=101"]
+        for head, count in [("policyPass", 1), ("policy", 81),
+                            ("value", 3), ("score", 4), ("ownership", 81)]:
+            lines.append(
+                "I/KataGoMTK: MTK_PARITY_HEAD handle=0x100 sample=1 board=9 "
+                f"head={head} count={count} maxAbs=0.001 mae=0.0005 "
+                "maxRel=0.0008 worst=0 cpu=0.5 npu=0.501")
+        result = parse_parity_events(lines, 9)
+        self.assertEqual(result["status"], "WITHIN_PROVISIONAL_TOLERANCE")
+        self.assertEqual(result["sampleCount"], 1)
+        self.assertEqual(result["heads"]["policy"]["comparedElements"], 81)
+        self.assertEqual(result["heads"]["value"]["maxAbs"], 0.001)
+        self.assertEqual(result["heads"]["policy"]["meanAbs"], 0.0005)
+        self.assertEqual(result["samples"][0]["cpuMs"], 101)
+        self.assertEqual(result["hardwareExecution"], "UNVERIFIED")
+
+    def test_large_difference_not_marked_numerically_equal(self):
+        lines = ["MTK_PARITY_CPU handle=0x100 sample=1 board=9 batch=1 ms=101"]
+        for head, count in [("policyPass", 1), ("policy", 81),
+                            ("value", 3), ("score", 4), ("ownership", 81)]:
+            bad = "0.9" if head == "ownership" else "0.001"
+            lines.append(f"MTK_PARITY_HEAD handle=0x100 sample=1 board=9 "
+                         f"head={head} count={count} maxAbs={bad} mae=0.0005 "
+                         f"maxRel={bad} worst=0 cpu=0.5 npu=0.501")
+        self.assertEqual(parse_parity_events(lines, 9)["status"], "MISMATCH")
+        self.assertEqual(parse_parity_events(lines[:-1], 9)["status"], "INCOMPLETE")
+        self.assertEqual(parse_parity_events([], 9)["status"], "NO_DATA")
+        self.assertEqual(parse_parity_events(lines, 13)["status"], "NO_DATA")
+        self.assertEqual(parse_parity_events(lines + [lines[-1]], 9)["status"], "INCOMPLETE")
+
     def test_important_diagnostics_are_in_upload_allowlist(self):
         with tempfile.TemporaryDirectory() as tmp:
             folder = Path(tmp)
@@ -85,6 +116,9 @@ class VivoNpuDiagnosticsTests(unittest.TestCase):
             names = [name.rsplit("/", 1)[-1] for name, _ in items]
             self.assertIn("vendor_litert.txt", names)
             self.assertIn("npu_diagnostics.txt", names)
+            (folder / "parity_summary.json").write_text('{"status":"NO_DATA"}')
+            _, uploaded = report_items(folder, report, "20261015_mtk_parity", logger=lambda _: None)
+            self.assertTrue(any(name.endswith("/parity_summary.json") for name, _ in uploaded))
             self.assertEqual(report["npuDiagnostics"]["delegateStatus"], "FULL_GRAPH_DELEGATED")
             self.assertTrue(summary_path.endswith(".json"))
 
