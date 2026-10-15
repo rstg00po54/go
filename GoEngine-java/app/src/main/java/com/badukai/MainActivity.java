@@ -1259,14 +1259,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * End-of-game NN ownership preview. Empty intersections show territory;
-     * occupied intersections are overlaid ONLY when the whole chain is strongly
-     * predicted to belong to the opponent. This is an AI suggestion, not
-     * a formal dead-stone adjudication or a change to game/scoring state.
+     * NN ownership preview for both ongoing positions and terminal scoring.
+     * Show tentative dead-chain markers only when the whole chain is strongly
+     * predicted to belong to the opponent. This never changes game state.
      */
     private int displayEndgameOwnership(KataGoEngine.PositionEvaluation result) {
         boardView.setOwnership(result.whiteOwnership);
-        if (!board.isGameOver()) return 0;
         try {
             FastEndgameScorer.Result dead = FastEndgameScorer.suggest(board, result.whiteOwnership);
             boardView.setDeadStoneMarks(dead.deadStones);
@@ -1281,7 +1279,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /** Display NN-estimated territory. At the end also preview suspected dead chains. */
+    /** Display NN-estimated territory and tentative dead-chain markers at any stage. */
     private String territorySummary(KataGoEngine.PositionEvaluation result) {
         int blackTerritory = 0, whiteTerritory = 0, uncertainEmpty = 0;
         final int size = result.size;
