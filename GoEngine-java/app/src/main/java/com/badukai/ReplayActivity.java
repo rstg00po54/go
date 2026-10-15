@@ -1,6 +1,8 @@
 package com.badukai;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import com.badukai.game.SgfArchive;
 import android.os.Bundle;
 import android.content.Intent;
 import android.widget.Button;
@@ -20,6 +22,8 @@ import java.nio.file.Files;
 /** Read-only SGF playback; never attaches to the playing engine. */
 public class ReplayActivity extends Activity {
     private static final int PICK_SGF=101;
+    private static final int EXPORT_SGF=102;
+    private String currentSgf;
     private GoSgf.Game game;
     private GoBoardView boardView;
     private SeekBar seek;
@@ -69,6 +73,18 @@ public class ReplayActivity extends Activity {
             });
         }
         page.addView(controls);
+        LinearLayout actions=new LinearLayout(this);
+        for(String label:new String[]{"历史棋谱","导出 SGF","分享棋谱"}){
+            Button action=new Button(this);
+            action.setText(label);
+            actions.addView(action,new LinearLayout.LayoutParams(0,dp(52),1));
+            action.setOnClickListener(v->{
+                if(label.equals("历史棋谱"))chooseHistory();
+                else if(label.equals("导出 SGF"))exportSgf();
+                else shareSgf();
+            });
+        }
+        page.addView(actions);
         Button importButton=new Button(this);
         importButton.setText("导入 SGF 文件");
         importButton.setOnClickListener(v->{
@@ -97,6 +113,7 @@ public class ReplayActivity extends Activity {
             GoSgf.Game parsed=GoSgf.decode(sgf);
             GoSgf.position(parsed,parsed.moves.size()); // Verify main line before showing it.
             game=parsed;
+            currentSgf=sgf;
             seek.setMax(game.moves.size());
             showStep(game.moves.size());
         }catch(Exception ex){
@@ -114,14 +131,68 @@ public class ReplayActivity extends Activity {
             counter.setText("第 "+step+" / "+game.moves.size()+" 手 · "+game.size+" 路");
         }catch(Exception e){Toast.makeText(this,"无法复盘："+e.getMessage(),Toast.LENGTH_SHORT).show();}
     }
+    private void chooseHistory() {
+        java.util.List<File> files=SgfArchive.list(this);
+        if(files.isEmpty()){
+            Toast.makeText(this,"暂无历史棋谱",Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String[] labels=new String[files.size()];
+        for(int i=0;i<files.size();i++){
+            try {
+                GoSgf.Game item=GoSgf.decode(new String(
+                        Files.readAllBytes(files.get(i).toPath()),StandardCharsets.UTF_8));
+                labels[i]=(i+1)+".  "+item.size+"路 · "+item.moves.size()+"手 · "
+                        +new java.text.SimpleDateFormat("MM-dd HH:mm",java.util.Locale.getDefault())
+                        .format(new java.util.Date(files.get(i).lastModified()));
+            }catch(Exception ex){labels[i]=(i+1)+".  "+files.get(i).getName();}
+        }
+        new AlertDialog.Builder(this).setTitle("历史棋谱")
+                .setItems(labels,(dialog,which)->{
+                    try{
+                        load(new String(Files.readAllBytes(files.get(which).toPath()),
+                                StandardCharsets.UTF_8));
+                    }catch(Exception ex){Toast.makeText(this,"读取失败："+ex.getMessage(),Toast.LENGTH_LONG).show();}
+                }).setNegativeButton("取消",null).show();
+    }
+    private void exportSgf() {
+        if(currentSgf==null){Toast.makeText(this,"没有可导出的棋谱",Toast.LENGTH_SHORT).show();return;}
+        Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/x-go-sgf");
+        intent.putExtra(Intent.EXTRA_TITLE,"badukai_"+game.size+"x"+game.size+".sgf");
+        startActivityForResult(intent,EXPORT_SGF);
+    }
+    private void shareSgf(){
+        if(currentSgf==null){Toast.makeText(this,"没有可分享的棋谱",Toast.LENGTH_SHORT).show();return;}
+        Intent send=new Intent(Intent.ACTION_SEND);
+        send.setType("text/plain");
+        send.putExtra(Intent.EXTRA_SUBJECT,"围棋棋谱 SGF");
+        send.putExtra(Intent.EXTRA_TEXT,currentSgf);
+        startActivity(Intent.createChooser(send,"分享棋谱"));
+    }
     @Override protected void onActivityResult(int request,int result,Intent data){
         super.onActivityResult(request,result,data);
-        if(request!=PICK_SGF||result!=RESULT_OK||data==null||data.getData()==null)return;
+        if(result!=RESULT_OK||data==null||data.getData()==null)return;
+        if(request==EXPORT_SGF){
+            if(currentSgf==null)return;
+            try(java.io.OutputStream out=getContentResolver().openOutputStream(data.getData())){
+                if(out==null)throw new java.io.IOException("No output stream");
+                out.write(currentSgf.getBytes(StandardCharsets.UTF_8));
+                Toast.makeText(this,"SGF 已导出",Toast.LENGTH_SHORT).show();
+            }catch(Exception ex){Toast.makeText(this,"导出失败："+ex.getMessage(),Toast.LENGTH_LONG).show();}
+            return;
+        }
+        if(request!=PICK_SGF)return;
         try(java.io.InputStream in=getContentResolver().openInputStream(data.getData())){
             java.io.ByteArrayOutputStream bytes=new java.io.ByteArrayOutputStream();
             byte[] buffer=new byte[4096];int n;
             while((n=in.read(buffer))!=-1){bytes.write(buffer,0,n);if(bytes.size()>2_000_000)throw new IllegalArgumentException("文件太大");}
-            load(bytes.toString("UTF-8"));
+            String sgf=bytes.toString("UTF-8");
+            GoSgf.Game checked=GoSgf.decode(sgf);
+            GoSgf.position(checked,checked.moves.size());
+            SgfArchive.save(this,sgf);
+            load(sgf);
         }catch(Exception ex){Toast.makeText(this,"导入失败："+ex.getMessage(),Toast.LENGTH_LONG).show();}
     }
 }
