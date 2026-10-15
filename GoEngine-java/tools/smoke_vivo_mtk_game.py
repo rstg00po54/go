@@ -128,8 +128,12 @@ def main(argv=None):
     p.add_argument("--no-human-sl", action="store_true")
     p.add_argument("--no-upload", action="store_true")
     p.add_argument("--timeout", type=int, default=480)
+    p.add_argument("--stall-timeout", type=int, default=150,
+                   help="Fail with captured logs if no new engine stage appears for this many seconds")
     args = p.parse_args(argv)
     if not args.adb: p.error("adb not installed")
+    if args.timeout < 10 or args.stall_timeout < 10:
+        p.error("--timeout and --stall-timeout must both be at least 10 seconds")
     run_id = uuid4().hex[:16]
     folder = PROJECT / "build/vivo_mtk_game_smoke" / datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     folder.mkdir(parents=True, exist_ok=False)
@@ -153,17 +157,49 @@ def main(argv=None):
                        "--es", "npu_smoke_id", run_id,
                        "--es", "npu_smoke_sizes", ",".join(map(str, DEFAULT_SIZES)),
                        "--ez", "npu_smoke_human", "false" if args.no_human_sl else "true"]).strip())
-        end = time.monotonic() + args.timeout
+        started_at = last_progress_at = last_heartbeat = time.monotonic()
+        end = started_at + args.timeout
+        last_progress = ""
         tags = ["NpuSmoke:V", "KataGoMTK:V", "KataGoEngine:V", "AndroidRuntime:E", "libc:F"]
+        print("Tracking CPU preload, NPU initialization and Human SL moves"
+              " (overall timeout=%ds; stall timeout=%ds)" %
+              (args.timeout, args.stall_timeout), flush=True)
         while time.monotonic() < end:
             logs = run_cmd([args.adb, "-s", serial, "logcat", "-d", "-v", "time", "-s", *tags],
                            timeout=30, check=False)
+            # The Java test emits one marker before each blocking operation.
+            # Track the LAST new marker, not the total count of log entries,
+            # so the script shows exactly where a device stops making progress.
+            progress_lines = [line for line in logs.splitlines()
+                              if "NpuSmoke" in line
+                              and any(marker + " id=" + run_id in line for marker in
+                                      ("START", "STAGE", "MTK_CPU_TO_NPU_PRECHECK_READY",
+                                       "STEP_BEGIN", "STEP_PASS"))]
+            newest = progress_lines[-1] if progress_lines else ""
+            now = time.monotonic()
+            if newest and newest != last_progress:
+                last_progress = newest
+                last_progress_at = now
+                last_heartbeat = now
+                print("Progress (%.0fs): %s" %
+                      (now - started_at, newest.split("NpuSmoke:", 1)[-1].strip()), flush=True)
+            elif now - last_heartbeat >= 15:
+                print("Still running: %.0fs total, %.0fs since stage %s" %
+                      (now - started_at, now - last_progress_at,
+                       last_progress.split("NpuSmoke:", 1)[-1].strip() if last_progress else "Activity launch"),
+                      flush=True)
+                last_heartbeat = now
             if re.search(r"\b(?:PASS|FAIL) id=" + re.escape(run_id) + r"(?:\s|$)", logs):
                 break
             if "Fatal signal" in logs or "FATAL EXCEPTION" in logs: break
+            if now - last_progress_at >= args.stall_timeout:
+                report["errors"].append("No new game phase in %ds; last: %s" %
+                                        (args.stall_timeout, last_progress[-250:] or "Activity launch"))
+                break
             time.sleep(2)
         else:
-            report["errors"].append("Timed out waiting for Human SL NPU game regression")
+            report["errors"].append("Timed out after %ds; last stage: %s" %
+                                    (args.timeout, last_progress[-250:] or "Activity launch"))
         log = run_cmd([args.adb, "-s", serial, "logcat", "-d", "-v", "time", "-s", *tags],
                       timeout=30, check=False)
         (folder / "logcat.txt").write_text(log, encoding="utf-8")
