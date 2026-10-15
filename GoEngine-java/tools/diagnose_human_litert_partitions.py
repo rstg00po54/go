@@ -50,6 +50,54 @@ def summarize(path):
     return {"name": path.name, "sizeBytes": len(data), "subgraphs": records}
 
 
+def activation_chain_report(path):
+    """Look for the exact EXP->ADD->LOG->TANH->MUL pattern, not guessed op names."""
+    import tflite
+    model = tflite.Model.GetRootAsModel(path.read_bytes(), 0)
+    sg = model.Subgraphs(0)
+    names = enum_names()
+    ops = []
+    consumers = {}
+    for i in range(sg.OperatorsLength()):
+        op = sg.Operators(i)
+        opcode = model.OperatorCodes(op.OpcodeIndex())
+        name = names.get(int(opcode.BuiltinCode()), "UNKNOWN")
+        inputs = [int(op.Inputs(k)) for k in range(op.InputsLength())]
+        outputs = [int(op.Outputs(k)) for k in range(op.OutputsLength())]
+        ops.append({"index": i, "type": name, "inputs": inputs, "outputs": outputs})
+        for tid in inputs:
+            consumers.setdefault(tid, []).append(i)
+
+    wanted = ("EXP", "ADD", "LOG", "TANH", "MUL")
+    matches = []
+    for first in ops:
+        if first["type"] != wanted[0]:
+            continue
+        chains = [(first["index"], first["outputs"][0])] if first["outputs"] else []
+        for next_type in wanted[1:]:
+            chained = []
+            for indices, tensor in chains:
+                for dest in consumers.get(tensor, []):
+                    if ops[dest]["type"] != next_type or not ops[dest]["outputs"]:
+                        continue
+                    chained.append((indices + (dest,) if isinstance(indices, tuple)
+                                    else (indices, dest), ops[dest]["outputs"][0]))
+            chains = chained
+        for chain, tensor in chains:
+            matches.append(list(chain))
+    counts = Counter(op["type"] for op in ops)
+    result = {
+        "pattern": "EXP->ADD->LOG->TANH->MUL",
+        "matches": len(matches), "firstExamples": matches[:12],
+        "expCount": counts.get("EXP", 0),
+        "logCount": counts.get("LOG", 0),
+        "tanhCount": counts.get("TANH", 0),
+        "completeExpCoverage": len(matches) == counts.get("EXP", 0),
+    }
+    print("HUMAN_PARTITION_ACTIVATIONS " + json.dumps(result), flush=True)
+    return result
+
+
 def report(original, compiled):
     source = summarize(original)
     aot = summarize(compiled)
@@ -100,6 +148,7 @@ def main():
     p.add_argument("--expect-original-ops", type=int, default=1278)
     args = p.parse_args()
     data = report(args.original, args.aot)
+    data["activationChainAnalysis"] = activation_chain_report(args.original)
     if data["originalOpCount"] != args.expect_original_ops:
         raise ValueError("Human b18 baseline operator count changed: %d" %
                          data["originalOpCount"])
