@@ -376,11 +376,12 @@ tasks.configureEach {
 // Independently packaged home illustrations and tactile button artwork.
 val stageGreenHomeArtwork = tasks.register<Copy>("stageGreenHomeArtwork") {
     into(layout.buildDirectory.dir("generated/homeAssets/home"))
-    from("docs/home/月门竹影下的围棋雅室.png") { rename { "background.png" } }
-    from("docs/home/人机对弈翡翠金饰按钮.png") { rename { "play.png" } }
-    from("docs/home/玉韵棋谱复盘按钮.png") { rename { "record.png" } }
-    from("docs/home/玉璧雅韵_死活训练.png") { rename { "training.png" } }
-    from("docs/home/翡翠鎏金竹韵设置图标.png") { rename { "settings.png" } }
+    doFirst { check(rootProject.file("docs/home/月门竹影下的围棋雅室.png").isFile) { "Missing home artwork under docs/home" } }
+    from(rootProject.file("docs/home/月门竹影下的围棋雅室.png")) { rename { "background.png" } }
+    from(rootProject.file("docs/home/人机对弈翡翠金饰按钮.png")) { rename { "play.png" } }
+    from(rootProject.file("docs/home/玉韵棋谱复盘按钮.png")) { rename { "record.png" } }
+    from(rootProject.file("docs/home/玉璧雅韵_死活训练.png")) { rename { "training.png" } }
+    from(rootProject.file("docs/home/翡翠鎏金竹韵设置图标.png")) { rename { "settings.png" } }
 }
 tasks.configureEach {
     if (name.startsWith("merge") && name.endsWith("Assets")) dependsOn(stageGreenHomeArtwork)
