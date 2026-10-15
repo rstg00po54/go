@@ -1457,8 +1457,10 @@ public class KataGoEngine {
                 long remainingMs = Math.max(1, TimeUnit.NANOSECONDS.toMillis(deadline - System.nanoTime()));
                 String response = responseQueue.poll(Math.min(200, remainingMs), TimeUnit.MILLISECONDS);
                 if (response != null) return response;
-                KataGoMediaTekNative.GtpSession mtk = mediaTekSession;
-                if (mtk != null) mtk.stopSearch();
+                // Do not send GTP "stop" while awaiting an ordinary reply.
+                // Each stop produces its own blank "=\\n\\n" response; the
+                // queued reply can be mistaken for the next genmove result.
+                // Explicit cancel/close paths alone may request stopSearch().
                 KataGoNpuNative.GtpSession npu = npuSession;
                 if (npu != null && !npu.isAlive()) {
                     Log.e(TAG, "NPU JNI GTP worker stopped while waiting for a reply");
