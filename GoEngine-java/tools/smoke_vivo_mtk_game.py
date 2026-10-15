@@ -74,6 +74,8 @@ def parse_game_log(raw, run_id, sizes, human=True):
         begin_line = part[0]
         prepared = [line for line in part if "MTK_LITERT_INIT board=" in line]
         ready = [line for line in part if "MTK_GAME_BACKEND_READY board=" in line]
+        neural = [line for line in part if "MTK_GTP_INFER board=" in line
+                  and field(line, "board") == str(requested)]
         terminal = [line for line in part if prefix in line and "STEP_PASS id=" + run_id in line]
         fallback = [line for line in part if "falling back to cpu" in line.lower()
                     or ("fallback" in line.lower() and "npu" in line.lower())
@@ -85,6 +87,8 @@ def parse_game_log(raw, run_id, sizes, human=True):
             part_errors.append("No size-matched MediaTek graph initialization")
         if len(ready) != 1 or field(ready[0], "board") != str(requested):
             part_errors.append("No genuine MediaTek game session")
+        if not neural:
+            part_errors.append("MediaTek game session did not actually invoke LiteRT evaluator")
         if human and ready and field(ready[0], "humanSL") != "true":
             part_errors.append("Human SL was not active")
         if len(terminal) != 1 or field(terminal[0], "active") != str(requested):
@@ -99,6 +103,7 @@ def parse_game_log(raw, run_id, sizes, human=True):
                 if value is None or not value.isdigit(): part_errors.append("Invalid " + name)
         item = {"index": index, "board": requested,
                 "status": "PASS" if not part_errors else "FAIL", "errors": part_errors,
+                "litertInferenceCount": len(neural),
                 "black": field(terminal[0], "black") if terminal else None,
                 "white": field(terminal[0], "white") if terminal else None}
         steps.append(item)
