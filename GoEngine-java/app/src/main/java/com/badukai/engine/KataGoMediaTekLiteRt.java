@@ -54,6 +54,7 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
     private final int[] inputPositions;
     private final int[] outputPositions;
     private final boolean spatialIsNchw;
+    private final boolean policyIsNchw;
     private final int size;
     private final float outputScaleMultiplier;
 
@@ -147,7 +148,17 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
             outputCounts[i] = item.getInt("count");
         }
         JSONArray spatialShape = rawInputs.getJSONObject("InputSpatial").getJSONArray("shape");
-        spatialIsNchw = spatialShape.getInt(1) == 22 && spatialShape.getInt(2) == board;
+        spatialIsNchw = spatialShape.length() == 4
+                && spatialShape.getInt(1) == 22 && spatialShape.getInt(2) == board;
+        JSONArray policyShape = rawOutputs.getJSONObject("OutputPolicy").getJSONArray("shape");
+        if (policyShape.length() != 4 || policyShape.getInt(0) != 1
+                || !(policyShape.getInt(1) == policyChannels && policyShape.getInt(2) == board
+                        && policyShape.getInt(3) == board)
+                && !(policyShape.getInt(1) == board && policyShape.getInt(2) == board
+                        && policyShape.getInt(3) == policyChannels))
+            throw new IllegalArgumentException("Unsupported Human LiteRT policy tensor layout");
+        policyIsNchw = policyChannels > 1 && policyShape.getInt(1) == policyChannels
+                && policyShape.getInt(2) == board;
         if (inputCounts[0] != board * board * CHANNELS[0] || inputCounts[1] != 19 ||
                 (human && inputCounts[2] != metaChannels) ||
                 inputCounts[human ? 3 : 2] != board * board ||
@@ -221,6 +232,16 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
         float[][] result = new float[5][];
         for (int i=0;i<5;i++) {
             result[i] = outputs.get(outputPositions[i]).readFloat();
+            if (i == 1 && policyIsNchw) {
+                // KataGo Eigen consumes NHWC interleaved policy channels,
+                // whereas ONNX and some LiteRT conversions export NCHW.
+                float[] interleaved = new float[result[i].length];
+                int area = size * size;
+                for (int p=0; p<area; p++)
+                    for (int ch=0; ch<policyChannels; ch++)
+                        interleaved[p*policyChannels + ch] = result[i][ch*area + p];
+                result[i] = interleaved;
+            }
             if (result[i].length != outputCounts[i])
                 throw new IllegalStateException("Unexpected output shape for " + OUTPUT[i]);
             for (float v : result[i])
