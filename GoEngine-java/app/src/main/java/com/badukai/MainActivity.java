@@ -3,6 +3,8 @@ package com.badukai;
 import android.app.AlertDialog;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.BitmapFactory;
+import android.widget.ImageView;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -189,6 +191,21 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "Game engine preference=" + (forceLegacy ? "PIE forced" : "JNI if bundled")
                 + "; preload boardSize=" + boardSize + "; backend=" + selectedBackend + "; winrate engine=PIE");
         bindViews();
+        // Artwork lives in docs and is copied into APK assets by Gradle.
+        try (InputStream in = getAssets().open("home/home_green.png")) {
+            ((ImageView) findViewById(R.id.homeArtwork)).setImageBitmap(BitmapFactory.decodeStream(in));
+        } catch (Exception ex) {
+            Log.e(TAG, "Home artwork could not be loaded", ex);
+            Toast.makeText(this, "首页图片未打包，请检查构建日志", Toast.LENGTH_LONG).show();
+        }
+        findViewById(R.id.homeGameTabButton).setOnClickListener(v -> showNewGameDialog());
+        findViewById(R.id.homeTabButton).setOnClickListener(v -> showMainPage());
+        View.OnClickListener upcoming = v -> Toast.makeText(this, "功能开发中", Toast.LENGTH_SHORT).show();
+        for (int id : new int[]{R.id.homeRecordButton, R.id.homeTrainingButton,
+                R.id.homeSettingsButton, R.id.homeRecordTabButton,
+                R.id.homeTrainingTabButton, R.id.homeSettingsTabButton}) {
+            findViewById(id).setOnClickListener(upcoming);
+        }
         boardView.setOnIntersectionClickListener(this::onBoardTap);
         aiWinRateText.setOnClickListener(v -> showWinRateChart());
         playerWinRateText.setOnClickListener(v -> showWinRateChart());
