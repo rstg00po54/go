@@ -19,7 +19,7 @@ import xml.etree.ElementTree as ET
 from upload_referee_test_results import UploadError, upload_referee_results
 
 PROJECT = Path(__file__).resolve().parents[1]
-PACKAGE = "com.badukai.java"
+PACKAGE = "com.badukai.java.nputest"
 MAIN_ACTIVITY_CLASS = "com.badukai.MainActivity"
 ACTIVITY = PACKAGE + "/" + MAIN_ACTIVITY_CLASS
 CASES = ("cgos9_expand_006_12", "cgos9_1", "cgos9_2", "cgos9_5")
