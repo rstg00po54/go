@@ -24,7 +24,8 @@ ALLOWED = {"result.json","dialog.txt","review_panel.txt","confirmation_dialog.tx
            "logcat.txt","activity.txt","gradle.log","crash.txt","analysis_dialog.png",
            "review_screen.png","resumed_screen.png","armed_logcat.txt","resume_logcat.txt","confirmation_dialog.png",
            "vendor_litert.txt","npu_diagnostics.txt","parity_summary.json",
-            "cpu_logcat.txt","gpu_logcat.txt","npu_logcat.txt","timings.csv"}
+            "cpu_logcat.txt","gpu_logcat.txt","npu_logcat.txt","timings.csv",
+             "neuron_compile_diagnostics.txt"}
 
 
 class UploadError(RuntimeError):
