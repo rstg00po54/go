@@ -11,7 +11,7 @@ on:
       - 'GoEngine-java/tools/check_human_mish_onnx_parity.py'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   rewrite-and-parity:
@@ -148,3 +148,59 @@ jobs:
             reports/aot_optimized.log
             reports/aot_comparison.json
           if-no-files-found: warn
+
+  release-optimized-jit-9:
+    needs: [rewrite-and-parity, compare-mt6993-aot]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: b18-exact-mish-9-lt-model-experimental
+          path: model/
+      - uses: actions/download-artifact@v4
+        with:
+          name: b18-exact-mish-9-rewrite-reports
+          path: reports/
+      - uses: actions/download-artifact@v4
+        with:
+          name: b18-exact-mish-9-mt6993-aot-comparison
+          path: aot/
+      - name: Publish ONLY numerically verified uncompiled JIT graph
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,hashlib,pathlib
+          rewrite=json.load(open('reports/rewrite.json'))
+          parity=json.load(open('reports/onnx_cpu_parity.json'))
+          tflite_parity=json.load(open('reports/onnx_tflite_parity.json'))
+          aot=json.load(open('aot/aot_comparison.json'))
+          manifest=json.load(open('model/human9_mish_equiv.json'))
+          graph=pathlib.Path('model/human9_mish_equiv.tflite')
+          assert rewrite['rewrittenChains']==120 and rewrite['gatedActivations']==118
+          assert rewrite['allOriginalInitializersBitIdentical']
+          assert parity['status']=='PASS' and len(parity['cases'])==4
+          assert tflite_parity['status']=='PASS'
+          assert aot['aotCompiled'] and aot['aotSelectedOps']==aot['aotTotalOps']
+          assert aot['aotPartitions']==1, 'Optimization did not deliver one partition'
+          assert manifest['weights']=='b18c384nbt-humanv0'
+          assert manifest['numInputMetaChannels']==192 and manifest['numPolicyChannels']==2
+          assert manifest['cpu_inference']=='PASS'
+          assert hashlib.sha256(graph.read_bytes()).hexdigest()==manifest['graphSha256']
+          print('HUMAN_MISH_JIT_RELEASE_VALIDATED bytes=',graph.stat().st_size)
+          PY
+          sha256sum model/human9_mish_equiv.tflite model/human9_mish_equiv.json \
+            > model/HUMAN_MISH_JIT_SHA256SUMS
+          cat model/HUMAN_MISH_JIT_SHA256SUMS
+          TAG="vivo-human-b18-mish-exact-jit-9x9-mt6993-v1"
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --prerelease \
+              --title "Experimental unchanged-weight b18 Human SL 9x9 exact Mish optimization" \
+              --notes "120 exact Mish/gated-activation algebra rewrites, 504 original weight tensors bit-identical, real ONNX five-head/metadata and TFLite CPU numerical parity PASS. MT6993 AOT reports 1738 of 1738 ops compiled to 1 partition versus 1038/1278 in 240 partitions on original. This release is *uncompiled JIT TFLite*, not the incompatible public AOT bytecode. Actual Vivo Neuron 9.0.11 JIT loading, Human SL parity and NPU hardware execution remain UNVERIFIED. Do NOT use as production release."
+          fi
+          gh release upload "$TAG" model/human9_mish_equiv.tflite \
+            model/human9_mish_equiv.json model/HUMAN_MISH_JIT_SHA256SUMS \
+            reports/rewrite.json reports/onnx_cpu_parity.json \
+            reports/onnx_tflite_parity.json aot/aot_comparison.json --clobber
