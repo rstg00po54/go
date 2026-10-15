@@ -1,0 +1,54 @@
+name: Map Human SL b18 MediaTek NPU and CPU partitions
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/rk3588-rknn]
+    paths:
+      - '.github/workflows/vivo_human_litert_partition_report.yml'
+      - 'GoEngine-java/tools/diagnose_human_litert_partitions.py'
+      - 'GoEngine-java/tools/test_human_litert_partitions.py'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-9:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install only FlatBuffer schema reader
+        run: |
+          python -m pip install 'tflite>=2.10'
+      - name: Offline partition diagnostics regression
+        run: |
+          python3 -m unittest discover -s GoEngine-java/tools -p test_human_litert_partitions.py -v
+      - name: Retrieve exact pre-compiled and original Human graphs
+        run: |
+          set -euo pipefail
+          mkdir -p models diagnostics
+          curl -fL --retry 3 -o models/human9_original.tflite \
+            https://github.com/rstg00po54/go/releases/download/vivo-human-litert-9-13-19-experimental-v0/katago_human_9x9.tflite
+          curl -fL --retry 3 -o models/human9_mt6993_aot.tflite \
+            https://github.com/rstg00po54/go/releases/download/vivo-human-9x9-mt6993-aot-neuron-test-v1/human_9x9_mediatek_mt6993_aot.tflite
+          echo '460463f71eb61fb8e5fd48df0309775de40cde520874edc402e07106e5f45d09  models/human9_original.tflite' | sha256sum -c
+          echo '4cbefc83200982184985115e4faf4da87ba32722083849cfd22e5e12dfc68f95  models/human9_mt6993_aot.tflite' | sha256sum -c
+      - name: Generate exact 13-kind op table and AOT residual CPU operation report
+        run: |
+          set -euo pipefail
+          python3 -u GoEngine-java/tools/diagnose_human_litert_partitions.py \
+            --original models/human9_original.tflite \
+            --aot models/human9_mt6993_aot.tflite \
+            --output diagnostics/human9_partition_map.json \
+            2>&1 | tee diagnostics/human9_partition_map.txt
+          test -s diagnostics/human9_partition_map.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: human-b18-9-op-partition-map
+          path: diagnostics/
+          if-no-files-found: warn
