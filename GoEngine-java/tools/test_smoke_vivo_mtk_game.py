@@ -7,7 +7,8 @@ from smoke_vivo_mtk_game import DEFAULT_SIZES, field, parse_game_log, vertex
 
 def example_log(sizes=DEFAULT_SIZES, human=True, include_final=True):
     run_id = "example1234"
-    lines = ["I/NpuSmoke: START id=" + run_id + " sizes=9,13,19,9 humanSL=" + str(human).lower()]
+    lines = ["I/NpuSmoke: START id=" + run_id + " sizes=9,13,19,9 humanSL=" + str(human).lower(),
+             "I/NpuSmoke: MTK_CPU_TO_NPU_PRECHECK_READY id=" + run_id + " backend=CPU/Eigen JNI"]
     for idx, size in enumerate(sizes):
         lines.extend([
             f"I/NpuSmoke: STEP_BEGIN id={run_id} index={idx} board={size}",
@@ -27,6 +28,11 @@ class MtkRealGameTests(unittest.TestCase):
         data = parse_game_log(example_log(), "example1234", DEFAULT_SIZES)
         self.assertEqual(data["status"], "PASS", data["errors"])
         self.assertEqual([s["status"] for s in data["steps"]], ["PASS"]*4)
+
+    def test_cpu_to_npu_switch_is_required(self):
+        raw = example_log()
+        self.assertEqual(parse_game_log(raw.replace("MTK_CPU_TO_NPU_PRECHECK_READY", "NO_CPU_PRECHECK"),
+                                        "example1234", DEFAULT_SIZES)["status"], "FAIL")
 
     def test_real_npu_and_human_required(self):
         raw = example_log()
