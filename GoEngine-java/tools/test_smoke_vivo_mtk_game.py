@@ -24,6 +24,27 @@ def example_log(sizes=DEFAULT_SIZES, human=True, include_final=True):
 
 
 class MtkRealGameTests(unittest.TestCase):
+    def test_mtk_gtp_reader_uses_real_newlines_not_literal_slashes(self):
+        # The UI smoke previously appeared hung because the MediaTek reader
+        # searched for the four literal characters backslash-n-backslash-n
+        # instead of the GTP blank-line terminator.
+        from pathlib import Path
+        engine = (Path(__file__).resolve().parents[1] /
+                  "app/src/main/java/com/badukai/engine/KataGoEngine.java").read_text()
+        reader = engine.split("private void startMediaTekReaderThread()", 1)[1].split(
+            "private void startNpuReaderThread()", 1)[0]
+        self.assertIn(r'buffer.append(chunk.replace("\r\n", "\n"));', reader)
+        self.assertIn(r'buffer.indexOf("\n\n")', reader)
+        self.assertNotIn(r'buffer.indexOf("\\n\\n")', reader)
+
+    def test_progress_markers_before_cpu_and_mtk_blocking_calls(self):
+        from pathlib import Path
+        source = (Path(__file__).resolve().parents[1] /
+                  "app/src/main/java/com/badukai/MainActivity.java").read_text()
+        for phase in ("human_model_prepare", "cpu_preload", "npu_start",
+                      "genmove_black", "genmove_white"):
+            self.assertIn("phase=" + phase, source)
+
     def test_each_board_and_return_to_nine_pass(self):
         data = parse_game_log(example_log(), "example1234", DEFAULT_SIZES)
         self.assertEqual(data["status"], "PASS", data["errors"])
