@@ -14,6 +14,9 @@
 #include "rknnbackend.h"
 #include <cstdlib>
 #endif
+#ifdef USE_MEDIATEK_BACKEND
+#include "mediatekbackend.h"
+#endif
 
 #include <Eigen/Dense>
 #include <unsupported/Eigen/CXX11/Tensor>
@@ -1745,6 +1748,9 @@ struct ComputeHandle {
 #ifdef USE_RKNN_BACKEND
   std::unique_ptr<KataGoRknnRunner> rknn;
 #endif
+#ifdef USE_MEDIATEK_BACKEND
+  std::unique_ptr<KataGoMediaTekRunner> mediatek;
+#endif
 
   ComputeHandle() = delete;
   ComputeHandle(const ComputeHandle&) = delete;
@@ -1791,6 +1797,22 @@ struct ComputeHandle {
       throw StringError("RKNN backend does not recognize 10b model: " + loadedModel.modelDesc.name);
     }
 #endif
+#ifdef USE_MEDIATEK_BACKEND
+    // 10b is served by the fixed-shape LiteRT graph; Human SL stays on Eigen.
+    if(loadedModel.modelDesc.name == "g170-b10c128-s1141046784-d204142634") {
+      if(context->nnXLen != context->nnYLen ||
+         (context->nnXLen != 9 && context->nnXLen != 13 && context->nnXLen != 19))
+        throw StringError("MediaTek LiteRT requires 9x9, 13x13 or 19x19");
+      if(model->numInputChannels != 22 || model->numInputGlobalChannels != 19 ||
+         model->numPolicyChannels != 1 || model->numValueChannels != 3 ||
+         model->numScoreValueChannels != 4 || model->numOwnershipChannels != 1)
+        throw StringError("MediaTek LiteRT g170 network tensor contract mismatch");
+      mediatek.reset(new KataGoMediaTekRunner(context->nnXLen));
+    }
+    else if(loadedModel.modelDesc.name.find("human") == std::string::npos) {
+      throw StringError("MediaTek LiteRT does not recognize 10b model: " + loadedModel.modelDesc.name);
+    }
+#endif
   }
 
   ~ComputeHandle() {
@@ -1823,6 +1845,9 @@ ComputeHandle* NeuralNet::createComputeHandle(
     std::string backend = "Eigen (CPU)";
 #ifdef USE_RKNN_BACKEND
     if(handle->rknn != nullptr) backend = "RKNN (RK3588 NPU)";
+#endif
+#ifdef USE_MEDIATEK_BACKEND
+    if(handle->mediatek != nullptr) backend = "MediaTek LiteRT";
 #endif
     logger->write(backend + " backend thread " + Global::intToString(serverThreadIdx) +
                   ": Model version " + Global::intToString(loadedModel->modelDesc.modelVersion));
@@ -1912,6 +1937,22 @@ void NeuralNet::getOutput(
     // sample offset. Keep KataGo's normal symmetries/postprocessing below.
     for(int row = 0; row < batchSize; row++) {
       computeHandle->rknn->infer(
+        inputBuffers->spatialInput.data() + (size_t)row * inputBuffers->singleInputElts,
+        inputBuffers->globalInput.data() + (size_t)row * inputBuffers->singleInputGlobalElts,
+        policyPass.data() + (size_t)row * computeHandle->model->numPolicyChannels,
+        policy.data() + (size_t)row * computeHandle->model->numPolicyChannels * nnXLen * nnYLen,
+        value.data() + (size_t)row * computeHandle->model->numValueChannels,
+        scoreValue.data() + (size_t)row * computeHandle->model->numScoreValueChannels,
+        ownership.data() + (size_t)row * computeHandle->model->numOwnershipChannels * nnXLen * nnYLen
+      );
+    }
+  }
+  else
+#endif
+#ifdef USE_MEDIATEK_BACKEND
+  if(computeHandle->mediatek) {
+    for(int row = 0; row < batchSize; row++) {
+      computeHandle->mediatek->infer(
         inputBuffers->spatialInput.data() + (size_t)row * inputBuffers->singleInputElts,
         inputBuffers->globalInput.data() + (size_t)row * inputBuffers->singleInputGlobalElts,
         policyPass.data() + (size_t)row * computeHandle->model->numPolicyChannels,
