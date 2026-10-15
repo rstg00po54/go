@@ -35,6 +35,7 @@ import com.badukai.engine.KataGoNative;
 import com.badukai.engine.KataGoGpuNative;
 import com.badukai.game.GoBoard;
 import com.badukai.game.NnAreaScore;
+import com.badukai.game.FastEndgameScorer;
 import com.badukai.game.Intersection;
 import com.badukai.game.Move;
 import com.badukai.game.Point;
@@ -1009,6 +1010,7 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
                 endgameEvaluation = result;
+                final int suspectedDeadStones = displayEndgameOwnership(result);
                 gameResultText = formatFastEndgameResult(result.whiteLead);
                 finalScoreText = String.format(Locale.CHINA, "快速 NN 预估\n%s",
                         Math.abs(result.whiteLead) < 0.05 ? "接近平局"
@@ -1019,8 +1021,9 @@ public class MainActivity extends AppCompatActivity {
                             gameCondition >= 2 ? gameCondition : 0);
                     nnAreaScoreBoard = snapshot;
                     nnAreaScoreMoves = moves;
-                    nnAreaScoreMessage = String.format(Locale.CHINA,"黑 %.1f · 白 %.1f",
-                            area.blackPoints,area.whitePoints);
+                    nnAreaScoreMessage = String.format(Locale.CHINA,"黑 %.1f · 白 %.1f%s",
+                            area.blackPoints,area.whitePoints,
+                            suspectedDeadStones == 0 ? "" : " · 疑似死子 " + suspectedDeadStones);
                 } catch (IllegalArgumentException ex) {
                     nnAreaScoreBoard = null;
                     nnAreaScoreMessage = null;
@@ -1088,6 +1091,9 @@ public class MainActivity extends AppCompatActivity {
                             + " stage=nn_dialog reason=nn_invalid");
                     return;
                 }
+                if (gameEnded && result.whiteOwnership != null
+                        && result.whiteOwnership.length == size * size)
+                    displayEndgameOwnership(result);
                 String leader = Math.abs(result.whiteLead) < 0.05 ? "双方持平"
                         : String.format(Locale.CHINA,"%s领先 %.1f目",
                                 result.whiteLead > 0 ? "白棋" : "黑棋",Math.abs(result.whiteLead));
@@ -1168,7 +1174,30 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /** Display NN-estimated empty territory only; do not infer dead or living stones. */
+    /**
+     * End-of-game NN ownership preview. Empty intersections show territory;
+     * occupied intersections are overlaid ONLY when the whole chain is strongly
+     * predicted to belong to the opponent. This is an AI suggestion, not
+     * a formal dead-stone adjudication or a change to game/scoring state.
+     */
+    private int displayEndgameOwnership(KataGoEngine.PositionEvaluation result) {
+        boardView.setOwnership(result.whiteOwnership);
+        if (!board.isGameOver()) return 0;
+        try {
+            FastEndgameScorer.Result dead = FastEndgameScorer.suggest(board, result.whiteOwnership);
+            boardView.setDeadStoneMarks(dead.deadStones);
+            Log.i(TAG, "ENDGAME_DEAD_STONE_MARKS suggested=" + dead.deadStones.size()
+                    + " groups=" + dead.deadGroups + " inspected=" + dead.scannedGroups
+                    + " verified=false");
+            return dead.deadStones.size();
+        } catch (IllegalArgumentException ex) {
+            boardView.setDeadStoneMarks(null);
+            Log.w(TAG, "Cannot display NN-inferred dead-chain markers", ex);
+            return 0;
+        }
+    }
+
+    /** Display NN-estimated territory. At the end also preview suspected dead chains. */
     private String territorySummary(KataGoEngine.PositionEvaluation result) {
         int blackTerritory = 0, whiteTerritory = 0, uncertainEmpty = 0;
         final int size = result.size;
@@ -1180,9 +1209,9 @@ public class MainActivity extends AppCompatActivity {
             else if (whiteOwn <= -GoBoardView.OWNERSHIP_MARK_THRESHOLD) blackTerritory++;
             else uncertainEmpty++;
         }
-        boardView.setOwnership(result.whiteOwnership);
-        Log.i(TAG,String.format(Locale.US,"NN empty territory B=%d W=%d uncertain=%d",
-                blackTerritory,whiteTerritory,uncertainEmpty));
+        int suspectedDead = displayEndgameOwnership(result);
+        Log.i(TAG,String.format(Locale.US,"NN empty territory B=%d W=%d uncertain=%d suspectedDead=%d",
+                blackTerritory,whiteTerritory,uncertainEmpty,suspectedDead));
         return String.format(Locale.CHINA,"黑估空%d目\n白估空%d目",blackTerritory,whiteTerritory);
     }
 
