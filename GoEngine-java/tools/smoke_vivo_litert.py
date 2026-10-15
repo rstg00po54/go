@@ -57,6 +57,12 @@ def summarize_npu_logs(lines, board):
                       r"\(DispatchDelegate\) node, yielding (\d+) partitions", line)
         if m: partitions.append({"delegated": int(m.group(1)), "total": int(m.group(2)),
                                  "partitions": int(m.group(3))})
+    scale_entries = []
+    for line in lines:
+        m = re.search(r"MTK_LITERT_INIT board=(\\d+).*?outputScaleMultiplier=([0-9.]+)"
+                      r"\\s+scaleSource=([a-z_]+)", line)
+        if m and int(m.group(1)) == board:
+            scale_entries.append({"factor": float(m.group(2)), "source": m.group(3)})
     fallback = [line.strip()[-300:] for line in lines if re.search(
         r"fallback|CPU instead|No compiler plugin|Failed to apply|Failed to delegate|"
         r"delegate failed|failed to invoke", line, re.IGNORECASE)]
@@ -79,6 +85,7 @@ def summarize_npu_logs(lines, board):
             "neuronApiVersion": neuron, "aidlVersion": aidl,
             "delegateStatus": delegate_status, "delegatePartitions": partitions,
             "inferenceTiming": timings, "fallbackIndicators": fallback[-12:],
+            "outputScaleRestoration": scale_entries,
             "hardwareExecution": "UNVERIFIED"}
 
 
