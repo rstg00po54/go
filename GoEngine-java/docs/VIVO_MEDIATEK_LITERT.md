@@ -91,6 +91,41 @@ The report now records `outputScaleRestoration` (factor and source) and
 original ONNX model. **Numerical parity after the repair is not yet
 confirmed on a vivo device** until the next real GTP test report is uploaded.
 
+## End-to-end vivo CPU/GPU/NPU performance comparison
+
+After building the experimental **playable** APK with
+`bash tools/build_vivo_mtk_gtp.sh`, install it and run:
+
+```bash
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+python3 tools/bench_vivo_backends.py --skip-install
+```
+
+The benchmark tests CPU/Eigen, GPU/OpenCL JNI and MediaTek LiteRT JNI
+in separate Android processes. By default: 9x9, `maxVisits=32`,
+`maxTime=12`, one excluded warm-up `genmove`, then five measured
+`genmove black` operations per backend from an identical empty-board
+position. It times model/session creation separately from **entire GTP
+move latency** (search, NN evaluation and Java/JNI overhead). Median,
+mean, min, max and nearest-rank p95 are recorded, as are individual
+moves, cold startup times, and MediaTek LiteRT inference logs when
+present. Logs and `timings.csv` are automatically uploaded under distinct
+`ui-test-results/runs/*mediatek_bench*` paths; previous reports are
+preserved. The script clears the phone's logcat before each backend,
+not archived GitHub results.
+
+Use `--backends gpu,npu` for only the requested accelerators;
+`--size 13` or `--size 19` for larger graphs; `--human-sl` to measure
+full Human SL-style game overhead (including its CPU work); and
+`--no-upload` for entirely local reports. A missing GPU/OpenCL runtime
+or automatic CPU fallback is recorded as a **failure** for GPU, never
+used as a valid GPU-vs-NPU speed comparison.
+
+These are approximate, device- and thermal-state-dependent measurements:
+complete GTP latency is not raw NN throughput, and successful LiteRT
+Neuron delegation is not independent proof that physical NPU silicon
+performed the operations.
+
 ## MediaTek NPU selectable in the playable Android game
 
 9x9, 13x13 and 19x19 real `genmove` tests and identical-feature CPU/Eigen
