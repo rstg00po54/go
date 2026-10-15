@@ -25,6 +25,7 @@ public class GoHomeTouchLayout extends FrameLayout {
     private void positionButtons() {
         if(getWidth()==0 || getHeight()==0)return;
         place(com.badukai.R.id.homeActionPanel,0f,.60f,1f,.40f);
+        place(com.badukai.R.id.homeHeaderPanel,0f,0f,1f,.117f);
         place(com.badukai.R.id.homeTitle,.05f,.025f,.64f,.048f);
         place(com.badukai.R.id.homeSubtitle,.055f,.077f,.70f,.03f);
         place(com.badukai.R.id.aiBattleButton,.075f,.645f,.85f,.088f);
