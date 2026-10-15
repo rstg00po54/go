@@ -29,7 +29,7 @@ cd /mnt/hgfs/D/code/go/GoEngine-java
 git fetch origin
 git switch feature/rk3588-rknn
 git pull --ff-only
-KATAGO_JOBS=2 bash tools/build_vivo_npu.sh
+bash tools/build_vivo_npu.sh
 ```
 
 The experimental APK uses Android application ID `com.badukai.java.nputest` and
@@ -50,6 +50,46 @@ That special CI build deliberately omits normal KataGo game binaries. Do not
 use `-PvivoProbeApk=true` to build the playable phone app. The full local build
 uses `-PbundleVivoLiteRtModels=true` and includes native game engines.
 
+## ONNX scale8 repair (2026-10-15)
+
+The real 9x9 GTP test passed, but the first CPU/Eigen vs LiteRT raw-head
+parity report showed a nearly exact **8x mismatch on all five heads**.
+Upstream KataGo `dumponnx` applies scale8 by default to keep intermediate
+convnet activations FP16-safe. That graph intentionally returns raw outputs
+divided by 8, and records the required undo factor under
+`katago.postProcess.outputScaleMultiplier`. The original
+`convert_katago_litert.py` and Android JNI runner had discarded this
+metadata, and thus forwarded 1/8-scale logits directly into KataGo.
+
+The repaired converter persists `outputScaleMultiplier` and
+`scale8Applied` in the signed JSON model manifest. The Android LiteRT
+runner restores the exact declared factor on all five **raw** output heads
+*before* returning them to KataGo. Existing models remain supported because
+only SHA256-pinned legacy 9/13/19 graphs may assume their old omitted factor
+is 8; all other missing-scale graphs fail closed. CPU/GPU/RKNN paths are
+unchanged.
+
+The published model graphs are bitwise unchanged; the updated v2
+manifests are in release `vivo-litert-10b-9-13-19-v2`, while the normal
+APK still uses pinned `v1` graph downloads. The v1 manifests were also
+updated by an earlier conversion run, so the downloader and APK verifier
+now accept **only** the original and scale-aware v1 JSON SHA256 values.
+JVM regression tests check both restoration and hash pinning.
+
+To verify the numeric fix on the actual vivo, rebuild and test once:
+
+```bash
+git pull --ff-only
+bash tools/build_vivo_mtk_gtp.sh
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+python3 tools/smoke_vivo_litert.py --gtp --size 9 --skip-install
+```
+
+The report now records `outputScaleRestoration` (factor and source) and
+`cpuLiteRtParity` separately from `GTP_PASS`. Expect factor 8 for this
+original ONNX model. **Numerical parity after the repair is not yet
+confirmed on a vivo device** until the next real GTP test report is uploaded.
+
 ## Experimental real KataGo `genmove` (opt-in, **not yet device validated**)
 
 The `MEDIATEK` KataGo C++ backend uses Eigen for Human SL and a JNI callback
@@ -62,7 +102,7 @@ To build the experimental APK (Android NDK/Eigen/CMake required):
 
 ```bash
 git pull --ff-only
-KATAGO_JOBS=2 bash tools/build_vivo_mtk_gtp.sh
+bash tools/build_vivo_mtk_gtp.sh
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
