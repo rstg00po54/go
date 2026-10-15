@@ -31,11 +31,11 @@ public class GoHomeTouchLayout extends FrameLayout {
         place(com.badukai.R.id.aiBattleButton,.067f,.622f,.866f,.112f);
         place(com.badukai.R.id.homeRecordButton,.052f,.751f,.422f,.101f);
         place(com.badukai.R.id.homeTrainingButton,.526f,.751f,.422f,.101f);
-        place(com.badukai.R.id.homeNavBarArtwork,.015f,.900f,.970f,.090f);
-        place(com.badukai.R.id.homeTabButton,.014f,.908f,.184f,.072f);
-        place(com.badukai.R.id.homeGameTabButton,.211f,.908f,.184f,.072f);
-        place(com.badukai.R.id.homeRecordTabButton,.408f,.908f,.184f,.072f);
-        place(com.badukai.R.id.homeTrainingTabButton,.605f,.908f,.184f,.072f);
-        place(com.badukai.R.id.homeSettingsTabButton,.802f,.908f,.184f,.072f);
+        place(com.badukai.R.id.homeNavBarArtwork,.040f,.865f,.920f,.110f);
+        place(com.badukai.R.id.homeTabButton,.055f,.878f,.160f,.082f);
+        place(com.badukai.R.id.homeGameTabButton,.236f,.878f,.160f,.082f);
+        place(com.badukai.R.id.homeRecordTabButton,.417f,.878f,.160f,.082f);
+        place(com.badukai.R.id.homeTrainingTabButton,.598f,.878f,.160f,.082f);
+        place(com.badukai.R.id.homeSettingsTabButton,.779f,.878f,.160f,.082f);
     }
 }
