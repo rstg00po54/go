@@ -23,6 +23,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.badukai.engine.KataGoEngine;
 import com.badukai.engine.KataGoMediaTekLiteRt;
+import com.badukai.engine.KataGoMediaTekGtpSmoke;
 import com.badukai.engine.NpuHardware;
 import com.badukai.engine.DeviceHardwareInfo;
 import com.badukai.engine.GpuTuneCache;
@@ -205,12 +206,33 @@ public class MainActivity extends AppCompatActivity {
             startDebugRefereeSmoke();
         } else if (isNpuSmokeIntent()) {
             startDebugNpuSwitchSmoke();
+        } else if (isMtkGtpSmokeIntent()) {
+            startDebugMtkGtpSmoke();
         } else if (isMtkSmokeIntent()) {
             startDebugMtkSmoke();
         } else if (!jniGtpSmoke && !jniGtpRepeat) {
             showGpuStartupScreen(boardSize, selectedBackend);
             startEngine();
         }
+    }
+
+    private boolean isMtkGtpSmokeIntent() {
+        return (getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+                && getIntent() != null && getIntent().getBooleanExtra("mtk_gtp_smoke", false);
+    }
+
+    private void startDebugMtkGtpSmoke() {
+        final String id = getIntent().getStringExtra("mtk_smoke_id");
+        if (id == null || !id.matches("[a-zA-Z0-9_-]{1,40}")) {
+            Log.e("KataGoMTK", "MTK_GTP_SMOKE_FAIL id=invalid reason=Invalid_run_id");
+            return;
+        }
+        final int size = getIntent().getIntExtra("mtk_board_size", 9);
+        render("MediaTek KataGo 真实 GTP 落子测试中...");
+        engineExecutor.execute(() -> {
+            KataGoMediaTekGtpSmoke.run(getApplicationContext(), id, size);
+            mainHandler.post(() -> render("MediaTek GTP 测试结束，请查看自动诊断报告"));
+        });
     }
 
     private boolean isMtkSmokeIntent() {
