@@ -46,7 +46,7 @@ public final class NpuHardware {
     public static String summary() {
         Vendor vendor = current();
         return vendor == Vendor.ROCKCHIP_RK3588 ? "RK3588 / RKNN"
-                : vendor == Vendor.MEDIATEK ? "MediaTek / LiteRT probe"
+                : vendor == Vendor.MEDIATEK ? "MediaTek / LiteRT GTP"
                 : "CPU/GPU (NPU unsupported)";
     }
 }
