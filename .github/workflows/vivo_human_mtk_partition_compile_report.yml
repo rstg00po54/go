@@ -1,0 +1,63 @@
+name: Report b18 Human MT6993 actual AOT operator selection
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/rk3588-rknn]
+    paths:
+      - '.github/workflows/vivo_human_mtk_partition_compile_report.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  report-9:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install same MediaTek AOT compiler as validated 9-line graph
+        run: |
+          python -m pip install 'ai-edge-litert==2.1.5' 'ai-edge-litert-sdk-mediatek==2.1.5' 'tflite>=2.10'
+      - name: Retrieve original pinned b18 graph, never rebuild or alter release
+        run: |
+          set -euo pipefail
+          mkdir -p models report
+          curl -fL --retry 3 -o models/human9.tflite \
+            https://github.com/rstg00po54/go/releases/download/vivo-human-litert-9-13-19-experimental-v0/katago_human_9x9.tflite
+          echo '460463f71eb61fb8e5fd48df0309775de40cde520874edc402e07106e5f45d09  models/human9.tflite' | sha256sum -c
+      - name: Print MediaTek compiler's actual supported-op and partition report
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -u - <<'PY' 2>&1 | tee report/human9_compiler_partition_report.log
+          import json, traceback
+          from ai_edge_litert.aot import aot_compile
+          from ai_edge_litert.aot.vendors.mediatek import target
+          print('HUMAN_PARTITION_COMPILE_START model=b18c384nbt-humanv0 target=MT6993',flush=True)
+          result=aot_compile.aot_compile('models/human9.tflite',
+                      target=[target.Target(target.SocModel.MT6993)],
+                      keep_going=False,output_dir='report/temp')
+          if result.failed_backends or len(result.models_with_backend)!=1:
+              raise ValueError('MediaTek compilation returned partial failure')
+          print('HUMAN_PARTITION_COMPILER_PASS',flush=True)
+          if not hasattr(result,'compilation_report'):
+              raise RuntimeError('Compiler did not expose op offloading report')
+          report=result.compilation_report()
+          print('HUMAN_PARTITION_COMPILER_REPORT_START',flush=True)
+          print(str(report),flush=True)
+          print('HUMAN_PARTITION_COMPILER_REPORT_END',flush=True)
+          with open('report/human9_compiler_report.txt','w') as f: f.write(str(report)+'\n')
+          print('HUMAN_PARTITION_REPORT_TYPE',type(report).__name__,flush=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: human-b18-9-actual-mt6993-compiler-partitions
+          path: |
+            report/human9_compiler_report.txt
+            report/human9_compiler_partition_report.log
+          if-no-files-found: warn
