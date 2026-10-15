@@ -71,15 +71,21 @@ def field(line, key):
     return match.group(1) if match else None
 
 
+def has_event(line, event, run_id):
+    """Only explicit benchmark event tokens, not NO_PASS or NOT_READY."""
+    return "KataGoBench" in line and bool(re.search(
+        r"\\b" + re.escape(event) + r" id=" + re.escape(run_id) + r"(?:\\s|$)", line))
+
+
 def parse_backend_log(raw, run_id, backend, board, warmups, repeats):
     """Reject CPU fallbacks and incomplete measurements; summarize only real moves."""
     lines = [line for line in raw.splitlines() if "KataGoBench" in line
              and field(line, "id") == run_id]
-    starts = [x for x in lines if "START id=" + run_id in x]
-    ready = [x for x in lines if "READY id=" + run_id in x]
-    moves = [x for x in lines if "MOVE id=" + run_id in x]
-    passes = [x for x in lines if "PASS id=" + run_id in x]
-    failures = [x for x in lines if "FAIL id=" + run_id in x]
+    starts = [x for x in lines if has_event(x, "START", run_id)]
+    ready = [x for x in lines if has_event(x, "READY", run_id)]
+    moves = [x for x in lines if has_event(x, "MOVE", run_id)]
+    passes = [x for x in lines if has_event(x, "PASS", run_id)]
+    failures = [x for x in lines if has_event(x, "FAIL", run_id)]
     errors = []
     if len(starts) != 1 or field(starts[0], "backend") != backend or field(starts[0], "board") != str(board):
         errors.append("Missing or mismatched benchmark START")
@@ -262,7 +268,7 @@ def main(argv=None):
                               (backend, latest_marker.split("KataGoBench", 1)[-1].strip()
                                if latest_marker else "Activity startup"), flush=True)
                         last_notice = time.monotonic()
-                    if any("PASS id=" + ident in line or "FAIL id=" + ident in line
+                    if any(has_event(line, "PASS", ident) or has_event(line, "FAIL", ident)
                            for line in events):
                         break
                     if "FATAL EXCEPTION" in log or "Fatal signal" in log:
