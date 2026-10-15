@@ -45,6 +45,25 @@ def validate_onnx(path, size):
     return model
 
 
+
+def output_scale_from_onnx(model):
+    """Preserve the documented KataGo ONNX outputScaleMultiplier contract."""
+    meta = {entry.key: entry.value for entry in model.metadata_props}
+    applied = meta.get("katago.build.scale8Applied")
+    value = meta.get("katago.postProcess.outputScaleMultiplier")
+    if applied not in ("true", "false"):
+        raise ValueError("KataGo dumponnx must declare katago.build.scale8Applied")
+    # Graph scale8 is a numerical transformation; raw outputs need the inverse.
+    expected = 8.0 if applied == "true" else 1.0
+    if value is None:
+        raise ValueError("Missing katago.postProcess.outputScaleMultiplier in ONNX graph")
+    scale = float(value)
+    if scale != expected:
+        raise ValueError("ONNX outputScaleMultiplier disagrees with scale8Applied: "
+                         f"{scale} vs {expected}")
+    return {"scale8Applied": applied == "true", "outputScaleMultiplier": scale}
+
+
 def classify_name(name, choices):
     matches = [item for item in choices if name == item or name.endswith("/" + item)
                or name.endswith(":" + item) or name.endswith("_" + item)]
@@ -126,6 +145,7 @@ def main():
         raise RuntimeError("Expected a single float32 TFLite model, found: %s" % candidates)
     shutil.copy2(candidates[0], args.output)
     signature = inspect_tflite(args.output, args.size)
+    signature.update(output_scale_from_onnx(source_model))
     args.signature.write_text(json.dumps(signature, indent=2) + "\n", encoding="utf-8")
     print("KATAGO_LITERT_READY size=%d path=%s bytes=%d" %
           (args.size, args.output, args.output.stat().st_size), flush=True)
