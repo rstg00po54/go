@@ -130,18 +130,6 @@
                     android:spinnerMode="dropdown" />
             </LinearLayout>
 
-            <Button
-                android:id="@+id/mediatekNpuSelfTestButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_marginEnd="12dp"
-                android:minHeight="40dp"
-                android:text="手机 NPU 自检（9/13/19路）"
-                android:textAllCaps="false"
-                android:textColor="#286B48"
-                android:visibility="gone" />
-
             <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#B9D9C2" />
 
             <LinearLayout
