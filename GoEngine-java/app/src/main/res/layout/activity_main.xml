@@ -12,90 +12,111 @@
             android:id="@+id/homeArtwork"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scaleType="fitXY"
-            android:contentDescription="竹林庭院与围棋桌的国风首页"
-            android:importantForAccessibility="no"/>
+            android:scaleType="centerCrop"
+            android:contentDescription="竹林书房中的围棋棋盘"
+            android:importantForAccessibility="no" />
+        <!-- Opaque green panel covers baked-in controls on the current illustration. -->
+        <View
+            android:id="@+id/homeActionPanel"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#193D2D" />
+        <TextView
+            android:id="@+id/homeTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="竹隐 · 围棋"
+            android:textColor="#FFF2CB"
+            android:textSize="25sp"
+            android:textStyle="bold"
+            android:shadowColor="#A0000000"
+            android:shadowRadius="3"
+            android:shadowDx="1"
+            android:shadowDy="2" />
+        <TextView
+            android:id="@+id/homeSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="离线 AI · 本地对弈"
+            android:textColor="#E8D19C"
+            android:textSize="13sp" />
         <Button
             android:id="@+id/aiBattleButton"
             android:layout_width="1dp"
             android:layout_height="1dp"
-            android:background="@android:color/transparent"
-            android:text=""
-            android:contentDescription="人机对弈"
-            android:stateListAnimator="@null"
-            android:padding="0dp"/>
+            android:background="@drawable/home_button_primary"
+            android:text="人机对弈"
+            android:textAllCaps="false"
+            android:textSize="23sp"
+            android:textColor="#FFF4D9"
+            android:textStyle="bold" />
         <Button
             android:id="@+id/homeRecordButton"
             android:layout_width="1dp"
             android:layout_height="1dp"
-            android:background="@android:color/transparent"
-            android:text=""
-            android:contentDescription="棋谱复盘（待实现）"
-            android:stateListAnimator="@null"
-            android:padding="0dp"/>
+            android:background="@drawable/home_button_secondary"
+            android:text="棋谱复盘"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:textColor="#294C35" />
         <Button
             android:id="@+id/homeTrainingButton"
             android:layout_width="1dp"
             android:layout_height="1dp"
-            android:background="@android:color/transparent"
-            android:text=""
-            android:contentDescription="死活训练（待实现）"
-            android:stateListAnimator="@null"
-            android:padding="0dp"/>
+            android:background="@drawable/home_button_secondary"
+            android:text="死活训练"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:textColor="#294C35" />
         <Button
             android:id="@+id/homeSettingsButton"
             android:layout_width="1dp"
             android:layout_height="1dp"
-            android:background="@android:color/transparent"
-            android:text=""
-            android:contentDescription="设置（待实现）"
-            android:stateListAnimator="@null"
-            android:padding="0dp"/>
+            android:background="@drawable/home_button_secondary"
+            android:text="⚙"
+            android:contentDescription="设置"
+            android:textSize="23sp"
+            android:textColor="#294C35" />
         <Button
             android:id="@+id/homeTabButton"
             android:layout_width="1dp"
             android:layout_height="1dp"
-            android:background="@android:color/transparent"
-            android:text=""
-            android:contentDescription="首页"
-            android:stateListAnimator="@null"
-            android:padding="0dp"/>
+            android:background="@drawable/home_button_tab"
+            android:text="首页"
+            android:textAllCaps="false"
+            android:textColor="#FCE5AA" />
         <Button
             android:id="@+id/homeGameTabButton"
             android:layout_width="1dp"
             android:layout_height="1dp"
-            android:background="@android:color/transparent"
-            android:text=""
-            android:contentDescription="对弈"
-            android:stateListAnimator="@null"
-            android:padding="0dp"/>
+            android:background="@drawable/home_button_tab"
+            android:text="对弈"
+            android:textAllCaps="false"
+            android:textColor="#FCE5AA" />
         <Button
             android:id="@+id/homeRecordTabButton"
             android:layout_width="1dp"
             android:layout_height="1dp"
-            android:background="@android:color/transparent"
-            android:text=""
-            android:contentDescription="棋谱（待实现）"
-            android:stateListAnimator="@null"
-            android:padding="0dp"/>
+            android:background="@drawable/home_button_tab"
+            android:text="棋谱"
+            android:textAllCaps="false"
+            android:textColor="#FCE5AA" />
         <Button
             android:id="@+id/homeTrainingTabButton"
             android:layout_width="1dp"
             android:layout_height="1dp"
-            android:background="@android:color/transparent"
-            android:text=""
-            android:contentDescription="训练（待实现）"
-            android:stateListAnimator="@null"
-            android:padding="0dp"/>
+            android:background="@drawable/home_button_tab"
+            android:text="训练"
+            android:textAllCaps="false"
+            android:textColor="#FCE5AA" />
         <Button
             android:id="@+id/homeSettingsTabButton"
             android:layout_width="1dp"
             android:layout_height="1dp"
-            android:background="@android:color/transparent"
-            android:text=""
-            android:contentDescription="设置（待实现）"
-            android:stateListAnimator="@null"
-            android:padding="0dp"/>
+            android:background="@drawable/home_button_tab"
+            android:text="设置"
+            android:textAllCaps="false"
+            android:textColor="#FCE5AA" />
     </com.badukai.ui.GoHomeTouchLayout>
 
     <LinearLayout
