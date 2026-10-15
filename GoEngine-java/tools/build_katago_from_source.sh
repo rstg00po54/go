@@ -12,8 +12,9 @@ PORTABLE_OPENCL=false
 if [[ "$BUILD_VARIANT" == "openclportable" || "$BUILD_VARIANT" == "opencljni" ]]; then BACKEND="opencl"; PORTABLE_OPENCL=true; fi
 if [[ "$BUILD_VARIANT" == "eigenjni" ]]; then BACKEND="eigen"; fi
 if [[ "$BUILD_VARIANT" == "rknnjni" ]]; then BACKEND="rknn"; fi
-if [[ $# -gt 1 || ("$BACKEND" != "eigen" && "$BACKEND" != "opencl" && "$BACKEND" != "rknn") ]]; then
-    echo "Usage: $0 [eigen|opencl|openclportable|eigenjni|opencljni|rknnjni]" >&2
+if [[ "$BUILD_VARIANT" == "mediatekjni" ]]; then BACKEND="mediatek"; fi
+if [[ $# -gt 1 || ("$BACKEND" != "eigen" && "$BACKEND" != "opencl" && "$BACKEND" != "rknn" && "$BACKEND" != "mediatek") ]]; then
+    echo "Usage: $0 [eigen|opencl|openclportable|eigenjni|opencljni|rknnjni|mediatekjni]" >&2
     exit 2
 fi
 if [[ ! -f "$SOURCE_DIR/cpp/CMakeLists.txt" ]]; then
@@ -79,10 +80,10 @@ ARGS=(
     -DBUILD_DISTRIBUTED=OFF -DNO_GIT_REVISION=ON -DUSE_AVX2=OFF -DUSE_TCMALLOC=OFF
     -DCMAKE_CXX_FLAGS="-DLITTLE_ENDIAN=1234 -DBIG_ENDIAN=4321 -DBYTE_ORDER=1234"
 )
-if [[ "$BUILD_VARIANT" == "eigenjni" || "$BUILD_VARIANT" == "opencljni" || "$BUILD_VARIANT" == "rknnjni" ]]; then
+if [[ "$BUILD_VARIANT" == "eigenjni" || "$BUILD_VARIANT" == "opencljni" || "$BUILD_VARIANT" == "rknnjni" || "$BUILD_VARIANT" == "mediatekjni" ]]; then
     ARGS+=(-DKATAGO_BUILD_JNI_LIBRARY=ON)
 fi
-if [[ "$BACKEND" == "eigen" || "$BACKEND" == "rknn" ]]; then
+if [[ "$BACKEND" == "eigen" || "$BACKEND" == "rknn" || "$BACKEND" == "mediatek" ]]; then
     EIGEN_CMAKE_DIR="$(find_eigen_cmake_dir)"
     echo "Eigen3 CMake dir: $EIGEN_CMAKE_DIR"
     ARGS+=(-DEigen3_DIR="$EIGEN_CMAKE_DIR")
@@ -207,6 +208,8 @@ fi
 cmake --build "$BUILD_DIR" --parallel "${KATAGO_JOBS:-8}"
 if [[ "$BUILD_VARIANT" == "rknnjni" ]]; then
     BIN="$BUILD_DIR/libkatago_npu.so"
+elif [[ "$BUILD_VARIANT" == "mediatekjni" ]]; then
+    BIN="$BUILD_DIR/libkatago_mtk.so"
 elif [[ "$BUILD_VARIANT" == "opencljni" ]]; then
     BIN="$BUILD_DIR/libkatago_gpu.so"
 elif [[ "$BUILD_VARIANT" == "eigenjni" ]]; then
@@ -228,10 +231,11 @@ if ! grep -Eq '^[[:space:]]*Machine:[[:space:]]*AArch64([[:space:]]|$)' <<< "$HE
     echo "Check NDK toolchain, target architecture, and PIE linker flags." >&2
     exit 1
 fi
-if [[ "$BUILD_VARIANT" == "eigenjni" || "$BUILD_VARIANT" == "opencljni" || "$BUILD_VARIANT" == "rknnjni" ]]; then
+if [[ "$BUILD_VARIANT" == "eigenjni" || "$BUILD_VARIANT" == "opencljni" || "$BUILD_VARIANT" == "rknnjni" || "$BUILD_VARIANT" == "mediatekjni" ]]; then
     EXPECTED_JNI_SONAME="libkatago.so"
     if [[ "$BUILD_VARIANT" == "opencljni" ]]; then EXPECTED_JNI_SONAME="libkatago_gpu.so"; fi
     if [[ "$BUILD_VARIANT" == "rknnjni" ]]; then EXPECTED_JNI_SONAME="libkatago_npu.so"; fi
+    if [[ "$BUILD_VARIANT" == "mediatekjni" ]]; then EXPECTED_JNI_SONAME="libkatago_mtk.so"; fi
     OUT="$OUTPUT_DIR/$EXPECTED_JNI_SONAME"
     if ! "$READELF" -W -d "$BIN" | grep -Fq "[$EXPECTED_JNI_SONAME]"; then
         echo "ERROR: JNI ELF does not have $EXPECTED_JNI_SONAME SONAME." >&2
@@ -240,6 +244,7 @@ if [[ "$BUILD_VARIANT" == "eigenjni" || "$BUILD_VARIANT" == "opencljni" || "$BUI
     JNI_CLASS="KataGoNative"
     if [[ "$BUILD_VARIANT" == "opencljni" ]]; then JNI_CLASS="KataGoGpuNative"; fi
     if [[ "$BUILD_VARIANT" == "rknnjni" ]]; then JNI_CLASS="KataGoNpuNative"; fi
+    if [[ "$BUILD_VARIANT" == "mediatekjni" ]]; then JNI_CLASS="KataGoMediaTekNative"; fi
     if ! "$READELF" -W --dyn-syms "$BIN" | grep -F "Java_com_badukai_engine_${JNI_CLASS}_nativeBuildStatus" >/dev/null; then
         echo "ERROR: $JNI_CLASS nativeBuildStatus symbol not exported." >&2
         exit 1
@@ -251,6 +256,14 @@ if [[ "$BUILD_VARIANT" == "eigenjni" || "$BUILD_VARIANT" == "opencljni" || "$BUI
         for symbol in nativeCreateSession nativeSendCommand nativeReadOutput nativeIsSessionAlive nativeStopSearch nativeDestroySession; do
             if ! "$READELF" -W --dyn-syms "$BIN" | grep -F "Java_com_badukai_engine_KataGoNpuNative_$symbol" >/dev/null; then
                 echo "ERROR: NPU JNI symbol missing: $symbol" >&2; exit 1
+            fi
+        done
+    fi
+    if [[ "$BUILD_VARIANT" == "mediatekjni" ]]; then
+        for symbol in nativeCreateSession nativeSendCommand nativeReadOutput nativeIsSessionAlive nativeStopSearch nativeDestroySession; do
+            if ! "$READELF" -W --dyn-syms "$BIN" | grep -F "Java_com_badukai_engine_KataGoMediaTekNative_$symbol" >/dev/null; then
+                echo "ERROR: MediaTek JNI symbol missing: $symbol" >&2
+                exit 1
             fi
         done
     fi
