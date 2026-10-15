@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+from statistics import mean, median
 import subprocess
 import sys
 import time
@@ -39,6 +40,46 @@ def detect(args):
     if len(devices) != 1:
         raise RuntimeError("Use --serial; connected devices=" + repr(devices))
     return devices[0]
+
+
+
+def summarize_npu_logs(lines, board):
+    """Extract per-run delegate evidence, without claiming confirmed NPU silicon execution."""
+    plugin_loaded = any("Loaded plugin at:" in line and "MediaTek" in line for line in lines)
+    dispatch_ready = any("DispatchDelegate::Initialize" in line for line in lines)
+    aidl = next((m.group(1) for line in lines
+                 if (m := re.search(r"AidlNeuronClient get aidl version=(\d+)", line))), None)
+    neuron = next((m.group(1) for line in lines
+                   if (m := re.search(r"Neuron api version:\s*([0-9.]+)", line))), None)
+    partitions = []
+    for line in lines:
+        m = re.search(r"Replacing (\d+) out of (\d+) node\(s\) with delegate "
+                      r"\(DispatchDelegate\) node, yielding (\d+) partitions", line)
+        if m: partitions.append({"delegated": int(m.group(1)), "total": int(m.group(2)),
+                                 "partitions": int(m.group(3))})
+    fallback = [line.strip()[-300:] for line in lines if re.search(
+        r"fallback|CPU instead|No compiler plugin|Failed to apply|Failed to delegate|"
+        r"delegate failed|failed to invoke", line, re.IGNORECASE)]
+    # Registering the XNNPACK CPU accelerator is normal, not evidence of fallback.
+    if partitions and all(p["total"] > 0 and p["delegated"] == p["total"] for p in partitions) and not fallback:
+        delegate_status = "FULL_GRAPH_DELEGATED"
+    elif partitions:
+        delegate_status = "PARTIAL_OR_FALLBACK"
+    else:
+        delegate_status = "NOT_OBSERVED"
+    durations = []
+    for line in lines:
+        m = re.search(r"MTK_LITERT_INFER board=(\d+) ms=([0-9]+(?:\.[0-9]+)?)", line)
+        if m and int(m.group(1)) == board: durations.append(float(m.group(2)))
+    timings = {"count": len(durations), "samplesMs": durations}
+    if durations:
+        timings.update(minMs=min(durations), medianMs=median(durations),
+                       meanMs=round(mean(durations), 3), maxMs=max(durations))
+    return {"compilerPluginLoaded": plugin_loaded, "dispatchInitialized": dispatch_ready,
+            "neuronApiVersion": neuron, "aidlVersion": aidl,
+            "delegateStatus": delegate_status, "delegatePartitions": partitions,
+            "inferenceTiming": timings, "fallbackIndicators": fallback[-12:],
+            "hardwareExecution": "UNVERIFIED"}
 
 
 def run(argv=None):
@@ -105,13 +146,25 @@ def run(argv=None):
                 r"KataGoMTK|LiteRT|litert|MediaTek|neuron|Neuron|Dispatch|compiler.plugin|"
                 r"accelerator|FATAL.EXCEPTION|Fatal.signal|SIGABRT|SIGSEGV", line, re.IGNORECASE)]
             (folder / "logcat.txt").write_text("\n".join(relevant) + "\n", encoding="utf-8")
-            # This is observational evidence, not a certificate of real NPU use.
+            # Publish compact per-run delegate proof and neural inference timings.
             vendor = [line for line in relevant if re.search(
                 r"Neuron|dispatch|compiler.plugin|delegate|accelerat", line, re.IGNORECASE)]
             (folder / "vendor_litert.txt").write_text("\n".join(vendor) + "\n", encoding="utf-8")
+            diagnostic = [line for line in relevant if re.search(
+                r"MTK_LITERT_|MTK_SMOKE_|Loaded plugin at:|Neuron api version|Neuron SDK version|"
+                r"Replacing [0-9]+ out of [0-9]+|DispatchDelegate::Initialize|AidlNeuronClient|"
+                r"HidlNeuronClient|Failed to load symbol|fallback|failed to delegate|"
+                r"FATAL EXCEPTION|Fatal signal", line, re.IGNORECASE)]
+            (folder / "npu_diagnostics.txt").write_text("\n".join(diagnostic) + "\n", encoding="utf-8")
             report["vendorLogLineCount"] = len(vendor)
-            report["fallbackWarnings"] = [line.strip()[-220:] for line in vendor
-                if re.search(r"fallback|CPU.instead|No.compiler.plugin|Failed.to.apply", line, re.IGNORECASE)][-12:]
+            report["npuDiagnostics"] = summarize_npu_logs(relevant, args.size)
+            report["fallbackWarnings"] = report["npuDiagnostics"]["fallbackIndicators"]
+            info = report["npuDiagnostics"]
+            print("Delegate:", info["delegateStatus"], "Neuron SDK:", info["neuronApiVersion"],
+                  "AIDL:", info["aidlVersion"], flush=True)
+            samples = info["inferenceTiming"]
+            print("Inference times (ms):", samples["samplesMs"],
+                  "average:", samples.get("meanMs", "unknown"), flush=True)
             crash = adb(args, serial, "logcat", "-b", "crash", "-d", "-v", "brief")
             if crash.strip(): (folder / "crash.txt").write_text(crash, encoding="utf-8")
         except Exception as err:
