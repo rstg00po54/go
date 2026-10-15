@@ -1,0 +1,53 @@
+{
+  "test": "Vivo KataGo real GTP MediaTek LiteRT",
+  "run_id": "5620d3ce6bd142ef",
+  "board": 9,
+  "serial": "10AFB21HP5002ZK",
+  "status": "FAIL",
+  "hardwareExecution": "UNVERIFIED",
+  "errors": [
+    "MediaTek GTP test failed"
+  ],
+  "soc": "MT6993",
+  "hardware": "mt6993",
+  "modelInferenceCount": 10,
+  "gtpNeuralInferenceCount": 10,
+  "searchMoves": {},
+  "vendorLogLineCount": 64,
+  "npuDiagnostics": {
+    "compilerPluginLoaded": true,
+    "dispatchInitialized": true,
+    "neuronApiVersion": "9.0.11",
+    "aidlVersion": "5",
+    "delegateStatus": "FULL_GRAPH_DELEGATED",
+    "delegatePartitions": [
+      {
+        "delegated": 1,
+        "total": 1,
+        "partitions": 1
+      }
+    ],
+    "inferenceTiming": {
+      "count": 10,
+      "samplesMs": [
+        5.0,
+        2.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "minMs": 1.0,
+      "medianMs": 1.0,
+      "meanMs": 1.5,
+      "maxMs": 5.0
+    },
+    "fallbackIndicators": [],
+    "hardwareExecution": "UNVERIFIED"
+  },
+  "fallbackWarnings": []
+}
