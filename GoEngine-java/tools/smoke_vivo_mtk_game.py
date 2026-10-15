@@ -56,7 +56,7 @@ def vertex(move, size):
                 and int(m.group(2)) <= size)
 
 
-def parse_game_log(raw, run_id, sizes, human=True):
+def parse_game_log(raw, run_id, sizes, human=True, require_human_npu=False):
     lines = raw.splitlines()
     prefix = "NpuSmoke"
     start = next((idx for idx, line in enumerate(lines)
@@ -76,7 +76,16 @@ def parse_game_log(raw, run_id, sizes, human=True):
         requested = sizes[index] if index < len(sizes) else None
         part = lines[begin: indexes[index+1] if index+1 < len(indexes) else len(lines)]
         begin_line = part[0]
-        prepared = [line for line in part if "MTK_LITERT_INIT board=" in line]
+        prepared = [line for line in part if "MTK_LITERT_INIT board=" in line
+                    and field(line, "model") != "human"]
+        human_init = [line for line in part if "MTK_LITERT_INIT board=" in line
+                      and field(line, "model") == "human"]
+        human_ready = [line for line in part if "MTK_HUMAN_LITERT_READY board=" in line]
+        human_calls = [line for line in part if "MTK_GTP_INFER board=" in line
+                       and field(line, "board") == str(requested)
+                       and field(line, "model") == "human"]
+        human_parity = [line for line in part if "MTK_PARITY_HEAD" in line
+                        and field(line, "model") == "human"]
         ready = [line for line in part if "MTK_GAME_BACKEND_READY board=" in line]
         neural = [line for line in part if "MTK_GTP_INFER board=" in line
                   and field(line, "board") == str(requested)]
@@ -98,6 +107,24 @@ def parse_game_log(raw, run_id, sizes, human=True):
         if len(terminal) != 1 or field(terminal[0], "active") != str(requested):
             part_errors.append("No matching STEP_PASS/active board")
         if fallback: part_errors.append("NPU fallback observed")
+        if require_human_npu:
+            if len(human_init) != 1 or len(human_ready) != 1:
+                part_errors.append("No separately compiled b18 Human LiteRT graph")
+            if not human_calls: part_errors.append("Human SL still executed on CPU/Eigen")
+            human_heads = {field(line, "head") for line in human_parity}
+            if human_heads != {"policyPass", "policy", "value", "score", "ownership"}:
+                part_errors.append("Missing actual Human CPU/LiteRT 5-head parity")
+            for line in human_parity:
+                try:
+                    diff = float(field(line, "maxAbs"))
+                    tolerance = 0.20 if field(line, "head") == "score" else 0.025
+                    if not (0 <= diff <= tolerance):
+                        part_errors.append("Human output parity failure " + str(field(line, "head"))
+                                           + " maxAbs=" + str(diff))
+                except (TypeError, ValueError):
+                    part_errors.append("Invalid Human CPU/LiteRT parity diagnostic")
+            if any("MTK_HUMAN_CPU_FALLBACK" in line for line in part):
+                part_errors.append("Human SL NPU graph fell back to CPU")
         if terminal:
             for color in ("black", "white"):
                 if not vertex(field(terminal[0], color), requested):
@@ -108,6 +135,8 @@ def parse_game_log(raw, run_id, sizes, human=True):
         item = {"index": index, "board": requested,
                 "status": "PASS" if not part_errors else "FAIL", "errors": part_errors,
                 "litertInferenceCount": len(neural),
+                "humanLiteRtInferenceCount": len(human_calls),
+                "humanParitySampleCount": len(human_parity),
                 "black": field(terminal[0], "black") if terminal else None,
                 "white": field(terminal[0], "white") if terminal else None}
         steps.append(item)
@@ -126,19 +155,32 @@ def main(argv=None):
     p.add_argument("--serial")
     p.add_argument("--skip-install", action="store_true")
     p.add_argument("--no-human-sl", action="store_true")
+    p.add_argument("--require-human-npu", action="store_true",
+                   help="Require real b18 Human NN LiteRT inference and 5-head Eigen parity (experimental)")
+    p.add_argument("--sizes", default="9,13,19,9",
+                   help="Ordered board sizes; e.g. --sizes 9 for first Human NPU validation")
     p.add_argument("--no-upload", action="store_true")
     p.add_argument("--timeout", type=int, default=480)
     p.add_argument("--stall-timeout", type=int, default=150,
                    help="Fail with captured logs if no new engine stage appears for this many seconds")
     args = p.parse_args(argv)
     if not args.adb: p.error("adb not installed")
+    try:
+        sizes = tuple(int(x) for x in args.sizes.split(","))
+        if not sizes or len(sizes) > 12 or any(x not in (9,13,19) for x in sizes):
+            raise ValueError("Invalid board sizes")
+    except ValueError as exc:
+        p.error("--sizes accepts a comma-separated sequence of 9,13,19 only: " + str(exc))
+    if args.require_human_npu and args.no_human_sl:
+        p.error("--require-human-npu requires Human SL enabled")
     if args.timeout < 10 or args.stall_timeout < 10:
         p.error("--timeout and --stall-timeout must both be at least 10 seconds")
     run_id = uuid4().hex[:16]
     folder = PROJECT / "build/vivo_mtk_game_smoke" / datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     folder.mkdir(parents=True, exist_ok=False)
     report = {"test": "vivo MediaTek KataGo real game backend with Human SL", "run_id": run_id,
-              "sizes": list(DEFAULT_SIZES), "humanSL": not args.no_human_sl,
+              "sizes": list(sizes), "humanSL": not args.no_human_sl,
+              "requireHumanNpu": args.require_human_npu,
               "hardwareExecution": "UNVERIFIED", "status": "FAIL", "errors": [], "steps": []}
     code, serial = 1, None
     try:
@@ -155,7 +197,8 @@ def main(argv=None):
         print(run_cmd([args.adb, "-s", serial, "shell", "am", "start", "-n", ACTIVITY,
                        "--ez", "npu_switch_smoke", "true",
                        "--es", "npu_smoke_id", run_id,
-                       "--es", "npu_smoke_sizes", ",".join(map(str, DEFAULT_SIZES)),
+                       "--es", "npu_smoke_sizes", ",".join(map(str, sizes)),
+                       "--ez", "npu_smoke_parity", "true" if args.require_human_npu else "false",
                        "--ez", "npu_smoke_human", "false" if args.no_human_sl else "true"]).strip())
         started_at = last_progress_at = last_heartbeat = time.monotonic()
         end = started_at + args.timeout
@@ -203,7 +246,7 @@ def main(argv=None):
         log = run_cmd([args.adb, "-s", serial, "logcat", "-d", "-v", "time", "-s", *tags],
                       timeout=30, check=False)
         (folder / "logcat.txt").write_text(log, encoding="utf-8")
-        result = parse_game_log(log, run_id, DEFAULT_SIZES, not args.no_human_sl)
+        result = parse_game_log(log, run_id, sizes, not args.no_human_sl, args.require_human_npu)
         result["errors"] = report["errors"] + result["errors"]
         if result["errors"]: result["status"] = "FAIL"
         report.update(result)
@@ -216,7 +259,7 @@ def main(argv=None):
                                             encoding="utf-8")
         print("MediaTek Human SL game status:", report["status"],
               "steps:", len([s for s in report["steps"] if s["status"] == "PASS"]),
-              "/", len(DEFAULT_SIZES), flush=True)
+              "/", len(sizes), flush=True)
         print("Report:", folder / "report.json", flush=True)
         if not args.no_upload:
             try:
