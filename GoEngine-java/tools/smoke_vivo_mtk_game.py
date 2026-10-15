@@ -155,6 +155,8 @@ def main(argv=None):
     p.add_argument("--serial")
     p.add_argument("--skip-install", action="store_true")
     p.add_argument("--no-human-sl", action="store_true")
+    p.add_argument("--diagnose-compiler", action="store_true",
+                   help="Capture filtered MediaTek Neuron compiler diagnostics; no root needed")
     p.add_argument("--require-human-npu", action="store_true",
                    help="Require real b18 Human NN LiteRT inference and 5-head Eigen parity (experimental)")
     p.add_argument("--sizes", default="9,13,19,9",
@@ -183,6 +185,7 @@ def main(argv=None):
               "requireHumanNpu": args.require_human_npu,
               "hardwareExecution": "UNVERIFIED", "status": "FAIL", "errors": [], "steps": []}
     code, serial = 1, None
+    previous_neuron_props = {}
     try:
         serial = connected(args.adb, args.serial)
         report["serial"] = serial
@@ -193,6 +196,16 @@ def main(argv=None):
             if not APK.is_file(): raise RuntimeError("Build experimental APK first")
             print(run_cmd([args.adb, "-s", serial, "install", "-r", str(APK)], timeout=150).strip())
         run_cmd([args.adb, "-s", serial, "shell", "am", "force-stop", PACKAGE])
+        if args.diagnose_compiler:
+            for name in ("debug.neuron.runtime.ShowTargetReport",
+                         "debug.neuron.runtime.ShowExecPlan"):
+                try:
+                    old = run_cmd([args.adb, "-s", serial, "shell", "getprop", name]).strip()
+                    previous_neuron_props[name] = old
+                    run_cmd([args.adb, "-s", serial, "shell", "setprop", name, "true"])
+                except (RuntimeError, OSError, subprocess.TimeoutExpired) as ex:
+                    print("Neuron debug property unavailable (normal on retail phones):",
+                          name, str(ex)[:200], flush=True)
         run_cmd([args.adb, "-s", serial, "logcat", "-b", "all", "-c"])
         print(run_cmd([args.adb, "-s", serial, "shell", "am", "start", "-n", ACTIVITY,
                        "--ez", "npu_switch_smoke", "true",
@@ -246,6 +259,21 @@ def main(argv=None):
         log = run_cmd([args.adb, "-s", serial, "logcat", "-d", "-v", "time", "-s", *tags],
                       timeout=30, check=False)
         (folder / "logcat.txt").write_text(log, encoding="utf-8")
+        if args.diagnose_compiler:
+            # Only compiler-related system messages, never a raw all-app log.
+            # Vendor services log outside our app PID/tag: previous captures
+            # omitted the Neuron target report and hid the unsupported op.
+            raw = run_cmd([args.adb, "-s", serial, "logcat", "-d", "-b", "all", "-v", "time"],
+                          timeout=40, check=False)
+            pattern = re.compile(r"(?i)(neuron|neuropilot|apusys|mediatek.*compil|"
+                                 r"litert.*compil|compiler_plugin|target report|"
+                                 r"executionplan|unsupported op|failed to compile model|"
+                                 r"subgraph legalization|model compilation)")
+            records = [line[:1200] for line in raw.splitlines() if pattern.search(line)]
+            (folder / "neuron_compile_diagnostics.txt").write_text(
+                "\n".join(records[-2500:]) + "\n", encoding="utf-8")
+            print("Neuron compiler messages collected:", len(records),
+                  "file:", folder / "neuron_compile_diagnostics.txt", flush=True)
         result = parse_game_log(log, run_id, sizes, not args.no_human_sl, args.require_human_npu)
         result["errors"] = report["errors"] + result["errors"]
         if result["errors"]: result["status"] = "FAIL"
@@ -255,6 +283,15 @@ def main(argv=None):
         report["errors"].append(str(exc))
         print("FAIL:", exc, file=sys.stderr)
     finally:
+        if serial and previous_neuron_props:
+            for name, old in previous_neuron_props.items():
+                try:
+                    # If property had no previous override, reset to false
+                    # rather than keeping debug logging enabled after test.
+                    run_cmd([args.adb, "-s", serial, "shell", "setprop", name,
+                             old if old else "false"], check=False)
+                except (OSError, RuntimeError, subprocess.TimeoutExpired):
+                    pass
         (folder / "report.json").write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n",
                                             encoding="utf-8")
         print("MediaTek Human SL game status:", report["status"],
