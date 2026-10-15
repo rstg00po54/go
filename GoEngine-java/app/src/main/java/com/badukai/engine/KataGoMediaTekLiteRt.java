@@ -196,6 +196,7 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
         outputs = out;
         Log.i(TAG, "MTK_LITERT_INIT board=" + board + " model=" + (human ? "human" : "10b")
                 + " npuRequested=true graph=" + file.getName()
+                + " aotTarget=" + metadata.optString("aotCompileTarget", "none")
                 + " outputScaleMultiplier=" + outputScaleMultiplier
                 + " scaleSource=" + (declaredScale == null ? "pinned_legacy_graph" : "onnx_manifest"));
     }
