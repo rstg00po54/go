@@ -9,7 +9,7 @@ on:
       - 'GoEngine-java/tools/convert_katago_human_litert.py'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   export-human:
@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        size: [9]
+        size: [9, 13, 19]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -63,6 +63,7 @@ jobs:
             2>&1 | tee models/human_convert_${{ matrix.size }}.log
           test -s models/katago_human_${{ matrix.size }}x${{ matrix.size }}.json
           sha256sum models/katago_human_* > models/HUMAN_SHA256SUMS
+          cat models/HUMAN_SHA256SUMS
       - name: Upload only experimental CPU-validated artifacts, not production model assets
         if: always()
         uses: actions/upload-artifact@v4
@@ -74,3 +75,30 @@ jobs:
             models/human_convert_*.log
             models/HUMAN_SHA256SUMS
           if-no-files-found: warn
+
+  publish-experimental-human:
+    needs: [export-human]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: vivo-human-litert-*-experimental
+          path: human-verified
+          merge-multiple: true
+      - name: Release CPU-validated Human graphs as experimental only
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          TAG="vivo-human-litert-9-13-19-experimental-v0"
+          for size in 9 13 19; do
+            test -s "human-verified/katago_human_${size}x${size}.tflite"
+            test -s "human-verified/katago_human_${size}x${size}.json"
+          done
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --prerelease \
+              --title "Experimental KataGo b18 Human SL 9/13/19 LiteRT" \
+              --notes "Official b18c384nbt-humanv0 exported with 192 SGF metadata inputs and independently converted per size. LiteRT CPU inference smoke passed; MediaTek device NPU delegation, numerical parity and human rank quality are NOT yet validated. Explicit opt-in only."
+          fi
+          gh release upload "$TAG" human-verified/katago_human_*.tflite human-verified/katago_human_*.json --clobber
