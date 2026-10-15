@@ -1,0 +1,44 @@
+10-15 09:59:50.727 I/KataGoMTK(20678): MTK_SMOKE_BEGIN id=895000f6cfb942d8 board=19
+10-15 09:59:50.790 I/litert  (20678): [compiler_plugin.cc:260] Loaded plugin at: /data/app/~~IAZwLuu_a4quwyvdxfT9-g==/com.badukai.java.nputest-4RwLgW6DxwOCNCRg5RNASw==/lib/arm64/libLiteRtCompilerPlugin_MediaTek.so
+10-15 09:59:50.907 W/litert  (20678): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 09:59:50.907 I/litert  (20678): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 09:59:50.914 W/litert  (20678): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 09:59:50.914 I/litert  (20678): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 09:59:50.969 E/apuware_hidl(20678): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 09:59:50.974 E/apuware_hidl(20678): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 09:59:50.979 E/apuware_hidl(20678): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 09:59:50.979 E/apuware_hidl(20678): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 09:59:50.981 I/apuware_hidl(20678): AidlNeuronClient get aidl version=5
+10-15 09:59:51.107 W/litert  (20678): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 09:59:51.107 I/litert  (20678): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 09:59:51.107 I/litert  (20678): [compiler_plugin.cc:632] Recording Neuron SDK version in bytecode: 9.0.11
+10-15 09:59:51.160 E/apuware_hidl(20678): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 09:59:51.165 E/apuware_hidl(20678): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 09:59:51.171 E/apuware_hidl(20678): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 09:59:51.171 E/apuware_hidl(20678): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 09:59:51.171 I/apuware_hidl(20678): AidlNeuronClient get aidl version=5
+10-15 09:59:51.247 E/apuware_hidl(20678): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 09:59:51.252 E/apuware_hidl(20678): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 09:59:51.257 E/apuware_hidl(20678): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 09:59:51.257 E/apuware_hidl(20678): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 09:59:51.258 I/apuware_hidl(20678): AidlNeuronClient get aidl version=5
+10-15 09:59:51.700 W/litert  (20678): [neuron_adapter_api.cc:186] Failed to load symbol NeuronExecution_setConfig: (null)
+10-15 09:59:51.700 I/litert  (20678): [neuron_adapter_api.cc:283] Neuron api version: 9.0.11
+10-15 09:59:51.700 I/litert  (20678): [dispatch_api.cc:133] Neuron SDK version: 9.0.11
+10-15 09:59:51.700 I/litert  (20678): [dispatch_api.cc:368] Runtime compatibility check: Neuron SDK version 9.0.11
+10-15 09:59:51.700 I/litert  (20678): [dispatch_delegate.cc:128] DispatchDelegate::Initialize katago_10b_19x19_batch1
+10-15 09:59:51.700 I/tflite  (20678): Replacing 1 out of 1 node(s) with delegate (DispatchDelegate) node, yielding 1 partitions for subgraph 0 (katago_10b_19x19_batch1).
+10-15 09:59:51.700 I/litert  (20678): [litert_dispatch_invocation_context.cc:266] Neuron SDK version check passed: bytecode 9.0.11, runtime 9.0.11
+10-15 09:59:51.707 E/apuware_hidl(20678): HidlNeuronClient can't get INeuronApusys2 service tried(1) times
+10-15 09:59:51.713 E/apuware_hidl(20678): HidlNeuronClient can't get INeuronApusys2 service tried(2) times
+10-15 09:59:51.718 E/apuware_hidl(20678): HidlNeuronClient can't get INeuronApusys2 service tried(3) times
+10-15 09:59:51.718 E/apuware_hidl(20678): HidlNeuronClient can't get INeuronApusys2 service, return
+10-15 09:59:51.718 I/apuware_hidl(20678): AidlNeuronClient get aidl version=5
+10-15 09:59:51.726 I/KataGoMTK(20678): MTK_LITERT_INIT board=19 npuRequested=true graph=katago_10b_19x19.tflite
+10-15 09:59:51.731 I/KataGoMTK(20678): MTK_LITERT_INFER board=19 ms=4 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 09:59:51.731 I/KataGoMTK(20678): MTK_LITERT_SMOKE board=19 heads=5 policyPass=-0.80859375 hardwareExecution=UNVERIFIED
+10-15 09:59:51.734 I/KataGoMTK(20678): MTK_LITERT_INFER board=19 ms=2 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 09:59:51.734 I/KataGoMTK(20678): MTK_LITERT_SMOKE board=19 heads=5 policyPass=-0.80859375 hardwareExecution=UNVERIFIED
+10-15 09:59:51.736 I/KataGoMTK(20678): MTK_LITERT_INFER board=19 ms=1 npuRequested=true hardwareExecution=UNVERIFIED
+10-15 09:59:51.736 I/KataGoMTK(20678): MTK_LITERT_SMOKE board=19 heads=5 policyPass=-0.80859375 hardwareExecution=UNVERIFIED
+10-15 09:59:51.742 I/KataGoMTK(20678): MTK_SMOKE_PASS id=895000f6cfb942d8 board=19 tfliteInference=true hardwareExecution=UNVERIFIED

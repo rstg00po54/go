@@ -1,0 +1,42 @@
+{
+  "test": "Vivo MediaTek KataGo 10b LiteRT graph",
+  "run_id": "895000f6cfb942d8",
+  "board": 19,
+  "serial": "10AFB21HP5002ZK",
+  "status": "PROBE_PASS",
+  "hardwareExecution": "UNVERIFIED",
+  "errors": [],
+  "soc": "MT6993",
+  "hardware": "mt6993",
+  "modelInferenceCount": 3,
+  "vendorLogLineCount": 117,
+  "fallbackWarnings": [],
+  "npuDiagnostics": {
+    "compilerPluginLoaded": true,
+    "dispatchInitialized": true,
+    "neuronApiVersion": "9.0.11",
+    "aidlVersion": "5",
+    "delegateStatus": "FULL_GRAPH_DELEGATED",
+    "delegatePartitions": [
+      {
+        "delegated": 1,
+        "total": 1,
+        "partitions": 1
+      }
+    ],
+    "inferenceTiming": {
+      "count": 3,
+      "samplesMs": [
+        4.0,
+        2.0,
+        1.0
+      ],
+      "minMs": 1.0,
+      "medianMs": 2.0,
+      "meanMs": 2.333,
+      "maxMs": 4.0
+    },
+    "fallbackIndicators": [],
+    "hardwareExecution": "UNVERIFIED"
+  }
+}
