@@ -28,6 +28,13 @@ class VivoNpuDiagnosticsTests(unittest.TestCase):
         result = summarize_npu_logs(SUCCESS, 9)
         self.assertEqual(result["delegateStatus"], "FULL_GRAPH_DELEGATED")
         self.assertEqual(result["neuronApiVersion"], "9.0.11")
+        scale_lines = SUCCESS + [
+            "I/KataGoMTK: MTK_LITERT_INIT board=9 npuRequested=true "
+            "graph=katago_10b_9x9.tflite outputScaleMultiplier=8.0 "
+            "scaleSource=pinned_legacy_graph"
+        ]
+        self.assertEqual(summarize_npu_logs(scale_lines, 9)["outputScaleRestoration"],
+                         [{"factor": 8.0, "source": "pinned_legacy_graph"}])
         self.assertEqual(result["aidlVersion"], "5")
         self.assertEqual(result["inferenceTiming"]["samplesMs"], [12.0, 9.0, 15.0])
         self.assertEqual(result["inferenceTiming"]["meanMs"], 12.0)
