@@ -96,6 +96,33 @@ jobs:
           assert all(v > 0 for i in range(sg.InputsLength()) for v in shape(sg.Tensors(sg.Inputs(i))))
           assert all(v > 0 for i in range(sg.OutputsLength()) for v in shape(sg.Tensors(sg.Outputs(i))))
           print('HUMAN_AOT_IO_CONTRACT_PASS',input_sizes,output_sizes,flush=True)
+          in_sizes={22*81:'InputSpatial',19:'InputGlobal',192:'InputMeta',81:'InputMask'}
+          out_sizes={2:'OutputPolicyPass',162:'OutputPolicy',3:'OutputValue',
+                     6:'OutputScoreValue',81:'OutputOwnership'}
+          manifest['inputOrder']=[]
+          manifest['outputOrder']=[]
+          for i in range(sg.InputsLength()):
+              tidx=sg.Inputs(i)
+              tensor=sg.Tensors(tidx)
+              dims=shape(tensor)
+              key=in_sizes[math.prod(dims)]
+              if key=='InputSpatial':
+                  assert dims in ([1,22,9,9],[1,9,9,22]), 'Unsupported AOT spatial layout'
+              manifest['inputOrder'].append(key)
+              manifest['inputs'][key]={'name':tensor.Name().decode('utf8','replace'),
+                                      'shape':dims,'count':math.prod(dims),'index':int(tidx)}
+          for i in range(sg.OutputsLength()):
+              tidx=sg.Outputs(i)
+              tensor=sg.Tensors(tidx)
+              dims=shape(tensor)
+              key=out_sizes[math.prod(dims)]
+              if key=='OutputPolicy':
+                  assert dims in ([1,2,9,9],[1,9,9,2]), 'Unsupported AOT policy layout'
+              manifest['outputOrder'].append(key)
+              manifest['outputs'][key]={'name':tensor.Name().decode('utf8','replace'),
+                                       'shape':dims,'count':math.prod(dims),'index':int(tidx)}
+          print('HUMAN_AOT_IO_BUFFER_ORDER',manifest['inputOrder'],
+                manifest['outputOrder'],flush=True)
           hash=hashlib.sha256(output.read_bytes()).hexdigest()
           manifest['sourceGraphSha256']=manifest['graphSha256']
           manifest['graphSha256']=hash
