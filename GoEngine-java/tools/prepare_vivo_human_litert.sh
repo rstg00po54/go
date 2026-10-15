@@ -6,6 +6,16 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TAG="vivo-human-litert-9-13-19-experimental-v0"
 URL="https://github.com/rstg00po54/go/releases/download/$TAG"
 DEST="$ROOT/app/src/main/assets/engine"
+# Release artifact digests independently recorded in the successful conversion
+# workflow; never silently accept a different model/manifest pair.
+declare -A VERIFIED_SHA=(
+  [katago_human_9x9.json]=b4854654a3f28147cc82f591c6313ae6062386878d8f15b9675c18b8154607ee
+  [katago_human_9x9.tflite]=460463f71eb61fb8e5fd48df0309775de40cde520874edc402e07106e5f45d09
+  [katago_human_13x13.json]=3d879e51a52e6338cd55e7c234e4e18e164d03520e3d6fd38341f0923204c4a7
+  [katago_human_13x13.tflite]=16acb00c0c5894471a90949ee17c5fb58c4950dccd4087a643f46182a27f239c
+  [katago_human_19x19.json]=c42798cf54d5d7bf7c49fea0c98b8ca12f5f5ff6fb817c923d80cf76270350a8
+  [katago_human_19x19.tflite]=d2f239d8206f0f65b632a767af1cad50606a6d637479d60a3dfc9bb391b54cf5
+)
 mkdir -p "$DEST"
 case "${1:---size}" in
   --all) SIZES=(9 13 19) ;;
@@ -21,6 +31,10 @@ for size in "${SIZES[@]}"; do
   echo "Downloading experimental b18 Human SL board=$size (~100 MiB graph)"
   curl --fail --location --retry 3 --connect-timeout 15 -o "$graphTmp" "$URL/${stem}.tflite"
   curl --fail --location --retry 3 --connect-timeout 15 -o "$manifestTmp" "$URL/${stem}.json"
+  printf '%s  %s\n' "${VERIFIED_SHA[${stem}.tflite]}" "$graphTmp" | sha256sum -c --status || {
+    echo "ERROR: Human TFLite graph differs from CPU-validated release hash" >&2; exit 1; }
+  printf '%s  %s\n' "${VERIFIED_SHA[${stem}.json]}" "$manifestTmp" | sha256sum -c --status || {
+    echo "ERROR: Human model JSON differs from CPU-validated release hash" >&2; exit 1; }
   python3 - "$graphTmp" "$manifestTmp" "$size" <<'PY'
 import hashlib, json, pathlib, sys
 graph, manifest, size = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2]), int(sys.argv[3])
