@@ -2,7 +2,7 @@
 """Test actual KataGoEngine UI backend orchestration on MediaTek Android.
 
 Runs the debug-only NpuSmoke intent, loading Human SL and size-specific
-MediaTek LiteRT for 9,13,19,9. Asserts every step used MediaTek and returned
+MediaTek LiteRT for 9,11,13,15,19,9. Asserts every step used MediaTek and returned
 two legal moves. Uploads separate reports to ui-test-results unless disabled.
 This does not erase previous results (but clears Android logcat before a run).
 """
@@ -23,7 +23,7 @@ PROJECT = Path(__file__).resolve().parents[1]
 APK = PROJECT / "app/build/outputs/apk/debug/app-debug.apk"
 PACKAGE = "com.badukai.java.nputest"
 ACTIVITY = PACKAGE + "/com.badukai.MainActivity"
-DEFAULT_SIZES = (9, 13, 19, 9)
+DEFAULT_SIZES = (9, 11, 13, 15, 19, 9)
 
 
 def run_cmd(argv, timeout=30, check=True):
