@@ -23,15 +23,18 @@ public class GoHomeTouchLayout extends FrameLayout {
         v.setLayoutParams(p);
     }
     private void positionButtons() {
-        if(getWidth()==0 || getHeight()==0)return;
-        place(com.badukai.R.id.aiBattleButton,.055f,.612f,.89f,.105f);
-        place(com.badukai.R.id.homeRecordButton,.052f,.737f,.39f,.091f);
-        place(com.badukai.R.id.homeTrainingButton,.47f,.737f,.46f,.091f);
-        place(com.badukai.R.id.homeSettingsButton,.855f,.02f,.115f,.057f);
-        place(com.badukai.R.id.homeTabButton,.015f,.905f,.182f,.066f);
-        place(com.badukai.R.id.homeGameTabButton,.212f,.905f,.182f,.066f);
-        place(com.badukai.R.id.homeRecordTabButton,.409f,.905f,.182f,.066f);
-        place(com.badukai.R.id.homeTrainingTabButton,.606f,.905f,.182f,.066f);
-        place(com.badukai.R.id.homeSettingsTabButton,.803f,.905f,.182f,.066f);
+        if (getWidth() == 0 || getHeight() == 0) return;
+        // The background is a full-screen scene, while controls are independently rendered.
+        place(com.badukai.R.id.homeTitle,.055f,.023f,.78f,.055f);
+        place(com.badukai.R.id.homeSubtitle,.06f,.082f,.65f,.032f);
+        place(com.badukai.R.id.homeSettingsButton,.865f,.018f,.115f,.066f);
+        place(com.badukai.R.id.aiBattleButton,.067f,.622f,.866f,.112f);
+        place(com.badukai.R.id.homeRecordButton,.052f,.751f,.422f,.101f);
+        place(com.badukai.R.id.homeTrainingButton,.526f,.751f,.422f,.101f);
+        place(com.badukai.R.id.homeTabButton,.014f,.908f,.184f,.072f);
+        place(com.badukai.R.id.homeGameTabButton,.211f,.908f,.184f,.072f);
+        place(com.badukai.R.id.homeRecordTabButton,.408f,.908f,.184f,.072f);
+        place(com.badukai.R.id.homeTrainingTabButton,.605f,.908f,.184f,.072f);
+        place(com.badukai.R.id.homeSettingsTabButton,.802f,.908f,.184f,.072f);
     }
 }
