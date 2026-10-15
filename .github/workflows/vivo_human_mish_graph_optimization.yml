@@ -1,0 +1,150 @@
+name: Test exact-Mish b18 Human graph optimization against MT6993
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/rk3588-rknn]
+    paths:
+      - '.github/workflows/vivo_human_mish_graph_optimization.yml'
+      - 'GoEngine-java/tools/optimize_human_mish_onnx.py'
+      - 'GoEngine-java/tools/test_optimize_human_mish_onnx.py'
+      - 'GoEngine-java/tools/check_human_mish_onnx_parity.py'
+
+permissions:
+  contents: read
+
+jobs:
+  rewrite-and-parity:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install official ONNX and CPU parity, independent LiteRT conversion
+        run: |
+          python -m pip install -U pip
+          python -m pip install 'onnx2tf[tensorflow]==2.6.9' 'onnxruntime>=1.20,<2'
+      - name: Unit test equivalent Mish implementation and fail-closed graph selection
+        run: |
+          python3 GoEngine-java/tools/test_optimize_human_mish_onnx.py -v
+      - name: Export untouched official Human b18 model as ONNX 9x9
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p models kata-dist reports
+          curl -fL --retry 3 -o models/b18c384nbt-humanv0.bin.gz \
+            'https://github.com/lightvector/KataGo/releases/download/v1.15.0/b18c384nbt-humanv0.bin.gz'
+          gzip -t models/b18c384nbt-humanv0.bin.gz
+          gzip -dc models/b18c384nbt-humanv0.bin.gz > models/b18c384nbt-humanv0.bin
+          test "$(wc -c < models/b18c384nbt-humanv0.bin)" -eq 107185997
+          curl -fL --retry 3 -o kata-dist.zip \
+            'https://github.com/lightvector/KataGo/releases/download/v1.18.1/katago-v1.18.1-onnx-openvino-linux-x64.zip'
+          unzip -q kata-dist.zip -d kata-dist
+          KATAGO_BIN="$(find "$PWD/kata-dist" -type f -name katago -print -quit)"
+          test -n "$KATAGO_BIN"
+          chmod +x "$KATAGO_BIN"
+          echo "KATAGO_BIN=$KATAGO_BIN" >> "$GITHUB_ENV"
+          LIBPATH="$(find "$PWD/kata-dist" -type f -name '*.so*' -printf '%h\n' | sort -u | paste -sd: -)"
+          echo "LD_LIBRARY_PATH=$LIBPATH" >> "$GITHUB_ENV"
+          "$KATAGO_BIN" dumponnx -model models/b18c384nbt-humanv0.bin \
+            -out models/human9_orig.onnx -nn-x-len 9 -nn-y-len 9
+      - name: Rewrite ONLY all 120 provably equivalent Human Mish chains
+        run: |
+          set -euo pipefail
+          python3 -u GoEngine-java/tools/optimize_human_mish_onnx.py \
+            --input models/human9_orig.onnx --output models/human9_mish_equiv.onnx \
+            --expected 120 --report reports/rewrite.json 2>&1 | tee reports/rewrite.log
+      - name: Compare original and rewritten weights, rank metadata and ALL five NN outputs
+        run: |
+          set -euo pipefail
+          python3 -u GoEngine-java/tools/check_human_mish_onnx_parity.py \
+            --original models/human9_orig.onnx \
+            --rewritten models/human9_mish_equiv.onnx --size 9 \
+            --report reports/onnx_cpu_parity.json 2>&1 | tee reports/onnx_cpu_parity.log
+      - name: Lower rewritten b18 graph to separate experimental LiteRT (do NOT install)
+        run: |
+          set -euo pipefail
+          python3 -u GoEngine-java/tools/convert_katago_human_litert.py \
+            --size 9 --onnx models/human9_mish_equiv.onnx \
+            --converter-backend flatbuffer_direct \
+            --output models/human9_mish_equiv.tflite \
+            --signature models/human9_mish_equiv.json \
+            2>&1 | tee reports/convert_mish.log
+          python3 -u GoEngine-java/tools/check_human_litert_onnx_parity.py \
+            --onnx models/human9_mish_equiv.onnx \
+            --tflite models/human9_mish_equiv.tflite \
+            --signature models/human9_mish_equiv.json --size 9 \
+            --report reports/onnx_tflite_parity.json \
+            2>&1 | tee reports/onnx_tflite_parity.log
+          sha256sum models/human9_mish_equiv.tflite models/human9_mish_equiv.json \
+            > reports/MISH_SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: b18-exact-mish-9-rewrite-reports
+          path: reports/
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        with:
+          name: b18-exact-mish-9-lt-model-experimental
+          path: |
+            models/human9_mish_equiv.tflite
+            models/human9_mish_equiv.json
+          if-no-files-found: error
+
+  compare-mt6993-aot:
+    needs: rewrite-and-parity
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install actual MT6993 LiteRT AOT compiler
+        run: |
+          python -m pip install 'ai-edge-litert==2.1.5' 'ai-edge-litert-sdk-mediatek==2.1.5' 'tflite>=2.10'
+      - uses: actions/download-artifact@v4
+        with:
+          name: b18-exact-mish-9-lt-model-experimental
+          path: models/
+      - name: Compare real compiler selected ops and partition counts, not binary size
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p reports
+          python3 -u - <<'PY' 2>&1 | tee reports/aot_optimized.log
+          import json, re
+          from pathlib import Path
+          from ai_edge_litert.aot import aot_compile
+          from ai_edge_litert.aot.vendors.mediatek import target
+          result=aot_compile.aot_compile(
+              'models/human9_mish_equiv.tflite',
+              target=[target.Target(target.SocModel.MT6993)],
+              output_dir='reports/aot_out', keep_going=False)
+          if result.failed_backends or len(result.models_with_backend)!=1:
+              raise RuntimeError('Optimized b18 did not compile with MT6993')
+          actual=str(result.compilation_report())
+          print('HUMAN_MISH_MT6993_AOT',actual,flush=True)
+          match=re.search(r'(\d+)\s*/\s*(\d+)\s+ops offloaded to\s+(\d+)\s+partitions',actual)
+          if not match: raise RuntimeError('No trustworthy compiler offload report')
+          off,total,partitions=map(int,match.groups())
+          report={"model":"b18c384nbt-humanv0","rewrite":"exact_mish_sigmoid_rational",
+                  "deviceRuntimeTested":False,"aotCompiled":True,
+                  "aotSelectedOps":off,"aotTotalOps":total,
+                  "aotPartitions":partitions,"originalAotSelectedOps":1038,
+                  "originalAotTotalOps":1278,"originalAotPartitions":240,
+                  "partitionReduction":240-partitions}
+          Path('reports/aot_comparison.json').write_text(json.dumps(report,indent=2)+'\n')
+          print('HUMAN_MISH_AOT_COMPARISON',json.dumps(report,sort_keys=True),flush=True)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: b18-exact-mish-9-mt6993-aot-comparison
+          path: |
+            reports/aot_optimized.log
+            reports/aot_comparison.json
+          if-no-files-found: warn
