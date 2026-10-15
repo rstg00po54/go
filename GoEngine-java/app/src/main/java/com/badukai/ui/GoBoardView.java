@@ -17,6 +17,10 @@ import com.badukai.game.Point;
 import com.badukai.game.StoneColor;
 import com.badukai.util.DebugLog;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 
 public class GoBoardView extends View {
     private static final String TAG = "GoBoardView";
@@ -41,6 +45,8 @@ public class GoBoardView extends View {
     private GoBoard board = new GoBoard(19);
     private Point lastMove;
     private float[] ownershipWhite;
+    // AI-inferred dead chains; draw over stones ONLY for terminal score previews.
+    private Set<Point> deadStoneMarks = Collections.emptySet();
     private int ownershipMode = OWNERSHIP_OFF;
     private Point[] recommendedPoints;
     private float[] recommendedProbabilities;
@@ -76,10 +82,18 @@ public class GoBoardView extends View {
         if (values == null || board == null || values.length != board.getSize() * board.getSize()) {
             ownershipWhite = null;
             ownershipMode = OWNERSHIP_OFF;
+            deadStoneMarks = Collections.emptySet();
         } else {
             ownershipWhite = values.clone();
             ownershipMode = OWNERSHIP_SQUARES;
         }
+        invalidate();
+    }
+
+    /** AI-suggested terminal dead chains. They are not official life/death rulings. */
+    public void setDeadStoneMarks(Set<Point> points) {
+        deadStoneMarks = (points == null || ownershipWhite == null)
+                ? Collections.emptySet() : new HashSet<>(points);
         invalidate();
     }
 
@@ -172,6 +186,7 @@ public class GoBoardView extends View {
         if (previewBoard == null) drawOwnership(canvas, n);
         drawStones(canvas, n, shown, previewBoard == null ? lastMove : null);
         if (previewBoard == null) {
+            drawDeadStoneMarks(canvas, n);
             drawRecommendations(canvas);
         } else drawPreviewMoveNumbers(canvas);
     }
@@ -334,6 +349,41 @@ public class GoBoardView extends View {
                 }
             }
         }
+    }
+
+    /** Draw owner-colored marks ABOVE occupied stones, otherwise they are hidden. */
+    private void drawDeadStoneMarks(Canvas canvas, int n) {
+        if (ownershipMode == OWNERSHIP_OFF || ownershipWhite == null ||
+                ownershipWhite.length != n * n || deadStoneMarks.isEmpty()) return;
+        for (Point point : deadStoneMarks) {
+            if (point == null || point.x < 0 || point.y < 0 || point.x >= n || point.y >= n)
+                continue;
+            Intersection stone = board.get(point.x, point.y);
+            if (stone == Intersection.EMPTY) continue;
+            float estimate = ownershipWhite[point.y * n + point.x];
+            if (!Float.isFinite(estimate) || Math.abs(estimate) < OWNERSHIP_MARK_THRESHOLD)
+                continue;
+            // Dead black stones belong to white territory and vice versa.
+            if ((stone == Intersection.BLACK && estimate <= 0f)
+                    || (stone == Intersection.WHITE && estimate >= 0f)) continue;
+            float cx = padding + point.x * cellSize;
+            float cy = padding + point.y * cellSize;
+            // A larger, high-contrast square stays readable on glossy stones.
+            float radius = cellSize * 0.15f;
+            paint.setShader(null);
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(stone == Intersection.BLACK ? Color.rgb(250, 250, 242)
+                    : Color.rgb(24, 30, 29));
+            canvas.drawRoundRect(cx - radius, cy - radius, cx + radius, cy + radius,
+                    dp(1.5f), dp(1.5f), paint);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(Math.max(dp(0.8f), cellSize * 0.025f));
+            paint.setColor(stone == Intersection.BLACK ? Color.rgb(28, 35, 31)
+                    : Color.rgb(245, 245, 239));
+            canvas.drawRoundRect(cx - radius, cy - radius, cx + radius, cy + radius,
+                    dp(1.5f), dp(1.5f), paint);
+        }
+        paint.setStyle(Paint.Style.FILL);
     }
 
     private void drawRecommendations(Canvas canvas) {
