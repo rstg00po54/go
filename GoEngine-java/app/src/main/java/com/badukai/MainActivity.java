@@ -205,6 +205,7 @@ public class MainActivity extends AppCompatActivity {
         setHomeButtonArt(R.id.homeTrainingButton, "home/training.png");
         setHomeButtonArt(R.id.homeSettingsButton, "home/settings.png");
         setHomeImageArt(R.id.homeNavBarArtwork, "home/navbar/bar.png");
+        ((com.badukai.ui.GoHomeTouchLayout) mainPageContainer).refreshPositions();
         findViewById(R.id.homeGameTabButton).setOnClickListener(v -> showNewGameDialog());
         findViewById(R.id.homeTabButton).setOnClickListener(v -> showMainPage());
         View.OnClickListener upcoming = v -> Toast.makeText(this, "功能开发中", Toast.LENGTH_SHORT).show();
