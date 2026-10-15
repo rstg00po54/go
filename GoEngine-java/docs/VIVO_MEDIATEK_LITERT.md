@@ -104,8 +104,11 @@ python3 tools/bench_vivo_backends.py --skip-install
 The benchmark tests CPU/Eigen, GPU/OpenCL JNI and MediaTek LiteRT JNI
 in separate Android processes. By default: 9x9, `maxVisits=32`,
 `maxTime=12`, one excluded warm-up `genmove`, then five measured
-`genmove black` operations per backend from an identical empty-board
-position. It times model/session creation separately from **entire GTP
+`genmove black` operations per backend on **different, reproducible opening
+positions**. All three backends receive the same sequence of replayed positions.
+This avoids a previous cache-hit benchmark that sometimes showed 0 ms moves;
+the host rejects NPU trials with no real LiteRT evaluator call. It times
+position replay separately from model/session creation and **entire GTP
 move latency** (search, NN evaluation and Java/JNI overhead). Median,
 mean, min, max and nearest-rank p95 are recorded, as are individual
 moves, cold startup times, and MediaTek LiteRT inference logs when
