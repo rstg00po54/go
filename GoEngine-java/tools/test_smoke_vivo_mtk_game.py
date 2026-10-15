@@ -24,6 +24,18 @@ def example_log(sizes=DEFAULT_SIZES, human=True, include_final=True):
 
 
 class MtkRealGameTests(unittest.TestCase):
+    def test_mtk_wait_does_not_inject_asynchronous_stop_gtp_responses(self):
+        from pathlib import Path
+        engine = (Path(__file__).resolve().parents[1] /
+                  "app/src/main/java/com/badukai/engine/KataGoEngine.java").read_text()
+        wait = engine.split("private String waitForResponse(", 1)[1].split(
+            "private String parseGtpMultilineResponse(", 1)[0]
+        self.assertNotIn("mtk.stopSearch()", wait)
+        self.assertIn("responseQueue.poll(", wait)
+        native = (Path(__file__).resolve().parents[1] /
+                  "app/src/main/cpp/EngineSession.cpp").read_text()
+        self.assertIn('session->send("stop")', native)
+
     def test_mtk_gtp_reader_uses_real_newlines_not_literal_slashes(self):
         # The UI smoke previously appeared hung because the MediaTek reader
         # searched for the four literal characters backslash-n-backslash-n
