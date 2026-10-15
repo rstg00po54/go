@@ -24,13 +24,9 @@ public class GoHomeTouchLayout extends FrameLayout {
     }
     private void positionButtons() {
         if(getWidth()==0 || getHeight()==0)return;
-        place(com.badukai.R.id.homeActionPanel,0f,.60f,1f,.40f);
-        place(com.badukai.R.id.homeHeaderPanel,0f,0f,1f,.117f);
-        place(com.badukai.R.id.homeTitle,.05f,.025f,.64f,.048f);
-        place(com.badukai.R.id.homeSubtitle,.055f,.077f,.70f,.03f);
-        place(com.badukai.R.id.aiBattleButton,.075f,.645f,.85f,.088f);
-        place(com.badukai.R.id.homeRecordButton,.06f,.757f,.42f,.080f);
-        place(com.badukai.R.id.homeTrainingButton,.52f,.757f,.42f,.080f);
+        place(com.badukai.R.id.aiBattleButton,.055f,.612f,.89f,.105f);
+        place(com.badukai.R.id.homeRecordButton,.052f,.737f,.39f,.091f);
+        place(com.badukai.R.id.homeTrainingButton,.47f,.737f,.46f,.091f);
         place(com.badukai.R.id.homeSettingsButton,.855f,.02f,.115f,.057f);
         place(com.badukai.R.id.homeTabButton,.015f,.905f,.182f,.066f);
         place(com.badukai.R.id.homeGameTabButton,.212f,.905f,.182f,.066f);
