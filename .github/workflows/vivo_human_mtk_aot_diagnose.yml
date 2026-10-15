@@ -49,15 +49,54 @@ jobs:
                   output_dir='diagnostics/aot_output',
                   keep_going=False)
               print('HUMAN_AOT_COMPILE_PASS result=', str(result)[:400],flush=True)
+              if result.failed_backends or len(result.models_with_backend) != 1:
+                  raise RuntimeError('AOT result is partial, cannot package')
+              import os
+              model = result.models_with_backend[0][1]
+              output = 'diagnostics/human_9x9_mediatek_mt6993_aot.tflite'
+              print('HUMAN_AOT_MODEL_API', [x for x in dir(model) if 'save' in x or 'export' in x],flush=True)
+              model.save(output, export_only=True)
+              print('HUMAN_AOT_SAVED', output, os.path.getsize(output),flush=True)
           except Exception as exc:
               print('HUMAN_AOT_COMPILE_FAIL:',repr(exc),flush=True)
               traceback.print_exc()
               raise
           PY
+      - name: Verify AOT bytecode file and preserve original Human metadata identity
+        run: |
+          set -euo pipefail
+          test -s diagnostics/human_9x9_mediatek_mt6993_aot.tflite
+          curl -fL --retry 3 -o diagnostics/human_original.json \
+            https://github.com/rstg00po54/go/releases/download/vivo-human-litert-9-13-19-experimental-v0/katago_human_9x9.json
+          echo 'b4854654a3f28147cc82f591c6313ae6062386878d8f15b9675c18b8154607ee  diagnostics/human_original.json' | sha256sum -c
+          python - <<'PY'
+          import json,hashlib
+          from pathlib import Path
+          manifest=json.loads(Path('diagnostics/human_original.json').read_text())
+          assert manifest['weights']=='b18c384nbt-humanv0' and manifest['size']==9
+          assert manifest['numInputMetaChannels']==192 and manifest['numPolicyChannels']==2
+          output=Path('diagnostics/human_9x9_mediatek_mt6993_aot.tflite')
+          hash=hashlib.sha256(output.read_bytes()).hexdigest()
+          manifest['sourceGraphSha256']=manifest['graphSha256']
+          manifest['graphSha256']=hash
+          manifest['aotCompileTarget']='MT6993'
+          manifest['aotCompileStatus']='PASS'
+          manifest['cpuInferenceValidationScope']='source_tflite_only'
+          Path('diagnostics/human_9x9_mediatek_mt6993_aot.json').write_text(
+              json.dumps(manifest,indent=2)+'\n')
+          print('HUMAN_AOT_GRAPH_HASH',hash, 'size',output.stat().st_size)
+          PY
+          sha256sum diagnostics/human_9x9_mediatek_mt6993_aot.tflite \
+            diagnostics/human_9x9_mediatek_mt6993_aot.json \
+            > diagnostics/HUMAN_AOT_SHA256SUMS
+          cat diagnostics/HUMAN_AOT_SHA256SUMS
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: human-b18-mediatek-aot-compile-diagnostics
           path: |
             diagnostics/*.log
+            diagnostics/*mt6993_aot.tflite
+            diagnostics/*mt6993_aot.json
+            diagnostics/HUMAN_AOT_SHA256SUMS
           if-no-files-found: warn
