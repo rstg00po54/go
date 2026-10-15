@@ -5,6 +5,7 @@
 
 #include <android/log.h>
 #include <algorithm>
+#include <atomic>
 #include <array>
 #include <cmath>
 #include <mutex>
@@ -19,6 +20,7 @@ std::mutex runnerMutex;
 JavaVM* javaVm = nullptr;
 jobject javaRunner = nullptr;
 jmethodID inferenceMethod = nullptr;
+std::atomic<bool> verifyAgainstCpu{false};
 
 struct ThreadEnv {
   JNIEnv* env = nullptr;
@@ -58,7 +60,7 @@ jfloatArray makeFloatArray(JNIEnv* env, const float* floats, jsize len) {
 }
 }
 
-bool KataGoMediaTekBridge::install(JNIEnv* env, jobject runner) {
+bool KataGoMediaTekBridge::install(JNIEnv* env, jobject runner, bool compareCpu) {
   if (runner == nullptr) return false;
   std::lock_guard<std::mutex> lock(runnerMutex);
   if (javaRunner != nullptr) return false;  // No concurrent GTP sessions.
@@ -83,6 +85,7 @@ bool KataGoMediaTekBridge::install(JNIEnv* env, jobject runner) {
   javaVm = vm;
   javaRunner = ref;
   inferenceMethod = method;
+  verifyAgainstCpu.store(compareCpu);
   __android_log_print(ANDROID_LOG_INFO, "KataGoMTK", "MTK_GTP_BRIDGE_INSTALLED");
   return true;
 }
@@ -92,9 +95,12 @@ void KataGoMediaTekBridge::reset(JNIEnv* env) {
   if (javaRunner) env->DeleteGlobalRef(javaRunner);
   javaRunner = nullptr;
   inferenceMethod = nullptr;
+  verifyAgainstCpu.store(false);
   // Keep javaVm valid for an attached native thread that is finishing up.
   __android_log_print(ANDROID_LOG_INFO, "KataGoMTK", "MTK_GTP_BRIDGE_RELEASED");
 }
+
+bool KataGoMediaTekBridge::parityEnabled() { return verifyAgainstCpu.load(); }
 
 bool KataGoMediaTekBridge::ready() {
   std::lock_guard<std::mutex> lock(runnerMutex);
