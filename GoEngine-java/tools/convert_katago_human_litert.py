@@ -90,6 +90,27 @@ def inspect_tflite(path, size, contract):
     from ai_edge_litert.interpreter import Interpreter
     interpreter = Interpreter(model_path=str(path), num_threads=1)
     interpreter.allocate_tensors()
+    # The MediaTek Neuron compiler can reject shapes with zero dimensions,
+    # even if the LiteRT CPU interpreter inferred concrete output buffers.
+    # Audit ALL intermediates, not just the four external input tensors.
+    shape_issues = []
+    signature_only = []
+    for tensor in interpreter.get_tensor_details():
+        dims = [int(n) for n in tensor["shape"]]
+        signature = [int(n) for n in tensor.get("shape_signature", dims)]
+        item = {"index": int(tensor["index"]), "name": tensor["name"][:90],
+                "shape": dims, "shapeSignature": signature}
+        if any(d <= 0 for d in dims):
+            shape_issues.append(item)
+        elif any(d <= 0 for d in signature):
+            signature_only.append(item)
+    print("KATAGO_HUMAN_TFLITE_SHAPE_AUDIT board=%d tensors=%d zeroDim=%d signatureDynamic=%d" %
+          (size, len(interpreter.get_tensor_details()), len(shape_issues), len(signature_only)),
+          flush=True)
+    for issue in shape_issues[:25]:
+        print("KATAGO_HUMAN_INVALID_STATIC_SHAPE " + json.dumps(issue), flush=True)
+    for issue in signature_only[:8]:
+        print("KATAGO_HUMAN_DYNAMIC_SIGNATURE " + json.dumps(issue), flush=True)
     inputs = interpreter.get_input_details()
     outputs = interpreter.get_output_details()
     if len(inputs) != 4 or len(outputs) != 5:
@@ -141,6 +162,10 @@ def inspect_tflite(path, size, contract):
         arr = interpreter.get_tensor(int(item["index"]))
         if not np.isfinite(arr).all(): raise ValueError("Nonfinite Human head")
     return {"format": "tflite-f32", "inputs": descriptors, "outputs": heads,
+            "npuStaticTensorAudit": {"tensorCount": len(interpreter.get_tensor_details()),
+                                     "invalidShapes": shape_issues[:50],
+                                     "dynamicSignatures": signature_only[:50],
+                                     "allTensorShapesStatic": len(shape_issues) == 0},
             "inputOrder": in_order, "outputOrder": out_order,
             "cpu_inference": "PASS"}
 
