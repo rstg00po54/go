@@ -15,7 +15,10 @@ INPUTS=("InputSpatial","InputGlobal","InputMeta","InputMask")
 OUTPUTS=("OutputPolicyPass","OutputPolicy","OutputValue","OutputScoreValue","OutputOwnership")
 
 def key(name, choices):
-    hits=[x for x in choices if x.lower() in name.lower()]\n    if len(hits)>1:\n        longest=max(map(len,hits))\n        hits=[x for x in hits if len(x)==longest]
+    hits=[x for x in choices if x.lower() in name.lower()]
+    if len(hits)>1:
+        longest=max(map(len,hits))
+        hits=[x for x in hits if len(x)==longest]
     if len(hits)!=1:
         raise ValueError("Cannot uniquely identify tensor "+repr(name)+" among "+str(choices))
     return hits[0]
