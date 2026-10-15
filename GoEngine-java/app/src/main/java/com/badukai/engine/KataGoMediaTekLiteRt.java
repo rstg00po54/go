@@ -72,7 +72,7 @@ public final class KataGoMediaTekLiteRt implements AutoCloseable {
             throw new IllegalStateException("MediaTek Android 12+ NPU required");
         if (!file.isFile() || !json.isFile())
             throw new IllegalArgumentException("KataGo LiteRT graph/manifest missing");
-        if (board != 9 && board != 13 && board != 19)
+        if (board != 9 && board != 11 && board != 13 && board != 15 && board != 19)
             throw new IllegalArgumentException("Unsupported fixed KataGo graph size");
         size = board;
         JSONObject metadata = new JSONObject(new String(Files.readAllBytes(json.toPath()), StandardCharsets.UTF_8));
