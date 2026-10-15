@@ -129,6 +129,51 @@ complete GTP latency is not raw NN throughput, and successful LiteRT
 Neuron delegation is not independent proof that physical NPU silicon
 performed the operations.
 
+## Exact-equivalent Human b18 Mish graph rewrite (9x9 experiment)
+
+This is **not a replacement model or modified weights**. The original
+b18 `Softplus/Tanh/Mul` has 120 instances, **118 with distinct gate inputs**.
+`tools/optimize_human_mish_onnx.py` replaces only the
+`tanh(softplus(z))` gate with
+`s=sigmoid(z); t=1-s; gate=(1-t*t)/(1+t*t)`, while preserving the
+original multiply operand, all 504 original initializers and rank metadata.
+
+The verified pipeline is
+`.github/workflows/vivo_human_mish_graph_optimization.yml`:
+- ONNX original-vs-optimized CPU comparisons for all five output heads
+  across four different rank metadata / board feature vectors passed;
+  maximum observed absolute error was below 8e-7.
+- Optimized ONNX vs optimized TFLite CPU comparisons for all five
+  output heads across three test inputs passed; maximum observed error
+  was below 2e-6.
+- Real MT6993 AOT compiler reports: **1738/1738 ops selected in 1
+  partition** for optimized Human SL, versus **1038/1278 selected into
+  240 partitions** for original Human SL. Because the operator count
+  changed under algebraic rewriting, the meaningful metric is
+  the drop from 240 to 1 partition, not raw number of operators.
+- This is a host/offline compiler result, **NOT evidence of the phone
+  actually executing an NPU graph**. Native vivo Neuron 9.0.11
+  must still accept the optimized *uncompiled* JIT graph and all
+  on-device five-head Eigen parity checks must pass.
+
+The standard b18 CPU graph and 10b NPU graph are never overwritten
+unless staging is explicitly opted into the experiment. To test the
+experimental optimized 9-line JIT model on vivo, after its GitHub
+Actions release is published:
+
+```bash
+git pull --ff-only
+bash tools/prepare_vivo_human_litert.sh --mish9
+bash tools/build_vivo_mtk_gtp.sh
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+python3 tools/smoke_vivo_mtk_game.py --skip-install --sizes 9 --require-human-npu --diagnose-compiler
+```
+
+Any failure retains the Human CPU/Eigen path and the 10b LiteRT graph,
+and strict smoke will report FAIL when no genuine Human NN LiteRT
+inference and output parity occurred. The experimental graph is **not**
+AOT 9.2.1 bytecode, which previously failed the runtime 9.0.11 probe.
+
 ## Why Human SL b18 still cannot initialize on vivo MT6993
 
 **Measured on original 9x9 b18 float32 model, not a guess.** The
