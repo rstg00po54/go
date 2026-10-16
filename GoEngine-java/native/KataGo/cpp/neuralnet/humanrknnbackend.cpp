@@ -7,6 +7,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <chrono>
 #include <fstream>
 #include <iterator>
 #include <stdexcept>
@@ -55,6 +56,8 @@ int match(const char* value, const char* const* names, int count) {
 struct KataGoHumanRknnRunner::Impl {
   rknn_context ctx = 0;
   bool available = false;
+  uint64_t inferenceCount = 0;
+  double inferenceElapsedMs = 0.0;
   std::array<int,IN> inSlot{{-1,-1,-1,-1}};
   std::array<int,OUT> outSlot{{-1,-1,-1,-1,-1}};
   std::vector<float> mask = std::vector<float>(AREA,0.0f);
@@ -130,8 +133,11 @@ struct KataGoHumanRknnRunner::Impl {
       inputs[slot].type=RKNN_TENSOR_FLOAT32;
       inputs[slot].fmt=RKNN_TENSOR_NHWC;
     }
+    const auto stamp0 = std::chrono::steady_clock::now();
     check(rknn_inputs_set(ctx,IN,inputs.data()),"rknn_inputs_set");
+    const auto stamp1 = std::chrono::steady_clock::now();
     check(rknn_run(ctx,nullptr),"rknn_run");
+    const auto stamp2 = std::chrono::steady_clock::now();
     std::array<rknn_output,OUT> outputs={};
     for(int i=0;i<OUT;i++) {
       outputs[i].index=static_cast<uint32_t>(i);
@@ -177,6 +183,22 @@ struct KataGoHumanRknnRunner::Impl {
       throw;
     }
     check(rknn_outputs_release(ctx,OUT,outputs.data()),"rknn_outputs_release");
+    const auto stamp3 = std::chrono::steady_clock::now();
+    const auto elapsed = [](std::chrono::steady_clock::time_point a,
+                            std::chrono::steady_clock::time_point b) {
+      return std::chrono::duration<double, std::milli>(b-a).count();
+    };
+    const double totalMs=elapsed(stamp0,stamp3);
+    ++inferenceCount;
+    inferenceElapsedMs+=totalMs;
+    // Bound log volume: short warm-up samples and periodic steady-state checks.
+    if(inferenceCount<=8 || inferenceCount%32==0) {
+      __android_log_print(ANDROID_LOG_INFO,"KataGoHumanRKNN",
+        "HUMAN_RKNN_INFER_TIMING count=%llu inputMs=%.3f runMs=%.3f outputMs=%.3f totalMs=%.3f avgMs=%.3f",
+        (unsigned long long)inferenceCount,elapsed(stamp0,stamp1),
+        elapsed(stamp1,stamp2),elapsed(stamp2,stamp3),
+        totalMs,inferenceElapsedMs/static_cast<double>(inferenceCount));
+    }
   }
 };
 
