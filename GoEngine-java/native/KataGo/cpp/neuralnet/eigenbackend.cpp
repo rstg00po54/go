@@ -1792,8 +1792,8 @@ struct ComputeHandle {
     // all other paths continue to use the existing verified Eigen fallback.
     if(loadedModel.modelDesc.name == "g170-b10c128-s1141046784-d204142634") {
       if(context->nnXLen != context->nnYLen ||
-         (context->nnXLen != 9 && context->nnXLen != 13 && context->nnXLen != 19))
-        throw StringError("RKNN 10b requires an independently converted 9x9, 13x13 or 19x19 NN graph");
+         (context->nnXLen != 9 && context->nnXLen != 11 && context->nnXLen != 13 && context->nnXLen != 15 && context->nnXLen != 19))
+        throw StringError("RKNN 10b requires an independently converted 9/11/13/15/19 NN graph");
       if(model->numInputChannels != 22 || model->numInputGlobalChannels != 19 ||
          model->numPolicyChannels != 1 || model->numValueChannels != 3 ||
          model->numScoreValueChannels != 4 || model->numOwnershipChannels != 1)
@@ -1810,7 +1810,7 @@ struct ComputeHandle {
       const char* path = std::getenv("KATAGO_RKNN_HUMAN_MODEL");
       if(path && *path) {
         if(context->nnXLen == context->nnYLen &&
-           (context->nnXLen == 9 || context->nnXLen == 13 || context->nnXLen == 19) &&
+           (context->nnXLen == 9 || context->nnXLen == 11 || context->nnXLen == 13 || context->nnXLen == 15 || context->nnXLen == 19) &&
            model->numInputChannels == 22 && model->numInputGlobalChannels == 19 &&
            model->numInputMetaChannels == 192 && model->numPolicyChannels == 2 &&
            model->numValueChannels == 3 && model->numScoreValueChannels == 6 &&
