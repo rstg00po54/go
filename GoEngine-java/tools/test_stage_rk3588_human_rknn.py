@@ -35,7 +35,9 @@ class BundlingTests(unittest.TestCase):
             return io.BytesIO(self.body)
         model.stage(True,self.cache,self.output,download)
         self.assertTrue(model.valid_model(self.output))
-        self.assertEqual(self.cache.read_bytes(),self.body)
+        pinned = self.cache.parent / ("release_" + model.EXPECTED_SHA256[:12]) / model.MODEL
+        self.assertEqual(pinned.read_bytes(),self.body)
+        self.assertFalse(self.cache.exists())
         model.stage(True,self.cache,self.output,download)
         self.assertEqual(len(calls),1)
 
