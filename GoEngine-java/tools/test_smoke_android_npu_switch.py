@@ -73,7 +73,7 @@ class NpuLogTests(unittest.TestCase):
             "I/KataGoHumanRKNN( 100): HUMAN_RKNN_INFER_TIMING count=2 inputMs=0.1 runMs=12.0 outputMs=0.4 totalMs=12.5 avgMs=11.5",
         ]
         injected = base.replace("I/NpuSmoke( 100): STEP_PASS",
-                                "\\n".join(lines) + "\\nI/NpuSmoke( 100): STEP_PASS", 1)
+                                "\n".join(lines) + "\nI/NpuSmoke( 100): STEP_PASS", 1)
         report = smoke.parse_log(injected, "unique", (9,), True, True)
         self.assertEqual(report["status"], "PASS", report["errors"])
         self.assertEqual(report["steps"][0]["human_npu_timing_samples"], 2)
