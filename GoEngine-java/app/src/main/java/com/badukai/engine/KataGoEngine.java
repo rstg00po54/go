@@ -383,36 +383,45 @@ public class KataGoEngine {
             if (useRknn) {
                 try {
                     phaseNs = System.nanoTime();
-                    // The validated original Human b18 9x9 model is now included
-                    // automatically in RK3588 NPU APKs, with no manual test flag.
-                    // 10b and all non-9x9 boards continue through their old paths.
+                    // The three size-specific Human SL RKNN graphs are distinct.
+                    // 9x9 is already device-validated; 13/19 require 4 real-board
+                    // native Eigen-vs-RKNN parity checks on first activation.
+                    // All sizes retain the existing 10b NPU + Human CPU fallback.
                     File experimentalHumanRknn = null;
                     boolean verifyHumanNpuAgainstCpu = false;
-                    if (useHumanSL && startupBoardSize == 9) {
-                        File candidate = new File(engineDir, "katago_human_9x9.rknn");
-                        if (hasAsset(HUMAN_RKNN_9_ASSET)) {
+                    if (useHumanSL && (startupBoardSize == 9
+                            || startupBoardSize == 13 || startupBoardSize == 19)) {
+                        final int humanBoardSize = startupBoardSize;
+                        final String stem = "katago_human_" + humanBoardSize
+                                + "x" + humanBoardSize;
+                        final String asset = "engine/" + stem + ".rknn";
+                        File candidate = new File(engineDir, stem + ".rknn");
+                        File manifest = new File(engineDir, stem + ".json");
+                        if (hasAsset(asset)) {
                             try {
-                                copyAssetToFile(HUMAN_RKNN_9_ASSET, candidate);
+                                copyAssetToFile(asset, candidate);
+                                if (humanBoardSize != 9)
+                                    copyAssetToFile("engine/" + stem + ".json", manifest);
                             } catch (IOException copyError) {
-                                // Do not break the known-good 10b NPU + Human CPU
-                                // when a Human RKNN asset cannot be staged.
-                                Log.e(TAG, "HUMAN_RKNN_ASSET_COPY_FAILED: using CPU Human", copyError);
+                                Log.e(TAG, "HUMAN_RKNN_ASSET_COPY_FAILED board="
+                                        + humanBoardSize + ": using CPU Human", copyError);
+                                candidate = null;
                             }
                         }
-                        if (isTrustedHumanRknnModel(candidate)) {
+                        if (candidate != null &&
+                                isTrustedHumanRknnModel(candidate, manifest, humanBoardSize)) {
                             experimentalHumanRknn = candidate;
-                            // Old test script still opts into 4 CPU/NPU parity checks.
-                            // Normal gameplay uses NPU directly, without extra CPU work.
-                            verifyHumanNpuAgainstCpu =
-                                    new File(engineDir, "enable_human_rknn_9x9.flag").isFile()
-                                    && !new File(engineDir, "human_rknn_timing_only.flag").isFile();
-                            Log.i(TAG, "HUMAN_RKNN_EXPERIMENT_REQUESTED board=9 compareCpu="
-                                    + verifyHumanNpuAgainstCpu + " model=" + candidate);
-                            Log.i(TAG, "HUMAN_RKNN_AUTO_ENABLED board=9 sha256="
-                                    + HUMAN_RKNN_9_SHA256);
+                            verifyHumanNpuAgainstCpu = humanBoardSize != 9
+                                    || (new File(engineDir, "enable_human_rknn_9x9.flag").isFile()
+                                        && !new File(engineDir, "human_rknn_timing_only.flag").isFile());
+                            Log.i(TAG, "HUMAN_RKNN_EXPERIMENT_REQUESTED board=" + humanBoardSize
+                                    + " compareCpu=" + verifyHumanNpuAgainstCpu
+                                    + " model=" + candidate);
+                            Log.i(TAG, "HUMAN_RKNN_AUTO_ENABLED board=" + humanBoardSize
+                                    + " safetyNativeCpuParity=" + verifyHumanNpuAgainstCpu);
                         } else {
-                            Log.w(TAG, "HUMAN_RKNN_NOT_STAGED: keeping Human CPU; "
-                                    + "10b NPU remains enabled");
+                            Log.w(TAG, "HUMAN_RKNN_NOT_STAGED board=" + humanBoardSize
+                                    + ": keeping CPU Human; 10b NPU remains enabled");
                         }
                     }
                     npuSession = KataGoNpuNative.createSession(modelFile, configFile, humanFile,
@@ -900,6 +909,44 @@ public class KataGoEngine {
     /** Only activate the exact RK3588-validated Human RKNN graph, never a
      * partial download, renamed 10b graph, or unverified test model.
      */
+    private boolean isTrustedHumanRknnModel(File file, File manifest, int size) {
+        if (size == 9) return isTrustedHumanRknnModel(file);
+        if ((size != 13 && size != 19) || file == null || !file.isFile()
+                || file.length() < 1000000L || !manifest.isFile()) return false;
+        try {
+            JSONObject doc = new JSONObject(new String(
+                    java.nio.file.Files.readAllBytes(manifest.toPath()),
+                    java.nio.charset.StandardCharsets.UTF_8));
+            if (!"b18c384nbt-humanv0".equals(doc.optString("model"))
+                    || doc.optInt("board") != size
+                    || !"rk3588".equals(doc.optString("target"))
+                    || doc.optBoolean("quantized", true)) return false;
+            JSONObject inputs = doc.getJSONObject("inputs");
+            if (inputs.getJSONArray("InputSpatial").getInt(1) != 22
+                    || inputs.getJSONArray("InputSpatial").getInt(2) != size
+                    || inputs.getJSONArray("InputSpatial").getInt(3) != size
+                    || inputs.getJSONArray("InputMeta").getInt(1) != 192
+                    || inputs.getJSONArray("InputMask").getInt(2) != size
+                    || inputs.getJSONArray("InputMask").getInt(3) != size) return false;
+            String expectedSha = doc.optString("sha256");
+            if (!expectedSha.matches("[0-9a-f]{64}")) return false;
+            MessageDigest sha = MessageDigest.getInstance("SHA-256");
+            try (InputStream input = new FileInputStream(file)) {
+                byte[] buffer = new byte[65536];
+                int count;
+                while ((count = input.read(buffer)) >= 0)
+                    if (count > 0) sha.update(buffer, 0, count);
+            }
+            StringBuilder digest = new StringBuilder(64);
+            for (byte b : sha.digest())
+                digest.append(String.format(Locale.US, "%02x", b & 0xff));
+            return expectedSha.equals(digest.toString());
+        } catch (Exception error) {
+            Log.w(TAG, "Human RKNN " + size + " manifest/hash verification failed", error);
+            return false;
+        }
+    }
+
     private boolean isTrustedHumanRknnModel(File file) {
         if (!file.isFile() || file.length() != HUMAN_RKNN_9_BYTES) return false;
         try (FileInputStream input = new FileInputStream(file)) {
