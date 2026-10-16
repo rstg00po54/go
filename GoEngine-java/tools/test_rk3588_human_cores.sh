@@ -10,6 +10,8 @@ fi
 SERIAL="${1:-${ANDROID_SERIAL:-8719e18a71a2a66c}}"
 RUNS="${HUMAN_CORES_RUNS:-24}"
 WARMUP="${HUMAN_CORES_WARMUP:-5}"
+MODE="${HUMAN_CORES_MODE:-multi}"
+[[ "$MODE" == multi || "$MODE" == individual ]] || { echo "Invalid HUMAN_CORES_MODE: $MODE" >&2; exit 2; }
 [[ "$RUNS" =~ ^[0-9]+$ && "$WARMUP" =~ ^[0-9]+$ ]] || {
   echo "Invalid HUMAN_CORES_RUNS or HUMAN_CORES_WARMUP" >&2; exit 2;
 }
@@ -39,5 +41,5 @@ if "$READELF" -d "$WORK/human_rknn_cores" | grep -Fq 'libc++_shared.so'; then
   echo "Unexpected libc++_shared.so dependency" >&2; exit 1
 fi
 adb -s "$SERIAL" push "$WORK/human_rknn_cores" "$DEVICE/human_rknn_cores"
-echo "开始 A/B/A 测试：单核 → 三核 → 单核，预热=$WARMUP，每阶段=$RUNS 次"
-adb -s "$SERIAL" shell "cd '$DEVICE' && chmod 755 ./human_rknn_cores && LD_LIBRARY_PATH='$DEVICE' ./human_rknn_cores ./katago_human_9x9.rknn '$RUNS' '$WARMUP'"
+echo "开始核心对照 mode=$MODE，预热=$WARMUP，每阶段=$RUNS 次"
+adb -s "$SERIAL" shell "cd '$DEVICE' && chmod 755 ./human_rknn_cores && LD_LIBRARY_PATH='$DEVICE' ./human_rknn_cores ./katago_human_9x9.rknn '$RUNS' '$WARMUP' '$MODE'"
