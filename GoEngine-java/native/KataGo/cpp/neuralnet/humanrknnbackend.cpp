@@ -4,6 +4,7 @@
 #include "rknn_api.h"
 #include <android/log.h>
 #include <algorithm>
+#include <atomic>
 #include <array>
 #include <cmath>
 #include <cstdint>
@@ -15,6 +16,7 @@
 #include <vector>
 
 namespace {
+std::atomic<int> activeHumanRknnRunners{0};
 constexpr int BOARD = 9;
 constexpr int AREA = BOARD*BOARD;
 constexpr int SPATIAL_CHANNELS = 22;
@@ -104,6 +106,7 @@ struct KataGoHumanRknnRunner::Impl {
       for(int i:inSlot) if(i<0) throw std::runtime_error("Missing Human RKNN input");
       for(int i:outSlot) if(i<0) throw std::runtime_error("Missing Human RKNN output");
       available=true;
+      activeHumanRknnRunners.fetch_add(1, std::memory_order_release);
       __android_log_print(ANDROID_LOG_INFO,"KataGoHumanRKNN",
         "HUMAN_RKNN_READY board=9 inputs=4 outputs=5 scale8Compensation=8");
     } catch(...) {
@@ -112,7 +115,10 @@ struct KataGoHumanRknnRunner::Impl {
       throw;
     }
   }
-  ~Impl() { if(ctx) rknn_destroy(ctx); }
+  ~Impl() {
+    if(available) activeHumanRknnRunners.fetch_sub(1, std::memory_order_acq_rel);
+    if(ctx) rknn_destroy(ctx);
+  }
 
   void infer(const float* spatial, const float* global, const float* meta,
              float* pass, float* policy, float* value, float* score,
@@ -201,6 +207,10 @@ struct KataGoHumanRknnRunner::Impl {
     }
   }
 };
+
+bool isKataGoHumanRknnActive() {
+  return activeHumanRknnRunners.load(std::memory_order_acquire)>0;
+}
 
 KataGoHumanRknnRunner::KataGoHumanRknnRunner(const std::string& modelPath,int boardSize)
   : impl_(new Impl(modelPath,boardSize)) {}
