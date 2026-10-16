@@ -10,20 +10,23 @@ SDK="$ROOT/build/rknn_sdk"
 mkdir -p "$WORK" "$(dirname "$MODEL")"
 
 if [[ ! -s "$MODEL" ]]; then
-  if ! command -v gh >/dev/null 2>&1; then
-    echo "Model missing: $MODEL" >&2
-    echo "Install/login GitHub CLI (gh), or manually download the Action artifact:" >&2
-    echo "https://github.com/rstg00po54/go/actions/runs/$RUN_ID" >&2
-    echo "Set HUMAN_RKNN_MODEL to the extracted katago_human_9x9.rknn file." >&2
-    exit 1
+  URL="https://github.com/rstg00po54/go/releases/download/rk3588-human-b18-9x9-experimental-v1/katago_human_9x9.rknn"
+  if command -v curl >/dev/null 2>&1 && curl -fL --retry 2 --connect-timeout 15 -o "$MODEL.tmp" "$URL"; then
+    mv "$MODEL.tmp" "$MODEL"
+  else
+    rm -f "$MODEL.tmp"
+    if ! command -v gh >/dev/null 2>&1; then
+      echo "Public release is not ready and GitHub CLI is missing." >&2
+      echo "Download the model from https://github.com/rstg00po54/go/actions/runs/$RUN_ID" >&2
+      echo "Set HUMAN_RKNN_MODEL to the extracted katago_human_9x9.rknn" >&2
+      exit 1
+    fi
+    mkdir -p "$WORK/ci"
+    gh run download "$RUN_ID" -R rstg00po54/go -n rk3588-b18-human-9-experimental -D "$WORK/ci"
+    found="$(find "$WORK/ci" -type f -name katago_human_9x9.rknn -print -quit)"
+    [[ -n "$found" ]] || { echo "CI artifact does not contain RKNN" >&2; exit 1; }
+    cp "$found" "$MODEL"
   fi
-  echo "Downloading original b18 RKNN artifact from successful CI run $RUN_ID"
-  mkdir -p "$WORK/ci"
-  gh run download "$RUN_ID" -R rstg00po54/go \
-    -n rk3588-b18-human-9-experimental -D "$WORK/ci"
-  found="$(find "$WORK/ci" -type f -name katago_human_9x9.rknn -print -quit)"
-  [[ -n "$found" ]] || { echo "CI artifact does not contain RKNN" >&2; exit 1; }
-  cp "$found" "$MODEL"
 fi
 EXPECTED="3692a0726ae4e0f5fd601cdc782cb04fe60e6a0c6f06c2789f6e073d52f61474"
 ACTUAL="$(sha256sum "$MODEL" | awk '{print $1}')"
