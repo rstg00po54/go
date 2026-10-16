@@ -396,12 +396,14 @@ public class KataGoEngine {
                                 + "x" + humanBoardSize;
                         final String asset = "engine/" + stem + ".rknn";
                         File candidate = new File(engineDir, stem + ".rknn");
-                        File manifest = new File(engineDir, stem + ".json");
+                        // .json is reserved for MediaTek LiteRT; RKNN manifests
+                        // have their own .rknn.json name to avoid asset conflicts.
+                        File manifest = new File(engineDir, stem + ".rknn.json");
                         if (hasAsset(asset)) {
                             try {
                                 copyAssetToFile(asset, candidate);
                                 if (humanBoardSize != 9)
-                                    copyAssetToFile("engine/" + stem + ".json", manifest);
+                                    copyAssetToFile("engine/" + stem + ".rknn.json", manifest);
                             } catch (IOException copyError) {
                                 Log.e(TAG, "HUMAN_RKNN_ASSET_COPY_FAILED board="
                                         + humanBoardSize + ": using CPU Human", copyError);
