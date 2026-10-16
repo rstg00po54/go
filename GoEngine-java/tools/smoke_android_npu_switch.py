@@ -14,6 +14,8 @@ Examples:
 import argparse
 from datetime import datetime, timezone
 import json
+import math
+import statistics
 import re
 import shutil
 import subprocess
@@ -74,7 +76,7 @@ def value(line, name):
     return match.group(1) if match else None
 
 
-def parse_log(log, run_id, sizes, require_human_rknn=False):
+def parse_log(log, run_id, sizes, require_human_rknn=False, human_rknn_timing_only=False):
     """Require a real RKNN_INIT + RKNN_READY for *each* test step, no CPU fallback.
 
     No events from a previous run qualify because NpuSmoke has a unique run ID.
@@ -127,15 +129,36 @@ def parse_log(log, run_id, sizes, require_human_rknn=False):
                               if "KataGoHumanRKNN" in line and "HUMAN_RKNN_CPU_FALLBACK" in line]
             expected_heads = {"policyPass", "policy", "value", "score", "ownership"}
             present_heads = {value(line, "head") for line in human_parity}
+            human_timings = [line for line in section
+                             if "KataGoHumanRKNN" in line and "HUMAN_RKNN_INFER_TIMING " in line]
+            if human_rknn_timing_only:
+                enabled = [line for line in section if "KataGoEngine" in line
+                           and "HUMAN_RKNN_EXPERIMENT_REQUESTED board=9 compareCpu=false" in line]
+                if not enabled or human_parity:
+                    problems.append("Timing-only test unexpectedly enabled native Eigen parity")
+            npu_total_ms, npu_run_ms = [], []
+            for line in human_timings:
+                try:
+                    total = float(value(line, "totalMs"))
+                    run = float(value(line, "runMs"))
+                    if not math.isfinite(total) or not math.isfinite(run) or not (0 < run <= total):
+                        raise ValueError("invalid NPU timing")
+                    npu_total_ms.append(total)
+                    npu_run_ms.append(run)
+                except (TypeError, ValueError):
+                    problems.append("Malformed Human NPU inference timing: " + line.strip()[-250:])
+            if not npu_total_ms:
+                problems.append("Missing real Human RKNN inference timing: stale JNI or NPU was not run")
             if expected != 9 or not human_ready:
                 problems.append("Human b18 RKNN 9x9 did not initialize")
             elif not any("scale8Compensation=8" in line for line in human_ready):
                 problems.append("Human RKNN JNI is missing scale8 compensation; rebuild and reinstall APK")
-            if not expected_heads.issubset(present_heads):
-                problems.append("Missing Human native CPU/NPU parity heads: "
-                                + repr(sorted(expected_heads - present_heads)))
-            if any(int(value(line, "bad") or "-1") != 0 for line in human_parity):
-                problems.append("Human native CPU/NPU parity has out-of-tolerance values")
+            if not human_rknn_timing_only:
+                if not expected_heads.issubset(present_heads):
+                    problems.append("Missing Human native CPU/NPU parity heads: "
+                                    + repr(sorted(expected_heads - present_heads)))
+                if any(int(value(line, "bad") or "-1") != 0 for line in human_parity):
+                    problems.append("Human native CPU/NPU parity has out-of-tolerance values")
             if human_fallback:
                 problems.append("Human RKNN fell back to CPU: " + human_fallback[-1].strip())
         if len(passed) != 1 or value(passed[0], "index") != str(at) or value(passed[0], "board") != str(expected):
@@ -153,6 +176,13 @@ def parse_log(log, run_id, sizes, require_human_rknn=False):
         detail = {"index": at, "board": expected, "status": "PASS" if not problems else "FAIL",
                   "npu_initialized": bool(inits), "npu_ready": bool(readies),
                   "model": model_name, "errors": problems}
+        if require_human_rknn:
+            detail["human_npu_timing_samples"] = len(npu_total_ms)
+            if npu_total_ms:
+                detail["human_npu_total_median_ms"] = round(statistics.median(npu_total_ms), 3)
+                detail["human_npu_run_median_ms"] = round(statistics.median(npu_run_ms), 3)
+                detail["human_npu_total_min_ms"] = round(min(npu_total_ms), 3)
+                detail["human_npu_total_max_ms"] = round(max(npu_total_ms), 3)
         if passed:
             for key in ("startupMs", "blackMs", "whiteMs"):
                 raw = value(passed[0], key)
@@ -189,7 +219,9 @@ def main(argv=None):
     p.add_argument("--skip-install", action="store_true", help="Test already installed Debug APK")
     p.add_argument("--no-human-sl", action="store_true", help="Test 10b NPU without loading CPU Human SL")
     p.add_argument("--require-human-rknn", action="store_true",
-                   help="Require real Human b18 RKNN and native CPU parity on every 9x9 step")
+                   help="Require real Human b18 RKNN on every 9x9 step")
+    p.add_argument("--human-rknn-timing-only", action="store_true",
+                   help="Only with --require-human-rknn: verify Human NPU timing without extra CPU parity")
     p.add_argument("--no-upload", action="store_true", help="Keep report locally; no GitHub push")
     p.add_argument("--upload-existing", type=Path, help="Retry uploading an existing report directory")
     p.add_argument("--upload-remote", default="auto", help="Git remote (auto: origin/github)")
@@ -213,12 +245,15 @@ def main(argv=None):
         p.error("Total --timeout must be at least 20 seconds")
     if args.require_human_rknn and (args.no_human_sl or any(size != 9 for size in args.sizes)):
         p.error("--require-human-rknn requires Human SL enabled and only 9x9 steps")
+    if args.human_rknn_timing_only and not args.require_human_rknn:
+        p.error("--human-rknn-timing-only requires --require-human-rknn")
     run_id = uuid4().hex[:16]
     folder = PROJECT / "build/android_npu_smoke" / datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     folder.mkdir(parents=True, exist_ok=True)
     report = {"test": "RK3588 NPU multi-board smoke", "run_id": run_id,
               "sizes": list(args.sizes), "human_sl": not args.no_human_sl,
               "require_human_rknn": args.require_human_rknn,
+              "human_rknn_timing_only": args.human_rknn_timing_only,
               "status": "ERROR", "steps": [], "errors": [],
               "started_utc": datetime.now(timezone.utc).isoformat()}
     serial, started = None, False
@@ -266,7 +301,8 @@ def main(argv=None):
             time.sleep(2)
         else:
             report["errors"].append("Timed out after %.1f seconds" % args.timeout)
-        parsed = parse_log(read_log(args.adb, serial), run_id, args.sizes, args.require_human_rknn)
+        parsed = parse_log(read_log(args.adb, serial), run_id, args.sizes,
+                           args.require_human_rknn, args.human_rknn_timing_only)
         parsed["errors"] = report["errors"] + parsed["errors"]
         if parsed["errors"]: parsed["status"] = "FAIL"
         report.update(parsed)
@@ -289,7 +325,8 @@ def main(argv=None):
                 # Recover successful early steps from the final log instead of
                 # reporting an inaccurate 0/N PASS.
                 if started and report["status"] != "PASS":
-                    recovered = parse_log(log, run_id, args.sizes, args.require_human_rknn)
+                    recovered = parse_log(log, run_id, args.sizes, args.require_human_rknn,
+                                          args.human_rknn_timing_only)
                     report["steps"] = recovered["steps"]
                     report["errors"] = list(dict.fromkeys(report["errors"] + recovered["errors"]))
                     if report["status"] != "INTERRUPTED": report["status"] = "FAIL"
