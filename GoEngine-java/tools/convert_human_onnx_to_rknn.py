@@ -44,6 +44,13 @@ def main():
         tensor.type.tensor_type.shape.dim[0].Clear()
         tensor.type.tensor_type.shape.dim[0].dim_value = 1
     onnx.checker.check_model(graph)
+    original_opset = next((x.version for x in graph.opset_import if x.domain in ("", "ai.onnx")), None)
+    if original_opset is None:
+        raise RuntimeError("Missing default ONNX opset")
+    if original_opset > 19:
+        print(f"Converting ONNX opset {original_opset} to 19 using ONNX version_converter", flush=True)
+        graph = onnx.version_converter.convert_version(graph, 19)
+        onnx.checker.check_model(graph)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     static_path = args.output.with_suffix(".static.onnx")
     onnx.save(graph, str(static_path))
