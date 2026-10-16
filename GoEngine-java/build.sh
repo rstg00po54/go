@@ -6,6 +6,10 @@ cd "$PROJECT_DIR"
 
 # Build GPU JNI before Gradle, so the normal build.sh command produces a GPU-capable APK.
 GRADLE_ARGS=()
+if [[ "${REQUIRE_HUMAN_RKNN_MULTISIZE:-0}" == 1 ]]; then
+    GRADLE_ARGS+=("-PrequireHumanRknnMultisize=true")
+    echo "Building full RK3588 Human b18 NPU APK with 9x9/13x13/19x19 verified model assets"
+fi
 BUILD_GPU_JNI=true
 # Rockchip's packaged v2.3.2 Android runtime is 4 KB aligned. This is a
 # deliberate opt-in for 4 KB-page RK3588 Android builds only.
