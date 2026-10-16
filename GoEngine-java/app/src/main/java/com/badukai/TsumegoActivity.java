@@ -122,7 +122,7 @@ public final class TsumegoActivity extends Activity {
     private Button button(String label, boolean primary) {
         Button button = new Button(this);
         button.setText(label);
-        button.setTextAllCaps(false);
+        button.setAllCaps(false);
         button.setTextSize(15f);
         button.setMinWidth(0);
         button.setMinHeight(0);
