@@ -1,0 +1,36 @@
+{
+  "test": "RK3588 NPU multi-board smoke",
+  "run_id": "01cd8549487c42b3",
+  "sizes": [
+    9
+  ],
+  "human_sl": true,
+  "require_human_rknn": true,
+  "status": "FAIL",
+  "steps": [
+    {
+      "index": 0,
+      "board": 9,
+      "status": "FAIL",
+      "npu_initialized": true,
+      "npu_ready": true,
+      "model": "katago_10b_9x9.rknn",
+      "errors": [
+        "Human native CPU/NPU parity has out-of-tolerance values",
+        "Human RKNN fell back to CPU: E/KataGoHumanRKNN( 2589): HUMAN_RKNN_CPU_FALLBACK reason=native_parity_mismatch"
+      ],
+      "startupMs": 4108,
+      "blackMs": 1040,
+      "whiteMs": 727,
+      "black": "G7",
+      "white": "D5"
+    }
+  ],
+  "errors": [
+    "step 0: Human native CPU/NPU parity has out-of-tolerance values",
+    "step 0: Human RKNN fell back to CPU: E/KataGoHumanRKNN( 2589): HUMAN_RKNN_CPU_FALLBACK reason=native_parity_mismatch"
+  ],
+  "started_utc": "2026-10-16T03:21:37.276313+00:00",
+  "serial": "8719e18a71a2a66c",
+  "finished_utc": "2026-10-16T03:21:46.280209+00:00"
+}
