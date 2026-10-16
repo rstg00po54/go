@@ -2,13 +2,11 @@ package com.badukai;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
-import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.Gravity;
-import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -18,7 +16,6 @@ import com.badukai.game.GoBoard;
 import com.badukai.game.Intersection;
 import com.badukai.game.Move;
 import com.badukai.game.Point;
-import com.badukai.game.StoneColor;
 import com.badukai.game.TsumegoLessons;
 import com.badukai.ui.GoBoardView;
 
@@ -136,8 +133,6 @@ public final class TsumegoActivity extends Activity {
         bg.setCornerRadius(dp(9));
         bg.setStroke(dp(1), Color.rgb(130, 159, 133));
         button.setBackground(bg);
-        LinearLayout.LayoutParams ignored = null;
-        // Margins belong on LayoutParams, not the backing drawable.
         return button;
     }
 
