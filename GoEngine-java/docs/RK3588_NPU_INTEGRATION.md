@@ -320,3 +320,36 @@ bash tools/test_rk3588_human_parity.sh 8719e18a71a2a66c --no-upload
 # 日后单独重新上传历史报告，不再跑 NPU
 bash tools/test_rk3588_human_parity.sh --upload-existing build/rk3588_human/parity_reports/<某次测试目录>
 ```
+
+## RK3588 Human SL b18 原生 Android 实际对弈实验（严格手动启用）
+
+原始 b18 的 RKNN 9×9 模型已经通过四组合成输入的 RK3588 CPU/NPU 对照。
+接下来，KataGo 的 RKNN JNI 内增加独立的 `KataGoHumanRknnRunner`。
+此接口不改变原先 10b 的推理路径，也不修改 KataGo 的原始人类棋力编码；
+`SGFMetadata::fillMetadataRow` 继续生成包含段级、双方身份、棋局时间等内容的 192 维输入。
+原始 Human 9×9 NPU 输出的两条 policy 通道从 NCHW 转为 KataGo Eigen 所需的 NHWC。
+
+**安全约束**：只有在应用私有目录 `files/engine` 内同时存在
+`katago_human_9x9.rknn` 和 `enable_human_rknn_9x9.flag`，
+并且已经选择 9×9 NPU 与 Human SL 时，才开启实验模型。否则仍走 CPU Human。
+可以开启 `KATAGO_RKNN_HUMAN_COMPARE_CPU=1`，使用相同真实棋局的四组
+Human 前向计算结果与原生 Eigen 对比，各五个输出头逐一报告误差；
+超出容差会禁用这次 Human NPU 并回退 CPU。
+
+一键实机流程（从源码同步开始）：
+
+```bash
+cd /mnt/hgfs/D/code/go/GoEngine-java
+git pull --ff-only
+bash tools/test_rk3588_human_game.sh 8719e18a71a2a66c
+```
+
+这条命令会重编 RKNN JNI 和 APK、安装调试 APK、复用已下载的 9×9 Human RKNN、
+把模型复制进应用私有目录，临时开启实验标记，运行现有 9×9 NPU / Human SL
+真实 GTP 自动测试，验证 Human NPU 初始化、5 输出头原生 CPU 对照与无回退，
+并将成功/失败报告上传到公共 `ui-test-results` 分支。
+**结束时自动删除开启标记**（模型文件缓存保留），下次普通启动默认仍使用 CPU Human。
+
+可用 `HUMAN_RKNN_SKIP_BUILD=1` 跳过编译，但前提是设备上调试 APK
+已包含本次 C++/JNI/Java 修改。可额外加 `--no-upload` 禁止公开上传日志。
+实机测试结果以 GitHub 上传报告为准；云端编译通过不等于本步骤通过。
