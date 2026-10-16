@@ -58,14 +58,23 @@ jobs:
         run: |
           set -euo pipefail
           TAG=rk3588-human-b18-9x9-device-verified-v1
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            echo 'Immutable publishing policy: verified tag exists, refusing clobber'
-            gh release view "$TAG"
-            exit 0
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --target "$GITHUB_SHA" \
+              --title 'RK3588 Human SL b18 9x9 device-verified RKNN' \
+              --notes 'Exact SHA256 pinned model from original build 38842174488, verified on RK3588 against 20/20 CPU/NPU heads in real KataGo games. This release is never replaced by automated model recompiles.'
           fi
-          gh release create "$TAG" --target "$GITHUB_SHA" \
-            --title 'RK3588 Human SL b18 9x9 device-verified RKNN' \
-            --notes 'Exact SHA256 pinned model from original build 38842174488, verified on RK3588 against 20/20 CPU/NPU heads in real KataGo games. This release is never replaced by automated model recompiles.'
-          gh release upload "$TAG" \
-            publish/katago_human_9x9.rknn publish/katago_human_9x9.json \
-            publish/human_b18_cpu9_reference.bin publish/human_b18_cpu9_reference.json
+          # A first interrupted publish may have left an empty release.
+          # Upload only missing assets, never clobber an existing verified model.
+          EXISTING="$(gh release view "$TAG" --json assets --jq '.assets[].name')"
+          for file in publish/*; do
+            name="${file##*/}"
+            if grep -Fxq "$name" <<< "$EXISTING"; then
+              echo "Verified release existing asset preserved: $name"
+            else
+              gh release upload "$TAG" "$file"
+            fi
+          done
+          gh release view "$TAG" --json assets --jq '.assets[].name'
+          REMOTE_SHA="$(gh api "repos/${GH_REPO}/releases/tags/$TAG" --jq '.assets[] | select(.name=="katago_human_9x9.rknn") | .digest')"
+          test "$REMOTE_SHA" = "sha256:78bee9b2561c4ba14024c1428d750e4a4cec3206011290b6b6b1d7b1e95947c7"
+          echo 'RK3588_VERIFIED_9_RELEASE_COMPLETE'
