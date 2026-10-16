@@ -74,47 +74,65 @@ double compare(const Result& a, const Result& b) {
 
 int main(int argc, char** argv) {
     try {
-        if(argc<2 || argc>4) {
-            std::cerr<<"Usage: human_rknn_cores <model.rknn> [runs=24] [warmup=5]\n";
+        if(argc<2 || argc>5) {
+            std::cerr<<"Usage: human_rknn_cores <model.rknn> [runs=24] [warmup=5] [multi|individual]\n";
             return 2;
         }
-        int runs=argc>=3?std::stoi(argv[2]):24;
-        int warmup=argc>=4?std::stoi(argv[3]):5;
-        if(runs<5 || runs>200 || warmup<0 || warmup>50)
-            throw std::runtime_error("runs 5-200, warmup 0-50");
-        std::cout<<"HUMAN_BENCH_START runs="<<runs<<" warmup="<<warmup
+        const int runs=argc>=3?std::stoi(argv[2]):24;
+        const int warmup=argc>=4?std::stoi(argv[3]):5;
+        const std::string mode=argc>=5?argv[4]:"multi";
+        if(runs<5 || runs>200 || warmup<0 || warmup>50 ||
+           (mode!="multi" && mode!="individual"))
+            throw std::runtime_error("runs 5-200, warmup 0-50, mode multi|individual");
+        std::cout<<"HUMAN_BENCH_START mode="<<mode<<" runs="<<runs<<" warmup="<<warmup
                  <<" board=9 model=original_b18\n";
-        const Result a=measure(argv[1],"core0_before",RKNN_NPU_CORE_0,warmup,runs);
-        bool supported=false;
-        Result b;
-        std::string unsupportedReason;
-        try {
-            b=measure(argv[1],"core012",RKNN_NPU_CORE_0_1_2,warmup,runs);
-            supported=true;
-        } catch(const std::exception& ex) {
-            unsupportedReason=ex.what();
-            std::cout<<"HUMAN_BENCH_CORE3_UNAVAILABLE reason="<<unsupportedReason<<"\n";
+        const Result before=measure(argv[1],"core0_before",RKNN_NPU_CORE_0,warmup,runs);
+        std::vector<Result> candidateResults;
+        const std::vector<std::pair<const char*,rknn_core_mask>> candidates =
+          mode=="individual" ?
+          std::vector<std::pair<const char*,rknn_core_mask>>{
+              {"core1",RKNN_NPU_CORE_1},{"core2",RKNN_NPU_CORE_2}} :
+          std::vector<std::pair<const char*,rknn_core_mask>>{
+              {"core012",RKNN_NPU_CORE_0_1_2}};
+        for(const auto& candidate:candidates) {
+            try {
+                candidateResults.push_back(measure(argv[1],candidate.first,candidate.second,warmup,runs));
+            } catch(const std::exception& ex) {
+                std::cout<<"HUMAN_BENCH_CORE_UNAVAILABLE phase="<<candidate.first
+                         <<" reason="<<ex.what()<<"\n";
+            }
         }
-        const Result c=measure(argv[1],"core0_after",RKNN_NPU_CORE_0,warmup,runs);
-        const double baselineDrift=compare(a,c);
-        double core3Delta=0;
-        if(supported) core3Delta=std::max(compare(a,b),compare(c,b));
+        const Result after=measure(argv[1],"core0_after",RKNN_NPU_CORE_0,warmup,runs);
         constexpr double MAX_ALLOWED_UNSCALED_DELTA=0.01;
-        if(baselineDrift>MAX_ALLOWED_UNSCALED_DELTA ||
-           (supported && core3Delta>MAX_ALLOWED_UNSCALED_DELTA))
+        double worstDelta=compare(before,after);
+        for(const Result& candidate:candidateResults) {
+            worstDelta=std::max(worstDelta,compare(before,candidate));
+            worstDelta=std::max(worstDelta,compare(after,candidate));
+        }
+        if(worstDelta>MAX_ALLOWED_UNSCALED_DELTA)
             throw std::runtime_error("Cross-core output numerical consistency failed");
-        const double oneCoreMedian=(quantile(a.runs,0.5)+quantile(c.runs,0.5))/2;
-        const double threeCoreMedian=supported?quantile(b.runs,0.5):0;
-        std::cout<<"HUMAN_BENCH_RESULT status=PASS cores3Available="<<(supported?1:0)
-                 <<" core0RunMedianMs="<<oneCoreMedian
-                 <<" core3RunMedianMs="<<threeCoreMedian
-                 <<" core3VsCore0Ratio="<<(supported?threeCoreMedian/oneCoreMedian:0.0)
-                 <<" core0BeforeMs="<<quantile(a.runs,0.5)
-                 <<" core0AfterMs="<<quantile(c.runs,0.5)
-                 <<" maxOutputDelta="<<std::max(baselineDrift,core3Delta)
+        const double baseline=(quantile(before.runs,0.5)+quantile(after.runs,0.5))/2;
+        const auto medianFor=[&](const char* label)->double {
+            for(const Result& result:candidateResults)
+                if(result.label==label) return quantile(result.runs,0.5);
+            return 0;
+        };
+        const double three=medianFor("core012"),one=medianFor("core1"),two=medianFor("core2");
+        std::cout<<"HUMAN_BENCH_RESULT status=PASS mode="<<mode
+                 <<" cores3Available="<<(three>0?1:0)
+                 <<" core1Available="<<(one>0?1:0)
+                 <<" core2Available="<<(two>0?1:0)
+                 <<" core0RunMedianMs="<<baseline
+                 <<" core3RunMedianMs="<<three
+                 <<" core3VsCore0Ratio="<<(three>0?three/baseline:0.0)
+                 <<" core1RunMedianMs="<<one
+                 <<" core2RunMedianMs="<<two
+                 <<" core0BeforeMs="<<quantile(before.runs,0.5)
+                 <<" core0AfterMs="<<quantile(after.runs,0.5)
+                 <<" maxOutputDelta="<<worstDelta
                  <<" samplesPerPhase="<<runs<<"\n";
-        std::cout<<"NOTE: identical synthetic 9x9 inputs; test scheduling/latency only."
-                    " Real KataGo move times and Human rank behavior are not part of this benchmark.\n";
+        std::cout<<"NOTE: Same fixed synthetic 9x9 input; scheduling/latency only. "
+                    "No change to Android app.\n";
         return 0;
     } catch(const std::exception& ex) {
         std::cerr<<"HUMAN_BENCH_RESULT status=FAIL reason="<<ex.what()<<"\n";
