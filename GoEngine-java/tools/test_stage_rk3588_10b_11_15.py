@@ -63,6 +63,45 @@ class StagingTests(unittest.TestCase):
                     self.assertFalse(f.with_suffix(".rknn.json").exists())
                     self.assertTrue((litert/f"katago_10b_{n}x{n}.json").exists())
 
+    def test_corrupt_first_download_retries_and_never_caches_bad_model(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td)
+            pins,data=self._models()
+            seen={11:0,15:0}
+            def fetch(url):
+                n=11 if "11x11" in url else 15
+                if url.endswith(".json"):
+                    return io.BytesIO(data[n][1])
+                seen[n]+=1
+                if n==11 and seen[n]==1:
+                    return io.BytesIO(b"corrupted download from proxy")
+                return io.BytesIO(data[n][0])
+            with mock.patch.object(stage,"PINS",pins):
+                stage.stage(True,required=True,root=root,fetch=fetch)
+                self.assertEqual(seen,{11:2,15:1})
+                for n in stage.SIZES:
+                    directory=root/"build/rk3588_10b/releases"/str(n)
+                    binary=directory/f"katago_10b_{n}x{n}.rknn"
+                    manifest=directory/f"katago_10b_{n}x{n}.rknn.json"
+                    self.assertTrue(stage.verify(n,binary,manifest))
+                    self.assertFalse(list(directory.glob("*.download")))
+                self.assertFalse(any(root.rglob("*corrupted*")))
+
+    def test_invalid_download_explains_size_hash_and_never_uses_unverified_assets(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td)
+            pins,data=self._models()
+            def fetch(url):
+                n=11 if "11x11" in url else 15
+                return io.BytesIO(data[n][1] if url.endswith(".json") else b"not a valid RKNN")
+            with mock.patch.object(stage,"PINS",pins):
+                with self.assertRaisesRegex(RuntimeError,"actualBytes=16"):
+                    stage.stage(True,required=True,root=root,fetch=fetch)
+                target=root/"app/build/generated/rk3588HumanAssets/engine/katago_10b_11x11.rknn"
+                self.assertFalse(target.exists())
+                self.assertFalse((root/"build/rk3588_10b/releases/11/katago_10b_11x11.rknn").exists())
+                self.assertFalse(list((root/"build/rk3588_10b/releases/11").glob("*.download")))
+
     def test_bad_sha_or_shape_cannot_pass(self):
         with tempfile.TemporaryDirectory() as td:
             root=Path(td)
