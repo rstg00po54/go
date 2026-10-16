@@ -148,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
         if (NpuHardware.current() == NpuHardware.Vendor.MEDIATEK)
             return KataGoEngine.supportsMediaTekGame(this, size);
         if (!KataGoEngine.supportsRknnHardware()) return false;
-        if (size != 9 && size != 13 && size != 19) return false;
+        if (size != 9 && size != 11 && size != 13 && size != 15 && size != 19) return false;
         String asset = "engine/katago_10b_" + size + "x" + size + ".rknn";
         try (InputStream in = getAssets().open(asset)) { return in.read() != -1; }
         catch (java.io.IOException e) { return false; }
@@ -1663,7 +1663,7 @@ public class MainActivity extends AppCompatActivity {
             int selectedCondition = conditionSpinner.getSelectedItemPosition();
             KataGoEngine.BackendPreference requested = backendChoices.get(backendSpinner.getSelectedItemPosition());
             if (requested == KataGoEngine.BackendPreference.NPU && !hasBundledNpuModel(requestedBoardSize)) {
-                Toast.makeText(this, "NPU 仅支持已打包 LiteRT 模型的棋盘尺寸；当前 " + requestedBoardSize
+                Toast.makeText(this, "NPU 未找到对应尺寸的模型或运行库；当前 " + requestedBoardSize
                         + " 路请使用 CPU/GPU", Toast.LENGTH_LONG).show();
                 return;
             }
