@@ -21,6 +21,9 @@
 #if defined(USE_MEDIATEK_BACKEND)
 #include "neuralnet/mediatekbackend.h"
 #endif
+#if defined(USE_RKNN_BACKEND)
+#include "neuralnet/humanrknnbackend.h"
+#endif
 
 #if defined(USE_RKNN_BACKEND)
 #define KATAGO_SESSION_JNI(name) Java_com_badukai_engine_KataGoNpuNative_##name
@@ -272,6 +275,13 @@ KATAGO_SESSION_JNI(nativeCreateSession)(JNIEnv* env, jclass, jstring model, jstr
         return 0;
     }
 }
+
+#if defined(USE_RKNN_BACKEND)
+extern "C" JNIEXPORT jboolean JNICALL
+KATAGO_SESSION_JNI(nativeIsHumanRknnActive)(JNIEnv*, jclass, jlong handle) {
+    return lookup(handle) && isKataGoHumanRknnActive() ? JNI_TRUE : JNI_FALSE;
+}
+#endif
 
 extern "C" JNIEXPORT jboolean JNICALL
 KATAGO_SESSION_JNI(nativeSendCommand)(JNIEnv* env, jclass, jlong handle, jstring command) {
