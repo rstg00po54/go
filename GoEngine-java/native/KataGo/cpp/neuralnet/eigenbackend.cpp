@@ -13,6 +13,10 @@
 #ifdef USE_RKNN_BACKEND
 #include "rknnbackend.h"
 #include "humanrknnbackend.h"
+#include <android/log.h>
+#include <array>
+#include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #endif
 #ifdef USE_MEDIATEK_BACKEND
