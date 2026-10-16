@@ -51,6 +51,11 @@ public class KataGoEngine {
     private static final String HUMAN_MODEL_RAW_ASSET = "engine/" + HUMAN_MODEL_RAW_NAME;
     private static final long HUMAN_MODEL_RAW_BYTES = 107185997L;
     private static final String HUMAN_MODEL_RAW_SHA256 = "c0b100bab7afd20afdf6d73f483464e0e9188be5479ee1c2ffc6b1c0a528509c";
+    // Already validated on RK3588: original Human SL b18 9x9 FP16 RKNN.
+    // APK staging is pinned to this exact release digest.
+    private static final String HUMAN_RKNN_9_ASSET = "engine/katago_human_9x9.rknn";
+    private static final long HUMAN_RKNN_9_BYTES = 59069801L;
+    private static final String HUMAN_RKNN_9_SHA256 = "78bee9b2561c4ba14024c1428d750e4a4cec3206011290b6b6b1d7b1e95947c7";
 
     public interface ModelProgress {
         void onProgress(long downloaded, long total);
@@ -157,7 +162,9 @@ public class KataGoEngine {
         return mediaTekSession != null ? (humanSLRunning
                 ? (mediaTekSession.usesHumanLiteRt() ? "NPU/MediaTek LiteRT + Human SL NPU"
                         : "NPU/MediaTek LiteRT + CPU Human SL")
-                : "NPU/MediaTek LiteRT JNI") : npuSession != null ? (humanSLRunning ? "NPU 10b + CPU Human SL" : "NPU/RKNN JNI") : gpuSession != null ? "GPU/OpenCL JNI" : jniSession != null ? "CPU/Eigen JNI" : "PIE/ProcessBuilder";
+                : "NPU/MediaTek LiteRT JNI") : npuSession != null ? (humanSLRunning
+                ? (npuSession.usesHumanRknn() ? "NPU 10b + Human b18 NPU" : "NPU 10b + CPU Human SL")
+                : "NPU/RKNN JNI") : gpuSession != null ? "GPU/OpenCL JNI" : jniSession != null ? "CPU/Eigen JNI" : "PIE/ProcessBuilder";
     }
 
     /**
@@ -372,26 +379,36 @@ public class KataGoEngine {
             if (useRknn) {
                 try {
                     phaseNs = System.nanoTime();
-                    // Manual, per-install opt-in for the original b18 9x9 RKNN.
-                    // Never bundle or activate the experimental 59 MB graph
-                    // automatically, and retain Human CPU on all other boards.
+                    // The validated original Human b18 9x9 model is now included
+                    // automatically in RK3588 NPU APKs, with no manual test flag.
+                    // 10b and all non-9x9 boards continue through their old paths.
                     File experimentalHumanRknn = null;
                     boolean verifyHumanNpuAgainstCpu = false;
                     if (useHumanSL && startupBoardSize == 9) {
-                        File enabled = new File(engineDir, "enable_human_rknn_9x9.flag");
                         File candidate = new File(engineDir, "katago_human_9x9.rknn");
-                        if (enabled.isFile()) {
-                            if (candidate.isFile() && candidate.length() > 1024 * 1024) {
-                                experimentalHumanRknn = candidate;
-                                // Explicit timing-only mode skips the first four CPU
-                                // reference passes. By default parity stays enabled.
-                                verifyHumanNpuAgainstCpu = !new File(engineDir,
-                                        "human_rknn_timing_only.flag").isFile();
-                                Log.i(TAG, "HUMAN_RKNN_EXPERIMENT_REQUESTED board=9 compareCpu="
-                                        + verifyHumanNpuAgainstCpu + " model=" + candidate);
-                            } else {
-                                Log.w(TAG, "HUMAN_RKNN_NOT_STAGED: keeping Human CPU");
+                        if (hasAsset(HUMAN_RKNN_9_ASSET)) {
+                            try {
+                                copyAssetToFile(HUMAN_RKNN_9_ASSET, candidate);
+                            } catch (IOException copyError) {
+                                // Do not break the known-good 10b NPU + Human CPU
+                                // when a Human RKNN asset cannot be staged.
+                                Log.e(TAG, "HUMAN_RKNN_ASSET_COPY_FAILED: using CPU Human", copyError);
                             }
+                        }
+                        if (isTrustedHumanRknnModel(candidate)) {
+                            experimentalHumanRknn = candidate;
+                            // Old test script still opts into 4 CPU/NPU parity checks.
+                            // Normal gameplay uses NPU directly, without extra CPU work.
+                            verifyHumanNpuAgainstCpu =
+                                    new File(engineDir, "enable_human_rknn_9x9.flag").isFile()
+                                    && !new File(engineDir, "human_rknn_timing_only.flag").isFile();
+                            Log.i(TAG, "HUMAN_RKNN_EXPERIMENT_REQUESTED board=9 compareCpu="
+                                    + verifyHumanNpuAgainstCpu + " model=" + candidate);
+                            Log.i(TAG, "HUMAN_RKNN_AUTO_ENABLED board=9 sha256="
+                                    + HUMAN_RKNN_9_SHA256);
+                        } else {
+                            Log.w(TAG, "HUMAN_RKNN_NOT_STAGED: keeping Human CPU; "
+                                    + "10b NPU remains enabled");
                         }
                     }
                     npuSession = KataGoNpuNative.createSession(modelFile, configFile, humanFile,
@@ -851,6 +868,25 @@ public class KataGoEngine {
             return expected.equals(hex.toString());
         } catch (NoSuchAlgorithmException e) {
             throw new IOException("SHA-256 unavailable", e);
+        }
+    }
+
+    /** Only activate the exact RK3588-validated Human RKNN graph, never a
+     * partial download, renamed 10b graph, or unverified test model.
+     */
+    private boolean isTrustedHumanRknnModel(File file) {
+        if (!file.isFile() || file.length() != HUMAN_RKNN_9_BYTES) return false;
+        try (FileInputStream input = new FileInputStream(file)) {
+            MessageDigest hash = MessageDigest.getInstance("SHA-256");
+            byte[] buffer = new byte[65536];
+            int bytes;
+            while ((bytes = input.read(buffer)) != -1) if (bytes > 0) hash.update(buffer, 0, bytes);
+            StringBuilder text = new StringBuilder(64);
+            for (byte value : hash.digest()) text.append(String.format(Locale.US, "%02x", value & 0xff));
+            return HUMAN_RKNN_9_SHA256.equals(text.toString());
+        } catch (IOException | NoSuchAlgorithmException error) {
+            Log.w(TAG, "Cannot verify Human b18 RKNN SHA-256", error);
+            return false;
         }
     }
 
