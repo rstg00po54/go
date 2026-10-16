@@ -17,7 +17,10 @@ import urllib.request
 ROOT = Path(__file__).resolve().parents[1]
 SIZES = (11,15)
 # Immutable model SHA-256, byte count, filled after successful GitHub build.
-PINS = {}
+PINS = {
+    11: ("fea8c70b6dd520482b22cc4d5140b616ca7157ab61c44c1b512fdab80e4398d6", 6767177),
+    15: ("071099d4fc7b72e2433e38eaf21dc43956adb8bd2b1e625fda3e2b41a5910750", 6770057),
+}
 
 def verify(n, binary, manifest):
     if n not in PINS or not binary.is_file() or not manifest.is_file():
