@@ -110,6 +110,31 @@ class NpuLogTests(unittest.TestCase):
         compare_enabled = injected.replace("compareCpu=false", "compareCpu=true")
         self.assertEqual(smoke.parse_log(compare_enabled, "unique", (9,), True, True)["status"], "FAIL")
 
+    def test_human_11_15_requires_real_npu_and_native_parity(self):
+        sizes=(11,15)
+        raw=fixture(sizes=sizes)
+        for index,size in enumerate(sizes):
+            lines=[
+                "I/KataGoHumanRKNN( 100): HUMAN_RKNN_READY board=%d inputs=4 outputs=5 scale8Compensation=8" % size,
+                "I/KataGoHumanRKNN( 100): HUMAN_RKNN_INFER_TIMING board=%d count=1 inputMs=0.3 runMs=40.0 outputMs=0.4 totalMs=40.7 avgMs=40.7" % size
+            ]
+            for head in ("policyPass","policy","value","score","ownership"):
+                lines.append(
+                    "I/KataGoHumanRKNN( 100): HUMAN_RKNN_NATIVE_PARITY "
+                    "board=%d case=0 head=%s maxAbs=0.002 meanAbs=0.001 bad=0" % (size,head))
+            anchor="I/NpuSmoke( 100): STEP_PASS id=unique index=%d board=%d"%(index,size)
+            raw=raw.replace(anchor,"\n".join(lines)+"\n"+anchor,1)
+        result=smoke.parse_log(raw,"unique",sizes,True)
+        self.assertEqual(result["status"],"PASS",result["errors"])
+        for size in sizes:
+            missing=raw.replace("HUMAN_RKNN_READY board=%d"%size,
+                                "HUMAN_RKNN_READY board=9",1)
+            self.assertEqual(smoke.parse_log(missing,"unique",sizes,True)["status"],"FAIL")
+        fallback=raw.replace("I/NpuSmoke( 100): STEP_PASS id=unique index=1",
+                             "E/KataGoHumanRKNN( 100): HUMAN_RKNN_CPU_FALLBACK reason=native_parity_mismatch\n"
+                             "I/NpuSmoke( 100): STEP_PASS id=unique index=1",1)
+        self.assertEqual(smoke.parse_log(fallback,"unique",sizes,True)["status"],"FAIL")
+
     def test_thirteen_receiving_nine_model_fails(self):
         report = smoke.parse_log(fixture(bad_index=1, bad_mode="wrong-model"), "unique", (9, 13, 19, 9))
         self.assertEqual(report["status"], "FAIL")
@@ -152,7 +177,8 @@ class NpuLogTests(unittest.TestCase):
 
     def test_command_line_size_validation(self):
         self.assertEqual(smoke.sizes_arg("9,13,19,9"), (9, 13, 19, 9))
-        for raw in ("", "9,11", "9,9,", ",".join(["9"] * 13)):
+        self.assertEqual(smoke.sizes_arg("9,11,13,15,19"), (9, 11, 13, 15, 19))
+        for raw in ("", "9,17", "9,9,", ",".join(["9"] * 13)):
             with self.assertRaises(Exception):
                 smoke.sizes_arg(raw)
 
