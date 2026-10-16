@@ -91,6 +91,7 @@ def run(serial, log_path):
 def main(argv=None):
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument("serial",nargs="?",default=os.getenv("ANDROID_SERIAL","8719e18a71a2a66c"))
+    p.add_argument("--individual",action="store_true",help="对比 NPU 单独核心 0、1、2（不做三核联合测试）")
     p.add_argument("--no-upload",action="store_true",help="只保留本地，不公开上传")
     p.add_argument("--upload-existing",type=Path,help="仅上传已有报告，不再跑 NPU")
     p.add_argument("--upload-remote",default="auto")
@@ -112,9 +113,11 @@ def main(argv=None):
                         +"_"+uuid4().hex[:8])
     folder.mkdir(parents=True,exist_ok=False)
     started=datetime.now(timezone.utc).isoformat()
-    print("Human b18 单核/三核性能报告：",folder,flush=True)
+    print("Human b18 NPU 性能报告：",folder,flush=True)
     log_path=folder/"human_cores.txt"
     try:
+        if args.individual:
+            os.environ["HUMAN_CORES_MODE"]="individual"
         code=run(args.serial,log_path)
     except (OSError,subprocess.SubprocessError) as exc:
         code=1
@@ -124,21 +127,33 @@ def main(argv=None):
     parsed=parse_output(raw)
     result=parsed["result"] or {}
     modes=parsed["modes"]
+    mode=result.get("mode","multi")
     core3_ok=result.get("cores3Available")=="1"
+    core1_ok=result.get("core1Available")=="1"
+    core2_ok=result.get("core2Available")=="1"
     success=(code==0 and result.get("status")=="PASS"
+             and mode==("individual" if args.individual else "multi")
              and "core0_before" in modes and "core0_after" in modes
              and (not core3_ok or "core012" in modes)
+             and (not core1_ok or "core1" in modes)
+             and (not core2_ok or "core2" in modes)
+             and (mode!="individual" or not core3_ok)
              and all(len(parsed["samples"].get(mode,[]))==info["runs"]
                      for mode,info in modes.items()))
     if code==0 and not success: code=1
     status="PASS" if success else ("INTERRUPTED" if code==130 else "FAIL")
     report={
-        "test":"RK3588 Human b18 9x9 one-core versus three-core NPU benchmark",
+        "test":"RK3588 Human b18 9x9 NPU core scheduling benchmark",
+        "mode":mode,
         "model":"b18c384nbt-humanv0","board":9,
         "syntheticInputsOnly":True,"cpuFallbackAvailable":False,
         "serial":args.serial,"status":status,"exit_code":code,
         "started_utc":started,"finished_utc":datetime.now(timezone.utc).isoformat(),
         "core3Available":core3_ok,
+        "core1Available":core1_ok,
+        "core2Available":core2_ok,
+        "core1MedianRunMs":float(result["core1RunMedianMs"]) if success and core1_ok else None,
+        "core2MedianRunMs":float(result["core2RunMedianMs"]) if success and core2_ok else None,
         "core0MedianRunMs":float(result["core0RunMedianMs"]) if success else None,
         "core3MedianRunMs":float(result["core3RunMedianMs"]) if success and core3_ok else None,
         "core3VsCore0Ratio":float(result["core3VsCore0Ratio"]) if success and core3_ok else None,
@@ -151,7 +166,7 @@ def main(argv=None):
         json.dumps(parsed,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     (folder/"report.json").write_text(
         json.dumps(report,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
-    print("测试结果：",status,"三核支持：",core3_ok,
+    print("测试结果：",status,"模式：",mode,"三核支持：",core3_ok,
           "本地报告：",folder/"report.json",flush=True)
     if not args.no_upload:
         print("上传报告到公开 GitHub ui-test-results 分支（包含设备标识和测试日志）",flush=True)
