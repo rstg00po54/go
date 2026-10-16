@@ -29,6 +29,10 @@ if [[ ! -s "$MODEL" ]]; then
   fi
 fi
 EXPECTED="3692a0726ae4e0f5fd601cdc782cb04fe60e6a0c6f06c2789f6e073d52f61474"
+MANIFEST="${HUMAN_RKNN_MANIFEST:-${MODEL%.rknn}.json}"
+if [[ -s "$MANIFEST" ]]; then
+  EXPECTED="$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); assert d["model"]=="b18c384nbt-humanv0" and d["board"]==9 and d["target"]=="rk3588" and d["quantized"] is False and len(d["inputs"])==4 and len(d["outputs"])==5; print(d["sha256"])' "$MANIFEST")"
+fi
 ACTUAL="$(sha256sum "$MODEL" | awk '{print $1}')"
 if [[ "$ACTUAL" != "$EXPECTED" && "${HUMAN_RKNN_ALLOW_OTHER_MODEL:-0}" != "1" ]]; then
   echo "Model hash mismatch: $ACTUAL (expected $EXPECTED)" >&2
