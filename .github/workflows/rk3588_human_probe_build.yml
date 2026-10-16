@@ -7,6 +7,8 @@ on:
     paths:
       - '.github/workflows/rk3588_human_probe_build.yml'
       - 'GoEngine-java/tools/human_rknn_probe.cpp'
+      - 'GoEngine-java/tools/human_rknn_parity.cpp'
+      - 'GoEngine-java/tools/test_rk3588_human_parity.sh'
       - 'GoEngine-java/tools/test_rk3588_human_rknn.sh'
 
 permissions:
@@ -40,7 +42,13 @@ jobs:
             -std=c++17 -O2 -fPIE -pie -static-libstdc++ -Wl,-z,max-page-size=16384 \
             -Isdk/include GoEngine-java/tools/human_rknn_probe.cpp \
             -Lsdk -lrknnrt -o build/human_rknn_probe
+          "$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang++" \
+            -std=c++17 -O2 -fPIE -pie -static-libstdc++ -Wl,-z,max-page-size=16384 \
+            -Isdk/include GoEngine-java/tools/human_rknn_parity.cpp \
+            -Lsdk -lrknnrt -o build/human_rknn_parity
+          test -s build/human_rknn_parity
           file build/human_rknn_probe
+          file build/human_rknn_parity
           file sdk/librknnrt.so
           test -s build/human_rknn_probe
           "$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf" -d build/human_rknn_probe | tee build/elf_deps.txt
@@ -49,10 +57,17 @@ jobs:
             exit 1
           fi
           echo 'Android probe verified: no libc++_shared.so dependency'
+          "$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf" -d build/human_rknn_parity | tee build/parity_elf_deps.txt
+          if grep -Fq 'libc++_shared.so' build/parity_elf_deps.txt; then
+            echo 'ERROR: Human parity executable unexpectedly needs libc++_shared.so' >&2
+            exit 1
+          fi
       - name: Upload test executable (not a hardware inference result)
         uses: actions/upload-artifact@v4
         with:
           name: human-rknn-probe-android-arm64
-          path: build/human_rknn_probe
+          path: |
+            build/human_rknn_probe
+            build/human_rknn_parity
           if-no-files-found: error
           retention-days: 14
