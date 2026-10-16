@@ -798,10 +798,26 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /** Start/reuse a separate 10b engine. This work never enters the gameplay executor. */
+    /**
+     * NPU games read the active main-engine 10b RKNN position, avoiding the
+     * independent CPU PIE analyser and a potentially unsafe second JNI session.
+     * CPU/GPU games retain their original independent MCTS analysis.
+     */
     private void initializeWinRateAnalysis(GoBoard snapshot, int size, float komi,
                                            List<Point> handicap, StoneColor nextToPlay) {
         final long session = winRateSession, epoch = winRateEpoch;
+        if (engine.usesNpuBackend()) {
+            Log.i(TAG, "WINRATE_BACKEND mode=main_npu_raw_nn board=" + size);
+            // A previous CPU/GPU match may have left the PIE analyser running.
+            winRateExecutor.execute(() -> {
+                if (session == winRateSession) {
+                    winRateSynchronized = false;
+                    winRateEngine.stop();
+                }
+            });
+            queueNpuWinRateEvaluation(snapshot, 0, session, epoch);
+            return;
+        }
         final List<Point> setup = new ArrayList<>(handicap);
         winRateExecutor.execute(() -> {
             if (session != winRateSession) return;
@@ -823,10 +839,42 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /** Only the analysis process sees this command; it may lag behind the real game safely. */
+    /**
+     * Serialize raw NN evaluation with the playing engine's GTP commands, so it
+     * reads the exact position after play/genmove/undo and cannot race the RKNN
+     * context. This replaces CPU MCTS only when an NPU session really is active.
+     */
+    private void queueNpuWinRateEvaluation(GoBoard snapshot, int moveCount, long session, long epoch) {
+        final int size = snapshot.getSize();
+        engineExecutor.execute(() -> {
+            if (session != winRateSession || epoch != winRateEpoch || !engine.usesNpuBackend()) return;
+            long startedMs = SystemClock.elapsedRealtime();
+            KataGoEngine.PositionEvaluation nn = null;
+            try {
+                nn = engine.evaluatePosition(size);
+            } catch (RuntimeException e) {
+                Log.w(TAG, "NPU winrate raw NN evaluation failed", e);
+            }
+            long elapsedMs = SystemClock.elapsedRealtime() - startedMs;
+            KataGoEngine.WinRate rate = nn != null && nn.size == size
+                    && Double.isFinite(nn.blackWin) && Double.isFinite(nn.whiteWin)
+                    && nn.blackWin >= 0.0 && nn.blackWin <= 1.0
+                    && nn.whiteWin >= 0.0 && nn.whiteWin <= 1.0
+                    ? new KataGoEngine.WinRate((float) nn.blackWin, (float) nn.whiteWin) : null;
+            Log.i(TAG, "WINRATE_NPU_RAW_NN board=" + size + " move=" + moveCount
+                    + " elapsedMs=" + elapsedMs + " result=" + (rate == null ? "FAIL" : "OK"));
+            mainHandler.post(() -> recordWinRate(snapshot, moveCount, epoch, rate));
+        });
+    }
+
+    /** Only the independent CPU/GPU analysis process sees this command. */
     private void queueWinRateMove(StoneColor played, String vertex, StoneColor next,
                                   GoBoard snapshot, int moveCount) {
         final long session = winRateSession, epoch = winRateEpoch;
+        if (engine.usesNpuBackend()) {
+            queueNpuWinRateEvaluation(snapshot, moveCount, session, epoch);
+            return;
+        }
         winRateExecutor.execute(() -> {
             if (session != winRateSession || !winRateSynchronized) return;
             if (!winRateEngine.playMove(played.toGtp(), vertex)) {
@@ -841,6 +889,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void queueWinRateUndo(GoBoard snapshot, int moveCount) {
+        // For NPU, wait for the main GTP engine's two undo commands to finish.
+        if (engine.usesNpuBackend()) return;
         final long session = winRateSession, epoch = winRateEpoch;
         winRateExecutor.execute(() -> {
             if (session != winRateSession || !winRateSynchronized) return;
@@ -900,7 +950,7 @@ public class MainActivity extends AppCompatActivity {
         }
         WinRateChartView chart = new WinRateChartView(this);
         chart.setRates(black, white);
-        new AlertDialog.Builder(this).setTitle("胜率曲线 · MCTS搜索评估")
+        new AlertDialog.Builder(this).setTitle("胜率曲线 · " + (engine.usesNpuBackend() ? "NPU单次NN" : "MCTS搜索评估"))
                 .setView(chart).setPositiveButton("关闭", null).show();
     }
 
@@ -1055,6 +1105,8 @@ public class MainActivity extends AppCompatActivity {
             mainHandler.post(() -> {
                 if (snapshot != board) return;
                 evaluating = false;
+                if (second && engine.usesNpuBackend())
+                    queueNpuWinRateEvaluation(snapshot, moveCount, winRateSession, winRateEpoch);
                 render(second ? "已悔棋，轮到你了" : "引擎悔棋同步失败");
             });
         });

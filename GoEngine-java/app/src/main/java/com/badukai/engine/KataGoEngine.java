@@ -139,6 +139,9 @@ public class KataGoEngine {
     /** RKNN graphs bundled here target RK3588/RK3588S, not other Android NPUs. */
     public static boolean supportsRknnHardware() { return NpuHardware.canRunRknn(); }
 
+    /** The actual backend, not merely the requested preference; false after CPU fallback. */
+    public boolean usesNpuBackend() { return npuSession != null || mediaTekSession != null; }
+
     private boolean hasAsset(String path) {
         try (InputStream stream = context.getAssets().open(path)) { return stream.read() >= 0; }
         catch (IOException missing) { return false; }
