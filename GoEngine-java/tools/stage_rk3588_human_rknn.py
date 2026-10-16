@@ -103,8 +103,10 @@ EXTRA_SIZES = (11, 13, 15, 19)
 # Published by workflow 38856959945; compiled/CPU-ONNX-parity-checked only.
 # Device RK3588 numerical and real-game verification remains pending.
 PINS = {
+    11: ("d5e33822766ff86f4e06dcfda416ae791df3af292f157969f59a69713c46df29", 59067505),
     13: ("8029fdfe086e96d99d2ce7fb7340cc6bab49d232c03fb44fddcfc64866eb5b40", 59071345),
     19: ("1bcdddac3687e72705f8cd058bd2c6cd44a1ee221cf30182762598dc0ad43158", 59074417),
+    15: ("73deb6fed2674fdf5061f140d80f994f121390789db534e45843a05a63158705", 59072369),
 }
 
 
