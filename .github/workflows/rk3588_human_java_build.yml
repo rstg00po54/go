@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/rk3588_human_java_build.yml'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoEngine.java'
+      - 'GoEngine-java/app/src/main/java/com/badukai/MainActivity.java'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoNpuNative.java'
       - 'GoEngine-java/app/build.gradle.kts'
       - 'GoEngine-java/tools/stage_rk3588_human_rknn.py'
