@@ -1,3 +1,6 @@
+# 9x9 uses the frozen hardware-verified RKNN Release, not the unstable
+# experimental graph rebuilt by the model-compiler workflow.
+# 13x13 and 19x19 use SHA256-pinned separately compiled original b18 graphs.
 name: RK3588 Human b18 NPU 完整可安装 APK
 
 on:
