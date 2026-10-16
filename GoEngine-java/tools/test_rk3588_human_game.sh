@@ -13,6 +13,7 @@ PKG="com.badukai.java.nputest"
 LOCAL_MODEL="$ROOT/build/rk3588_human/9/katago_human_9x9.rknn"
 REMOTE_MODEL="/data/local/tmp/katago_human_rknn_probe/katago_human_9x9.rknn"
 FLAG="files/engine/enable_human_rknn_9x9.flag"
+TIMING_FLAG="files/engine/human_rknn_timing_only.flag"
 
 echo "[1/5] 编译实验版 RKNN JNI 和 Android APK（复用本地缓存）"
 if [[ "${HUMAN_RKNN_SKIP_BUILD:-0}" != "1" ]]; then
@@ -43,13 +44,23 @@ if [[ "$HOST_SHA" != "$BOARD_SHA" ]]; then
 fi
 echo "HUMAN_RKNN_APP_MODEL_SHA_PASS sha256=$HOST_SHA"
 adb -s "$SERIAL" shell "run-as '$PKG' touch '$FLAG'"
+# Default is safe: four real-game CPU/NPU checks. An explicit timing-only
+# run benchmarks NPU without the added Eigen comparison cost.
+SMOKE_ARGS=()
+if [[ "${HUMAN_RKNN_TIMING_ONLY:-0}" == "1" ]]; then
+  adb -s "$SERIAL" shell "run-as '$PKG' touch '$TIMING_FLAG'"
+  SMOKE_ARGS+=(--human-rknn-timing-only)
+  echo "Human b18 计时模式：关闭额外 CPU 对照，仍保持 NPU 运行错误时回退 CPU"
+else
+  adb -s "$SERIAL" shell "run-as '$PKG' rm -f '$TIMING_FLAG'"
+fi
 cleanup() {
   echo "关闭应用内 Human RKNN 实验标记（模型缓存保留）"
-  adb -s "$SERIAL" shell "run-as '$PKG' rm -f '$FLAG'" >/dev/null 2>&1 || true
+  adb -s "$SERIAL" shell "run-as '$PKG' rm -f '$FLAG' '$TIMING_FLAG'" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
 echo "[5/5] 用真实 KataGo 棋局/原生等级数据进行 Human NPU 测试，并自动上传报告"
 python3 "$ROOT/tools/smoke_android_npu_switch.py" \
-  --serial "$SERIAL" --skip-install --sizes 9 --require-human-rknn "$@"
+  --serial "$SERIAL" --skip-install --sizes 9 --require-human-rknn "${SMOKE_ARGS[@]}" "$@"
 echo "HUMAN_RKNN_REAL_GAME_SMOKE_PASS"
