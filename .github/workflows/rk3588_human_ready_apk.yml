@@ -10,6 +10,9 @@ on:
     paths:
       - '.github/workflows/rk3588_human_ready_apk.yml'
       - 'GoEngine-java/tools/stage_rk3588_human_rknn.py'
+      - 'GoEngine-java/tools/stage_rk3588_10b_11_15.py'
+      - 'GoEngine-java/native/KataGo/cpp/neuralnet/rknnbackend.cpp'
+      - 'GoEngine-java/native/KataGo/cpp/neuralnet/eigenbackend.cpp'
       - 'GoEngine-java/app/build.gradle.kts'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoEngine.java'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoNpuNative.java'
@@ -70,7 +73,7 @@ jobs:
           set -euo pipefail
           cd GoEngine-java
           chmod +x ./gradlew
-          REQUIRE_HUMAN_RKNN_MULTISIZE=1 ALLOW_4K_RKNN_RUNTIME=1 KATAGO_JOBS=2 bash build.sh --apk-only
+          REQUIRE_RKNN_FIVE_SIZES=1 ALLOW_4K_RKNN_RUNTIME=1 KATAGO_JOBS=2 bash build.sh --apk-only
 
       - name: 验证 APK 确实包含 10b NPU、Human b18 NPU 和 JNI
         shell: bash
@@ -82,6 +85,14 @@ jobs:
           assert p.is_file()
           wanted=[
             'assets/engine/katago_human_9x9.rknn',
+            'assets/engine/katago_human_11x11.rknn',
+            'assets/engine/katago_human_11x11.rknn.json',
+            'assets/engine/katago_human_15x15.rknn',
+            'assets/engine/katago_human_15x15.rknn.json',
+            'assets/engine/katago_10b_11x11.rknn',
+            'assets/engine/katago_10b_11x11.rknn.json',
+            'assets/engine/katago_10b_15x15.rknn',
+            'assets/engine/katago_10b_15x15.rknn.json',
             'assets/engine/katago_human_13x13.rknn',
             'assets/engine/katago_human_13x13.rknn.json',
             'assets/engine/katago_human_19x19.rknn',
@@ -106,7 +117,9 @@ jobs:
           assert n==59069801
           assert digest.hexdigest()=='78bee9b2561c4ba14024c1428d750e4a4cec3206011290b6b6b1d7b1e95947c7'
           expected={
+            11:('d5e33822766ff86f4e06dcfda416ae791df3af292f157969f59a69713c46df29',59067505),
             13:('8029fdfe086e96d99d2ce7fb7340cc6bab49d232c03fb44fddcfc64866eb5b40',59071345),
+            15:('73deb6fed2674fdf5061f140d80f994f121390789db534e45843a05a63158705',59072369),
             19:('1bcdddac3687e72705f8cd058bd2c6cd44a1ee221cf30182762598dc0ad43158',59074417),
           }
           import json
@@ -129,7 +142,27 @@ jobs:
               assert count==size and digest.hexdigest()==sha
               print('RK3588_HUMAN_B18_MODEL_VERIFIED board=%d sha=%s bytes=%d'%
                     (board,sha,count))
-          print('RK3588_HUMAN_NPU_APK_VERIFIED size=%d boardSizes=9,13,19'%
+          tens={
+            11:('fea8c70b6dd520482b22cc4d5140b616ca7157ab61c44c1b512fdab80e4398d6',6767177),
+            15:('071099d4fc7b72e2433e38eaf21dc43956adb8bd2b1e625fda3e2b41a5910750',6770057)
+          }
+          with zipfile.ZipFile(p) as z:
+            for board,(sha,size) in tens.items():
+              name='assets/engine/katago_10b_%dx%d'%(board,board)
+              meta=json.loads(z.read(name+'.rknn.json'))
+              assert meta['board']==board and meta['sha256']==sha
+              assert meta['model']=='g170-b10c128-s1141046784-d204142634'
+              assert meta['quantized'] is False
+              digest=hashlib.sha256()
+              n=0
+              with z.open(name+'.rknn') as f:
+                while True:
+                  b=f.read(1024*1024)
+                  if not b: break
+                  digest.update(b); n+=len(b)
+              assert n==size and digest.hexdigest()==sha
+              print('RK3588_10B_MODEL_VERIFIED board=%d sha=%s'%(board,sha))
+          print('RK3588_HUMAN_NPU_APK_VERIFIED size=%d boardSizes=9,11,13,15,19'%
                 p.stat().st_size)
           PY
 
@@ -137,7 +170,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: BadukaiJ-RK3588-10b-Human-b18-9-13-19-NPU-APK
+          name: BadukaiJ-RK3588-10b-Human-b18-9-11-13-15-19-NPU-APK
           path: GoEngine-java/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
