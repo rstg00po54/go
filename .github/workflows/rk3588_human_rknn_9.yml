@@ -48,8 +48,7 @@ jobs:
           chmod +x "$KATAGO_BIN"
           echo "KATAGO_DUMPONNX_BIN=$KATAGO_BIN" >> "$GITHUB_ENV"
           echo "HUMAN_B18_MODEL=$PWD/source_models/b18.bin" >> "$GITHUB_ENV"
-          LIBPATH="$(find "$PWD/kata_dist" -type f -name '*.so*' -printf '%h
-' | sort -u | paste -sd: -)"
+          LIBPATH="$(find "$PWD/kata_dist" -type f -name '*.so*' -printf '%h\n' | sort -u | paste -sd: -)"
           echo "LD_LIBRARY_PATH=$LIBPATH" >> "$GITHUB_ENV"
       - name: Export from original weights and convert to RK3588 without quantization
         shell: bash
