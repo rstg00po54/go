@@ -1,4 +1,4 @@
-// RK3588 RKNPU2 adapter for independently compiled 9x9, 13x13, and 19x19 KataGo 10b graphs.
+// RK3588 RKNPU2 adapter for independently compiled 9x9, 11x11, 13x13, 15x15 and 19x19 KataGo 10b graphs.
 // Full KataGo search, inputs, symmetries, and head postprocessing remain upstream.
 #include "rknnbackend.h"
 #include "rknn_api.h"
@@ -48,8 +48,8 @@ struct KataGoRknnRunner::Impl {
           inputCounts{{static_cast<uint32_t>(SPATIAL * area), GLOBAL, static_cast<uint32_t>(area)}},
           outputCounts{{1, static_cast<uint32_t>(area), 3, 4, static_cast<uint32_t>(area)}},
           mask(static_cast<size_t>(area)) {
-        if(board != 9 && board != 13 && board != 19)
-            throw std::runtime_error("RKNN model requires 9x9, 13x13 or 19x19");
+        if(board != 9 && board != 11 && board != 13 && board != 15 && board != 19)
+            throw std::runtime_error("RKNN model requires a precompiled 9/11/13/15/19 board graph");
         __android_log_print(ANDROID_LOG_INFO, "KataGoRKNN", "RKNN_INIT board=%d path=%s", board, path.c_str());
         std::ifstream file(path, std::ios::binary);
         if(!file) throw std::runtime_error("RKNN model not found: " + path);
