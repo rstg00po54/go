@@ -1,0 +1,54 @@
+name: RK3588 Human b18 原生 JNI 编译验证
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/rk3588-rknn]
+    paths:
+      - '.github/workflows/rk3588_human_native_build.yml'
+      - 'GoEngine-java/native/KataGo/cpp/neuralnet/humanrknnbackend.cpp'
+      - 'GoEngine-java/native/KataGo/cpp/neuralnet/humanrknnbackend.h'
+      - 'GoEngine-java/native/KataGo/cpp/neuralnet/eigenbackend.cpp'
+      - 'GoEngine-java/native/KataGo/cpp/CMakeLists.txt'
+      - 'GoEngine-java/tools/build_katago_from_source.sh'
+
+permissions:
+  contents: read
+
+jobs:
+  android-rk3588:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 C++ 编译依赖
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq cmake ninja-build libeigen3-dev libssl-dev zlib1g-dev
+          ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          test -n "$ROOT" && test -d "$ROOT/ndk"
+          NDK="$(find "$ROOT/ndk" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          test -f "$NDK/build/cmake/android.toolchain.cmake"
+          echo "ANDROID_NDK_HOME=$NDK" >> "$GITHUB_ENV"
+      - name: 编译 RKNN JNI（包括独立 Human b18 Runner）
+        shell: bash
+        run: |
+          set -euo pipefail
+          KATAGO_JOBS=2 bash GoEngine-java/tools/build_katago_from_source.sh rknnjni 2>&1 | tee rk3588_human_native_build.log
+          LIB=GoEngine-java/build/katago_android_arm64_rknnjni/libkatago_npu.so
+          test -s "$LIB"
+          readelf -W --dyn-syms "$LIB" | grep -F 'Java_com_badukai_engine_KataGoNpuNative_nativeBuildStatus'
+          readelf -W -d "$LIB" | grep -F '[librknnrt.so]'
+          echo 'HUMAN_RKNN_NATIVE_BUILD_PASS'
+      - name: 保存编译结果
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rk3588-human-native-jni-experimental
+          path: |
+            rk3588_human_native_build.log
+            GoEngine-java/build/katago_android_arm64_rknnjni/libkatago_npu.so
+          if-no-files-found: warn
+          retention-days: 14
