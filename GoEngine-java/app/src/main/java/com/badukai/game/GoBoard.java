@@ -57,6 +57,31 @@ public class GoBoard {
         return points;
     }
 
+    /**
+     * Create a local training position from setup stones, with zero played moves.
+     * Unlike a real match this is an SGF-style initial position: both colors
+     * may already be present. It never affects the live game's GoBoard.
+     */
+    public static GoBoard forTrainingPosition(int size, List<Point> black, List<Point> white) {
+        if (size != 9 && size != 11 && size != 13 && size != 15 && size != 19)
+            throw new IllegalArgumentException("Unsupported training board size");
+        if (black == null || white == null)
+            throw new IllegalArgumentException("Null setup stones");
+        GoBoard result = new GoBoard(size);
+        Set<Point> seen = new HashSet<>();
+        for (Point point : black) {
+            if (point == null || !result.isInside(point.x, point.y) || !seen.add(point))
+                throw new IllegalArgumentException("Invalid or repeated black setup point");
+            result.placeStone(point, StoneColor.BLACK);
+        }
+        for (Point point : white) {
+            if (point == null || !result.isInside(point.x, point.y) || !seen.add(point))
+                throw new IllegalArgumentException("Invalid or repeated white setup point");
+            result.placeStone(point, StoneColor.WHITE);
+        }
+        return result;
+    }
+
     /** Place initial black handicap stones without treating them as played moves. */
     public boolean placeHandicapStones(List<Point> points) {
         if (points == null || points.size() < 2 || points.size() > 9 || !moveHistory.isEmpty() || !initialHandicapStones.isEmpty()) return false;
