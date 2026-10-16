@@ -1,0 +1,53 @@
+name: RK3588 Human b18 Java JNI 接口编译验证
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/rk3588-rknn]
+    paths:
+      - '.github/workflows/rk3588_human_java_build.yml'
+      - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoEngine.java'
+      - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoNpuNative.java'
+
+permissions:
+  contents: read
+
+jobs:
+  android-java:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: GoEngine-java
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: 安装 Android SDK 35
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          test -n "$SDK"
+          if command -v sdkmanager >/dev/null; then
+            yes | sdkmanager --licenses >/dev/null || true
+            sdkmanager "platforms;android-35" "build-tools;35.0.0"
+          else
+            test -d "$SDK/platforms/android-35"
+          fi
+      - name: 编译 Android Java 接口
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew :app:compileDebugJavaWithJavac --no-daemon --stacktrace 2>&1 | tee ../rk3588_human_java_build.log
+      - name: 保存编译日志
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rk3588-human-java-compile-log
+          path: rk3588_human_java_build.log
+          if-no-files-found: warn
+          retention-days: 7
