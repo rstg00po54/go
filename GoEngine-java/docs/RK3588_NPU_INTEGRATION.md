@@ -294,3 +294,29 @@ bash tools/test_rk3588_human_parity.sh 8719e18a71a2a66c
 **验证边界**：这四组仍是确定性的合成输入；即便通过，也不能证明
 原生 KataGo Human SL 棋力编码正确、真实棋局精度或 Android 正式接入完成。
 下一阶段再使用 KataGo C++ 实际生成的棋局特征和人类等级元数据交叉验证。
+
+### 自动上传精度对比结果
+
+`tools/test_rk3588_human_parity.sh` 现在默认把完整测试结果写到
+`build/rk3588_human/parity_reports/<UTC时间>_<短ID>/`，包含：
+
+- `report.json`：PASS/FAIL、设备标识、四组/五头误差汇总
+- `parity_summary.json`：每个输出头的最大误差、平均误差和超阈值计数
+- `human_parity.txt`：运行时的输出和失败诊断
+
+**成功与失败都尝试自动上传**到公开的 GitHub `ui-test-results` 分支，
+使用本机已有的 Git 凭据，不切换代码分支或修改工作区文件。
+报告公开包含板子 ADB 序列号及未经脱敏的运行日志。
+不会上传原始权重、RKNN 模型或 CPU 参考二进制。
+上传失败只打印提示并保留本地报告，不覆盖真实的精度测试退出码。
+
+```bash
+# 默认运行并上传
+bash tools/test_rk3588_human_parity.sh 8719e18a71a2a66c
+
+# 只在本地保留结果
+bash tools/test_rk3588_human_parity.sh 8719e18a71a2a66c --no-upload
+
+# 日后单独重新上传历史报告，不再跑 NPU
+bash tools/test_rk3588_human_parity.sh --upload-existing build/rk3588_human/parity_reports/<某次测试目录>
+```
