@@ -6,6 +6,10 @@ cd "$PROJECT_DIR"
 
 # Build GPU JNI before Gradle, so the normal build.sh command produces a GPU-capable APK.
 GRADLE_ARGS=()
+if [[ "${REQUIRE_RKNN_FIVE_SIZES:-0}" == 1 ]]; then
+    GRADLE_ARGS+=("-PrequireRknnFiveSizes=true" "-PrequireHumanRknnMultisize=true")
+    echo "Building five-board RK3588 10b + Human b18 NPU APK: 9,11,13,15,19"
+fi
 if [[ "${REQUIRE_HUMAN_RKNN_MULTISIZE:-0}" == 1 ]]; then
     GRADLE_ARGS+=("-PrequireHumanRknnMultisize=true")
     echo "Building full RK3588 Human b18 NPU APK with 9x9/13x13/19x19 verified model assets"
