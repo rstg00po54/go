@@ -27,7 +27,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install 'rknn-toolkit2==2.3.2' 'onnxruntime>=1.17,<2' 'numpy<=1.26.4' 'onnx==1.16.1'
-      - name: Verify ONNX interface required by RKNN\n        run: |\n          python -c "import onnx; print('onnx', onnx.__version__); assert hasattr(onnx, 'mapping')"\n      - name: Fetch original KataGo b18 weights and official ONNX exporter
+      - name: Verify ONNX interface required by RKNN
+        run: |
+          python -c "import onnx; print('onnx', onnx.__version__); assert hasattr(onnx, 'mapping')"
+      - name: Fetch original KataGo b18 weights and official ONNX exporter
         shell: bash
         run: |
           set -euo pipefail
@@ -45,7 +48,8 @@ jobs:
           chmod +x "$KATAGO_BIN"
           echo "KATAGO_DUMPONNX_BIN=$KATAGO_BIN" >> "$GITHUB_ENV"
           echo "HUMAN_B18_MODEL=$PWD/source_models/b18.bin" >> "$GITHUB_ENV"
-          LIBPATH="$(find "$PWD/kata_dist" -type f -name '*.so*' -printf '%h\n' | sort -u | paste -sd: -)"
+          LIBPATH="$(find "$PWD/kata_dist" -type f -name '*.so*' -printf '%h
+' | sort -u | paste -sd: -)"
           echo "LD_LIBRARY_PATH=$LIBPATH" >> "$GITHUB_ENV"
       - name: Export from original weights and convert to RK3588 without quantization
         shell: bash
