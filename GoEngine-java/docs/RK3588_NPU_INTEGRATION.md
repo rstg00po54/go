@@ -225,3 +225,45 @@ The exact Build ID of the crash frame **must match** the local ELF produced by
 rejects it instead of misleadingly reporting unrelated source lines.
 Override the source ELF path with `KATAGO_NPU_ELF=/path/to/libkatago_npu.so`.
 The ELF must contain DWARF; `??:0` indicates missing debug information.
+
+## Experimental original Human SL b18 RKNN on RK3588 (9x9, October 2026)
+
+The original `b18c384nbt-humanv0.bin` (107185997 bytes) is exported with
+KataGo 1.18.1 `dumponnx`, then 120 mathematically equivalent Mish chains are
+rewritten without changing any of the original 504 initializer tensors.
+All five ONNX output heads passed four CPU parity cases across varying Human
+metadata vectors. The RKNN-Toolkit2 2.3.2 float16-weight/float32-I/O build
+now **compiles successfully** on GitHub Actions for **9x9**, with SHA-256
+`3692a0726ae4e0f5fd601cdc782cb04fe60e6a0c6f06c2789f6e073d52f61474`.
+
+- Successful [CI run](https://github.com/rstg00po54/go/actions/runs/38839604816)
+  contains the RKNN artifact, manifest and conversion reports.
+- Experimental [public release](https://github.com/rstg00po54/go/releases/tag/rk3588-human-b18-9x9-experimental-v1)
+  is published by a separate successful workflow run (when available).
+- These files are **not yet verified on the physical RK3588**; the working
+  10b JNI backend continues unchanged and Human SL in the app still uses CPU.
+- 11x11, 13x13, 15x15 and 19x19 original Human b18 RKNN are not built yet.
+
+Board-only probe (does **not** reinstall or modify the existing Android APK):
+
+```bash
+cd /mnt/hgfs/D/code/go/GoEngine-java
+git pull --ff-only
+bash tools/test_rk3588_human_rknn.sh 8719e18a71a2a66c
+```
+
+The script verifies the compiled model's SHA-256, stages Rockchip's Android
+`librknnrt.so` and an NDK-built tiny probe under `/data/local/tmp`, tests the
+four RKNN inputs and five heads with two synthetic metadata conditions,
+checks numeric finiteness, and writes `build/rk3588_human/device_probe/device_smoke.log`.
+If the release is not online yet, it can fetch the successful workflow
+artifact with authenticated `gh` CLI instead. `HUMAN_RKNN_MODEL` allows
+specifying an already downloaded `.rknn` file.
+
+**Important**: Probe `HUMAN_RKNN_SMOKE_PASS` means load and synthetic inference
+only. It does not validate original KataGo rank metadata encoding, CPU/NPU
+five-head numerical parity, policy/ownership channel ordering, search behavior,
+or playing strength. The full Android C++ Human backend must not be enabled
+until those checks have been completed. The exported b18 graph uses
+`scale8Applied=true` and a postprocessing multiplier of 8; that contract
+must be accounted for when integrating the network into KataGo.
