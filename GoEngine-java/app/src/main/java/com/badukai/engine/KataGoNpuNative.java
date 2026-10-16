@@ -3,7 +3,7 @@ package com.badukai.engine;
 import android.util.Log;
 import java.io.File;
 
-/** RK3588 in-process RKNN GTP transport; fixed 19x19 10b. */
+/** RK3588 in-process RKNN GTP transport; 9/13/19 10b and optional 9x9 Human b18. */
 public final class KataGoNpuNative {
     private static final String TAG = "KataGoNpuNative";
     private static boolean loaded;
@@ -68,6 +68,14 @@ public final class KataGoNpuNative {
             return id != 0 && nativeIsSessionAlive(id);
         }
 
+        /** True only when the native Human b18 NPU runner is actually active.
+         * Returns false after automatic fallback to Eigen CPU.
+         */
+        public boolean usesHumanRknn() {
+            long id = handle;
+            return id != 0 && nativeIsHumanRknnActive(id);
+        }
+
         public boolean stopSearch() {
             long id = handle;
             return id != 0 && nativeStopSearch(id);
@@ -99,6 +107,7 @@ public final class KataGoNpuNative {
     private static native boolean nativeSendCommand(long handle, String command);
     private static native String nativeReadOutput(long handle, int timeoutMs);
     private static native boolean nativeIsSessionAlive(long handle);
+    private static native boolean nativeIsHumanRknnActive(long handle);
     private static native boolean nativeStopSearch(long handle);
     private static native void nativeDestroySession(long handle);
 }
