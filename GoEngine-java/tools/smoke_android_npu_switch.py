@@ -61,9 +61,9 @@ def sizes_arg(value):
     try:
         sizes = tuple(int(x) for x in value.split(","))
     except ValueError as exc:
-        raise argparse.ArgumentTypeError("Expected comma-separated 9,13,19") from exc
-    if not 1 <= len(sizes) <= 12 or any(x not in (9, 13, 19) for x in sizes):
-        raise argparse.ArgumentTypeError("Allowed board sizes: 9,13,19; 1-12 steps")
+        raise argparse.ArgumentTypeError("Expected comma-separated 9,11,13,15,19") from exc
+    if not 1 <= len(sizes) <= 12 or any(x not in (9, 11, 13, 15, 19) for x in sizes):
+        raise argparse.ArgumentTypeError("Allowed board sizes: 9,11,13,15,19; 1-12 steps")
     return sizes
 
 
@@ -149,7 +149,7 @@ def parse_log(log, run_id, sizes, require_human_rknn=False, human_rknn_timing_on
                     problems.append("Malformed Human NPU inference timing: " + line.strip()[-250:])
             if not npu_total_ms:
                 problems.append("Missing real Human RKNN inference timing: stale JNI or NPU was not run")
-            if expected not in (9, 13, 19) or not human_ready:
+            if expected not in (9, 11, 13, 15, 19) or not human_ready:
                 problems.append(f"Human b18 RKNN {expected}x{expected} did not initialize")
             elif not any("scale8Compensation=8" in line for line in human_ready):
                 problems.append("Human RKNN JNI is missing scale8 compensation; rebuild and reinstall APK")
@@ -244,7 +244,7 @@ def main(argv=None):
     if args.timeout < 20:
         p.error("Total --timeout must be at least 20 seconds")
     if args.require_human_rknn and (args.no_human_sl or any(size not in (9,13,19) for size in args.sizes)):
-        p.error("--require-human-rknn requires Human SL enabled and only 9x9/13x13/19x19 steps")
+        p.error("--require-human-rknn requires Human SL enabled and only 9x9/11x11/13x13/15x15/19x19 steps")
     if args.human_rknn_timing_only and not args.require_human_rknn:
         p.error("--human-rknn-timing-only requires --require-human-rknn")
     run_id = uuid4().hex[:16]
