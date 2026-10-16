@@ -89,6 +89,9 @@ public class KataGoEngine {
     private volatile KataGoNpuNative.GtpSession npuSession;
     private volatile KataGoMediaTekNative.GtpSession mediaTekSession;
     private volatile boolean mediaTekParityEnabled;
+    // False in normal games. The debug-only RK3588 smoke runner explicitly enables
+    // native Eigen-vs-RKNN head comparison without changing production game speed.
+    private volatile boolean humanRknnParityEnabled;
     private volatile int activeNpuBoardSize = -1;
     public enum BackendPreference { CPU, GPU, NPU }
     private volatile BackendPreference backendPreference = BackendPreference.CPU;
@@ -155,6 +158,9 @@ public class KataGoEngine {
     /** Board size of the RKNN model loaded by the active native GTP session. */
     /** Debug only: compare native Eigen and LiteRT pre-postprocessing output heads. */
     public void setMediaTekParityEnabled(boolean enabled) { mediaTekParityEnabled = enabled; }
+
+    /** Debug smoke only: opt in to native Human b18 CPU/NPU five-head parity. */
+    public void setHumanRknnParityEnabled(boolean enabled) { humanRknnParityEnabled = enabled; }
 
     public int getActiveNpuBoardSize() { return npuSession != null || mediaTekSession != null ? activeNpuBoardSize : -1; }
 
@@ -383,10 +389,10 @@ public class KataGoEngine {
             if (useRknn) {
                 try {
                     phaseNs = System.nanoTime();
-                    // The three size-specific Human SL RKNN graphs are distinct.
-                    // 9x9 is already device-validated; 13/19 require 4 real-board
-                    // native Eigen-vs-RKNN parity checks on first activation.
-                    // All sizes retain the existing 10b NPU + Human CPU fallback.
+                    // Five size-specific Human SL RKNN graphs are independently
+                    // validated. Normal games use NPU only; debug smoke can opt in
+                    // to expensive native Eigen-vs-RKNN comparison for all five heads.
+                    // The existing CPU fallback remains available on an NPU failure.
                     File experimentalHumanRknn = null;
                     boolean verifyHumanNpuAgainstCpu = false;
                     if (useHumanSL && npuSizeSupported) {
@@ -412,9 +418,7 @@ public class KataGoEngine {
                         if (candidate != null &&
                                 isTrustedHumanRknnModel(candidate, manifest, humanBoardSize)) {
                             experimentalHumanRknn = candidate;
-                            verifyHumanNpuAgainstCpu = humanBoardSize != 9
-                                    || (new File(engineDir, "enable_human_rknn_9x9.flag").isFile()
-                                        && !new File(engineDir, "human_rknn_timing_only.flag").isFile());
+                            verifyHumanNpuAgainstCpu = humanRknnParityEnabled;
                             Log.i(TAG, "HUMAN_RKNN_EXPERIMENT_REQUESTED board=" + humanBoardSize
                                     + " compareCpu=" + verifyHumanNpuAgainstCpu
                                     + " model=" + candidate);
