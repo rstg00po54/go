@@ -9,6 +9,9 @@ on:
       - 'GoEngine-java/tools/human_rknn_probe.cpp'
       - 'GoEngine-java/tools/human_rknn_parity.cpp'
       - 'GoEngine-java/tools/test_rk3588_human_parity.sh'
+      - 'GoEngine-java/tools/run_rk3588_human_parity.py'
+      - 'GoEngine-java/tools/test_run_rk3588_human_parity.py'
+      - 'GoEngine-java/tools/upload_referee_test_results.py'
       - 'GoEngine-java/tools/test_rk3588_human_rknn.sh'
 
 permissions:
@@ -20,6 +23,13 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+      - name: 验证 Human b18 精度报告上传与脚本语法
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n GoEngine-java/tools/test_rk3588_human_parity.sh
+          python3 -m py_compile GoEngine-java/tools/run_rk3588_human_parity.py
+          python3 -m unittest discover -s GoEngine-java/tools -p 'test_run_rk3588_human_parity.py' -v
       - name: Install RKNN Android API and find NDK
         shell: bash
         run: |
