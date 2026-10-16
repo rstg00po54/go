@@ -625,3 +625,56 @@ bash tools/test_rk3588_human_multisize.sh 8719e18a71a2a66c
 已经编译好 APK 的情况下，可用
 `HUMAN_MULTISIZE_SKIP_BUILD=1` 避免重复构建 C++。
 **CPU ONNX 图一致、CI 编译成功都不能代替实际 NPU 验证。**
+
+
+## RK3588 11×11 / 15×15 原始 KataGo 10b + Human b18 NPU 补齐（2026-10-16）
+
+不同于只扩展 Human，这次两套模型分别导出和编译，采用 KataGo 原始权重：
+`10b.bin` 为 `g170-b10c128-s1141046784-d204142634`，
+Human `b18c384nbt-humanv0.bin` 保留 192 维 `InputMeta`、
+人类棋力等级 `rank_18k` 到 `rank_1k`、原始五输出头。
+与 9/13/19 一样，RKNN 模型固定棋盘尺寸，不能改名跨尺寸使用。
+
+GitHub Actions [38861681416](https://github.com/rstg00po54/go/actions/runs/38861681416)
+已按棋盘分别编译 10b 和 Human，完成原始 Human ONNX/改写图 CPU
+精度校验和独立 RKNN Manifest/哈希验证；实机 NPU 精度另测。
+
+| 尺寸 | 10b SHA256 | Human SHA256 |
+|---|---|---|
+| 11×11 | `fea8c70b6dd520482b22cc4d5140b616ca7157ab61c44c1b512fdab80e4398d6` | `d5e33822766ff86f4e06dcfda416ae791df3af292f157969f59a69713c46df29` |
+| 15×15 | `071099d4fc7b72e2433e38eaf21dc43956adb8bd2b1e625fda3e2b41a5910750` | `73deb6fed2674fdf5061f140d80f994f121390789db534e45843a05a63158705` |
+
+Release 分别是：
+- `rk3588-dual-human-10b-11x11-experimental-v1`
+- `rk3588-dual-human-10b-15x15-experimental-v1`
+
+打包脚本 `stage_rk3588_human_rknn.py` 和
+`stage_rk3588_10b_11_15.py` 将这些文件下载到 **build/generated**
+目录并按固定 SHA256 验证，保留缓存以供离线重编译。
+RKNN Manifest 命名 `katago_human_11x11.rknn.json`、
+`katago_10b_11x11.rknn.json` 等，不与本地
+`katago_human_11x11.json` / `katago_human_11x11.tflite`
+或 15 路 LiteRT 资源冲突。原始 9/13/19 模型仍保持各自固定 SHA。
+低于要求的模型不应静默显示 NPU PASS，缺失会阻止严格打包。
+
+### 更新本地、重新编译 JNI 与 APK
+
+```bash
+cd /mnt/hgfs/D/code/go/GoEngine-java
+git pull --rebase --autostash origin feature/rk3588-rknn
+KATAGO_JOBS=2 bash tools/build_katago_from_source.sh rknnjni
+REQUIRE_RKNN_FIVE_SIZES=1 ALLOW_4K_RKNN_RUNTIME=1 bash build.sh --apk-only
+```
+
+在 RK3588 Android 4 KB 页面设备测试（无需重复编译）：
+
+```bash
+HUMAN_MULTISIZE_SKIP_BUILD=1 bash tools/test_rk3588_human_11_15.sh 8719e18a71a2a66c
+```
+
+Shell 脚本内部调用 `smoke_android_npu_switch.py`，要求
+11、15 路实际初始化 10b RKNN 和 Human RKNN，真实 GTP 下黑白各一手，
+校验 `rank_12k`、五头原生 CPU/NPU 对照和无回退，公开上传完整 PASS/FAIL
+报告到 `ui-test-results`。模型 CI 编译成功 **不等同于硬件验证完成**。
+
+设备 NPU 仅适用于 4 KB 页运行库；RK3588 测试 APK 不应装在 16 KB 页面设备。
