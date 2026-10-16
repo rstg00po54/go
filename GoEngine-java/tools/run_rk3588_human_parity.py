@@ -94,6 +94,9 @@ def main(argv=None):
                         help="Upload an already saved parity report without running NPU again")
     parser.add_argument("--upload-remote", default="auto", help="Git remote: origin/github/auto")
     args = parser.parse_args(argv)
+    board = int(os.environ.get("HUMAN_RKNN_BOARD_SIZE", "9"))
+    if board not in (9, 13, 19):
+        parser.error("HUMAN_RKNN_BOARD_SIZE must be 9, 13 or 19")
     if args.no_upload and args.upload_existing:
         parser.error("--upload-existing cannot be used with --no-upload")
 
@@ -136,7 +139,7 @@ def main(argv=None):
         exit_code = 1
     report = {
         "test": "RK3588 Human b18 original ONNX CPU versus RKNN NPU parity",
-        "status": status, "serial": args.serial, "board": 9,
+        "status": status, "serial": args.serial, "board": board,
         "model": "b18c384nbt-humanv0", "exit_code": exit_code,
         "started_utc": started,
         "finished_utc": datetime.now(timezone.utc).isoformat(),
