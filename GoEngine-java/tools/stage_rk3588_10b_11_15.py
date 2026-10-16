@@ -77,7 +77,7 @@ def stream_download(url, target, fetch=None):
     elif shutil.which("curl"):
         # curl retries transient VPN/CDN/proxy failures and checks HTTP errors.
         subprocess.run(["curl","--fail","--location","--silent","--show-error",
-                        "--retry","3","--retry-all-errors","--connect-timeout","20",
+                        "--retry","3","--connect-timeout","20",
                         "--max-time","300","--output",str(target),url],check=True)
     else:
         request=urllib.request.Request(url,headers={"User-Agent":"Badukai-RK3588-10b"})
