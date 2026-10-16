@@ -211,11 +211,12 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.homeGameTabButton).setOnClickListener(v -> showNewGameDialog());
         findViewById(R.id.homeTabButton).setOnClickListener(v -> showMainPage());
         View.OnClickListener upcoming = v -> Toast.makeText(this, "功能开发中", Toast.LENGTH_SHORT).show();
-        for (int id : new int[]{R.id.homeTrainingButton,
-                R.id.homeSettingsButton,
-                R.id.homeTrainingTabButton, R.id.homeSettingsTabButton}) {
+        for (int id : new int[]{R.id.homeSettingsButton, R.id.homeSettingsTabButton}) {
             findViewById(id).setOnClickListener(upcoming);
         }
+        // Offline training is isolated from the live KataGo engine and match.
+        findViewById(R.id.homeTrainingButton).setOnClickListener(v -> openTsumego());
+        findViewById(R.id.homeTrainingTabButton).setOnClickListener(v -> openTsumego());
         findViewById(R.id.homeRecordButton).setOnClickListener(v -> openReplay());
         findViewById(R.id.homeRecordTabButton).setOnClickListener(v -> openReplay());
         // Real buttons: spring back on release; normal OnClick listeners still handle navigation.
@@ -1735,6 +1736,11 @@ public class MainActivity extends AppCompatActivity {
     private void openReplay() {
         saveReplaySnapshot(true);
         startActivity(new android.content.Intent(this, ReplayActivity.class));
+    }
+
+    private void openTsumego() {
+        saveReplaySnapshot(true);
+        startActivity(new android.content.Intent(this, TsumegoActivity.class));
     }
 
     private void showMainPage() {
