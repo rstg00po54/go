@@ -1,0 +1,73 @@
+--------- beginning of main
+I/NpuSmoke( 2736): START id=226cdf6116bc4faa sizes=9 humanSL=true
+I/NpuSmoke( 2736): STAGE id=226cdf6116bc4faa phase=human_model_prepare
+I/KataGoEngine( 2736): Human SL model ready: /data/user/0/com.badukai.java.nputest/files/engine/b18c384nbt-humanv0.bin
+I/NpuSmoke( 2736): STAGE id=226cdf6116bc4faa phase=human_model_ready
+I/NpuSmoke( 2736): STEP_BEGIN id=226cdf6116bc4faa index=0 board=9
+I/NpuSmoke( 2736): STAGE id=226cdf6116bc4faa phase=npu_start index=0 board=9
+I/KataGoEngine( 2736): === JAVA KATAGO ENGINE / ANDROID ARM64 ===
+I/KataGoEngine( 2736): STARTUP_TIMING phase=engine_backend_and_paths ms=0.370709
+I/KataGoEngine( 2736): Native GTP defaultBoardSize=9
+I/KataGoEngine( 2736): STARTUP_TIMING phase=engine_prepare_config ms=10.196668
+I/KataGoEngine( 2736): STARTUP_TIMING phase=engine_prepare_model_asset ms=57.909548
+I/KataGoEngine( 2736): Human SL model: /data/user/0/com.badukai.java.nputest/files/engine/b18c384nbt-humanv0.bin size=107185997
+I/KataGoEngine( 2736): STARTUP_TIMING phase=engine_find_human_model ms=0.2135
+I/KataGoEngine( 2736): Model: /data/user/0/com.badukai.java.nputest/files/engine/10b.bin size=12003218
+I/KataGoEngine( 2736): Config: /data/user/0/com.badukai.java.nputest/files/engine/human_gtp.cfg
+I/KataGoEngine( 2736): Backend requested: NPU/RKNN in-process JNI
+I/KataGoEngine( 2736): HUMAN_RKNN_EXPERIMENT_REQUESTED board=9 model=/data/user/0/com.badukai.java.nputest/files/engine/katago_human_9x9.rknn
+I/KataGoEngine( 2736): STARTUP_TIMING phase=engine_npu_native_create ms=3.107709
+I/KataGoEngine( 2736): NPU_MODEL_SELECTED board=9 path=/data/user/0/com.badukai.java.nputest/files/engine/katago_10b_9x9.rknn
+I/KataGoRKNN( 2736): RKNN_INIT board=9 path=/data/user/0/com.badukai.java.nputest/files/engine/katago_10b_9x9.rknn
+I/KataGoRKNN( 2736): RKNN_INPUT board=9 slot=0 name=InputSpatial dims=1x9x9x22 elems=1782 expected=1782 size=3564 fmt=1 type=1
+I/KataGoRKNN( 2736): RKNN_INPUT board=9 slot=1 name=InputGlobal dims=1x1x1x19 elems=19 expected=19 size=38 fmt=1 type=1
+I/KataGoRKNN( 2736): RKNN_INPUT board=9 slot=2 name=InputMask dims=1x9x9x1 elems=81 expected=81 size=162 fmt=1 type=1
+I/KataGoRKNN( 2736): RKNN_READY board=9 model=/data/user/0/com.badukai.java.nputest/files/engine/katago_10b_9x9.rknn
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_INIT board=9 bytes=59069801 path=/data/user/0/com.badukai.java.nputest/files/engine/katago_human_9x9.rknn
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_INPUT key=0 slot=0 name=InputSpatial elems=1782
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_INPUT key=1 slot=1 name=InputGlobal elems=19
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_INPUT key=2 slot=2 name=InputMeta elems=192
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_INPUT key=3 slot=3 name=InputMask elems=81
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_OUTPUT key=0 slot=0 name=OutputPolicyPass elems=2
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_OUTPUT key=1 slot=1 name=OutputPolicy elems=162
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_OUTPUT key=2 slot=2 name=OutputValue elems=3
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_OUTPUT key=3 slot=3 name=OutputScoreValue elems=6
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_OUTPUT key=4 slot=4 name=OutputOwnership elems=81
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_READY board=9 inputs=4 outputs=5 scale8Compensation=8
+I/KataGoEngine( 2736): KataGo GTP ready response: = KataGo
+I/KataGoEngine( 2736): STARTUP_TIMING phase=engine_npu_ready ms=6926.172904
+I/KataGoEngine( 2736): GTP boardsize=9 ok=true elapsedMs=0
+I/KataGoEngine( 2736): Chinese rules verified=true rules={"friendlyPassOk":true,"hasButton":false,"ko":"SIMPLE","scoring":"AREA","suicide":false,"tax":"NONE","whiteHandicapBonus":"N"}
+I/KataGoEngine( 2736): Search limits verified=true requested: maxVisits=32 maxTime=2.000 readback: maxVisits=32 maxTime=2.0
+I/KataGoEngine( 2736): Human SL rank verified=true requested=rank_12k readback=rank_12k
+I/NpuSmoke( 2736): PHASE_TIMING id=226cdf6116bc4faa index=0 board=9 phase=gtp_setup ms=3
+I/NpuSmoke( 2736): STAGE id=226cdf6116bc4faa phase=genmove_black index=0 board=9
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_NATIVE_PARITY board=9 case=0 head=policyPass maxAbs=0.0020780563 meanAbs=0.0018537045 bad=0 worst=1 cpu=-3.7967501 npu=-3.7988281
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_NATIVE_PARITY board=9 case=0 head=policy maxAbs=0.0093784332 meanAbs=0.0033419721 bad=0 worst=14 cpu=-4.2906284 npu=-4.28125
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_NATIVE_PARITY board=9 case=0 head=value maxAbs=0.0016508102 meanAbs=0.0010264715 bad=0 worst=2 cpu=-6.5217867 npu=-6.5234375
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_NATIVE_PARITY board=9 case=0 head=score maxAbs=0.0024967194 meanAbs=0.0011338082 bad=0 worst=5 cpu=-4.3725033 npu=-4.375
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_NATIVE_PARITY board=9 case=0 head=ownership maxAbs=0.001630336 meanAbs=0.00059316694 bad=0 worst=6 cpu=0.073564976 npu=0.075195312
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_NATIVE_PARITY board=9 case=1 head=policyPass maxAbs=0.0020780563 meanAbs=0.0018537045 bad=0 worst=1 cpu=-3.7967501 npu=-3.7988281
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_NATIVE_PARITY board=9 case=1 head=policy maxAbs=0.0093784332 meanAbs=0.0033419721 bad=0 worst=14 cpu=-4.2906284 npu=-4.28125
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_NATIVE_PARITY board=9 case=1 head=value maxAbs=0.0016508102 meanAbs=0.0010264715 bad=0 worst=2 cpu=-6.5217867 npu=-6.5234375
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_NATIVE_PARITY board=9 case=1 head=score maxAbs=0.0024967194 meanAbs=0.0011338082 bad=0 worst=5 cpu=-4.3725033 npu=-4.375
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_NATIVE_PARITY board=9 case=1 head=ownership maxAbs=0.001630336 meanAbs=0.00059316694 bad=0 worst=6 cpu=0.073564976 npu=0.075195312
+I/KataGoEngine( 2736): genmove color=black move=E5 rootVisits=unavailable newPlayouts=unavailable elapsedMs=789 (wall time includes GTP and inference overhead)
+I/NpuSmoke( 2736): STAGE id=226cdf6116bc4faa phase=genmove_white index=0 board=9
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_NATIVE_PARITY board=9 case=2 head=policyPass maxAbs=0.0012726784 meanAbs=0.00096344948 bad=0 worst=1 cpu=-4.3215852 npu=-4.3203125
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_NATIVE_PARITY board=9 case=2 head=policy maxAbs=0.02341938 meanAbs=0.0025326772 bad=0 worst=80 cpu=-12.773419 npu=-12.75
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_NATIVE_PARITY board=9 case=2 head=value maxAbs=0.00330019 meanAbs=0.0019191901 bad=0 worst=0 cpu=3.6490436 npu=3.6523438
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_NATIVE_PARITY board=9 case=2 head=score maxAbs=0.0036554337 meanAbs=0.0014034684 bad=0 worst=5 cpu=-4.3010321 npu=-4.3046875
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_NATIVE_PARITY board=9 case=2 head=ownership maxAbs=0.001843676 meanAbs=0.00060961484 bad=0 worst=61 cpu=-0.033124194 npu=-0.031280518
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_NATIVE_PARITY board=9 case=3 head=policyPass maxAbs=0.0012726784 meanAbs=0.00096344948 bad=0 worst=1 cpu=-4.3215852 npu=-4.3203125
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_NATIVE_PARITY board=9 case=3 head=policy maxAbs=0.02341938 meanAbs=0.0025326772 bad=0 worst=80 cpu=-12.773419 npu=-12.75
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_NATIVE_PARITY board=9 case=3 head=value maxAbs=0.00330019 meanAbs=0.0019191901 bad=0 worst=0 cpu=3.6490436 npu=3.6523438
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_NATIVE_PARITY board=9 case=3 head=score maxAbs=0.0036554337 meanAbs=0.0014034684 bad=0 worst=5 cpu=-4.3010321 npu=-4.3046875
+I/KataGoHumanRKNN( 2736): HUMAN_RKNN_NATIVE_PARITY board=9 case=3 head=ownership maxAbs=0.001843676 meanAbs=0.00060961484 bad=0 worst=61 cpu=-0.033124194 npu=-0.031280518
+I/KataGoEngine( 2736): genmove color=white move=C3 rootVisits=unavailable newPlayouts=unavailable elapsedMs=784 (wall time includes GTP and inference overhead)
+I/NpuSmoke( 2736): PHASE_TIMING id=226cdf6116bc4faa index=0 board=9 phase=genmove_black ms=790
+I/NpuSmoke( 2736): PHASE_TIMING id=226cdf6116bc4faa index=0 board=9 phase=genmove_white ms=784
+I/NpuSmoke( 2736): STEP_PASS id=226cdf6116bc4faa index=0 board=9 active=9 startupMs=6926 setupMs=3 black=E5 blackMs=790 white=C3 whiteMs=784
+I/NpuSmoke( 2736): PASS id=226cdf6116bc4faa steps=1 sizes=9
+I/KataGoEngine( 2736): NPU/RKNN JNI session stopped
+I/KataGoEngine( 2736): KataGo stopped

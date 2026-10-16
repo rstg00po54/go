@@ -1,0 +1,30 @@
+{
+  "test": "RK3588 NPU multi-board smoke",
+  "run_id": "226cdf6116bc4faa",
+  "sizes": [
+    9
+  ],
+  "human_sl": true,
+  "require_human_rknn": true,
+  "status": "PASS",
+  "steps": [
+    {
+      "index": 0,
+      "board": 9,
+      "status": "PASS",
+      "npu_initialized": true,
+      "npu_ready": true,
+      "model": "katago_10b_9x9.rknn",
+      "errors": [],
+      "startupMs": 6926,
+      "blackMs": 790,
+      "whiteMs": 784,
+      "black": "E5",
+      "white": "C3"
+    }
+  ],
+  "errors": [],
+  "started_utc": "2026-10-16T03:28:53.808902+00:00",
+  "serial": "8719e18a71a2a66c",
+  "finished_utc": "2026-10-16T03:29:04.430675+00:00"
+}
