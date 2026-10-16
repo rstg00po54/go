@@ -214,12 +214,12 @@ def main(argv=None):
     p.add_argument("--serial", help="RK3588 ADB serial; required when multiple devices connected")
     p.add_argument("--adb", default=shutil.which("adb"))
     p.add_argument("--apk", type=Path, default=APK)
-    p.add_argument("--sizes", type=sizes_arg, default=DEFAULT_SIZES, help="e.g. 9,13,19,9")
+    p.add_argument("--sizes", type=sizes_arg, default=DEFAULT_SIZES, help="e.g. 9,11,13,15,19")
     p.add_argument("--timeout", type=float, default=420, help="Total test deadline in seconds")
     p.add_argument("--skip-install", action="store_true", help="Test already installed Debug APK")
     p.add_argument("--no-human-sl", action="store_true", help="Test 10b NPU without loading CPU Human SL")
     p.add_argument("--require-human-rknn", action="store_true",
-                   help="Require real Human b18 RKNN on every 9x9 step")
+                   help="Require actual Human b18 RKNN, native 5-head parity and zero CPU fallback on every board")
     p.add_argument("--human-rknn-timing-only", action="store_true",
                    help="Only with --require-human-rknn: verify Human NPU timing without extra CPU parity")
     p.add_argument("--no-upload", action="store_true", help="Keep report locally; no GitHub push")
@@ -243,7 +243,7 @@ def main(argv=None):
         p.error("adb not found")
     if args.timeout < 20:
         p.error("Total --timeout must be at least 20 seconds")
-    if args.require_human_rknn and (args.no_human_sl or any(size not in (9,13,19) for size in args.sizes)):
+    if args.require_human_rknn and (args.no_human_sl or any(size not in (9,11,13,15,19) for size in args.sizes)):
         p.error("--require-human-rknn requires Human SL enabled and only 9x9/11x11/13x13/15x15/19x19 steps")
     if args.human_rknn_timing_only and not args.require_human_rknn:
         p.error("--human-rknn-timing-only requires --require-human-rknn")
