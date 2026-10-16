@@ -103,7 +103,7 @@ struct Probe {
         std::cout << "HUMAN_RKNN_READY board=9 inputs=4 outputs=5\n";
     }
 
-    std::array<std::vector<float>,OUTPUT_COUNT> infer(int rankFeature, bool preserveMetadata=false, bool quiet=false) {
+    std::array<std::vector<float>,OUTPUT_COUNT> infer(int rankFeature, bool preserveMetadata=false, bool quiet=false, std::array<double,3>* phases=nullptr) {
         // In parity mode, all four inputs come directly from the original
         // ONNX CPU fixture. Do not overwrite its 192-dimensional metadata.
         if(!preserveMetadata) {
@@ -124,7 +124,9 @@ struct Probe {
         }
         const auto start=std::chrono::steady_clock::now();
         check(rknn_inputs_set(runtime.ctx, INPUT_COUNT, ins.data()), "rknn_inputs_set");
+        const auto afterInput=std::chrono::steady_clock::now();
         check(rknn_run(runtime.ctx, nullptr), "rknn_run");
+        const auto afterRun=std::chrono::steady_clock::now();
         std::array<rknn_output, OUTPUT_COUNT> outs{};
         for(int i=0;i<OUTPUT_COUNT;i++) {
             outs[i].index=uint32_t(i);
@@ -150,8 +152,15 @@ struct Probe {
         }
         check(rknn_outputs_release(runtime.ctx, OUTPUT_COUNT, outs.data()),
               "rknn_outputs_release");
+        const auto afterOutput=std::chrono::steady_clock::now();
+        if(phases) {
+            const auto ms=[](auto a,auto b) {
+                return std::chrono::duration<double,std::milli>(b-a).count();
+            };
+            *phases={{ms(start,afterInput),ms(afterInput,afterRun),ms(afterRun,afterOutput)}};
+        }
         auto elapsed=std::chrono::duration_cast<std::chrono::microseconds>(
-            std::chrono::steady_clock::now()-start).count();
+            afterOutput-start).count();
         if(!quiet) std::cout << "HUMAN_INFER_OK metaIndex=" << rankFeature
                   << " totalMs=" << std::fixed << std::setprecision(3)
                   << elapsed/1000.0 << "\n";
