@@ -1,0 +1,36 @@
+{
+  "test": "RK3588 NPU multi-board smoke",
+  "run_id": "1ecfdcad6e0b4bd2",
+  "sizes": [
+    9
+  ],
+  "human_sl": true,
+  "require_human_rknn": true,
+  "human_rknn_timing_only": true,
+  "status": "PASS",
+  "steps": [
+    {
+      "index": 0,
+      "board": 9,
+      "status": "PASS",
+      "npu_initialized": true,
+      "npu_ready": true,
+      "model": "katago_10b_9x9.rknn",
+      "errors": [],
+      "human_npu_timing_samples": 4,
+      "human_npu_total_median_ms": 50.187,
+      "human_npu_run_median_ms": 49.462,
+      "human_npu_total_min_ms": 30.927,
+      "human_npu_total_max_ms": 57.963,
+      "startupMs": 2953,
+      "blackMs": 206,
+      "whiteMs": 243,
+      "black": "F6",
+      "white": "F7"
+    }
+  ],
+  "errors": [],
+  "started_utc": "2026-10-16T03:35:58.126314+00:00",
+  "serial": "8719e18a71a2a66c",
+  "finished_utc": "2026-10-16T03:36:02.545883+00:00"
+}
