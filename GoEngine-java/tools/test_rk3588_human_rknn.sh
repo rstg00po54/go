@@ -16,7 +16,9 @@ SDK="$ROOT/build/rknn_sdk"
 mkdir -p "$WORK" "$(dirname "$MODEL")"
 
 if [[ ! -s "$MODEL" ]]; then
-  URL="https://github.com/rstg00po54/go/releases/download/rk3588-human-b18-${SIZE}x${SIZE}-experimental-v1/katago_human_${SIZE}x${SIZE}.rknn"
+  TAG="rk3588-human-b18-${SIZE}x${SIZE}-experimental-v1"
+  [[ "$SIZE" != 9 ]] || TAG=rk3588-human-b18-9x9-device-verified-v1
+  URL="https://github.com/rstg00po54/go/releases/download/$TAG/katago_human_${SIZE}x${SIZE}.rknn"
   if command -v curl >/dev/null 2>&1 && curl -fL --retry 2 --connect-timeout 15 -o "$MODEL.tmp" "$URL" && \
      curl -fL --retry 2 --connect-timeout 15 -o "$MANIFEST.tmp" "${URL%.rknn}.json"; then
     mv "$MANIFEST.tmp" "$MANIFEST"
