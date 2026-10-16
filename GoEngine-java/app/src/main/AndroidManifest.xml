@@ -33,6 +33,7 @@
             android:theme="@android:style/Theme.Material.NoActionBar" />
 
         <activity android:name=".ReplayActivity" android:exported="false" />
+        <activity android:name=".TsumegoActivity" android:exported="false" />
 
         <activity
             android:name=".MainActivity"
