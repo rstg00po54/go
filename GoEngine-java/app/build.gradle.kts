@@ -94,6 +94,9 @@ android {
 
     // Package the checked-in green home artwork from docs automatically.
     sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/homeAssets"))
+    // RK3588 NPU builds contain the validated original Human b18 9x9 model.
+    // The model comes from a pinned Release, never from git or a test flag.
+    sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/rk3588HumanAssets"))
 
     // Android 10+ does not allow executing binaries extracted under writable filesDir.
     // Package katago as libkatago_exec.so and extract native libs to nativeLibraryDir.
@@ -335,6 +338,19 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
         }
         println("KataGo native libraries ready in: ${abiDir.absolutePath}")
     }
+}
+
+// Stage the release-verified Human b18 9x9 model only for RKNN APKs.
+// Runs even when disabled to remove a stale asset after switching APK targets.
+val stageRk3588HumanRknn = tasks.register<Exec>("stageRk3588HumanRknn") {
+    group = "build"
+    description = "SHA256-verify and bundle the Human b18 9x9 RKNN for RK3588 NPU builds"
+    workingDir(rootProject.projectDir)
+    commandLine("python3", "tools/stage_rk3588_human_rknn.py",
+        if (enableKataGoNpuJni) "--enabled" else "--disabled")
+}
+tasks.configureEach {
+    if (name.startsWith("merge") && name.endsWith("Assets")) dependsOn(stageRk3588HumanRknn)
 }
 
 // Probe-only vivo builds must never silently omit the six KataGo LiteRT
