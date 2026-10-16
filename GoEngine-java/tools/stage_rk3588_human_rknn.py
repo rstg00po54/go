@@ -19,7 +19,7 @@ MODEL = "katago_human_9x9.rknn"
 CACHE = ROOT / "build/rk3588_human/9" / MODEL
 OUTPUT = ROOT / "app/build/generated/rk3588HumanAssets/engine" / MODEL
 RELEASE = ("https://github.com/rstg00po54/go/releases/download/"
-           "rk3588-human-b18-9x9-experimental-v1/" + MODEL)
+           "rk3588-human-b18-9x9-device-verified-v1/" + MODEL)
 # Exact SHA-256 and byte length of the published and RK3588-validated release.
 EXPECTED_SHA256 = "78bee9b2561c4ba14024c1428d750e4a4cec3206011290b6b6b1d7b1e95947c7"
 EXPECTED_SIZE = 59069801
