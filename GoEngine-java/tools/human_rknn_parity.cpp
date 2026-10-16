@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
         if(std::memcmp(magic, "B18REF01", 8) != 0)
             throw std::runtime_error("Invalid CPU fixture magic");
         uint32_t size = readU32(reference), cases = readU32(reference);
-        if((size != 9 && size != 13 && size != 19) || cases != 4)
+        if((size != 9 && size != 11 && size != 13 && size != 15 && size != 19) || cases != 4)
             throw std::runtime_error("Incorrect reference board/case count");
         std::cout << "HUMAN_CPU_REFERENCE_LOADED board=" << size << " cases=" << cases << "\n";
         Probe probe(argv[1], RKNN_NPU_CORE_0, size);
