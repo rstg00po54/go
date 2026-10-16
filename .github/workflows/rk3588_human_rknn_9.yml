@@ -1,0 +1,67 @@
+name: RK3588 original Human b18 experimental RKNN 9x9
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/rk3588-rknn]
+    paths:
+      - '.github/workflows/rk3588_human_rknn_9.yml'
+      - 'GoEngine-java/tools/build_rk3588_human_rknn.sh'
+      - 'GoEngine-java/tools/convert_human_onnx_to_rknn.py'
+      - 'GoEngine-java/tools/optimize_human_mish_onnx.py'
+      - 'GoEngine-java/tools/check_human_mish_onnx_parity.py'
+
+permissions:
+  contents: read
+
+jobs:
+  export-convert:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: pip
+          cache-dependency-path: 'GoEngine-java/requirements.txt'
+      - name: Install RKNN conversion and numerical reference
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'rknn-toolkit2==2.3.2' 'onnxruntime>=1.17,<2' 'numpy<=1.26.4' 'onnx>=1.16.1'
+      - name: Fetch original KataGo b18 weights and official ONNX exporter
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p source_models kata_dist
+          curl -fL --retry 3 -o source_models/b18.bin.gz \
+            'https://github.com/lightvector/KataGo/releases/download/v1.15.0/b18c384nbt-humanv0.bin.gz'
+          gzip -t source_models/b18.bin.gz
+          gzip -dc source_models/b18.bin.gz > source_models/b18.bin
+          test "$(wc -c < source_models/b18.bin)" -eq 107185997
+          curl -fL --retry 3 -o katago_dist.zip \
+            'https://github.com/lightvector/KataGo/releases/download/v1.18.1/katago-v1.18.1-onnx-openvino-linux-x64.zip'
+          unzip -q katago_dist.zip -d kata_dist
+          KATAGO_BIN="$(find "$PWD/kata_dist" -type f -name katago -print -quit)"
+          test -n "$KATAGO_BIN"
+          chmod +x "$KATAGO_BIN"
+          echo "KATAGO_DUMPONNX_BIN=$KATAGO_BIN" >> "$GITHUB_ENV"
+          echo "HUMAN_B18_MODEL=$PWD/source_models/b18.bin" >> "$GITHUB_ENV"
+          LIBPATH="$(find "$PWD/kata_dist" -type f -name '*.so*' -printf '%h\n' | sort -u | paste -sd: -)"
+          echo "LD_LIBRARY_PATH=$LIBPATH" >> "$GITHUB_ENV"
+      - name: Export from original weights and convert to RK3588 without quantization
+        shell: bash
+        run: |
+          set -o pipefail
+          bash GoEngine-java/tools/build_rk3588_human_rknn.sh 9 2>&1 | tee rknn_build.log
+      - name: Publish compilation logs and experimental RKNN as CI artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rk3588-b18-human-9-experimental
+          path: |
+            rknn_build.log
+            GoEngine-java/build/rk3588_human/9/*.json
+            GoEngine-java/build/rk3588_human/9/*.rknn
+          if-no-files-found: warn
+          retention-days: 14
