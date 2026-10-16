@@ -1809,7 +1809,8 @@ struct ComputeHandle {
     else if(loadedModel.modelDesc.name.find("b18c384nbt-human") == 0) {
       const char* path = std::getenv("KATAGO_RKNN_HUMAN_MODEL");
       if(path && *path) {
-        if(context->nnXLen == 9 && context->nnYLen == 9 &&
+        if(context->nnXLen == context->nnYLen &&
+           (context->nnXLen == 9 || context->nnXLen == 13 || context->nnXLen == 19) &&
            model->numInputChannels == 22 && model->numInputGlobalChannels == 19 &&
            model->numInputMetaChannels == 192 && model->numPolicyChannels == 2 &&
            model->numValueChannels == 3 && model->numScoreValueChannels == 6 &&
