@@ -1,5 +1,6 @@
 // Experimental Human SL b18 RKNN runner, deliberately separate from 10b.
-// Requires explicit opt-in, fixed 9x9 model and four SGF metadata-aware inputs.
+// Original Human SL b18 model with 9/13/19 fixed-shape RKNN graphs.
+// The selected model must match the KataGo board shape and SGF metadata.
 #include "humanrknnbackend.h"
 #include "rknn_api.h"
 #include <android/log.h>
@@ -17,8 +18,6 @@
 
 namespace {
 std::atomic<int> activeHumanRknnRunners{0};
-constexpr int BOARD = 9;
-constexpr int AREA = BOARD*BOARD;
 constexpr int SPATIAL_CHANNELS = 22;
 constexpr int GLOBAL_CHANNELS = 19;
 constexpr int META_CHANNELS = 192;
@@ -36,12 +35,6 @@ const char* const outputNames[OUT] = {
   "OutputPolicyPass", "OutputPolicy", "OutputValue",
   "OutputScoreValue", "OutputOwnership"
 };
-const std::array<uint32_t,IN> inputCounts = {{
-  AREA*SPATIAL_CHANNELS,GLOBAL_CHANNELS,META_CHANNELS,AREA
-}};
-const std::array<uint32_t,OUT> outputCounts = {{
-  2,2*AREA,3,6,AREA
-}};
 void check(int rc, const char* what) {
   if(rc != RKNN_SUCC)
     throw std::runtime_error(std::string("Human RKNN ") + what + " failed rc=" + std::to_string(rc));
@@ -58,14 +51,24 @@ int match(const char* value, const char* const* names, int count) {
 struct KataGoHumanRknnRunner::Impl {
   rknn_context ctx = 0;
   bool available = false;
+  const int board;
+  const int area;
+  const std::array<uint32_t,IN> inputCounts;
+  const std::array<uint32_t,OUT> outputCounts;
   uint64_t inferenceCount = 0;
   double inferenceElapsedMs = 0.0;
   std::array<int,IN> inSlot{{-1,-1,-1,-1}};
   std::array<int,OUT> outSlot{{-1,-1,-1,-1,-1}};
-  std::vector<float> mask = std::vector<float>(AREA,0.0f);
-  explicit Impl(const std::string& path, int boardSize) {
-    if(boardSize != BOARD)
-      throw std::runtime_error("Human b18 RKNN experimental backend only supports 9x9");
+  std::vector<float> mask;
+  explicit Impl(const std::string& path, int boardSize)
+    : board(boardSize), area(boardSize*boardSize),
+      inputCounts{{static_cast<uint32_t>(22*area),19,192,
+                   static_cast<uint32_t>(area)}},
+      outputCounts{{2,static_cast<uint32_t>(2*area),3,6,
+                    static_cast<uint32_t>(area)}},
+      mask(area,0.0f) {
+    if(boardSize != 9 && boardSize != 13 && boardSize != 19)
+      throw std::runtime_error("Human b18 RKNN supports only 9x9, 13x13, 19x19");
     std::ifstream file(path,std::ios::binary);
     if(!file) throw std::runtime_error("Human RKNN model file missing: "+path);
     std::vector<char> model((std::istreambuf_iterator<char>(file)),std::istreambuf_iterator<char>());
@@ -108,7 +111,7 @@ struct KataGoHumanRknnRunner::Impl {
       available=true;
       activeHumanRknnRunners.fetch_add(1, std::memory_order_release);
       __android_log_print(ANDROID_LOG_INFO,"KataGoHumanRKNN",
-        "HUMAN_RKNN_READY board=9 inputs=4 outputs=5 scale8Compensation=8");
+        "HUMAN_RKNN_READY board=%d inputs=4 outputs=5 scale8Compensation=8",board);
     } catch(...) {
       rknn_destroy(ctx);
       ctx=0;
@@ -126,7 +129,7 @@ struct KataGoHumanRknnRunner::Impl {
     if(!available || !spatial || !global || !meta || !pass || !policy ||
        !value || !score || !ownership)
       throw std::runtime_error("Human RKNN inputs/outputs are not initialized");
-    for(int point=0;point<AREA;point++)
+    for(int point=0;point<area;point++)
       mask[point]=spatial[point*SPATIAL_CHANNELS];
     std::array<const float*,IN> sources={{spatial,global,meta,mask.data()}};
     std::array<rknn_input,IN> inputs={};
@@ -177,9 +180,9 @@ struct KataGoHumanRknnRunner::Impl {
       // KataGo Eigen TENSORMAP4 consumes interleaved channels (NHWC).
       // The other heads are scalar vectors or a one-channel board map.
       std::copy(values[0].begin(),values[0].end(),pass);
-      for(int p=0;p<AREA;p++) {
+      for(int p=0;p<area;p++) {
         policy[p*2]=values[1][p];
-        policy[p*2+1]=values[1][AREA+p];
+        policy[p*2+1]=values[1][area+p];
       }
       std::copy(values[2].begin(),values[2].end(),value);
       std::copy(values[3].begin(),values[3].end(),score);
@@ -200,8 +203,8 @@ struct KataGoHumanRknnRunner::Impl {
     // Bound log volume: short warm-up samples and periodic steady-state checks.
     if(inferenceCount<=8 || inferenceCount%32==0) {
       __android_log_print(ANDROID_LOG_INFO,"KataGoHumanRKNN",
-        "HUMAN_RKNN_INFER_TIMING count=%llu inputMs=%.3f runMs=%.3f outputMs=%.3f totalMs=%.3f avgMs=%.3f",
-        (unsigned long long)inferenceCount,elapsed(stamp0,stamp1),
+        "HUMAN_RKNN_INFER_TIMING board=%d count=%llu inputMs=%.3f runMs=%.3f outputMs=%.3f totalMs=%.3f avgMs=%.3f",
+        board,(unsigned long long)inferenceCount,elapsed(stamp0,stamp1),
         elapsed(stamp1,stamp2),elapsed(stamp2,stamp3),
         totalMs,inferenceElapsedMs/static_cast<double>(inferenceCount));
     }
