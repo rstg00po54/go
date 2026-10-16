@@ -164,6 +164,7 @@ public final class TsumegoActivity extends Activity {
         boardView.setOwnership(null);
         boardView.setRecommendations(null, null);
         boardView.setBoard(board);
+        boardView.setTrainingTarget(p.target);
         boardView.setLastMove(null);
         boardView.setInputEnabled(true);
         progress.setText("第 " + (index + 1) + " / " + puzzles.size()
