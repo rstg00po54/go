@@ -1,0 +1,112 @@
+--------- beginning of main
+I/NpuSmoke( 4227): START id=52a885f144f34c2a sizes=11,15 humanSL=true
+I/NpuSmoke( 4227): STAGE id=52a885f144f34c2a phase=human_model_prepare
+I/KataGoEngine( 4227): Human SL model ready: /data/user/0/com.badukai.java.nputest/files/engine/b18c384nbt-humanv0.bin
+I/NpuSmoke( 4227): STAGE id=52a885f144f34c2a phase=human_model_ready
+I/NpuSmoke( 4227): HUMAN_RKNN_PARITY_ENABLED id=52a885f144f34c2a enabled=false
+I/NpuSmoke( 4227): STEP_BEGIN id=52a885f144f34c2a index=0 board=11
+I/NpuSmoke( 4227): STAGE id=52a885f144f34c2a phase=npu_start index=0 board=11
+I/KataGoEngine( 4227): === JAVA KATAGO ENGINE / ANDROID ARM64 ===
+I/KataGoEngine( 4227): STARTUP_TIMING phase=engine_backend_and_paths ms=0.380042
+I/KataGoEngine( 4227): Native GTP defaultBoardSize=11
+I/KataGoEngine( 4227): STARTUP_TIMING phase=engine_prepare_config ms=10.702418
+I/KataGoEngine( 4227): STARTUP_TIMING phase=engine_prepare_model_asset ms=59.002422
+I/KataGoEngine( 4227): Human SL model: /data/user/0/com.badukai.java.nputest/files/engine/b18c384nbt-humanv0.bin size=107185997
+I/KataGoEngine( 4227): STARTUP_TIMING phase=engine_find_human_model ms=0.20825
+I/KataGoEngine( 4227): Model: /data/user/0/com.badukai.java.nputest/files/engine/10b.bin size=12003218
+I/KataGoEngine( 4227): Config: /data/user/0/com.badukai.java.nputest/files/engine/human_gtp.cfg
+I/KataGoEngine( 4227): Backend requested: NPU/RKNN in-process JNI
+I/KataGoEngine( 4227): HUMAN_RKNN_EXPERIMENT_REQUESTED board=11 compareCpu=false model=/data/user/0/com.badukai.java.nputest/files/engine/katago_human_11x11.rknn
+I/KataGoEngine( 4227): HUMAN_RKNN_AUTO_ENABLED board=11 safetyNativeCpuParity=false
+I/KataGoEngine( 4227): STARTUP_TIMING phase=engine_npu_native_create ms=435.733127
+I/KataGoEngine( 4227): NPU_MODEL_SELECTED board=11 path=/data/user/0/com.badukai.java.nputest/files/engine/katago_10b_11x11.rknn
+I/KataGoRKNN( 4227): RKNN_INIT board=11 path=/data/user/0/com.badukai.java.nputest/files/engine/katago_10b_11x11.rknn
+I/KataGoRKNN( 4227): RKNN_INPUT board=11 slot=0 name=InputSpatial dims=1x11x11x22 elems=2662 expected=2662 size=5324 fmt=1 type=1
+I/KataGoRKNN( 4227): RKNN_INPUT board=11 slot=1 name=InputGlobal dims=1x1x1x19 elems=19 expected=19 size=38 fmt=1 type=1
+I/KataGoRKNN( 4227): RKNN_INPUT board=11 slot=2 name=InputMask dims=1x11x11x1 elems=121 expected=121 size=242 fmt=1 type=1
+I/KataGoRKNN( 4227): RKNN_READY board=11 model=/data/user/0/com.badukai.java.nputest/files/engine/katago_10b_11x11.rknn
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_INIT board=11 bytes=59067505 path=/data/user/0/com.badukai.java.nputest/files/engine/katago_human_11x11.rknn
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_INPUT key=0 slot=0 name=InputSpatial elems=2662
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_INPUT key=1 slot=1 name=InputGlobal elems=19
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_INPUT key=2 slot=2 name=InputMeta elems=192
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_INPUT key=3 slot=3 name=InputMask elems=121
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_OUTPUT key=0 slot=0 name=OutputPolicyPass elems=2
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_OUTPUT key=1 slot=1 name=OutputPolicy elems=242
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_OUTPUT key=2 slot=2 name=OutputValue elems=3
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_OUTPUT key=3 slot=3 name=OutputScoreValue elems=6
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_OUTPUT key=4 slot=4 name=OutputOwnership elems=121
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_READY board=11 inputs=4 outputs=5 scale8Compensation=8
+I/KataGoEngine( 4227): KataGo GTP ready response: = KataGo
+I/KataGoEngine( 4227): STARTUP_TIMING phase=engine_npu_ready ms=3855.159804
+I/KataGoEngine( 4227): GTP boardsize=11 ok=true elapsedMs=0
+I/KataGoEngine( 4227): Chinese rules verified=true rules={"friendlyPassOk":true,"hasButton":false,"ko":"SIMPLE","scoring":"AREA","suicide":false,"tax":"NONE","whiteHandicapBonus":"N"}
+I/KataGoEngine( 4227): Search limits verified=true requested: maxVisits=32 maxTime=2.000 readback: maxVisits=32 maxTime=2.0
+I/KataGoEngine( 4227): Human SL rank verified=true requested=rank_12k readback=rank_12k
+I/NpuSmoke( 4227): PHASE_TIMING id=52a885f144f34c2a index=0 board=11 phase=gtp_setup ms=9
+I/NpuSmoke( 4227): STAGE id=52a885f144f34c2a phase=genmove_black index=0 board=11
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_INFER_TIMING board=11 count=1 inputMs=0.571 runMs=48.512 outputMs=0.552 totalMs=49.635 avgMs=49.635
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_INFER_TIMING board=11 count=2 inputMs=0.099 runMs=56.419 outputMs=0.571 totalMs=57.090 avgMs=53.362
+I/KataGoEngine( 4227): genmove color=black move=J8 rootVisits=unavailable newPlayouts=unavailable elapsedMs=254 (wall time includes GTP and inference overhead)
+I/NpuSmoke( 4227): STAGE id=52a885f144f34c2a phase=genmove_white index=0 board=11
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_INFER_TIMING board=11 count=3 inputMs=0.141 runMs=63.270 outputMs=0.559 totalMs=63.970 avgMs=56.898
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_INFER_TIMING board=11 count=4 inputMs=0.267 runMs=63.389 outputMs=0.545 totalMs=64.201 avgMs=58.724
+I/KataGoEngine( 4227): genmove color=white move=D4 rootVisits=unavailable newPlayouts=unavailable elapsedMs=224 (wall time includes GTP and inference overhead)
+I/NpuSmoke( 4227): PHASE_TIMING id=52a885f144f34c2a index=0 board=11 phase=genmove_black ms=254
+I/NpuSmoke( 4227): PHASE_TIMING id=52a885f144f34c2a index=0 board=11 phase=genmove_white ms=224
+I/NpuSmoke( 4227): STEP_PASS id=52a885f144f34c2a index=0 board=11 active=11 startupMs=3855 setupMs=9 black=J8 blackMs=254 white=D4 whiteMs=224
+I/NpuSmoke( 4227): STEP_BEGIN id=52a885f144f34c2a index=1 board=15
+I/NpuSmoke( 4227): STAGE id=52a885f144f34c2a phase=npu_start index=1 board=15
+I/KataGoEngine( 4227): NPU/RKNN JNI session stopped
+I/KataGoEngine( 4227): KataGo stopped
+I/KataGoEngine( 4227): === JAVA KATAGO ENGINE / ANDROID ARM64 ===
+I/KataGoEngine( 4227): STARTUP_TIMING phase=engine_backend_and_paths ms=0.931
+I/KataGoEngine( 4227): Native GTP defaultBoardSize=15
+I/KataGoEngine( 4227): STARTUP_TIMING phase=engine_prepare_config ms=15.534626
+I/KataGoEngine( 4227): Reusing installed model asset: /data/user/0/com.badukai.java.nputest/files/engine/10b.bin
+I/KataGoEngine( 4227): STARTUP_TIMING phase=engine_prepare_model_asset ms=52.86938
+I/KataGoEngine( 4227): Human SL model: /data/user/0/com.badukai.java.nputest/files/engine/b18c384nbt-humanv0.bin size=107185997
+I/KataGoEngine( 4227): STARTUP_TIMING phase=engine_find_human_model ms=0.146125
+I/KataGoEngine( 4227): Model: /data/user/0/com.badukai.java.nputest/files/engine/10b.bin size=12003218
+I/KataGoEngine( 4227): Config: /data/user/0/com.badukai.java.nputest/files/engine/human_gtp.cfg
+I/KataGoEngine( 4227): Backend requested: NPU/RKNN in-process JNI
+I/KataGoEngine( 4227): HUMAN_RKNN_EXPERIMENT_REQUESTED board=15 compareCpu=false model=/data/user/0/com.badukai.java.nputest/files/engine/katago_human_15x15.rknn
+I/KataGoEngine( 4227): HUMAN_RKNN_AUTO_ENABLED board=15 safetyNativeCpuParity=false
+I/KataGoEngine( 4227): STARTUP_TIMING phase=engine_npu_native_create ms=436.22021
+I/KataGoEngine( 4227): NPU_MODEL_SELECTED board=15 path=/data/user/0/com.badukai.java.nputest/files/engine/katago_10b_15x15.rknn
+I/KataGoRKNN( 4227): RKNN_INIT board=15 path=/data/user/0/com.badukai.java.nputest/files/engine/katago_10b_15x15.rknn
+I/KataGoRKNN( 4227): RKNN_INPUT board=15 slot=0 name=InputSpatial dims=1x15x15x22 elems=4950 expected=4950 size=9900 fmt=1 type=1
+I/KataGoRKNN( 4227): RKNN_INPUT board=15 slot=1 name=InputGlobal dims=1x1x1x19 elems=19 expected=19 size=38 fmt=1 type=1
+I/KataGoRKNN( 4227): RKNN_INPUT board=15 slot=2 name=InputMask dims=1x15x15x1 elems=225 expected=225 size=450 fmt=1 type=1
+I/KataGoRKNN( 4227): RKNN_READY board=15 model=/data/user/0/com.badukai.java.nputest/files/engine/katago_10b_15x15.rknn
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_INIT board=15 bytes=59072369 path=/data/user/0/com.badukai.java.nputest/files/engine/katago_human_15x15.rknn
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_INPUT key=0 slot=0 name=InputSpatial elems=4950
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_INPUT key=1 slot=1 name=InputGlobal elems=19
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_INPUT key=2 slot=2 name=InputMeta elems=192
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_INPUT key=3 slot=3 name=InputMask elems=225
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_OUTPUT key=0 slot=0 name=OutputPolicyPass elems=2
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_OUTPUT key=1 slot=1 name=OutputPolicy elems=450
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_OUTPUT key=2 slot=2 name=OutputValue elems=3
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_OUTPUT key=3 slot=3 name=OutputScoreValue elems=6
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_OUTPUT key=4 slot=4 name=OutputOwnership elems=225
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_READY board=15 inputs=4 outputs=5 scale8Compensation=8
+I/KataGoEngine( 4227): KataGo GTP ready response: = KataGo
+I/KataGoEngine( 4227): STARTUP_TIMING phase=engine_npu_ready ms=3392.523966
+I/KataGoEngine( 4227): GTP boardsize=15 ok=true elapsedMs=0
+I/KataGoEngine( 4227): Chinese rules verified=true rules={"friendlyPassOk":true,"hasButton":false,"ko":"SIMPLE","scoring":"AREA","suicide":false,"tax":"NONE","whiteHandicapBonus":"N"}
+I/KataGoEngine( 4227): Search limits verified=true requested: maxVisits=32 maxTime=2.000 readback: maxVisits=32 maxTime=2.0
+I/KataGoEngine( 4227): Human SL rank verified=true requested=rank_12k readback=rank_12k
+I/NpuSmoke( 4227): PHASE_TIMING id=52a885f144f34c2a index=1 board=15 phase=gtp_setup ms=2
+I/NpuSmoke( 4227): STAGE id=52a885f144f34c2a phase=genmove_black index=1 board=15
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_INFER_TIMING board=15 count=1 inputMs=0.764 runMs=72.652 outputMs=0.595 totalMs=74.010 avgMs=74.010
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_INFER_TIMING board=15 count=2 inputMs=0.359 runMs=79.396 outputMs=0.561 totalMs=80.315 avgMs=77.163
+I/KataGoEngine( 4227): genmove color=black move=M12 rootVisits=unavailable newPlayouts=unavailable elapsedMs=352 (wall time includes GTP and inference overhead)
+I/NpuSmoke( 4227): STAGE id=52a885f144f34c2a phase=genmove_white index=1 board=15
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_INFER_TIMING board=15 count=3 inputMs=0.340 runMs=74.421 outputMs=0.609 totalMs=75.370 avgMs=76.565
+I/KataGoHumanRKNN( 4227): HUMAN_RKNN_INFER_TIMING board=15 count=4 inputMs=0.362 runMs=83.794 outputMs=0.611 totalMs=84.766 avgMs=78.615
+I/KataGoEngine( 4227): genmove color=white move=C3 rootVisits=unavailable newPlayouts=unavailable elapsedMs=304 (wall time includes GTP and inference overhead)
+I/NpuSmoke( 4227): PHASE_TIMING id=52a885f144f34c2a index=1 board=15 phase=genmove_black ms=353
+I/NpuSmoke( 4227): PHASE_TIMING id=52a885f144f34c2a index=1 board=15 phase=genmove_white ms=304
+I/NpuSmoke( 4227): STEP_PASS id=52a885f144f34c2a index=1 board=15 active=15 startupMs=3392 setupMs=2 black=M12 blackMs=353 white=C3 whiteMs=304
+I/NpuSmoke( 4227): PASS id=52a885f144f34c2a steps=2 sizes=11,15
+I/KataGoEngine( 4227): NPU/RKNN JNI session stopped
+I/KataGoEngine( 4227): KataGo stopped
