@@ -122,7 +122,7 @@ def parse_log(log, run_id, sizes, require_human_rknn=False, human_rknn_timing_on
             problems.append("Native RKNN fallback or mismatched board: " + fallback[-1].strip())
         if require_human_rknn:
             human_ready = [line for line in section
-                           if "KataGoHumanRKNN" in line and "HUMAN_RKNN_READY board=9" in line]
+                           if "KataGoHumanRKNN" in line and f"HUMAN_RKNN_READY board={expected}" in line]
             human_parity = [line for line in section
                             if "KataGoHumanRKNN" in line and "HUMAN_RKNN_NATIVE_PARITY " in line]
             human_fallback = [line for line in section
@@ -133,7 +133,7 @@ def parse_log(log, run_id, sizes, require_human_rknn=False, human_rknn_timing_on
                              if "KataGoHumanRKNN" in line and "HUMAN_RKNN_INFER_TIMING " in line]
             if human_rknn_timing_only:
                 enabled = [line for line in section if "KataGoEngine" in line
-                           and "HUMAN_RKNN_EXPERIMENT_REQUESTED board=9 compareCpu=false" in line]
+                           and f"HUMAN_RKNN_EXPERIMENT_REQUESTED board={expected} compareCpu=false" in line]
                 if not enabled or human_parity:
                     problems.append("Timing-only test unexpectedly enabled native Eigen parity")
             npu_total_ms, npu_run_ms = [], []
@@ -149,8 +149,8 @@ def parse_log(log, run_id, sizes, require_human_rknn=False, human_rknn_timing_on
                     problems.append("Malformed Human NPU inference timing: " + line.strip()[-250:])
             if not npu_total_ms:
                 problems.append("Missing real Human RKNN inference timing: stale JNI or NPU was not run")
-            if expected != 9 or not human_ready:
-                problems.append("Human b18 RKNN 9x9 did not initialize")
+            if expected not in (9, 13, 19) or not human_ready:
+                problems.append(f"Human b18 RKNN {expected}x{expected} did not initialize")
             elif not any("scale8Compensation=8" in line for line in human_ready):
                 problems.append("Human RKNN JNI is missing scale8 compensation; rebuild and reinstall APK")
             if not human_rknn_timing_only:
@@ -243,8 +243,8 @@ def main(argv=None):
         p.error("adb not found")
     if args.timeout < 20:
         p.error("Total --timeout must be at least 20 seconds")
-    if args.require_human_rknn and (args.no_human_sl or any(size != 9 for size in args.sizes)):
-        p.error("--require-human-rknn requires Human SL enabled and only 9x9 steps")
+    if args.require_human_rknn and (args.no_human_sl or any(size not in (9,13,19) for size in args.sizes)):
+        p.error("--require-human-rknn requires Human SL enabled and only 9x9/13x13/19x19 steps")
     if args.human_rknn_timing_only and not args.require_human_rknn:
         p.error("--human-rknn-timing-only requires --require-human-rknn")
     run_id = uuid4().hex[:16]
