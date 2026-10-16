@@ -156,7 +156,13 @@ def stage_extra_models(enabled, required=False, root=ROOT, fetch=None):
         name = "katago_human_%dx%d" % (size,size)
         output_dir = root / "app/build/generated/rk3588HumanAssets/engine"
         dest = output_dir / (name + ".rknn")
-        dest_meta = output_dir / (name + ".json")
+        # LiteRT already uses engine/<stem>.json. Keep the RKNN
+        # release manifest in a separate APK asset so both backends can
+        # coexist, even when the user's LiteRT files are untracked.
+        dest_meta = output_dir / (name + ".rknn.json")
+        # Remove only a stale manifest from our GENERATED assets directory.
+        # Never touch the user's app/src/main/assets/engine/<stem>.json.
+        (output_dir / (name + ".json")).unlink(missing_ok=True)
         if not enabled:
             dest.unlink(missing_ok=True)
             dest_meta.unlink(missing_ok=True)
