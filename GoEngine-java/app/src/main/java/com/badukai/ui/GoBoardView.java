@@ -44,6 +44,8 @@ public class GoBoardView extends View {
     private float shaderRadius = -1f;
     private GoBoard board = new GoBoard(19);
     private Point lastMove;
+    // Optional beginner-training mark; never enabled in normal KataGo games.
+    private Point trainingTarget;
     private float[] ownershipWhite;
     // AI-inferred dead chains; draw over stones ONLY for terminal score previews.
     private Set<Point> deadStoneMarks = Collections.emptySet();
@@ -143,6 +145,12 @@ public class GoBoardView extends View {
 
     public boolean hasVariationPreview() { return previewBoard != null; }
 
+    /** Highlight the stone/group the student is being asked to capture. */
+    public void setTrainingTarget(Point point) {
+        trainingTarget = point;
+        invalidate();
+    }
+
     public void setLastMove(Point point) {
         DebugLog.enter(TAG, "setLastMove in, point=" + point);
         lastMove = point;
@@ -189,6 +197,7 @@ public class GoBoardView extends View {
         drawStones(canvas, n, shown, previewBoard == null ? lastMove : null);
         if (previewBoard == null) {
             drawDeadStoneMarks(canvas, n);
+            drawTrainingTarget(canvas);
             drawRecommendations(canvas);
         } else drawPreviewMoveNumbers(canvas);
     }
@@ -385,6 +394,24 @@ public class GoBoardView extends View {
             canvas.drawRoundRect(cx - radius, cy - radius, cx + radius, cy + radius,
                     dp(1.5f), dp(1.5f), paint);
         }
+        paint.setStyle(Paint.Style.FILL);
+    }
+
+    /** Two-tone outline on the selected target stone; it disappears on capture. */
+    private void drawTrainingTarget(Canvas canvas) {
+        if (trainingTarget == null || board == null ||
+                !board.isInside(trainingTarget.x, trainingTarget.y) ||
+                board.get(trainingTarget) == Intersection.EMPTY) return;
+        float cx = padding + trainingTarget.x * cellSize;
+        float cy = padding + trainingTarget.y * cellSize;
+        paint.setShader(null);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(Math.max(dp(2f), cellSize * 0.085f));
+        paint.setColor(Color.rgb(52, 64, 46));
+        canvas.drawCircle(cx, cy, cellSize * 0.48f, paint);
+        paint.setStrokeWidth(Math.max(dp(2f), cellSize * 0.065f));
+        paint.setColor(Color.rgb(248, 187, 56));
+        canvas.drawCircle(cx, cy, cellSize * 0.48f, paint);
         paint.setStyle(Paint.Style.FILL);
     }
 
