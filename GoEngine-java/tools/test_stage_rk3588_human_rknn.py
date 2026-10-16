@@ -136,7 +136,7 @@ class BundlingTests(unittest.TestCase):
                 self.assertEqual(len(calls),4)
                 for size in (13,19):
                     out=root/f"app/build/generated/rk3588HumanAssets/engine/katago_human_{size}x{size}.rknn"
-                    meta=out.with_suffix(".json")
+                    meta=out.with_suffix(".rknn.json")
                     self.assertTrue(model.verify_extra(size,out,meta))
                 model.stage_extra_models(True, required=True, root=root,
                     fetch=lambda _:self.fail("Release must be cached after first stage"))
@@ -147,6 +147,75 @@ class BundlingTests(unittest.TestCase):
                     self.assertFalse(out.exists())
                 model.stage_extra_models(True, required=True, root=root,
                     fetch=lambda _:self.fail("Validated cache must allow offline build"))
+
+    def test_keep_litert_manifests_while_removing_stale_generated_rknn_names(self):
+        # Locally downloaded LiteRT models are untracked and may occupy
+        # katago_human_13x13.json / katago_human_19x19.json.
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td)
+            app_assets=root/"app/src/main/assets/engine"
+            generated=root/"app/build/generated/rk3588HumanAssets/engine"
+            app_assets.mkdir(parents=True)
+            generated.mkdir(parents=True)
+            for size in (13,19):
+                name=f"katago_human_{size}x{size}"
+                (app_assets/(name+".json")).write_text("LiteRT user manifest")
+                (app_assets/(name+".tflite")).write_bytes(b"user LiteRT weights")
+                # Simulate stale assets from an older APK build.
+                (generated/(name+".json")).write_text("obsolete RKNN manifest")
+                (generated/(name+".rknn.json")).write_text("previous APK metadata")
+            model.stage_extra_models(False, root=root)
+            for size in (13,19):
+                name=f"katago_human_{size}x{size}"
+                self.assertEqual((app_assets/(name+".json")).read_text(),
+                                 "LiteRT user manifest")
+                self.assertEqual((app_assets/(name+".tflite")).read_bytes(),
+                                 b"user LiteRT weights")
+                self.assertFalse((generated/(name+".json")).exists())
+                self.assertFalse((generated/(name+".rknn.json")).exists())
+
+    def test_stage_multisize_uses_distinct_rknn_metadata_name(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td)
+            app_assets=root/"app/src/main/assets/engine"
+            app_assets.mkdir(parents=True)
+            for size in (13,19):
+                (app_assets/f"katago_human_{size}x{size}.json").write_text(
+                    "untracked LiteRT JSON")
+            pins={}
+            fixtures={}
+            for size in (13,19):
+                payload=(f"HumanRKNN{size}".encode())*120000
+                digest=hashlib.sha256(payload).hexdigest()
+                pins[size]=(digest,len(payload))
+                fixtures[size]=(payload,json.dumps({
+                    "model":"b18c384nbt-humanv0","board":size,
+                    "target":"rk3588","quantized":False,
+                    "inputs":{"InputSpatial":[1,22,size,size],
+                              "InputGlobal":[1,19,1,1],
+                              "InputMeta":[1,192,1,1],
+                              "InputMask":[1,1,size,size]},
+                    "outputs":["OutputPolicyPass","OutputPolicy","OutputValue",
+                               "OutputScoreValue","OutputOwnership"],
+                    "sha256":digest}).encode())
+            def fetch(url):
+                size=13 if "13x13" in url else 19
+                return io.BytesIO(fixtures[size][1 if url.endswith(".json") else 0])
+            generated=root/"app/build/generated/rk3588HumanAssets/engine"
+            generated.mkdir(parents=True)
+            for size in (13,19):
+                (generated/f"katago_human_{size}x{size}.json").write_text(
+                    "stale generated JSON")
+            with mock.patch.object(model,"PINS",pins):
+                model.stage_extra_models(True,required=True,root=root,fetch=fetch)
+                for size in (13,19):
+                    name=f"katago_human_{size}x{size}"
+                    self.assertTrue(model.verify_extra(
+                        size, generated/(name+".rknn"),
+                        generated/(name+".rknn.json")))
+                    self.assertFalse((generated/(name+".json")).exists())
+                    self.assertEqual((app_assets/(name+".json")).read_text(),
+                                     "untracked LiteRT JSON")
 
     def test_13_19_reject_model_not_matching_release_pin(self):
         with tempfile.TemporaryDirectory() as td:
