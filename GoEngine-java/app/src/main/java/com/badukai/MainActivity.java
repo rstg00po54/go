@@ -1794,11 +1794,11 @@ public class MainActivity extends AppCompatActivity {
         final int size = boardSize, kyu = aiKyu, visits = searchVisits;
         final double seconds = searchTime;
         final KataGoEngine.BackendPreference requestedBackend = selectedBackend;
-        boolean npuBoardChanged = requestedBackend == KataGoEngine.BackendPreference.NPU
-                && engine.getActiveNpuBoardSize() != size;
-        boolean reusingHumanEngine = engine.isHumanSLRunning() && !npuBoardChanged
-                && engine.getBackendName().startsWith(requestedBackend.name());
-        render(reusingHumanEngine ? "正在初始化棋局..." : requestedBackend == KataGoEngine.BackendPreference.NPU
+        boolean reusingHumanEngine = engine.canReuseHumanSession(requestedBackend, size);
+        // GTP clear_board does not reinitialize the RKNN runtime. Do not show
+        // the NPU loading screen when the already initialized 10b/b18 session
+        // is merely being reused for a new match.
+        render(reusingHumanEngine ? "正在重置棋盘..." : requestedBackend == KataGoEngine.BackendPreference.NPU
                 ? (NpuHardware.current() == NpuHardware.Vendor.MEDIATEK
                         ? "NPU/MediaTek LiteRT 初始化中..." : "NPU/RKNN 初始化中...")
                 : requestedBackend == KataGoEngine.BackendPreference.GPU
@@ -1813,7 +1813,12 @@ public class MainActivity extends AppCompatActivity {
                 advanceGpuStartup(8, "正在准备对弈模型...");
                 boolean restartNpuForBoard = requestedBackend == KataGoEngine.BackendPreference.NPU
                         && engine.getActiveNpuBoardSize() != size;
-                if (!engine.isHumanSLRunning() || restartNpuForBoard) {
+                boolean reuse = engine.canReuseHumanSession(requestedBackend, size);
+                Log.i(TAG, "KATAGO_NEW_GAME_SESSION action=" + (reuse ? "REUSE" : "CREATE")
+                        + " board=" + size + " requested=" + requestedBackend
+                        + " active=" + engine.getBackendName()
+                        + " rknnInit=" + (reuse ? 0 : 1));
+                if (!reuse) {
                     if (restartNpuForBoard)
                         Log.i(TAG, "NPU_MODEL_SWITCH board=" + engine.getActiveNpuBoardSize() + " -> " + size
                                 + "; restarting native GTP for matching NPU model");
@@ -1831,7 +1836,9 @@ public class MainActivity extends AppCompatActivity {
                     if (!engine.start(KataGoEngine.Model.HUMAN, true)) throw new IllegalStateException("Human SL 引擎启动失败");
                     advanceGpuStartup(96, "正在初始化棋盘规则...");
                 } else {
-                    Log.i(TAG, "Reusing running Human SL KataGo process for new game");
+                    Log.i(TAG, "KATAGO_NEW_GAME_REUSE board=" + size
+                            + " backend=" + engine.getBackendName()
+                            + " noModelReload=1; resetting via GTP clear_board");
                 }
                 long initStartedNs = System.nanoTime(), phaseNs = initStartedNs;
                 boolean ok = engine.setBoardSize(size);
