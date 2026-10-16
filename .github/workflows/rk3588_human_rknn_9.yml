@@ -10,6 +10,7 @@ on:
       - 'GoEngine-java/tools/convert_human_onnx_to_rknn.py'
       - 'GoEngine-java/tools/optimize_human_mish_onnx.py'
       - 'GoEngine-java/tools/check_human_mish_onnx_parity.py'
+      - 'GoEngine-java/tools/export_human_rknn_cpu_reference.py'
 
 permissions:
   contents: write
@@ -55,6 +56,15 @@ jobs:
         run: |
           set -o pipefail
           bash GoEngine-java/tools/build_rk3588_human_rknn.sh 9 2>&1 | tee rknn_build.log
+      - name: Export original b18 ONNX CPU golden reference for RK3588 five heads
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 GoEngine-java/tools/export_human_rknn_cpu_reference.py \
+            --onnx GoEngine-java/build/rk3588_human/9/human_9_original.onnx \
+            --size 9 \
+            --output GoEngine-java/build/rk3588_human/9/human_b18_cpu9_reference.bin \
+            --manifest GoEngine-java/build/rk3588_human/9/human_b18_cpu9_reference.json
       - name: Publish compilation logs and experimental RKNN as CI artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -64,6 +74,7 @@ jobs:
             rknn_build.log
             GoEngine-java/build/rk3588_human/9/*.json
             GoEngine-java/build/rk3588_human/9/*.rknn
+            GoEngine-java/build/rk3588_human/9/human_b18_cpu9_reference.bin
           if-no-files-found: warn
           retention-days: 14
       - name: Publish verified experimental Human RKNN model to GitHub Release
@@ -95,4 +106,18 @@ jobs:
               --title 'RK3588 original Human SL b18 9x9 (experimental)' \
               --notes 'Original b18 weights; 120 exact Mish rewrites; ONNX CPU five-head parity PASS. RKNN-Toolkit2 2.3.2 nonquantized RK3588 compilation PASS. Actual RK3588 runtime inference, human-rank behavior and CPU/NPU parity have NOT been tested. Not a production build.'
           fi
-          gh release upload "$TAG" "$MODEL" "$META" --clobber
+          python3 - <<'PY'
+          import hashlib, json, pathlib
+          out=pathlib.Path('GoEngine-java/build/rk3588_human/9')
+          ref=out/'human_b18_cpu9_reference.bin'
+          m=json.loads((out/'human_b18_cpu9_reference.json').read_text())
+          assert m['model']=='b18c384nbt-humanv0' and m['board']==9
+          assert m['cases']==4 and m['format']=='B18REF01-le-f32'
+          assert m['cpuBackend']=='onnxruntime-cpu'
+          assert m['syntheticInputsOnly'] is True
+          assert hashlib.sha256(ref.read_bytes()).hexdigest()==m['fixtureSha256']
+          print('HUMAN_REFERENCE_RELEASE_VERIFIED sha256='+m['fixtureSha256'])
+          PY
+          gh release upload "$TAG" "$MODEL" "$META" \
+            GoEngine-java/build/rk3588_human/9/human_b18_cpu9_reference.bin \
+            GoEngine-java/build/rk3588_human/9/human_b18_cpu9_reference.json --clobber
