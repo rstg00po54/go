@@ -61,8 +61,8 @@ struct Probe {
       : board(boardSize), area(boardSize*boardSize),
         inputCounts{{static_cast<uint32_t>(22*area),19,192,static_cast<uint32_t>(area)}},
         outputCounts{{2,static_cast<uint32_t>(2*area),3,6,static_cast<uint32_t>(area)}} {
-        if(boardSize != 9 && boardSize != 13 && boardSize != 19)
-            throw std::runtime_error("Human probe only supports 9/13/19");
+        if(boardSize != 9 && boardSize != 11 && boardSize != 13 && boardSize != 15 && boardSize != 19)
+            throw std::runtime_error("Human probe only supports 9/11/13/15/19");
         std::ifstream file(path, std::ios::binary);
         if(!file) throw std::runtime_error(std::string("Cannot open ") + path);
         std::vector<char> model((std::istreambuf_iterator<char>(file)), {});
@@ -188,7 +188,7 @@ struct Probe {
 int main(int argc, char** argv) {
     try {
         if(argc != 2 && argc != 3) {
-            std::cerr << "Usage: human_rknn_probe <model.rknn> [9|13|19]\n";
+            std::cerr << "Usage: human_rknn_probe <model.rknn> [9|11|13|15|19]\n";
             return 2;
         }
         int board = argc == 3 ? std::stoi(argv[2]) : 9;
