@@ -8,6 +8,9 @@ on:
       - '.github/workflows/rk3588_human_java_build.yml'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoEngine.java'
       - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoNpuNative.java'
+      - 'GoEngine-java/app/build.gradle.kts'
+      - 'GoEngine-java/tools/stage_rk3588_human_rknn.py'
+      - 'GoEngine-java/tools/test_stage_rk3588_human_rknn.py'
 
 permissions:
   contents: read
@@ -37,6 +40,11 @@ jobs:
           else
             test -d "$SDK/platforms/android-35"
           fi
+      - name: 校验 RK3588 Human NPU APK 模型打包逻辑
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tools -p 'test_stage_rk3588_human_rknn.py' -v
       - name: 编译 Android Java 接口
         shell: bash
         run: |
