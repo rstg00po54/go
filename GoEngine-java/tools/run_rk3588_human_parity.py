@@ -95,8 +95,8 @@ def main(argv=None):
     parser.add_argument("--upload-remote", default="auto", help="Git remote: origin/github/auto")
     args = parser.parse_args(argv)
     board = int(os.environ.get("HUMAN_RKNN_BOARD_SIZE", "9"))
-    if board not in (9, 13, 19):
-        parser.error("HUMAN_RKNN_BOARD_SIZE must be 9, 13 or 19")
+    if board not in (9, 11, 13, 15, 19):
+        parser.error("HUMAN_RKNN_BOARD_SIZE must be 9, 11, 13, 15 or 19")
     if args.no_upload and args.upload_existing:
         parser.error("--upload-existing cannot be used with --no-upload")
 
