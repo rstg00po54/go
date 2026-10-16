@@ -57,20 +57,38 @@ def stage(enabled, cache=CACHE, output=OUTPUT, download=None):
         output.unlink(missing_ok=True)
         print("HUMAN_RKNN_ASSET_DISABLED")
         return
+    # A previously built RKNN graph can have different binary bytes although
+    # its weights/outputs are equivalent. Never delete the developer's tested
+    # model just because the official Release has a different SHA-256.
+    if valid_model(output):
+        print("HUMAN_RKNN_ASSET_READY board=9 bytes=%d sha256=%s path=%s (reused)"
+              % (EXPECTED_SIZE, EXPECTED_SHA256, output), flush=True)
+        return
+
+    source_cache = cache
     if not valid_model(cache):
         if cache.exists():
-            # Do not destroy an explicitly supplied alternative model.
-            raise ValueError("Cached RK3588 Human model differs from pinned validated release: " + str(cache))
-        print("Downloading validated RK3588 Human SL b18 9x9 RKNN (~59 MB)...", flush=True)
-        if download is not None:
-            with download() as source:
-                atomic_write(cache, source)
-        else:
-            request = urllib.request.Request(RELEASE, headers={"User-Agent": "Badukai-RK3588-build"})
-            with urllib.request.urlopen(request, timeout=60) as source:
-                atomic_write(cache, source)
+            print("HUMAN_RKNN_EXISTING_MODEL_PRESERVED path=%s (different from release)"
+                  % cache, flush=True)
+        # Keep the published binary in an independent, versioned directory.
+        # Future builds can run offline without replacing the original graph.
+        source_cache = cache.parent / ("release_" + EXPECTED_SHA256[:12]) / MODEL
+        if not valid_model(source_cache):
+            if source_cache.exists():
+                raise ValueError("Pinned Release cache failed SHA-256 verification: "
+                                 + str(source_cache))
+            print("Downloading verified Human b18 RKNN Release once (~59 MB)...",
+                  flush=True)
+            if download is not None:
+                with download() as source:
+                    atomic_write(source_cache, source)
+            else:
+                request = urllib.request.Request(
+                    RELEASE, headers={"User-Agent": "Badukai-RK3588-build"})
+                with urllib.request.urlopen(request, timeout=60) as source:
+                    atomic_write(source_cache, source)
     if not valid_model(output):
-        with cache.open("rb") as source:
+        with source_cache.open("rb") as source:
             atomic_write(output, source)
     print("HUMAN_RKNN_ASSET_READY board=9 bytes=%d sha256=%s path=%s"
           % (EXPECTED_SIZE, EXPECTED_SHA256, output), flush=True)
