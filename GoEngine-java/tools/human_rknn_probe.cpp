@@ -51,10 +51,18 @@ struct Context {
 
 struct Probe {
     Context runtime;
+    int board, area;
+    std::array<uint32_t,INPUT_COUNT> inputCounts;
+    std::array<uint32_t,OUTPUT_COUNT> outputCounts;
     std::array<int, INPUT_COUNT> inputSlot{{-1,-1,-1,-1}};
     std::array<int, OUTPUT_COUNT> outputSlot{{-1,-1,-1,-1,-1}};
     std::array<std::vector<float>,INPUT_COUNT> input;
-    explicit Probe(const char* path, rknn_core_mask coreMask = RKNN_NPU_CORE_0) {
+    explicit Probe(const char* path, rknn_core_mask coreMask = RKNN_NPU_CORE_0, int boardSize=9)
+      : board(boardSize), area(boardSize*boardSize),
+        inputCounts{{static_cast<uint32_t>(22*area),19,192,static_cast<uint32_t>(area)}},
+        outputCounts{{2,static_cast<uint32_t>(2*area),3,6,static_cast<uint32_t>(area)}} {
+        if(boardSize != 9 && boardSize != 13 && boardSize != 19)
+            throw std::runtime_error("Human probe only supports 9/13/19");
         std::ifstream file(path, std::ios::binary);
         if(!file) throw std::runtime_error(std::string("Cannot open ") + path);
         std::vector<char> model((std::istreambuf_iterator<char>(file)), {});
@@ -77,7 +85,7 @@ struct Probe {
             std::cout << "HUMAN_INPUT slot=" << i << " name=" << a.name
                       << " dims=" << dims(a) << " elements=" << a.n_elems
                       << " fmt=" << int(a.fmt) << " type=" << int(a.type) << "\n";
-            if(inputSlot[key] >= 0 || a.n_elems != IN_COUNTS[key])
+            if(inputSlot[key] >= 0 || a.n_elems != inputCounts[key])
                 throw std::runtime_error("Incorrect/duplicate input " + std::string(a.name));
             inputSlot[key] = i;
         }
@@ -90,17 +98,17 @@ struct Probe {
             std::cout << "HUMAN_OUTPUT slot=" << i << " name=" << a.name
                       << " dims=" << dims(a) << " elements=" << a.n_elems
                       << " fmt=" << int(a.fmt) << " type=" << int(a.type) << "\n";
-            if(outputSlot[key] >= 0 || a.n_elems != OUT_COUNTS[key])
+            if(outputSlot[key] >= 0 || a.n_elems != outputCounts[key])
                 throw std::runtime_error("Incorrect/duplicate output " + std::string(a.name));
             outputSlot[key] = i;
         }
         for(int x:inputSlot) if(x<0) throw std::runtime_error("Missing Human input");
         for(int x:outputSlot) if(x<0) throw std::runtime_error("Missing Human head");
-        for(int i=0;i<INPUT_COUNT;i++) input[i].assign(IN_COUNTS[i], 0.0f);
+        for(int i=0;i<INPUT_COUNT;i++) input[i].assign(inputCounts[i], 0.0f);
         // NHWC: feature plane 0 holds the board mask, as in the working 10b bridge.
-        for(int point=0;point<AREA;point++) input[0][point*22] = 1.0f;
+        for(int point=0;point<area;point++) input[0][point*22] = 1.0f;
         std::fill(input[3].begin(), input[3].end(), 1.0f);
-        std::cout << "HUMAN_RKNN_READY board=9 inputs=4 outputs=5\n";
+        std::cout << "HUMAN_RKNN_READY board=" << board << " inputs=4 outputs=5\n";
     }
 
     std::array<std::vector<float>,OUTPUT_COUNT> infer(int rankFeature, bool preserveMetadata=false, bool quiet=false, std::array<double,3>* phases=nullptr) {
@@ -139,7 +147,7 @@ struct Probe {
         try {
             for(int key=0;key<OUTPUT_COUNT;key++) {
                 const rknn_output& o=outs[outputSlot[key]];
-                if(!o.buf || o.size != OUT_COUNTS[key]*sizeof(float))
+                if(!o.buf || o.size != outputCounts[key]*sizeof(float))
                     throw std::runtime_error(std::string("Bad head length: ")+OUT_NAMES[key]);
                 auto p=static_cast<const float*>(o.buf);
                 values[key].assign(p, p+OUT_COUNTS[key]);
@@ -179,11 +187,12 @@ struct Probe {
 
 int main(int argc, char** argv) {
     try {
-        if(argc != 2) {
-            std::cerr << "Usage: human_rknn_probe <katago_human_9x9.rknn>\n";
+        if(argc != 2 && argc != 3) {
+            std::cerr << "Usage: human_rknn_probe <model.rknn> [9|13|19]\n";
             return 2;
         }
-        Probe probe(argv[1]);
+        int board = argc == 3 ? std::stoi(argv[2]) : 9;
+        Probe probe(argv[1], RKNN_NPU_CORE_0, board);
         auto a=probe.infer(0);
         auto b=probe.infer(17);
         for(int key=0;key<OUTPUT_COUNT;key++) {
@@ -193,7 +202,7 @@ int main(int argc, char** argv) {
             std::cout << "HUMAN_META_SENSITIVITY head=" << OUT_NAMES[key]
                       << " maxAbs=" << delta << "\n";
         }
-        std::cout << "HUMAN_RKNN_SMOKE_PASS board=9 noCpuFallback=1\n"
+        std::cout << "HUMAN_RKNN_SMOKE_PASS board=" << board << " noCpuFallback=1\n"
                   << "NOTE: synthetic inputs only; native KataGo rank encoding and "
                      "CPU/NPU parity remain unverified.\n";
         return 0;
