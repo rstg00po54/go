@@ -217,7 +217,11 @@ public class KataGoEngine {
         if (running.get()) {
             // RKNN graphs are fixed-shape; a different board needs a fresh session.
             if (isReady() && humanSLRunning == useHumanSL
-                    && ((npuSession == null && mediaTekSession == null) || activeNpuBoardSize == startupBoardSize)) return true;
+                    && ((npuSession == null && mediaTekSession == null) || activeNpuBoardSize == startupBoardSize)) {
+                Log.i(TAG, "KATAGO_SESSION_REUSE startCalled=1 board=" + startupBoardSize
+                        + " backend=" + getBackendName() + " rknnInit=0");
+                return true;
+            }
             stop(); // Different engine mode or an engine process/session died.
         }
         configuredBoardSize = -1;
@@ -817,6 +821,28 @@ public class KataGoEngine {
         reader = null;
         errorReader = null;
         Log.i(TAG, "KataGo stopped");
+    }
+
+    /**
+     * A new game can reuse the existing GTP/RKNN model context. The UI must
+     * not infer this from the text of getBackendName(), which reflects the
+     * actual fallback backend rather than the requested backend.
+     *
+     * The 9/13/19 RKNN graphs have fixed shapes: on a size change we must
+     * create a new native session instead of sending a mismatched boardsize.
+     * Human rank, komi, handicap and search limits are GTP parameters, not
+     * reasons to call rknn_init() again.
+     */
+    public boolean canReuseHumanSession(BackendPreference requested, int size) {
+        if (requested == null || requested != backendPreference
+                || !humanSLRunning || !isReady()) return false;
+        if (requested == BackendPreference.NPU) {
+            return (npuSession != null || mediaTekSession != null)
+                    && activeNpuBoardSize == size;
+        }
+        if (requested == BackendPreference.GPU) return gpuSession != null;
+        // The CPU fallback is reusable if the user explicitly chose CPU.
+        return npuSession == null && mediaTekSession == null && gpuSession == null;
     }
 
     public boolean isHumanSLRunning() { return isReady() && humanSLRunning; }
