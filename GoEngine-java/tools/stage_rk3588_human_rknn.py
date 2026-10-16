@@ -100,7 +100,12 @@ def stage(enabled, cache=CACHE, output=OUTPUT, download=None):
 # with the model; both are verified before inclusion in the APK. Once the CI
 # publishes the exact hashes, PINS should be populated for immutable pinning.
 EXTRA_SIZES = (13, 19)
-PINS = {}  # size: (sha256, byte_count) for published, validated releases
+# Published by workflow 38856959945; compiled/CPU-ONNX-parity-checked only.
+# Device RK3588 numerical and real-game verification remains pending.
+PINS = {
+    13: ("8029fdfe086e96d99d2ce7fb7340cc6bab49d232c03fb44fddcfc64866eb5b40", 59071345),
+    19: ("1bcdddac3687e72705f8cd058bd2c6cd44a1ee221cf30182762598dc0ad43158", 59074417),
+}
 
 
 def verify_extra(size, binary, manifest):
