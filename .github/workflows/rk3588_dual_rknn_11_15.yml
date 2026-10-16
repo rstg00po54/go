@@ -1,0 +1,127 @@
+name: RK3588 11x11 and 15x15 dual 10b Human b18 RKNN
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/rk3588-rknn]
+    paths:
+      - '.github/workflows/rk3588_dual_rknn_11_15.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  compile:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        size: [11, 15]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install ONNX and RKNN Toolkit2
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libgl1 libglib2.0-0 unzip
+          python -m pip install --upgrade pip
+          python -m pip install 'rknn-toolkit2==2.3.2' 'onnxruntime>=1.17,<2' 'numpy<=1.26.4' 'onnx==1.16.1'
+          python -c "import onnx; from rknn.api import RKNN; assert hasattr(onnx,'mapping')"
+      - name: Fetch original b18 and 10b model weights plus official ONNX exporter
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p source_models kata_dist
+          curl -fL --retry 3 -o source_models/b18.bin.gz 'https://github.com/lightvector/KataGo/releases/download/v1.15.0/b18c384nbt-humanv0.bin.gz'
+          echo '637746e44f0efe00ad1245a50aa9bbf0716efe364c43965ead97bd6835d84ab5  source_models/b18.bin.gz' | sha256sum -c -
+          gzip -dc source_models/b18.bin.gz > source_models/b18.bin
+          test "$(wc -c < source_models/b18.bin)" -eq 107185997
+          curl -fL --retry 3 -o source_models/10b.bin 'https://raw.githubusercontent.com/rstg00po54/go/rk3588-engine/GoEngine-java/app/src/main/assets/engine/10b.bin'
+          test "$(wc -c < source_models/10b.bin)" -eq 12003218
+          curl -fL --retry 3 -o katago_dist.zip 'https://github.com/lightvector/KataGo/releases/download/v1.18.1/katago-v1.18.1-onnx-openvino-linux-x64.zip'
+          unzip -q katago_dist.zip -d kata_dist
+          KATAGO_BIN="$(find "$PWD/kata_dist" -type f -name katago -print -quit)"
+          test -n "$KATAGO_BIN"
+          chmod +x "$KATAGO_BIN"
+          echo "KATAGO_DUMPONNX_BIN=$KATAGO_BIN" >> "$GITHUB_ENV"
+          echo "HUMAN_B18_MODEL=$PWD/source_models/b18.bin" >> "$GITHUB_ENV"
+          LIBPATH="$(find "$PWD/kata_dist" -type f -name '*.so*' -printf '%h\n' | sort -u | paste -sd: -)"
+          echo "LD_LIBRARY_PATH=$LIBPATH" >> "$GITHUB_ENV"
+      - name: Build 11/15 original Human b18 graph and 4-case CPU reference
+        shell: bash
+        run: |
+          set -euo pipefail
+          N="${{ matrix.size }}"
+          bash GoEngine-java/tools/build_rk3588_human_rknn.sh "$N" 2>&1 | tee "human_${N}_compile.log"
+          OUT="GoEngine-java/build/rk3588_human/$N"
+          python3 GoEngine-java/tools/export_human_rknn_cpu_reference.py --onnx "$OUT/human_${N}_original.onnx" --size "$N" --output "$OUT/human_b18_cpu${N}_reference.bin" --manifest "$OUT/human_b18_cpu${N}_reference.json"
+      - name: Build separate 11/15 original g170 10b graph
+        shell: bash
+        run: |
+          set -euo pipefail
+          N="${{ matrix.size }}"
+          OUT="GoEngine-java/build/rk3588_10b/$N"
+          mkdir -p "$OUT"
+          "$KATAGO_DUMPONNX_BIN" dumponnx -model source_models/10b.bin -out "$OUT/10b_${N}_original.onnx" -nn-x-len "$N" -nn-y-len "$N"
+          python3 GoEngine-java/tools/convert_rk3588_10b_11_15.py --size "$N" --onnx "$OUT/10b_${N}_original.onnx" --prepared "$OUT/10b_${N}_opset19.onnx" --output "$OUT/katago_10b_${N}x${N}.rknn" 2>&1 | tee "10b_${N}_compile.log"
+      - name: Validate original models, five heads, shapes and SHA-256
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - "${{ matrix.size }}" <<'PY'
+          import hashlib,json,pathlib,sys
+          n=int(sys.argv[1])
+          human=pathlib.Path(f'GoEngine-java/build/rk3588_human/{n}')
+          g170=pathlib.Path(f'GoEngine-java/build/rk3588_10b/{n}')
+          heads=['OutputPolicyPass','OutputPolicy','OutputValue','OutputScoreValue','OutputOwnership']
+          for base,name,weights,inp in [
+            (human,f'katago_human_{n}x{n}','b18c384nbt-humanv0',{'InputSpatial':[1,22,n,n],'InputGlobal':[1,19,1,1],'InputMeta':[1,192,1,1],'InputMask':[1,1,n,n]}),
+            (g170,f'katago_10b_{n}x{n}','g170-b10c128-s1141046784-d204142634',{'InputSpatial':[1,22,n,n],'InputGlobal':[1,19,1,1],'InputMask':[1,1,n,n]})]:
+            b=base/(name+'.rknn')
+            m=json.loads((base/(name+('.json' if weights.startswith('b18') else '.rknn.json'))).read_text())
+            assert m['board']==n and m['model']==weights
+            assert m['target']=='rk3588' and m['quantized'] is False
+            assert m['inputs']==inp and m['outputs']==heads
+            assert not m['runtimeVerified'] and not m['fiveHeadParityVerified']
+            assert b.stat().st_size>1000000
+            assert hashlib.sha256(b.read_bytes()).hexdigest()==m['sha256']
+            print('DUAL_RKNN_MODEL_COMPILED',n,weights,b.stat().st_size,m['sha256'])
+          reference=human/f'human_b18_cpu{n}_reference.bin'
+          refmeta=json.loads((human/f'human_b18_cpu{n}_reference.json').read_text())
+          assert refmeta['board']==n and refmeta['cases']==4 and refmeta['cpuBackend']=='onnxruntime-cpu'
+          assert hashlib.sha256(reference.read_bytes()).hexdigest()==refmeta['fixtureSha256']
+          PY
+      - name: Store model and CPU-reference artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rk3588-dual-11-15-${{ matrix.size }}
+          path: |
+            human_*_compile.log
+            10b_*_compile.log
+            GoEngine-java/build/rk3588_human/${{ matrix.size }}/*.rknn
+            GoEngine-java/build/rk3588_human/${{ matrix.size }}/*.json
+            GoEngine-java/build/rk3588_human/${{ matrix.size }}/human_b18_cpu*_reference.bin
+            GoEngine-java/build/rk3588_10b/${{ matrix.size }}/*.rknn
+            GoEngine-java/build/rk3588_10b/${{ matrix.size }}/*.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Publish immutable-size-specific models for subsequent RK3588 verification
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          N="${{ matrix.size }}"
+          TAG="rk3588-dual-human-10b-${N}x${N}-experimental-v1"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release already exists; never clobber released model files" >&2
+            exit 1
+          fi
+          gh release create "$TAG" --prerelease --target "$GITHUB_SHA" --title "RK3588 10b + Human b18 ${N}x${N}" --notes 'Original 10b and Human b18 weights; converted to fixed-size RKNN and ONNX CPU reference checked. Actual RK3588 NPU parity remains unverified.'
+          gh release upload "$TAG" "GoEngine-java/build/rk3588_human/$N/katago_human_${N}x${N}.rknn" "GoEngine-java/build/rk3588_human/$N/katago_human_${N}x${N}.json" "GoEngine-java/build/rk3588_human/$N/human_b18_cpu${N}_reference.bin" "GoEngine-java/build/rk3588_human/$N/human_b18_cpu${N}_reference.json" "GoEngine-java/build/rk3588_10b/$N/katago_10b_${N}x${N}.rknn" "GoEngine-java/build/rk3588_10b/$N/katago_10b_${N}x${N}.rknn.json"
