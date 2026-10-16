@@ -55,13 +55,48 @@ class BundlingTests(unittest.TestCase):
         self.assertFalse(self.output.exists())
         self.assertFalse(any(self.cache.parent.glob("*.tmp")))
 
-    def test_corrupt_cache_is_not_silently_overwritten(self):
-        self.cache.parent.mkdir(parents=True,exist_ok=True)
-        self.cache.write_bytes(b"not the release")
+    def test_different_existing_model_preserved_release_cached_and_reused(self):
+        self.cache.parent.mkdir(parents=True, exist_ok=True)
+        original=b"a previously compiled and hardware-tested Human graph"
+        self.cache.write_bytes(original)
+        calls=[]
+        def download():
+            calls.append(True)
+            return io.BytesIO(self.body)
+        model.stage(True, self.cache, self.output, download)
+        pinned=self.cache.parent / ("release_" + model.EXPECTED_SHA256[:12]) / model.MODEL
+        self.assertEqual(self.cache.read_bytes(), original)
+        self.assertEqual(pinned.read_bytes(), self.body)
+        self.assertEqual(self.output.read_bytes(), self.body)
+        # Repeated builds must work offline, even after deleting generated output.
+        self.output.unlink()
+        model.stage(True, self.cache, self.output,
+                    lambda: self.fail("Download should not repeat"))
+        self.assertEqual(len(calls),1)
+        self.assertEqual(self.cache.read_bytes(),original)
+
+    def test_invalid_pinned_release_cache_fails_without_modifying_original(self):
+        self.cache.parent.mkdir(parents=True, exist_ok=True)
+        original=b"locally compiled RKNN"
+        self.cache.write_bytes(original)
+        pinned=self.cache.parent / ("release_" + model.EXPECTED_SHA256[:12]) / model.MODEL
+        pinned.parent.mkdir(parents=True, exist_ok=True)
+        pinned.write_bytes(b"invalid release cache")
         with self.assertRaises(ValueError):
-            model.stage(True,self.cache,self.output,lambda: io.BytesIO(self.body))
-        self.assertEqual(self.cache.read_bytes(),b"not the release")
+            model.stage(True,self.cache,self.output,
+                        lambda: self.fail("Do not trust an invalid Release cache"))
+        self.assertEqual(self.cache.read_bytes(),original)
         self.assertFalse(self.output.exists())
+
+    def test_existing_verified_apk_asset_does_not_redownload(self):
+        self.output.parent.mkdir(parents=True, exist_ok=True)
+        self.output.write_bytes(self.body)
+        self.cache.parent.mkdir(parents=True, exist_ok=True)
+        self.cache.write_bytes(b"different graph")
+        model.stage(True,self.cache,self.output,
+                    lambda: self.fail("Already-verified APK asset should be reused"))
+        self.assertEqual(self.output.read_bytes(), self.body)
+        self.assertEqual(self.cache.read_bytes(), b"different graph")
 
 
 if __name__=="__main__":
