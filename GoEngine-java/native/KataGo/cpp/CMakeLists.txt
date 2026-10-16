@@ -96,10 +96,11 @@ elseif(USE_BACKEND STREQUAL "OPENCL")
     neuralnet/opencltuner.cpp
     )
 elseif(USE_BACKEND STREQUAL "RKNN")
-  message(STATUS "-DUSE_BACKEND=RKNN, using RK3588 RKNPU2 for 10b and Eigen for Human SL.")
+  message(STATUS "-DUSE_BACKEND=RKNN, using RK3588 RKNPU2 for 10b, optional experimental b18 Human SL and Eigen fallback.")
   set(NEURALNET_BACKEND_SOURCES
     neuralnet/eigenbackend.cpp
     neuralnet/rknnbackend.cpp
+    neuralnet/humanrknnbackend.cpp
   )
 elseif(USE_BACKEND STREQUAL "MEDIATEK")
   if(NOT KATAGO_BUILD_JNI_LIBRARY OR NOT ANDROID)
