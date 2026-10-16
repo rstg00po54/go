@@ -1,0 +1,116 @@
+Android probe C++ runtime: static (libc++_shared.so not required)
+/mnt/hgfs/D/code/go/GoEngine-java/build/rk3588_human/device_probe/human_rknn_probe: 1 file pushed, 0 skipped. 79.7 MB/s (255264 bytes in 0.003s)
+/mnt/hgfs/D/code/go/GoEngine-java/build/rknn_sdk/librknnrt.so: 1 file pushed, 0 skipped. 294.4 MB/s (8387408 bytes in 0.027s)
+/mnt/hgfs/D/code/go/GoEngine-java/build/rk3588_human/9/katago_human_9x9.rknn: 1 file pushed, 0 skipped. 208.2 MB/s (59069801 bytes in 0.271s)
+Running original Human b18 RKNN on 8719e18a71a2a66c (APK untouched)
+HUMAN_RKNN_LOAD bytes=59069801
+HUMAN_INPUT slot=0 name=InputSpatial dims=1x9x9x22 elements=1782 fmt=1 type=1
+HUMAN_INPUT slot=1 name=InputGlobal dims=1x1x1x19 elements=19 fmt=1 type=1
+HUMAN_INPUT slot=2 name=InputMeta dims=1x1x1x192 elements=192 fmt=1 type=1
+HUMAN_INPUT slot=3 name=InputMask dims=1x9x9x1 elements=81 fmt=1 type=1
+HUMAN_OUTPUT slot=0 name=OutputPolicyPass dims=1x2x1x1 elements=2 fmt=0 type=1
+HUMAN_OUTPUT slot=1 name=OutputPolicy dims=1x2x9x9 elements=162 fmt=0 type=1
+HUMAN_OUTPUT slot=2 name=OutputValue dims=1x3x1x1 elements=3 fmt=0 type=1
+HUMAN_OUTPUT slot=3 name=OutputScoreValue dims=1x6x1x1 elements=6 fmt=0 type=1
+HUMAN_OUTPUT slot=4 name=OutputOwnership dims=1x1x9x9 elements=81 fmt=0 type=1
+HUMAN_RKNN_READY board=9 inputs=4 outputs=5
+HUMAN_INFER_OK metaIndex=0 totalMs=32.778
+HUMAN_HEAD metaIndex=0 name=OutputPolicyPass count=2 first=-0.630 maxAbs=0.630
+HUMAN_HEAD metaIndex=0 name=OutputPolicy count=162 first=-0.654 maxAbs=0.766
+HUMAN_HEAD metaIndex=0 name=OutputValue count=3 first=0.598 maxAbs=0.682
+HUMAN_HEAD metaIndex=0 name=OutputScoreValue count=6 first=0.012 maxAbs=1.102
+HUMAN_HEAD metaIndex=0 name=OutputOwnership count=81 first=0.005 maxAbs=0.025
+HUMAN_INFER_OK metaIndex=17 totalMs=45.478
+HUMAN_HEAD metaIndex=17 name=OutputPolicyPass count=2 first=-0.517 maxAbs=0.517
+HUMAN_HEAD metaIndex=17 name=OutputPolicy count=162 first=-0.539 maxAbs=0.548
+HUMAN_HEAD metaIndex=17 name=OutputValue count=3 first=0.647 maxAbs=0.647
+HUMAN_HEAD metaIndex=17 name=OutputScoreValue count=6 first=0.026 maxAbs=1.064
+HUMAN_HEAD metaIndex=17 name=OutputOwnership count=81 first=0.008 maxAbs=0.015
+HUMAN_META_SENSITIVITY head=OutputPolicyPass maxAbs=0.113
+HUMAN_META_SENSITIVITY head=OutputPolicy maxAbs=0.412
+HUMAN_META_SENSITIVITY head=OutputValue maxAbs=0.131
+HUMAN_META_SENSITIVITY head=OutputScoreValue maxAbs=0.078
+HUMAN_META_SENSITIVITY head=OutputOwnership maxAbs=0.014
+HUMAN_RKNN_SMOKE_PASS board=9 noCpuFallback=1
+NOTE: synthetic inputs only; native KataGo rank encoding and CPU/NPU parity remain unverified.
+Saved: /mnt/hgfs/D/code/go/GoEngine-java/build/rk3588_human/device_probe/device_smoke.log
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:--  0:00:01 --:--:--     0
+
+ 45 37264   45 16829    0     0   9146      0  0:00:04  0:00:01  0:00:03  9146
+100 37264  100 37264    0     0  16876      0  0:00:02  0:00:02 --:--:-- 55681
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+
+100  4156  100  4156    0     0   3457      0  0:00:01  0:00:01 --:--:--  3457
+HUMAN_CPU_REFERENCE_SHA_PASS sha256=d5e1713c48152906e4a9fcf4180809e961349b3962545a17857d088eabf45b60
+/mnt/hgfs/D/code/go/GoEngine-java/build/rk3588_human/device_probe/human_rknn_parity: 1 file pushed, 0 skipped. 170.1 MB/s (260424 bytes in 0.001s)
+/mnt/hgfs/D/code/go/GoEngine-java/build/rk3588_human/device_probe/human_b18_cpu9_reference.bin: 1 file pushed, 0 skipped. 49.0 MB/s (37264 bytes in 0.001s)
+Comparing RK3588 NPU to ORIGINAL Human b18 ONNX CPU reference...
+HUMAN_CPU_REFERENCE_LOADED board=9 cases=4
+HUMAN_RKNN_LOAD bytes=59069801
+HUMAN_INPUT slot=0 name=InputSpatial dims=1x9x9x22 elements=1782 fmt=1 type=1
+HUMAN_INPUT slot=1 name=InputGlobal dims=1x1x1x19 elements=19 fmt=1 type=1
+HUMAN_INPUT slot=2 name=InputMeta dims=1x1x1x192 elements=192 fmt=1 type=1
+HUMAN_INPUT slot=3 name=InputMask dims=1x9x9x1 elements=81 fmt=1 type=1
+HUMAN_OUTPUT slot=0 name=OutputPolicyPass dims=1x2x1x1 elements=2 fmt=0 type=1
+HUMAN_OUTPUT slot=1 name=OutputPolicy dims=1x2x9x9 elements=162 fmt=0 type=1
+HUMAN_OUTPUT slot=2 name=OutputValue dims=1x3x1x1 elements=3 fmt=0 type=1
+HUMAN_OUTPUT slot=3 name=OutputScoreValue dims=1x6x1x1 elements=6 fmt=0 type=1
+HUMAN_OUTPUT slot=4 name=OutputOwnership dims=1x1x9x9 elements=81 fmt=0 type=1
+HUMAN_RKNN_READY board=9 inputs=4 outputs=5
+HUMAN_INFER_OK metaIndex=0 totalMs=31.759
+HUMAN_HEAD metaIndex=0 name=OutputPolicyPass count=2 first=-0.659 maxAbs=0.659
+HUMAN_HEAD metaIndex=0 name=OutputPolicy count=162 first=-0.526 maxAbs=0.679
+HUMAN_HEAD metaIndex=0 name=OutputValue count=3 first=0.754 maxAbs=0.761
+HUMAN_HEAD metaIndex=0 name=OutputScoreValue count=6 first=0.065 maxAbs=1.389
+HUMAN_HEAD metaIndex=0 name=OutputOwnership count=81 first=0.010 maxAbs=0.026
+HUMAN_HEAD_PARITY case=0 name=OutputPolicyPass maxAbs=0.0000755 meanAbs=0.0000562 worstIndex=0 cpu=-0.6591042 npu=-0.6591797 outOfTolerance=0 status=PASS
+HUMAN_HEAD_PARITY case=0 name=OutputPolicy maxAbs=0.0014662 meanAbs=0.0004252 worstIndex=2 cpu=-0.6376966 npu=-0.6362305 outOfTolerance=0 status=PASS
+HUMAN_HEAD_PARITY case=0 name=OutputValue maxAbs=0.0003258 meanAbs=0.0002542 worstIndex=1 cpu=0.2993981 npu=0.2990723 outOfTolerance=0 status=PASS
+HUMAN_HEAD_PARITY case=0 name=OutputScoreValue maxAbs=0.0008998 meanAbs=0.0002252 worstIndex=4 cpu=-1.3895717 npu=-1.3886719 outOfTolerance=0 status=PASS
+HUMAN_HEAD_PARITY case=0 name=OutputOwnership maxAbs=0.0001829 meanAbs=0.0000635 worstIndex=14 cpu=-0.0023783 npu=-0.0021954 outOfTolerance=0 status=PASS
+HUMAN_INFER_OK metaIndex=0 totalMs=35.895
+HUMAN_HEAD metaIndex=0 name=OutputPolicyPass count=2 first=-0.572 maxAbs=0.572
+HUMAN_HEAD metaIndex=0 name=OutputPolicy count=162 first=-0.295 maxAbs=1.764
+HUMAN_HEAD metaIndex=0 name=OutputValue count=3 first=0.933 maxAbs=1.033
+HUMAN_HEAD metaIndex=0 name=OutputScoreValue count=6 first=0.219 maxAbs=1.671
+HUMAN_HEAD metaIndex=0 name=OutputOwnership count=81 first=0.038 maxAbs=0.114
+HUMAN_HEAD_PARITY case=1 name=OutputPolicyPass maxAbs=0.0002947 meanAbs=0.0002561 worstIndex=1 cpu=-0.4674788 npu=-0.4677734 outOfTolerance=0 status=PASS
+HUMAN_HEAD_PARITY case=1 name=OutputPolicy maxAbs=0.0014488 meanAbs=0.0003457 worstIndex=60 cpu=-1.4682456 npu=-1.4667969 outOfTolerance=0 status=PASS
+HUMAN_HEAD_PARITY case=1 name=OutputValue maxAbs=0.0017669 meanAbs=0.0010163 worstIndex=2 cpu=-1.0314362 npu=-1.0332031 outOfTolerance=0 status=PASS
+HUMAN_HEAD_PARITY case=1 name=OutputScoreValue maxAbs=0.0014322 meanAbs=0.0005141 worstIndex=4 cpu=-1.6723306 npu=-1.6708984 outOfTolerance=0 status=PASS
+HUMAN_HEAD_PARITY case=1 name=OutputOwnership maxAbs=0.0001734 meanAbs=0.0000622 worstIndex=32 cpu=0.0440882 npu=0.0439148 outOfTolerance=0 status=PASS
+HUMAN_INFER_OK metaIndex=0 totalMs=47.646
+HUMAN_HEAD metaIndex=0 name=OutputPolicyPass count=2 first=-0.381 maxAbs=0.381
+HUMAN_HEAD metaIndex=0 name=OutputPolicy count=162 first=-0.112 maxAbs=2.145
+HUMAN_HEAD metaIndex=0 name=OutputValue count=3 first=1.230 maxAbs=1.304
+HUMAN_HEAD metaIndex=0 name=OutputScoreValue count=6 first=0.352 maxAbs=2.098
+HUMAN_HEAD metaIndex=0 name=OutputOwnership count=81 first=0.058 maxAbs=0.118
+HUMAN_HEAD_PARITY case=2 name=OutputPolicyPass maxAbs=0.0004414 meanAbs=0.0003773 worstIndex=0 cpu=-0.3801738 npu=-0.3806152 outOfTolerance=0 status=PASS
+HUMAN_HEAD_PARITY case=2 name=OutputPolicy maxAbs=0.0023769 meanAbs=0.0003343 worstIndex=34 cpu=-1.3677403 npu=-1.3701172 outOfTolerance=0 status=PASS
+HUMAN_HEAD_PARITY case=2 name=OutputValue maxAbs=0.0010394 meanAbs=0.0007925 worstIndex=2 cpu=-1.3026716 npu=-1.3037109 outOfTolerance=0 status=PASS
+HUMAN_HEAD_PARITY case=2 name=OutputScoreValue maxAbs=0.0003894 meanAbs=0.0001940 worstIndex=3 cpu=-0.0557788 npu=-0.0553894 outOfTolerance=0 status=PASS
+HUMAN_HEAD_PARITY case=2 name=OutputOwnership maxAbs=0.0002561 meanAbs=0.0000731 worstIndex=46 cpu=-0.0071634 npu=-0.0074196 outOfTolerance=0 status=PASS
+HUMAN_INFER_OK metaIndex=0 totalMs=57.891
+HUMAN_HEAD metaIndex=0 name=OutputPolicyPass count=2 first=-0.492 maxAbs=0.492
+HUMAN_HEAD metaIndex=0 name=OutputPolicy count=162 first=-0.015 maxAbs=1.718
+HUMAN_HEAD metaIndex=0 name=OutputValue count=3 first=1.252 maxAbs=1.621
+HUMAN_HEAD metaIndex=0 name=OutputScoreValue count=6 first=0.409 maxAbs=2.170
+HUMAN_HEAD metaIndex=0 name=OutputOwnership count=81 first=0.024 maxAbs=0.095
+HUMAN_HEAD_PARITY case=3 name=OutputPolicyPass maxAbs=0.0001976 meanAbs=0.0001525 worstIndex=0 cpu=-0.4922340 npu=-0.4924316 outOfTolerance=0 status=PASS
+HUMAN_HEAD_PARITY case=3 name=OutputPolicy maxAbs=0.0027357 meanAbs=0.0004015 worstIndex=2 cpu=-1.3312486 npu=-1.3339844 outOfTolerance=0 status=PASS
+HUMAN_HEAD_PARITY case=3 name=OutputValue maxAbs=0.0013003 meanAbs=0.0007673 worstIndex=2 cpu=-1.6197934 npu=-1.6210938 outOfTolerance=0 status=PASS
+HUMAN_HEAD_PARITY case=3 name=OutputScoreValue maxAbs=0.0020690 meanAbs=0.0006049 worstIndex=4 cpu=-2.1719909 npu=-2.1699219 outOfTolerance=0 status=PASS
+HUMAN_HEAD_PARITY case=3 name=OutputOwnership maxAbs=0.0002384 meanAbs=0.0000796 worstIndex=40 cpu=0.0367795 npu=0.0370178 outOfTolerance=0 status=PASS
+HUMAN_CPU_NPU_PARITY PASS cases=4 heads=20 badHeads=0 maxAbs=0.0027357 atol=0.0500000 rtol=0.0300000
+NOTE: test compares synthetic CPU/NPU tensors; valid native KataGo rank features and real-game accuracy are not tested.
+HUMAN_RKNN_PARITY_SCRIPT_PASS report=/mnt/hgfs/D/code/go/GoEngine-java/build/rk3588_human/device_probe/human_parity.log
