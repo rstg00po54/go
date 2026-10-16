@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Probe original Human b18 RKNN on RK3588 Android, without changing the Go APK.
 set -euo pipefail
-ROOT="$(cd "$(dirname "\${BASH_SOURCE[0]}")/.." && pwd)"
-SERIAL="\${1:-\${ANDROID_SERIAL:-8719e18a71a2a66c}}"
-RUN_ID="\${HUMAN_RKNN_CI_RUN:-38839604816}"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SERIAL="${1:-${ANDROID_SERIAL:-8719e18a71a2a66c}}"
+RUN_ID="${HUMAN_RKNN_CI_RUN:-38839604816}"
 WORK="$ROOT/build/rk3588_human/device_probe"
-MODEL="\${HUMAN_RKNN_MODEL:-$ROOT/build/rk3588_human/9/katago_human_9x9.rknn}"
+MODEL="${HUMAN_RKNN_MODEL:-$ROOT/build/rk3588_human/9/katago_human_9x9.rknn}"
 SDK="$ROOT/build/rknn_sdk"
 mkdir -p "$WORK" "$(dirname "$MODEL")"
 
@@ -27,7 +27,7 @@ if [[ ! -s "$MODEL" ]]; then
 fi
 EXPECTED="3692a0726ae4e0f5fd601cdc782cb04fe60e6a0c6f06c2789f6e073d52f61474"
 ACTUAL="$(sha256sum "$MODEL" | awk '{print $1}')"
-if [[ "$ACTUAL" != "$EXPECTED" && "\${HUMAN_RKNN_ALLOW_OTHER_MODEL:-0}" != "1" ]]; then
+if [[ "$ACTUAL" != "$EXPECTED" && "${HUMAN_RKNN_ALLOW_OTHER_MODEL:-0}" != "1" ]]; then
   echo "Model hash mismatch: $ACTUAL (expected $EXPECTED)" >&2
   echo "Only for deliberately substituted experimental models, set HUMAN_RKNN_ALLOW_OTHER_MODEL=1" >&2
   exit 1
@@ -36,9 +36,9 @@ fi
 if [[ ! -s "$SDK/librknnrt.so" || ! -s "$SDK/include/rknn_api.h" ]]; then
   bash "$ROOT/tools/prepare_rknn.sh"
 fi
-NDK="\${ANDROID_NDK_HOME:-\${ANDROID_NDK_ROOT:-}}"
+NDK="${ANDROID_NDK_HOME:-${ANDROID_NDK_ROOT:-}}"
 if [[ -z "$NDK" ]]; then
-  for sdk in "\${ANDROID_HOME:-}" "\${ANDROID_SDK_ROOT:-}" "$HOME/Android/Sdk"; do
+  for sdk in "${ANDROID_HOME:-}" "${ANDROID_SDK_ROOT:-}" "$HOME/Android/Sdk"; do
     [[ -n "$sdk" && -d "$sdk/ndk" ]] || continue
     NDK="$(find "$sdk/ndk" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
     [[ -z "$NDK" ]] || break
