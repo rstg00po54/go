@@ -42,7 +42,10 @@ class NpuLogTests(unittest.TestCase):
 
     def test_human_npu_requires_real_runner_and_all_five_native_heads(self):
         base = fixture(sizes=(9,))
-        lines = ["I/KataGoHumanRKNN( 100): HUMAN_RKNN_READY board=9 inputs=4 outputs=5 scale8Compensation=8"]
+        lines = [
+            "I/KataGoHumanRKNN( 100): HUMAN_RKNN_READY board=9 inputs=4 outputs=5 scale8Compensation=8",
+            "I/KataGoHumanRKNN( 100): HUMAN_RKNN_INFER_TIMING count=1 inputMs=0.1 runMs=11.0 outputMs=0.2 totalMs=11.3 avgMs=11.3",
+        ]
         for name in ("policyPass", "policy", "value", "score", "ownership"):
             lines.append("I/KataGoHumanRKNN( 100): HUMAN_RKNN_NATIVE_PARITY "
                          "board=9 case=0 head=%s maxAbs=0.002 meanAbs=0.001 bad=0" % name)
@@ -60,6 +63,26 @@ class NpuLogTests(unittest.TestCase):
                                     "E/KataGoHumanRKNN( 100): HUMAN_RKNN_CPU_FALLBACK reason=native_parity_mismatch\n"
                                     "I/NpuSmoke( 100): STEP_PASS", 1)
         self.assertEqual(smoke.parse_log(fallback, "unique", (9,), True)["status"], "FAIL")
+
+    def test_human_timing_only_requires_npu_and_no_cpu_comparison(self):
+        base = fixture(sizes=(9,))
+        lines = [
+            "I/KataGoEngine( 100): HUMAN_RKNN_EXPERIMENT_REQUESTED board=9 compareCpu=false model=/test.rknn",
+            "I/KataGoHumanRKNN( 100): HUMAN_RKNN_READY board=9 inputs=4 outputs=5 scale8Compensation=8",
+            "I/KataGoHumanRKNN( 100): HUMAN_RKNN_INFER_TIMING count=1 inputMs=0.1 runMs=10.0 outputMs=0.4 totalMs=10.5 avgMs=10.5",
+            "I/KataGoHumanRKNN( 100): HUMAN_RKNN_INFER_TIMING count=2 inputMs=0.1 runMs=12.0 outputMs=0.4 totalMs=12.5 avgMs=11.5",
+        ]
+        injected = base.replace("I/NpuSmoke( 100): STEP_PASS",
+                                "\\n".join(lines) + "\\nI/NpuSmoke( 100): STEP_PASS", 1)
+        report = smoke.parse_log(injected, "unique", (9,), True, True)
+        self.assertEqual(report["status"], "PASS", report["errors"])
+        self.assertEqual(report["steps"][0]["human_npu_timing_samples"], 2)
+        self.assertEqual(report["steps"][0]["human_npu_total_median_ms"], 11.5)
+        self.assertEqual(report["steps"][0]["human_npu_run_median_ms"], 11.0)
+        missing_timing = injected.replace("HUMAN_RKNN_INFER_TIMING", "HUMAN_RKNN_INFER_OTHER")
+        self.assertEqual(smoke.parse_log(missing_timing, "unique", (9,), True, True)["status"], "FAIL")
+        compare_enabled = injected.replace("compareCpu=false", "compareCpu=true")
+        self.assertEqual(smoke.parse_log(compare_enabled, "unique", (9,), True, True)["status"], "FAIL")
 
     def test_thirteen_receiving_nine_model_fails(self):
         report = smoke.parse_log(fixture(bad_index=1, bad_mode="wrong-model"), "unique", (9, 13, 19, 9))
