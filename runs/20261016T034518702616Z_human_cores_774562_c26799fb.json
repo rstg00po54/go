@@ -1,0 +1,47 @@
+{
+  "test": "RK3588 Human b18 9x9 one-core versus three-core NPU benchmark",
+  "model": "b18c384nbt-humanv0",
+  "board": 9,
+  "syntheticInputsOnly": true,
+  "cpuFallbackAvailable": false,
+  "serial": "8719e18a71a2a66c",
+  "status": "PASS",
+  "exit_code": 0,
+  "started_utc": "2026-10-16T03:45:04.613915+00:00",
+  "finished_utc": "2026-10-16T03:45:18.694143+00:00",
+  "core3Available": true,
+  "core0MedianRunMs": 78.216,
+  "core3MedianRunMs": 162.727,
+  "core3VsCore0Ratio": 2.08,
+  "maxOutputDelta": 0.0,
+  "phases": {
+    "core0_before": {
+      "runs": 24,
+      "warmup": 5,
+      "medianRunMs": 82.415,
+      "p90RunMs": 88.332,
+      "medianTotalMs": 84.606,
+      "minRunMs": 69.733,
+      "maxRunMs": 90.251
+    },
+    "core012": {
+      "runs": 24,
+      "warmup": 5,
+      "medianRunMs": 162.727,
+      "p90RunMs": 181.351,
+      "medianTotalMs": 164.712,
+      "minRunMs": 142.727,
+      "maxRunMs": 200.715
+    },
+    "core0_after": {
+      "runs": 24,
+      "warmup": 5,
+      "medianRunMs": 74.017,
+      "p90RunMs": 79.385,
+      "medianTotalMs": 75.926,
+      "minRunMs": 63.49,
+      "maxRunMs": 82.835
+    }
+  },
+  "errors": []
+}

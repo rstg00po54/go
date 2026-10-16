@@ -1,0 +1,165 @@
+检查模型和 NPU 环境（不安装 APK）
+Android probe C++ runtime: static (libc++_shared.so not required)
+/mnt/hgfs/D/code/go/GoEngine-java/build/rk3588_human/device_probe/human_rknn_probe: 1 file pushed, 0 skipped. 133.7 MB/s (255288 bytes in 0.002s)
+/mnt/hgfs/D/code/go/GoEngine-java/build/rknn_sdk/librknnrt.so: 1 file pushed, 0 skipped. 360.4 MB/s (8387408 bytes in 0.022s)
+/mnt/hgfs/D/code/go/GoEngine-java/build/rk3588_human/9/katago_human_9x9.rknn: 1 file pushed, 0 skipped. 205.8 MB/s (59069801 bytes in 0.274s)
+Running original Human b18 RKNN on 8719e18a71a2a66c (APK untouched)
+HUMAN_RKNN_LOAD bytes=59069801
+HUMAN_INPUT slot=0 name=InputSpatial dims=1x9x9x22 elements=1782 fmt=1 type=1
+HUMAN_INPUT slot=1 name=InputGlobal dims=1x1x1x19 elements=19 fmt=1 type=1
+HUMAN_INPUT slot=2 name=InputMeta dims=1x1x1x192 elements=192 fmt=1 type=1
+HUMAN_INPUT slot=3 name=InputMask dims=1x9x9x1 elements=81 fmt=1 type=1
+HUMAN_OUTPUT slot=0 name=OutputPolicyPass dims=1x2x1x1 elements=2 fmt=0 type=1
+HUMAN_OUTPUT slot=1 name=OutputPolicy dims=1x2x9x9 elements=162 fmt=0 type=1
+HUMAN_OUTPUT slot=2 name=OutputValue dims=1x3x1x1 elements=3 fmt=0 type=1
+HUMAN_OUTPUT slot=3 name=OutputScoreValue dims=1x6x1x1 elements=6 fmt=0 type=1
+HUMAN_OUTPUT slot=4 name=OutputOwnership dims=1x1x9x9 elements=81 fmt=0 type=1
+HUMAN_RKNN_READY board=9 inputs=4 outputs=5
+HUMAN_INFER_OK metaIndex=0 totalMs=36.176
+HUMAN_HEAD metaIndex=0 name=OutputPolicyPass count=2 first=-0.630 maxAbs=0.630
+HUMAN_HEAD metaIndex=0 name=OutputPolicy count=162 first=-0.654 maxAbs=0.766
+HUMAN_HEAD metaIndex=0 name=OutputValue count=3 first=0.598 maxAbs=0.682
+HUMAN_HEAD metaIndex=0 name=OutputScoreValue count=6 first=0.012 maxAbs=1.102
+HUMAN_HEAD metaIndex=0 name=OutputOwnership count=81 first=0.005 maxAbs=0.025
+HUMAN_INFER_OK metaIndex=17 totalMs=42.900
+HUMAN_HEAD metaIndex=17 name=OutputPolicyPass count=2 first=-0.517 maxAbs=0.517
+HUMAN_HEAD metaIndex=17 name=OutputPolicy count=162 first=-0.539 maxAbs=0.548
+HUMAN_HEAD metaIndex=17 name=OutputValue count=3 first=0.647 maxAbs=0.647
+HUMAN_HEAD metaIndex=17 name=OutputScoreValue count=6 first=0.026 maxAbs=1.064
+HUMAN_HEAD metaIndex=17 name=OutputOwnership count=81 first=0.008 maxAbs=0.015
+HUMAN_META_SENSITIVITY head=OutputPolicyPass maxAbs=0.113
+HUMAN_META_SENSITIVITY head=OutputPolicy maxAbs=0.412
+HUMAN_META_SENSITIVITY head=OutputValue maxAbs=0.131
+HUMAN_META_SENSITIVITY head=OutputScoreValue maxAbs=0.078
+HUMAN_META_SENSITIVITY head=OutputOwnership maxAbs=0.014
+HUMAN_RKNN_SMOKE_PASS board=9 noCpuFallback=1
+NOTE: synthetic inputs only; native KataGo rank encoding and CPU/NPU parity remain unverified.
+Saved: /mnt/hgfs/D/code/go/GoEngine-java/build/rk3588_human/device_probe/device_smoke.log
+/mnt/hgfs/D/code/go/GoEngine-java/build/rk3588_human/device_probe/human_rknn_cores: 1 file pushed, 0 skipped. 142.6 MB/s (266256 bytes in 0.002s)
+开始 A/B/A 测试：单核 → 三核 → 单核，预热=5，每阶段=24 次
+HUMAN_BENCH_START runs=24 warmup=5 board=9 model=original_b18
+HUMAN_RKNN_LOAD bytes=59069801
+HUMAN_INPUT slot=0 name=InputSpatial dims=1x9x9x22 elements=1782 fmt=1 type=1
+HUMAN_INPUT slot=1 name=InputGlobal dims=1x1x1x19 elements=19 fmt=1 type=1
+HUMAN_INPUT slot=2 name=InputMeta dims=1x1x1x192 elements=192 fmt=1 type=1
+HUMAN_INPUT slot=3 name=InputMask dims=1x9x9x1 elements=81 fmt=1 type=1
+HUMAN_OUTPUT slot=0 name=OutputPolicyPass dims=1x2x1x1 elements=2 fmt=0 type=1
+HUMAN_OUTPUT slot=1 name=OutputPolicy dims=1x2x9x9 elements=162 fmt=0 type=1
+HUMAN_OUTPUT slot=2 name=OutputValue dims=1x3x1x1 elements=3 fmt=0 type=1
+HUMAN_OUTPUT slot=3 name=OutputScoreValue dims=1x6x1x1 elements=6 fmt=0 type=1
+HUMAN_OUTPUT slot=4 name=OutputOwnership dims=1x1x9x9 elements=81 fmt=0 type=1
+HUMAN_RKNN_READY board=9 inputs=4 outputs=5
+HUMAN_BENCH_SAMPLE phase=core0_before index=0 inputMs=0.620 runMs=74.055 outputMs=1.613 totalMs=76.288
+HUMAN_BENCH_SAMPLE phase=core0_before index=1 inputMs=0.611 runMs=90.251 outputMs=1.539 totalMs=92.400
+HUMAN_BENCH_SAMPLE phase=core0_before index=2 inputMs=0.879 runMs=84.695 outputMs=1.839 totalMs=87.412
+HUMAN_BENCH_SAMPLE phase=core0_before index=3 inputMs=0.608 runMs=87.632 outputMs=1.603 totalMs=89.844
+HUMAN_BENCH_SAMPLE phase=core0_before index=4 inputMs=0.606 runMs=87.499 outputMs=1.633 totalMs=89.738
+HUMAN_BENCH_SAMPLE phase=core0_before index=5 inputMs=0.612 runMs=83.176 outputMs=1.534 totalMs=85.322
+HUMAN_BENCH_SAMPLE phase=core0_before index=6 inputMs=0.612 runMs=87.272 outputMs=1.545 totalMs=89.429
+HUMAN_BENCH_SAMPLE phase=core0_before index=7 inputMs=0.610 runMs=78.827 outputMs=1.544 totalMs=80.981
+HUMAN_BENCH_SAMPLE phase=core0_before index=8 inputMs=0.659 runMs=77.564 outputMs=1.701 totalMs=79.923
+HUMAN_BENCH_SAMPLE phase=core0_before index=9 inputMs=0.683 runMs=69.733 outputMs=1.629 totalMs=72.045
+HUMAN_BENCH_SAMPLE phase=core0_before index=10 inputMs=0.607 runMs=74.327 outputMs=1.541 totalMs=76.475
+HUMAN_BENCH_SAMPLE phase=core0_before index=11 inputMs=0.610 runMs=82.538 outputMs=1.602 totalMs=84.751
+HUMAN_BENCH_SAMPLE phase=core0_before index=12 inputMs=0.609 runMs=88.278 outputMs=1.932 totalMs=90.819
+HUMAN_BENCH_SAMPLE phase=core0_before index=13 inputMs=0.610 runMs=74.528 outputMs=1.138 totalMs=76.277
+HUMAN_BENCH_SAMPLE phase=core0_before index=14 inputMs=0.420 runMs=88.355 outputMs=1.655 totalMs=90.430
+HUMAN_BENCH_SAMPLE phase=core0_before index=15 inputMs=0.615 runMs=82.292 outputMs=1.553 totalMs=84.460
+HUMAN_BENCH_SAMPLE phase=core0_before index=16 inputMs=0.611 runMs=86.379 outputMs=1.625 totalMs=88.614
+HUMAN_BENCH_SAMPLE phase=core0_before index=17 inputMs=0.611 runMs=89.278 outputMs=1.582 totalMs=91.470
+HUMAN_BENCH_SAMPLE phase=core0_before index=18 inputMs=0.685 runMs=78.425 outputMs=1.491 totalMs=80.601
+HUMAN_BENCH_SAMPLE phase=core0_before index=19 inputMs=0.611 runMs=81.529 outputMs=1.709 totalMs=83.850
+HUMAN_BENCH_SAMPLE phase=core0_before index=20 inputMs=0.614 runMs=84.163 outputMs=1.652 totalMs=86.430
+HUMAN_BENCH_SAMPLE phase=core0_before index=21 inputMs=0.615 runMs=73.022 outputMs=1.679 totalMs=75.316
+HUMAN_BENCH_SAMPLE phase=core0_before index=22 inputMs=0.687 runMs=75.270 outputMs=1.203 totalMs=77.160
+HUMAN_BENCH_SAMPLE phase=core0_before index=23 inputMs=0.420 runMs=79.154 outputMs=1.607 totalMs=81.181
+HUMAN_BENCH_SUMMARY phase=core0_before runs=24 warmup=5 medianRunMs=82.415 p90RunMs=88.332 medianTotalMs=84.606 minRunMs=69.733 maxRunMs=90.251
+HUMAN_RKNN_LOAD bytes=59069801
+HUMAN_INPUT slot=0 name=InputSpatial dims=1x9x9x22 elements=1782 fmt=1 type=1
+HUMAN_INPUT slot=1 name=InputGlobal dims=1x1x1x19 elements=19 fmt=1 type=1
+HUMAN_INPUT slot=2 name=InputMeta dims=1x1x1x192 elements=192 fmt=1 type=1
+HUMAN_INPUT slot=3 name=InputMask dims=1x9x9x1 elements=81 fmt=1 type=1
+HUMAN_OUTPUT slot=0 name=OutputPolicyPass dims=1x2x1x1 elements=2 fmt=0 type=1
+HUMAN_OUTPUT slot=1 name=OutputPolicy dims=1x2x9x9 elements=162 fmt=0 type=1
+HUMAN_OUTPUT slot=2 name=OutputValue dims=1x3x1x1 elements=3 fmt=0 type=1
+HUMAN_OUTPUT slot=3 name=OutputScoreValue dims=1x6x1x1 elements=6 fmt=0 type=1
+HUMAN_OUTPUT slot=4 name=OutputOwnership dims=1x1x9x9 elements=81 fmt=0 type=1
+HUMAN_RKNN_READY board=9 inputs=4 outputs=5
+HUMAN_BENCH_SAMPLE phase=core012 index=0 inputMs=0.628 runMs=175.155 outputMs=1.759 totalMs=177.542
+HUMAN_BENCH_SAMPLE phase=core012 index=1 inputMs=0.617 runMs=187.694 outputMs=1.708 totalMs=190.019
+HUMAN_BENCH_SAMPLE phase=core012 index=2 inputMs=0.617 runMs=161.160 outputMs=1.674 totalMs=163.451
+HUMAN_BENCH_SAMPLE phase=core012 index=3 inputMs=0.620 runMs=150.793 outputMs=1.692 totalMs=153.105
+HUMAN_BENCH_SAMPLE phase=core012 index=4 inputMs=0.622 runMs=156.276 outputMs=1.121 totalMs=158.020
+HUMAN_BENCH_SAMPLE phase=core012 index=5 inputMs=0.462 runMs=164.799 outputMs=1.628 totalMs=166.890
+HUMAN_BENCH_SAMPLE phase=core012 index=6 inputMs=0.617 runMs=163.028 outputMs=1.600 totalMs=165.245
+HUMAN_BENCH_SAMPLE phase=core012 index=7 inputMs=0.614 runMs=148.675 outputMs=1.110 totalMs=150.399
+HUMAN_BENCH_SAMPLE phase=core012 index=8 inputMs=0.422 runMs=159.819 outputMs=1.695 totalMs=161.936
+HUMAN_BENCH_SAMPLE phase=core012 index=9 inputMs=0.618 runMs=153.572 outputMs=1.095 totalMs=155.286
+HUMAN_BENCH_SAMPLE phase=core012 index=10 inputMs=0.424 runMs=182.465 outputMs=1.182 totalMs=184.072
+HUMAN_BENCH_SAMPLE phase=core012 index=11 inputMs=0.598 runMs=165.870 outputMs=1.851 totalMs=168.320
+HUMAN_BENCH_SAMPLE phase=core012 index=12 inputMs=0.614 runMs=170.729 outputMs=1.646 totalMs=172.989
+HUMAN_BENCH_SAMPLE phase=core012 index=13 inputMs=0.616 runMs=178.753 outputMs=1.663 totalMs=181.031
+HUMAN_BENCH_SAMPLE phase=core012 index=14 inputMs=0.622 runMs=200.715 outputMs=1.566 totalMs=202.903
+HUMAN_BENCH_SAMPLE phase=core012 index=15 inputMs=0.677 runMs=164.036 outputMs=1.086 totalMs=165.800
+HUMAN_BENCH_SAMPLE phase=core012 index=16 inputMs=0.422 runMs=156.989 outputMs=1.856 totalMs=159.268
+HUMAN_BENCH_SAMPLE phase=core012 index=17 inputMs=0.615 runMs=164.396 outputMs=1.645 totalMs=166.655
+HUMAN_BENCH_SAMPLE phase=core012 index=18 inputMs=0.618 runMs=153.126 outputMs=1.669 totalMs=155.413
+HUMAN_BENCH_SAMPLE phase=core012 index=19 inputMs=0.616 runMs=161.687 outputMs=1.683 totalMs=163.987
+HUMAN_BENCH_SAMPLE phase=core012 index=20 inputMs=0.616 runMs=162.426 outputMs=1.136 totalMs=164.178
+HUMAN_BENCH_SAMPLE phase=core012 index=21 inputMs=0.423 runMs=174.967 outputMs=1.823 totalMs=177.213
+HUMAN_BENCH_SAMPLE phase=core012 index=22 inputMs=0.692 runMs=142.727 outputMs=1.251 totalMs=144.669
+HUMAN_BENCH_SAMPLE phase=core012 index=23 inputMs=0.423 runMs=145.384 outputMs=1.195 totalMs=147.003
+HUMAN_BENCH_SUMMARY phase=core012 runs=24 warmup=5 medianRunMs=162.727 p90RunMs=181.351 medianTotalMs=164.712 minRunMs=142.727 maxRunMs=200.715
+HUMAN_RKNN_LOAD bytes=59069801
+HUMAN_INPUT slot=0 name=InputSpatial dims=1x9x9x22 elements=1782 fmt=1 type=1
+HUMAN_INPUT slot=1 name=InputGlobal dims=1x1x1x19 elements=19 fmt=1 type=1
+HUMAN_INPUT slot=2 name=InputMeta dims=1x1x1x192 elements=192 fmt=1 type=1
+HUMAN_INPUT slot=3 name=InputMask dims=1x9x9x1 elements=81 fmt=1 type=1
+HUMAN_OUTPUT slot=0 name=OutputPolicyPass dims=1x2x1x1 elements=2 fmt=0 type=1
+HUMAN_OUTPUT slot=1 name=OutputPolicy dims=1x2x9x9 elements=162 fmt=0 type=1
+HUMAN_OUTPUT slot=2 name=OutputValue dims=1x3x1x1 elements=3 fmt=0 type=1
+HUMAN_OUTPUT slot=3 name=OutputScoreValue dims=1x6x1x1 elements=6 fmt=0 type=1
+HUMAN_OUTPUT slot=4 name=OutputOwnership dims=1x1x9x9 elements=81 fmt=0 type=1
+HUMAN_RKNN_READY board=9 inputs=4 outputs=5
+HUMAN_BENCH_SAMPLE phase=core0_after index=0 inputMs=0.445 runMs=73.934 outputMs=1.662 totalMs=76.041
+HUMAN_BENCH_SAMPLE phase=core0_after index=1 inputMs=0.614 runMs=68.821 outputMs=1.593 totalMs=71.028
+HUMAN_BENCH_SAMPLE phase=core0_after index=2 inputMs=0.611 runMs=78.291 outputMs=2.147 totalMs=81.049
+HUMAN_BENCH_SAMPLE phase=core0_after index=3 inputMs=0.609 runMs=82.821 outputMs=1.580 totalMs=85.009
+HUMAN_BENCH_SAMPLE phase=core0_after index=4 inputMs=0.604 runMs=75.073 outputMs=1.586 totalMs=77.263
+HUMAN_BENCH_SAMPLE phase=core0_after index=5 inputMs=0.604 runMs=72.376 outputMs=1.048 totalMs=74.028
+HUMAN_BENCH_SAMPLE phase=core0_after index=6 inputMs=0.414 runMs=63.490 outputMs=0.868 totalMs=64.772
+HUMAN_BENCH_SAMPLE phase=core0_after index=7 inputMs=0.311 runMs=69.658 outputMs=1.497 totalMs=71.465
+HUMAN_BENCH_SAMPLE phase=core0_after index=8 inputMs=0.607 runMs=79.400 outputMs=1.746 totalMs=81.753
+HUMAN_BENCH_SAMPLE phase=core0_after index=9 inputMs=0.610 runMs=69.394 outputMs=1.527 totalMs=71.532
+HUMAN_BENCH_SAMPLE phase=core0_after index=10 inputMs=0.607 runMs=77.167 outputMs=1.622 totalMs=79.395
+HUMAN_BENCH_SAMPLE phase=core0_after index=11 inputMs=0.616 runMs=78.218 outputMs=1.534 totalMs=80.368
+HUMAN_BENCH_SAMPLE phase=core0_after index=12 inputMs=0.612 runMs=68.170 outputMs=1.674 totalMs=70.457
+HUMAN_BENCH_SAMPLE phase=core0_after index=13 inputMs=0.678 runMs=65.171 outputMs=1.592 totalMs=67.441
+HUMAN_BENCH_SAMPLE phase=core0_after index=14 inputMs=0.610 runMs=73.655 outputMs=1.057 totalMs=75.322
+HUMAN_BENCH_SAMPLE phase=core0_after index=15 inputMs=0.421 runMs=73.488 outputMs=1.511 totalMs=75.421
+HUMAN_BENCH_SAMPLE phase=core0_after index=16 inputMs=0.608 runMs=74.100 outputMs=1.103 totalMs=75.811
+HUMAN_BENCH_SAMPLE phase=core0_after index=17 inputMs=0.419 runMs=77.201 outputMs=2.063 totalMs=79.684
+HUMAN_BENCH_SAMPLE phase=core0_after index=18 inputMs=0.648 runMs=73.396 outputMs=1.079 totalMs=75.123
+HUMAN_BENCH_SAMPLE phase=core0_after index=19 inputMs=0.421 runMs=75.821 outputMs=1.607 totalMs=77.850
+HUMAN_BENCH_SAMPLE phase=core0_after index=20 inputMs=0.611 runMs=77.579 outputMs=1.143 totalMs=79.333
+HUMAN_BENCH_SAMPLE phase=core0_after index=21 inputMs=0.460 runMs=69.917 outputMs=1.674 totalMs=72.051
+HUMAN_BENCH_SAMPLE phase=core0_after index=22 inputMs=0.613 runMs=79.349 outputMs=1.697 totalMs=81.659
+HUMAN_BENCH_SAMPLE phase=core0_after index=23 inputMs=0.618 runMs=82.835 outputMs=1.568 totalMs=85.021
+HUMAN_BENCH_SUMMARY phase=core0_after runs=24 warmup=5 medianRunMs=74.017 p90RunMs=79.385 medianTotalMs=75.926 minRunMs=63.490 maxRunMs=82.835
+HUMAN_BENCH_HEAD_COMPARE a=core0_before b=core0_after head=OutputPolicyPass maxAbs=0.000
+HUMAN_BENCH_HEAD_COMPARE a=core0_before b=core0_after head=OutputPolicy maxAbs=0.000
+HUMAN_BENCH_HEAD_COMPARE a=core0_before b=core0_after head=OutputValue maxAbs=0.000
+HUMAN_BENCH_HEAD_COMPARE a=core0_before b=core0_after head=OutputScoreValue maxAbs=0.000
+HUMAN_BENCH_HEAD_COMPARE a=core0_before b=core0_after head=OutputOwnership maxAbs=0.000
+HUMAN_BENCH_HEAD_COMPARE a=core0_before b=core012 head=OutputPolicyPass maxAbs=0.000
+HUMAN_BENCH_HEAD_COMPARE a=core0_before b=core012 head=OutputPolicy maxAbs=0.000
+HUMAN_BENCH_HEAD_COMPARE a=core0_before b=core012 head=OutputValue maxAbs=0.000
+HUMAN_BENCH_HEAD_COMPARE a=core0_before b=core012 head=OutputScoreValue maxAbs=0.000
+HUMAN_BENCH_HEAD_COMPARE a=core0_before b=core012 head=OutputOwnership maxAbs=0.000
+HUMAN_BENCH_HEAD_COMPARE a=core0_after b=core012 head=OutputPolicyPass maxAbs=0.000
+HUMAN_BENCH_HEAD_COMPARE a=core0_after b=core012 head=OutputPolicy maxAbs=0.000
+HUMAN_BENCH_HEAD_COMPARE a=core0_after b=core012 head=OutputValue maxAbs=0.000
+HUMAN_BENCH_HEAD_COMPARE a=core0_after b=core012 head=OutputScoreValue maxAbs=0.000
+HUMAN_BENCH_HEAD_COMPARE a=core0_after b=core012 head=OutputOwnership maxAbs=0.000
+HUMAN_BENCH_RESULT status=PASS cores3Available=1 core0RunMedianMs=78.216 core3RunMedianMs=162.727 core3VsCore0Ratio=2.080 core0BeforeMs=82.415 core0AfterMs=74.017 maxOutputDelta=0.000 samplesPerPhase=24
+NOTE: identical synthetic 9x9 inputs; test scheduling/latency only. Real KataGo move times and Human rank behavior are not part of this benchmark.
