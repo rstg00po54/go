@@ -1817,7 +1817,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG, "KATAGO_NEW_GAME_SESSION action=" + (reuse ? "REUSE" : "CREATE")
                         + " board=" + size + " requested=" + requestedBackend
                         + " active=" + engine.getBackendName()
-                        + " rknnInit=" + (reuse ? 0 : 1));
+                        + " noModelReload=" + reuse);
                 if (!reuse) {
                     if (restartNpuForBoard)
                         Log.i(TAG, "NPU_MODEL_SWITCH board=" + engine.getActiveNpuBoardSize() + " -> " + size
