@@ -66,7 +66,7 @@ command -v adb >/dev/null || { echo "adb required" >&2; exit 1; }
 # Fail before transferring the 59 MB model if the executable needs a
 # C++ shared runtime which is not staged by this standalone probe.
 READELF="$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf"
-if "$READELF" -d "$WORK/human_rknn_probe" | grep -q 'Shared library: \[libc++_shared.so\]'; then
+if "$READELF" -d "$WORK/human_rknn_probe" | grep -Fq 'libc++_shared.so'; then
   echo 'ERROR: probe still depends on libc++_shared.so despite static C++ link' >&2
   exit 1
 fi
