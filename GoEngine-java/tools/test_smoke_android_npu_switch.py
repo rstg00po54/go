@@ -64,6 +64,32 @@ class NpuLogTests(unittest.TestCase):
                                     "I/NpuSmoke( 100): STEP_PASS", 1)
         self.assertEqual(smoke.parse_log(fallback, "unique", (9,), True)["status"], "FAIL")
 
+    def test_human_npu_13_19_requires_each_real_native_parity_head(self):
+        sizes = (13, 19)
+        log = fixture(sizes=sizes)
+        for size in sizes:
+            lines = [
+                "I/KataGoHumanRKNN( 100): HUMAN_RKNN_READY board=%d inputs=4 outputs=5 scale8Compensation=8" % size,
+                "I/KataGoHumanRKNN( 100): HUMAN_RKNN_INFER_TIMING board=%d count=1 inputMs=0.1 runMs=20.0 outputMs=0.2 totalMs=20.3 avgMs=20.3" % size,
+            ]
+            for head in ("policyPass", "policy", "value", "score", "ownership"):
+                lines.append(
+                    "I/KataGoHumanRKNN( 100): HUMAN_RKNN_NATIVE_PARITY "
+                    "board=%d case=0 head=%s maxAbs=0.002 meanAbs=0.001 bad=0" % (size,head))
+            marker = "I/NpuSmoke( 100): STEP_PASS id=unique index=%d board=%d" % (
+                sizes.index(size),size)
+            log = log.replace(marker, "\n".join(lines)+"\n"+marker, 1)
+        result = smoke.parse_log(log,"unique",sizes,True)
+        self.assertEqual(result["status"],"PASS",result["errors"])
+        for size in sizes:
+            wrong=log.replace("HUMAN_RKNN_READY board=%d" % size,
+                              "HUMAN_RKNN_READY board=9",1)
+            self.assertEqual(smoke.parse_log(wrong,"unique",sizes,True)["status"],"FAIL")
+        fallback=log.replace("I/NpuSmoke( 100): STEP_PASS id=unique index=1",
+                             "E/KataGoHumanRKNN( 100): HUMAN_RKNN_CPU_FALLBACK reason=native_parity_mismatch\n"
+                             "I/NpuSmoke( 100): STEP_PASS id=unique index=1",1)
+        self.assertEqual(smoke.parse_log(fallback,"unique",sizes,True)["status"],"FAIL")
+
     def test_human_timing_only_requires_npu_and_no_cpu_comparison(self):
         base = fixture(sizes=(9,))
         lines = [
