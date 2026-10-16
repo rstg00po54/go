@@ -99,7 +99,7 @@ def stage(enabled, cache=CACHE, output=OUTPUT, download=None):
 # original-weight 13/19 RKNN compilation workflows. Their manifest travels
 # with the model; both are verified before inclusion in the APK. Once the CI
 # publishes the exact hashes, PINS should be populated for immutable pinning.
-EXTRA_SIZES = (13, 19)
+EXTRA_SIZES = (11, 13, 15, 19)
 # Published by workflow 38856959945; compiled/CPU-ONNX-parity-checked only.
 # Device RK3588 numerical and real-game verification remains pending.
 PINS = {
@@ -110,7 +110,7 @@ PINS = {
 
 def verify_extra(size, binary, manifest):
     import json
-    if not binary.is_file() or not manifest.is_file():
+    if size not in PINS or not binary.is_file() or not manifest.is_file():
         return False
     try:
         doc = json.loads(manifest.read_text(encoding="utf-8"))
@@ -143,7 +143,7 @@ def verify_extra(size, binary, manifest):
         return False
 
 
-def stage_extra_models(enabled, required=False, root=ROOT, fetch=None):
+def stage_extra_models(enabled, required=False, require_five=False, root=ROOT, fetch=None):
     """Install only complete, internally verified original b18 13/19 model pairs.
 
     The first enabled build may download the two model + manifest pairs.
@@ -153,6 +153,12 @@ def stage_extra_models(enabled, required=False, root=ROOT, fetch=None):
     """
     import json
     for size in EXTRA_SIZES:
+        size_required = (size in (13,19) and required) or (size in (11,15) and require_five)
+        if size not in PINS:
+            if size_required:
+                raise ValueError("Missing immutable SHA256 pin for Human b18 %dx%d" % (size,size))
+            print("HUMAN_RKNN_MULTI_ASSET_SKIPPED board=%d reason=not_pinned" % size,flush=True)
+            continue
         name = "katago_human_%dx%d" % (size,size)
         output_dir = root / "app/build/generated/rk3588HumanAssets/engine"
         dest = output_dir / (name + ".rknn")
@@ -175,13 +181,14 @@ def stage_extra_models(enabled, required=False, root=ROOT, fetch=None):
         meta = cache_dir / (name + ".json")
         if not verify_extra(size, model, meta):
             if model.exists() or meta.exists():
-                if required:
+                if size_required:
                     raise ValueError("Cached Human RKNN multi-size release is invalid: " + str(cache_dir))
                 print("HUMAN_RKNN_MULTI_ASSET_SKIPPED board=%d reason=invalid_cache" % size,flush=True)
                 dest.unlink(missing_ok=True)
                 dest_meta.unlink(missing_ok=True)
                 continue
-            tag = "rk3588-human-b18-%dx%d-experimental-v1" % (size,size)
+            tag = ("rk3588-dual-human-10b-%dx%d-experimental-v1" if size in (11,15)
+                   else "rk3588-human-b18-%dx%d-experimental-v1") % (size,size)
             url = "https://github.com/rstg00po54/go/releases/download/" + tag + "/"
             print("HUMAN_RKNN_MULTI_DOWNLOAD board=%d" % size,flush=True)
             cache_dir.mkdir(parents=True,exist_ok=True)
@@ -215,7 +222,7 @@ def stage_extra_models(enabled, required=False, root=ROOT, fetch=None):
                 meta.unlink(missing_ok=True)
                 dest.unlink(missing_ok=True)
                 dest_meta.unlink(missing_ok=True)
-                if required:
+                if size_required:
                     raise
                 print("HUMAN_RKNN_MULTI_ASSET_SKIPPED board=%d reason=%s" %
                       (size,type(err).__name__),flush=True)
@@ -245,9 +252,12 @@ def main():
     mode.add_argument("--disabled", action="store_true")
     parser.add_argument("--require-multisize", action="store_true",
                         help="Fail build if either 13x13 or 19x19 RKNN release is absent")
+    parser.add_argument("--require-five-sizes", action="store_true",
+                        help="Fail unless 11x11 and 15x15 Human b18 are pinned and bundled")
     args = parser.parse_args()
     stage(args.enabled)
-    stage_extra_models(args.enabled, required=args.require_multisize)
+    stage_extra_models(args.enabled, required=args.require_multisize,
+                       require_five=args.require_five_sizes)
 
 
 if __name__ == "__main__":
