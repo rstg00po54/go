@@ -1,0 +1,111 @@
+name: RK3588 Human b18 NPU 完整可安装 APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/rk3588-rknn]
+    paths:
+      - '.github/workflows/rk3588_human_ready_apk.yml'
+      - 'GoEngine-java/tools/stage_rk3588_human_rknn.py'
+      - 'GoEngine-java/app/build.gradle.kts'
+      - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoEngine.java'
+      - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoNpuNative.java'
+      - 'GoEngine-java/native/KataGo/cpp/neuralnet/humanrknnbackend.cpp'
+      - 'GoEngine-java/native/KataGo/cpp/neuralnet/humanrknnbackend.h'
+      - 'GoEngine-java/app/src/main/cpp/EngineSession.cpp'
+
+permissions:
+  contents: read
+
+jobs:
+  build-rk3588-apk:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: 安装 Android、Eigen 和原生依赖
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq cmake ninja-build libeigen3-dev libssl-dev zlib1g-dev
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          test -n "$SDK"
+          SDKMANAGER="$(find "$SDK/cmdline-tools" -maxdepth 3 -name sdkmanager -type f | sort -V | tail -1)"
+          if [[ -n "$SDKMANAGER" ]]; then
+            "$SDKMANAGER" --install "platforms;android-35" "build-tools;35.0.0"
+          fi
+          NDK="$(find "$SDK/ndk" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          test -f "$NDK/build/cmake/android.toolchain.cmake"
+          echo "ANDROID_NDK_HOME=$NDK" >> "$GITHUB_ENV"
+
+      - name: 准备 RK3588 10b 多尺寸模型与 NPU SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          RKNN_MULTISIZE=1 bash GoEngine-java/tools/prepare_rknn.sh
+          for size in 9 13 19; do
+            test -s "GoEngine-java/app/src/main/assets/engine/katago_10b_${size}x${size}.rknn"
+          done
+
+      - name: 编译 KataGo ARM64 PIE 与 RK3588 NPU JNI
+        shell: bash
+        run: |
+          set -euo pipefail
+          export KATAGO_JOBS=2
+          bash GoEngine-java/tools/build_katago_from_source.sh eigen
+          bash GoEngine-java/tools/build_katago_from_source.sh rknnjni
+          test -s GoEngine-java/build/katago_android_arm64_rknnjni/libkatago_npu.so
+
+      - name: 打包含 Human b18 NPU 的调试 APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd GoEngine-java
+          ALLOW_4K_RKNN_RUNTIME=1 KATAGO_JOBS=2 bash build.sh --apk-only
+
+      - name: 验证 APK 确实包含 10b NPU、Human b18 NPU 和 JNI
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,zipfile,pathlib
+          p=pathlib.Path('GoEngine-java/app/build/outputs/apk/debug/app-debug.apk')
+          assert p.is_file()
+          wanted=[
+            'assets/engine/katago_human_9x9.rknn',
+            'assets/engine/katago_10b_9x9.rknn',
+            'assets/engine/katago_10b_13x13.rknn',
+            'assets/engine/katago_10b_19x19.rknn',
+            'lib/arm64-v8a/libkatago_npu.so',
+            'lib/arm64-v8a/librknnrt.so',
+            'lib/arm64-v8a/libkatago_exec.so',
+          ]
+          digest=hashlib.sha256()
+          with zipfile.ZipFile(p) as z:
+            for file in wanted:
+              assert file in z.namelist(), 'APK missing '+file
+            with z.open('assets/engine/katago_human_9x9.rknn') as f:
+              n=0
+              while True:
+                chunk=f.read(1024*1024)
+                if not chunk: break
+                digest.update(chunk); n+=len(chunk)
+          assert n==59069801
+          assert digest.hexdigest()=='78bee9b2561c4ba14024c1428d750e4a4cec3206011290b6b6b1d7b1e95947c7'
+          print('RK3588_HUMAN_NPU_APK_VERIFIED size=%d modelSha256=%s'%
+                (p.stat().st_size,digest.hexdigest()))
+          PY
+
+      - name: 保存可以直接安装的 RK3588 Human NPU APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BadukaiJ-RK3588-10b-Human-b18-NPU-APK
+          path: GoEngine-java/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
