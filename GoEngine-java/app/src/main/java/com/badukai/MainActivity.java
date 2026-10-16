@@ -385,6 +385,8 @@ public class MainActivity extends AppCompatActivity {
         if (sizesArg == null) sizesArg = "9,13,19,9";
         final boolean humanSL = getIntent().getBooleanExtra("npu_smoke_human", true);
         final boolean parity = getIntent().getBooleanExtra("npu_smoke_parity", false);
+        final boolean humanRknnParity = getIntent().getBooleanExtra(
+                "npu_smoke_human_rknn_parity", false);
         final int[] sizes;
         try {
             String[] values = sizesArg.split(",", -1);
@@ -422,6 +424,8 @@ public class MainActivity extends AppCompatActivity {
                     Log.i("NpuSmoke", "STAGE id=" + id + " phase=cpu_closed");
                 }
                 engine.setMediaTekParityEnabled(parity);
+                engine.setHumanRknnParityEnabled(humanRknnParity);
+                Log.i("NpuSmoke", "HUMAN_RKNN_PARITY_ENABLED id=" + id + " enabled=" + humanRknnParity);
                 for (int i=0; i<sizes.length; i++) {
                     int size = sizes[i];
                     Log.i("NpuSmoke", "STEP_BEGIN id=" + id + " index=" + i + " board=" + size);
@@ -469,6 +473,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.e("NpuSmoke", "FAIL id=" + id + " stage=run reason=" + ex, ex);
             } finally {
                 engine.stop();
+                engine.setHumanRknnParityEnabled(false);
                 engine.setMediaTekParityEnabled(false);
                 mainHandler.post(() -> render("NPU 自动测试结束，查看 NpuSmoke 日志"));
             }
