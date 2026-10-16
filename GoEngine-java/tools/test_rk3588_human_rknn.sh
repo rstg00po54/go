@@ -59,9 +59,18 @@ fi
 COMPILER="$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang++"
 [[ -x "$COMPILER" ]] || { echo "Android ARM64 NDK compiler not found: $COMPILER" >&2; exit 1; }
 command -v adb >/dev/null || { echo "adb required" >&2; exit 1; }
-"$COMPILER" -std=c++17 -O2 -fPIE -pie -Wl,-z,max-page-size=16384 \
+"$COMPILER" -std=c++17 -O2 -fPIE -pie -static-libstdc++ -Wl,-z,max-page-size=16384 \
   -I"$SDK/include" "$ROOT/tools/human_rknn_probe.cpp" \
   -L"$SDK" -lrknnrt -o "$WORK/human_rknn_probe"
+
+# Fail before transferring the 59 MB model if the executable needs a
+# C++ shared runtime which is not staged by this standalone probe.
+READELF="$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf"
+if "$READELF" -d "$WORK/human_rknn_probe" | grep -q 'Shared library: \[libc++_shared.so\]'; then
+  echo 'ERROR: probe still depends on libc++_shared.so despite static C++ link' >&2
+  exit 1
+fi
+echo 'Android probe C++ runtime: static (libc++_shared.so not required)'
 
 DEVICE=/data/local/tmp/katago_human_rknn_probe
 adb -s "$SERIAL" shell "mkdir -p '$DEVICE'"
