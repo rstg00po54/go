@@ -2067,12 +2067,12 @@ void NeuralNet::getOutput(
       bool tooDifferent = false;
       for(size_t h=0;h<5;h++) {
         double maxAbs = 0.0, meanAbs = 0.0;
-        size_t exceeded = 0;
+        size_t exceeded = 0, worst = 0;
         for(size_t j=0;j<counts[h];j++) {
           const double cpu = heads[h][j];
           const double npu = savedNpu[h][j];
           const double err = std::abs(cpu-npu);
-          maxAbs=std::max(maxAbs,err);
+          if(err>maxAbs) { maxAbs=err; worst=j; }
           meanAbs+=err;
           if(!std::isfinite(npu) || err>0.05+0.03*std::abs(cpu))
             exceeded++;
@@ -2080,8 +2080,9 @@ void NeuralNet::getOutput(
         meanAbs/=counts[h];
         if(exceeded) tooDifferent=true;
         __android_log_print(ANDROID_LOG_INFO,"KataGoHumanRKNN",
-          "HUMAN_RKNN_NATIVE_PARITY board=%d case=%d head=%s maxAbs=%.8g meanAbs=%.8g bad=%zu",
-          nnXLen,computeHandle->humanRknnCompared,headNames[h],maxAbs,meanAbs,exceeded);
+          "HUMAN_RKNN_NATIVE_PARITY board=%d case=%d head=%s maxAbs=%.8g meanAbs=%.8g bad=%zu worst=%zu cpu=%.8g npu=%.8g",
+          nnXLen,computeHandle->humanRknnCompared,headNames[h],maxAbs,meanAbs,exceeded,worst,
+          heads[h][worst],savedNpu[h][worst]);
       }
       computeHandle->humanRknnCompared++;
       if(tooDifferent) {
