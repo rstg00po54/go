@@ -1,0 +1,49 @@
+name: 死活训练页面编译检查
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/rk3588-rknn]
+    paths:
+      - '.github/workflows/offline_tsumego_ui.yml'
+      - 'GoEngine-java/app/src/main/java/com/badukai/TsumegoActivity.java'
+      - 'GoEngine-java/app/src/main/java/com/badukai/MainActivity.java'
+      - 'GoEngine-java/app/src/main/java/com/badukai/game/TsumegoLessons.java'
+      - 'GoEngine-java/app/src/main/java/com/badukai/game/GoBoard.java'
+      - 'GoEngine-java/app/src/main/AndroidManifest.xml'
+
+permissions:
+  contents: read
+
+jobs:
+  android-java:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: GoEngine-java
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: 准备 Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          test -n "$SDK"
+          if command -v sdkmanager >/dev/null 2>&1; then
+            yes | sdkmanager --licenses >/dev/null || true
+            sdkmanager "platforms;android-35" "build-tools;35.0.0"
+          else
+            test -d "$SDK/platforms/android-35"
+          fi
+      - name: 编译死活训练 Android Java 与资源
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x gradlew
+          ./gradlew :app:compileDebugJavaWithJavac --no-daemon --stacktrace
+          echo 'TSUMEGO_ANDROID_JAVA_BUILD_PASS'
