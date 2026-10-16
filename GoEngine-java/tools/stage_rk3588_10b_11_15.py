@@ -9,6 +9,7 @@ import argparse
 import hashlib
 import json
 import os
+import subprocess
 from pathlib import Path
 import shutil
 import tempfile
@@ -45,6 +46,44 @@ def verify(n, binary, manifest):
         return digest.hexdigest()==expectedSha
     except (ValueError,TypeError,OSError):
         return False
+
+def model_diagnostics(n, binary, manifest):
+    """Summarize the actual bytes and metadata, so a failed download is diagnosable."""
+    expected_sha, expected_size = PINS[n]
+    items=[f"board={n}",f"expectedBytes={expected_size}",f"expectedSha256={expected_sha}"]
+    if binary.is_file():
+        digest=hashlib.sha256()
+        with binary.open("rb") as stream:
+            for block in iter(lambda:stream.read(1024*1024),b""):
+                digest.update(block)
+        items += [f"actualBytes={binary.stat().st_size}",
+                  f"actualSha256={digest.hexdigest()}"]
+    else:
+        items.append("model=missing")
+    try:
+        meta=json.loads(manifest.read_text(encoding="utf-8"))
+        for k in ("model","board","target","quantized","sha256","inputs","outputs"):
+            items.append(f"{k}={meta.get(k)!r}")
+    except (OSError,UnicodeError,ValueError,AttributeError) as error:
+        items.append(f"manifestError={type(error).__name__}:{error}")
+    return " ".join(items)
+
+
+def stream_download(url, target, fetch=None):
+    """Download to a temporary path, never overwrite an existing verified cache."""
+    if fetch is not None:
+        with fetch(url) as source, target.open("wb") as destination:
+            shutil.copyfileobj(source,destination,1024*1024)
+    elif shutil.which("curl"):
+        # curl retries transient VPN/CDN/proxy failures and checks HTTP errors.
+        subprocess.run(["curl","--fail","--location","--silent","--show-error",
+                        "--retry","3","--retry-all-errors","--connect-timeout","20",
+                        "--max-time","300","--output",str(target),url],check=True)
+    else:
+        request=urllib.request.Request(url,headers={"User-Agent":"Badukai-RK3588-10b"})
+        with urllib.request.urlopen(request,timeout=90) as source,target.open("wb") as destination:
+            shutil.copyfileobj(source,destination,1024*1024)
+
 
 def safe_copy(src,dst):
     dst.parent.mkdir(parents=True,exist_ok=True)
@@ -84,28 +123,37 @@ def stage(enabled,required=False,root=ROOT,fetch=None):
             url=f"https://github.com/rstg00po54/go/releases/download/{tag}/"
             cache_dir.mkdir(parents=True,exist_ok=True)
             print(f"RKNN_10B_MULTI_DOWNLOAD board={n}",flush=True)
-            try:
-                for filename,target in ((name+".rknn.json",cache_meta),
-                                        (name+".rknn",cache)):
-                    link=url+filename
-                    if fetch is not None:
-                        with fetch(link) as inp:
-                            with tempfile.TemporaryFile(mode="w+b") as intermediate:
-                                shutil.copyfileobj(inp,intermediate,1024*1024)
-                                intermediate.seek(0)
-                                with target.open("wb") as out:
-                                    shutil.copyfileobj(intermediate,out,1024*1024)
-                    else:
-                        req=urllib.request.Request(link,headers={"User-Agent":"Badukai-RK3588-10b"})
-                        with urllib.request.urlopen(req,timeout=90) as inp,target.open("wb") as out:
-                            shutil.copyfileobj(inp,out,1024*1024)
-                if not verify(n,cache,cache_meta): raise ValueError("SHA256/shape mismatch")
-            except Exception:
-                cache.unlink(missing_ok=True)
-                cache_meta.unlink(missing_ok=True)
-                if required: raise
+            last_error = None
+            for attempt in range(1,4):
+                temp_meta=cache_meta.with_suffix(cache_meta.suffix+".download")
+                temp_binary=cache.with_suffix(cache.suffix+".download")
+                try:
+                    print(f"RKNN_10B_MULTI_DOWNLOAD_ATTEMPT board={n} attempt={attempt}/3",flush=True)
+                    stream_download(url+name+".rknn.json",temp_meta,fetch)
+                    stream_download(url+name+".rknn",temp_binary,fetch)
+                    if not verify(n,temp_binary,temp_meta):
+                        raise ValueError("Downloaded 10b RKNN failed validation: "+
+                                         model_diagnostics(n,temp_binary,temp_meta))
+                    os.replace(temp_meta,cache_meta)
+                    os.replace(temp_binary,cache)
+                    last_error=None
+                    break
+                except (OSError,ValueError,subprocess.CalledProcessError) as error:
+                    last_error=error
+                    print(f"RKNN_10B_MULTI_DOWNLOAD_RETRY board={n} attempt={attempt} "
+                          f"reason={error}",flush=True)
+                finally:
+                    temp_meta.unlink(missing_ok=True)
+                    temp_binary.unlink(missing_ok=True)
+            if last_error is not None:
+                if required:
+                    raise RuntimeError(f"RKNN 10b {n} download verification failed after 3 attempts: "
+                                       f"{last_error}") from last_error
                 print(f"RKNN_10B_MULTI_SKIP board={n} reason=download_error",flush=True)
                 continue
+        if not verify(n,cache,cache_meta):
+            raise ValueError("RKNN 10b cache integrity check failed: "+
+                             model_diagnostics(n,cache,cache_meta))
         safe_copy(cache,output)
         safe_copy(cache_meta,manifest)
         if not verify(n,output,manifest):
