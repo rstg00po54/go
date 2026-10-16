@@ -383,8 +383,12 @@ public class KataGoEngine {
                         if (enabled.isFile()) {
                             if (candidate.isFile() && candidate.length() > 1024 * 1024) {
                                 experimentalHumanRknn = candidate;
-                                verifyHumanNpuAgainstCpu = true;
-                                Log.i(TAG, "HUMAN_RKNN_EXPERIMENT_REQUESTED board=9 model=" + candidate);
+                                // Explicit timing-only mode skips the first four CPU
+                                // reference passes. By default parity stays enabled.
+                                verifyHumanNpuAgainstCpu = !new File(engineDir,
+                                        "human_rknn_timing_only.flag").isFile();
+                                Log.i(TAG, "HUMAN_RKNN_EXPERIMENT_REQUESTED board=9 compareCpu="
+                                        + verifyHumanNpuAgainstCpu + " model=" + candidate);
                             } else {
                                 Log.w(TAG, "HUMAN_RKNN_NOT_STAGED: keeping Human CPU");
                             }
