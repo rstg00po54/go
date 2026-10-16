@@ -3,6 +3,12 @@
 # Existing Android APK is untouched. The first board smoke stages the model.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Outer invocation records stdout/stderr, summarizes all five heads, and
+# uploads even a FAIL. The inner invocation is kept as the original board test.
+# --no-upload keeps everything local; --upload-existing retries without ADB.
+if [[ "${HUMAN_PARITY_CHILD:-0}" != "1" ]]; then
+  exec python3 "$ROOT/tools/run_rk3588_human_parity.py" "$@"
+fi
 SERIAL="${1:-${ANDROID_SERIAL:-8719e18a71a2a66c}}"
 WORK="$ROOT/build/rk3588_human/device_probe"
 SDK="$ROOT/build/rknn_sdk"
