@@ -1,5 +1,5 @@
 // Experimental Human SL b18 RKNN runner, deliberately separate from 10b.
-// Original Human SL b18 model with 9/13/19 fixed-shape RKNN graphs.
+// Original Human SL b18 model with 9/11/13/15/19 fixed-shape RKNN graphs.
 // The selected model must match the KataGo board shape and SGF metadata.
 #include "humanrknnbackend.h"
 #include "rknn_api.h"
@@ -67,8 +67,8 @@ struct KataGoHumanRknnRunner::Impl {
       outputCounts{{2,static_cast<uint32_t>(2*area),3,6,
                     static_cast<uint32_t>(area)}},
       mask(area,0.0f) {
-    if(boardSize != 9 && boardSize != 13 && boardSize != 19)
-      throw std::runtime_error("Human b18 RKNN supports only 9x9, 13x13, 19x19");
+    if(boardSize != 9 && boardSize != 11 && boardSize != 13 && boardSize != 15 && boardSize != 19)
+      throw std::runtime_error("Human b18 RKNN supports only 9x9, 11x11, 13x13, 15x15, 19x19");
     std::ifstream file(path,std::ios::binary);
     if(!file) throw std::runtime_error("Human RKNN model file missing: "+path);
     std::vector<char> model((std::istreambuf_iterator<char>(file)),std::istreambuf_iterator<char>());
