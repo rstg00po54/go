@@ -103,11 +103,15 @@ struct Probe {
         std::cout << "HUMAN_RKNN_READY board=9 inputs=4 outputs=5\n";
     }
 
-    std::array<std::vector<float>,OUTPUT_COUNT> infer(int rankFeature) {
-        std::fill(input[2].begin(), input[2].end(), 0.0f);
-        if(rankFeature < 0 || rankFeature >= 192)
-            throw std::runtime_error("Invalid rank-feature index");
-        input[2][rankFeature] = 1.0f;
+    std::array<std::vector<float>,OUTPUT_COUNT> infer(int rankFeature, bool preserveMetadata=false) {
+        // In parity mode, all four inputs come directly from the original
+        // ONNX CPU fixture. Do not overwrite its 192-dimensional metadata.
+        if(!preserveMetadata) {
+            std::fill(input[2].begin(), input[2].end(), 0.0f);
+            if(rankFeature < 0 || rankFeature >= 192)
+                throw std::runtime_error("Invalid rank-feature index");
+            input[2][rankFeature] = 1.0f;
+        }
         std::array<rknn_input, INPUT_COUNT> ins{};
         for(int i=0;i<INPUT_COUNT;i++) {
             int slot=inputSlot[i];
