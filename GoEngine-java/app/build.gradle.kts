@@ -340,14 +340,18 @@ val stageKataGoNative = tasks.register("stageKataGoNative") {
     }
 }
 
-// Stage the release-verified Human b18 9x9 model only for RKNN APKs.
-// Runs even when disabled to remove a stale asset after switching APK targets.
+// 9x9 is hardware-verified. 13/19 are separately released and SHA-pinned;
+// they keep four native CPU/NPU safety parity checks until board verification.
+val requireHumanRknnMultisize = providers.gradleProperty("requireHumanRknnMultisize")
+    .map { it.equals("true", ignoreCase = true) }.getOrElse(false)
 val stageRk3588HumanRknn = tasks.register<Exec>("stageRk3588HumanRknn") {
     group = "build"
-    description = "SHA256-verify and bundle the Human b18 9x9 RKNN for RK3588 NPU builds"
+    description = "SHA256-verify and stage Human b18 9/13/19 RKNN for RK3588 NPU APK"
     workingDir(rootProject.projectDir)
     commandLine("python3", "tools/stage_rk3588_human_rknn.py",
         if (enableKataGoNpuJni) "--enabled" else "--disabled")
+    if (requireHumanRknnMultisize && enableKataGoNpuJni)
+        args("--require-multisize")
 }
 tasks.configureEach {
     if (name.startsWith("merge") && name.endsWith("Assets")) dependsOn(stageRk3588HumanRknn)
