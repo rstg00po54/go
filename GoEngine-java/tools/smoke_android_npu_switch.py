@@ -129,6 +129,8 @@ def parse_log(log, run_id, sizes, require_human_rknn=False):
             present_heads = {value(line, "head") for line in human_parity}
             if expected != 9 or not human_ready:
                 problems.append("Human b18 RKNN 9x9 did not initialize")
+            elif not any("scale8Compensation=8" in line for line in human_ready):
+                problems.append("Human RKNN JNI is missing scale8 compensation; rebuild and reinstall APK")
             if not expected_heads.issubset(present_heads):
                 problems.append("Missing Human native CPU/NPU parity heads: "
                                 + repr(sorted(expected_heads - present_heads)))
