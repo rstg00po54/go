@@ -12,7 +12,7 @@ on:
       - 'GoEngine-java/tools/check_human_mish_onnx_parity.py'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   export-convert:
@@ -66,3 +66,22 @@ jobs:
             GoEngine-java/build/rk3588_human/9/*.rknn
           if-no-files-found: warn
           retention-days: 14
+      - name: Publish verified experimental Human RKNN model to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          MODEL=GoEngine-java/build/rk3588_human/9/katago_human_9x9.rknn
+          META=GoEngine-java/build/rk3588_human/9/katago_human_9x9.json
+          test -s "$MODEL"
+          test -s "$META"
+          echo '3692a0726ae4e0f5fd601cdc782cb04fe60e6a0c6f06c2789f6e073d52f61474  '"$MODEL" | sha256sum -c -
+          TAG=rk3588-human-b18-9x9-experimental-v1
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --prerelease --target "$GITHUB_SHA" \
+              --title 'RK3588 original Human SL b18 9x9 (experimental)' \
+              --notes 'Original b18 weights; 120 exact Mish rewrites; ONNX CPU five-head parity PASS. RKNN-Toolkit2 2.3.2 nonquantized RK3588 compilation PASS. Actual RK3588 runtime inference, human-rank behavior and CPU/NPU parity have NOT been tested. Not a production build.'
+          fi
+          gh release upload "$TAG" "$MODEL" "$META" --clobber
