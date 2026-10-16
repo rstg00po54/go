@@ -1,16 +1,9 @@
 name: RK3588 Human b18 13x13 + 19x19 RKNN 模型构建
 
+# The released binaries are SHA256-pinned and must not be auto-overwritten by
+# another non-deterministic RKNN recompile.
 on:
   workflow_dispatch:
-  push:
-    branches: [feature/rk3588-rknn]
-    paths:
-      - '.github/workflows/rk3588_human_rknn_13_19.yml'
-      - 'GoEngine-java/tools/build_rk3588_human_rknn.sh'
-      - 'GoEngine-java/tools/convert_human_onnx_to_rknn.py'
-      - 'GoEngine-java/tools/optimize_human_mish_onnx.py'
-      - 'GoEngine-java/tools/check_human_mish_onnx_parity.py'
-      - 'GoEngine-java/tools/export_human_rknn_cpu_reference.py'
 
 permissions:
   contents: write
@@ -131,8 +124,22 @@ jobs:
               --title "RK3588 original Human SL b18 ${SIZE}x${SIZE} (experimental)" \
               --notes 'Original Human b18, 120 exact Mish rewrites, CPU ONNX parity checked. This NPU binary still requires device CPU/NPU five-head parity and real-game tests. Do not describe as runtime verified.'
           fi
+          # Never clobber the models selected for the Android app. A new
+          # compiler output must use a new release tag, after device tests.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            REMOTE_SHA="$(gh api "repos/${GH_REPO}/releases/tags/$TAG" --jq '.assets[] | select(.name=="katago_human_'${SIZE}'x'${SIZE}'.rknn") | .digest')"
+            case "$SIZE" in
+              13) PIN='sha256:8029fdfe086e96d99d2ce7fb7340cc6bab49d232c03fb44fddcfc64866eb5b40' ;;
+              19) PIN='sha256:1bcdddac3687e72705f8cd058bd2c6cd44a1ee221cf30182762598dc0ad43158' ;;
+            esac
+            test "$REMOTE_SHA" = "$PIN" || {
+              echo "Published Human b18 $SIZE RKNN digest changed unexpectedly" >&2; exit 1;
+            }
+            echo "HUMAN_B18_RELEASE_FROZEN board=$SIZE sha256=$REMOTE_SHA"
+            exit 0
+          fi
           gh release upload "$TAG" \
             "$OUT/katago_human_${SIZE}x${SIZE}.rknn" \
             "$OUT/katago_human_${SIZE}x${SIZE}.json" \
             "$OUT/human_b18_cpu${SIZE}_reference.bin" \
-            "$OUT/human_b18_cpu${SIZE}_reference.json" --clobber
+            "$OUT/human_b18_cpu${SIZE}_reference.json"
