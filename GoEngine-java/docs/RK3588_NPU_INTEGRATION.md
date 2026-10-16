@@ -476,3 +476,41 @@ A/B/A 顺序的 9×9 原始权重 Human b18 实机测试已完成。报告自动
 无需重打包 APK：目前 KataGo Human b18 C++ Runner
 `humanrknnbackend.cpp` 本来就固定 `RKNN_NPU_CORE_0`，
 本次结论不会影响已经验证通过的 10b NPU 或 Human 9×9 对弈功能。
+
+## 正常使用：RK3588 版 APK 自动启用 Human b18 NPU（2026-10-16）
+
+此前的 9×9 原生 b18 人类棋力、五输出头和 `rank_12k` 已在 RK3588
+实机完成验证。现在将此前的测试版 Human NPU 变为 RK3588 APK 的正常功能：
+
+- `enableKataGoNpuJni=true` 的 RK3588 APK 会在 Gradle 合并 assets **之前**
+  自动准备 `katago_human_9x9.rknn`（59,069,801 字节）。
+- 文件通过 GitHub Release 固定的 SHA-256
+  `78bee9b2561c4ba14024c1428d750e4a4cec3206011290b6b6b1d7b1e95947c7`
+  校验。只在第一次构建缺失缓存时联网；不把大模型提交到 Git。
+- CPU / MediaTek 版本的 APK 会自动删除先前生成的 RK3588 assets，
+  防止从同一构建目录切换目标时夹带错误的模型。
+- 正常启动 RK3588 → 选 9×9 → 人类棋力（18 级～1 级）→ NPU，
+  自动复制 APK 内已校验的 b18 模型并使用 **NPU 10b + Human b18 NPU**，
+  不再依赖 `enable_human_rknn_9x9.flag` 或手动 ADB 放模型。
+- 旧版实机验证脚本仍然可以使用实验标记启用前 4 次原生 Eigen/NPU 五头
+  误差对照；普通对局**默认没有额外 CPU 对照开销**。
+- Native JNI 现在提供实际 Human RKNN 运行状态查询；如果初始化/运行
+  失败并回退，则会显示 **NPU 10b + CPU Human SL**，不会误报 Human NPU。
+- 13×13 / 19×19 的原有 10b RKNN 路径以及其他棋盘尺寸的原有 CPU
+  路径均不受影响。**Human b18 RKNN 目前只支持 9×9**。
+
+本地生成可安装的 RK3588 APK（需要已有 10b RKNN 多尺寸模型及 RKNN SDK）：
+
+```bash
+cd /mnt/hgfs/D/code/go/GoEngine-java
+git pull --ff-only
+RKNN_MULTISIZE=1 bash tools/prepare_rknn.sh
+bash tools/build_katago_from_source.sh rknnjni
+ALLOW_4K_RKNN_RUNTIME=1 bash build.sh --apk-only
+```
+
+另外在 GitHub Actions 运行 `RK3588 Human b18 NPU 完整可安装 APK`
+可以获取完整的 Android APK 构建产物，包含 10b 9×9/13×13/19×19、
+Human b18 9×9、RKNN Android Runtime 与 JNI。
+构建完成后会核对 APK 内每个必要文件及 Human 模型的实际 SHA-256。
+该 4 KB Runtime 专用于 RK3588 Android，**不可在 16 KB 页设备上安装使用**。
