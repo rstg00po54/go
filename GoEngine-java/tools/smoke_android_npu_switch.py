@@ -209,6 +209,11 @@ def write_json(path, data):
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def human_rknn_parity_intent(require_human_rknn, timing_only):
+    """Opt in to expensive native Eigen parity only for strict RKNN smoke."""
+    return "true" if require_human_rknn and not timing_only else "false"
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--serial", help="RK3588 ADB serial; required when multiple devices connected")
@@ -285,7 +290,7 @@ def main(argv=None):
                # Normal games never run CPU parity; explicit RK3588 smoke tests
                # enable it unless this run requests NPU timing-only measurement.
                "--ez", "npu_smoke_human_rknn_parity",
-               "true" if args.require_human_rknn and not args.human_rknn_timing_only else "false"]
+               human_rknn_parity_intent(args.require_human_rknn, args.human_rknn_timing_only)]
         print("Starting NPU smoke sizes:", args.sizes, flush=True)
         print(command(cmd, timeout=25).strip(), flush=True)
         started = True
