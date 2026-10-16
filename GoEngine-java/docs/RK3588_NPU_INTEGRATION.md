@@ -378,3 +378,34 @@ bash tools/test_rk3588_human_game.sh 8719e18a71a2a66c
 git pull --ff-only
 bash tools/test_rk3588_human_game.sh 8719e18a71a2a66c
 ```
+
+### 真实 Human b18 推理性能测量（独立于 CPU 对照）
+
+2026-10-16 第二轮 9×9 真实对弈已通过：原生 `rank_12k`、
+`HUMAN_RKNN_READY scale8Compensation=8`、20/20 五输出头精度检查
+全部 PASS，最大绝对误差 `0.02341938`；未发生 CPU 回退。
+成功报告：`ui-test-results/runs/20261016T032904444016Z_npu_766978_bbf078bd.json`。
+
+之后在 `KataGoHumanRknnRunner::infer()` 内为每次实际前向增加独立计时：
+`inputMs`（rknn_inputs_set）、`runMs`（rknn_run）、
+`outputMs`（get/read/release）和 `totalMs`，同时记录累计平均值。
+为了避免 logcat 过量，默认打印每个 Runner 的前 8 次及以后每 32 次。
+上传脚本会把采样的最小/最大/中位耗时写入报告。
+
+默认实机脚本**仍会开启**前四次真实局面的 Eigen CPU/NPU 五头精度对照：
+
+```bash
+bash tools/test_rk3588_human_game.sh 8719e18a71a2a66c
+```
+
+若只想测 NPU 的性能，之前已在真实棋局通过精度检查后可**明确选择**关闭
+额外的 Eigen CPU 对照（NPU 异常时 CPU 回退仍有效）：
+
+```bash
+HUMAN_RKNN_TIMING_ONLY=1 bash tools/test_rk3588_human_game.sh 8719e18a71a2a66c
+```
+
+该命令会暂时建立 `human_rknn_timing_only.flag`，结束时自动删除。
+测试程序会检查 Human NPU 初始化、NPU 计时日志和无 CPU 回退，
+并上传 PASS/FAIL 与真实 `runMs`、`totalMs` 统计。
+这与 GTP 黑白落子整步耗时是两种不同指标，不可混淆。
