@@ -77,7 +77,18 @@ jobs:
           META=GoEngine-java/build/rk3588_human/9/katago_human_9x9.json
           test -s "$MODEL"
           test -s "$META"
-          echo '3692a0726ae4e0f5fd601cdc782cb04fe60e6a0c6f06c2789f6e073d52f61474  '"$MODEL" | sha256sum -c -
+          python3 - <<'PY'
+          import hashlib, json, pathlib
+          model=pathlib.Path('GoEngine-java/build/rk3588_human/9/katago_human_9x9.rknn')
+          meta=json.loads(pathlib.Path('GoEngine-java/build/rk3588_human/9/katago_human_9x9.json').read_text())
+          assert meta['model']=='b18c384nbt-humanv0' and meta['board']==9
+          assert meta['target']=='rk3588' and meta['quantized'] is False
+          assert meta['inputs']=={'InputSpatial':[1,22,9,9], 'InputGlobal':[1,19,1,1], 'InputMeta':[1,192,1,1], 'InputMask':[1,1,9,9]}
+          assert meta['outputs']==['OutputPolicyPass','OutputPolicy','OutputValue','OutputScoreValue','OutputOwnership']
+          assert meta['runtimeVerified'] is False and meta['fiveHeadParityVerified'] is False
+          assert hashlib.sha256(model.read_bytes()).hexdigest()==meta['sha256'], 'Compiled binary/manifest SHA mismatch'
+          print('HUMAN_RKNN_RELEASE_MANIFEST_PASS sha256='+meta['sha256'])
+          PY
           TAG=rk3588-human-b18-9x9-experimental-v1
           if ! gh release view "$TAG" >/dev/null 2>&1; then
             gh release create "$TAG" --prerelease --target "$GITHUB_SHA" \
