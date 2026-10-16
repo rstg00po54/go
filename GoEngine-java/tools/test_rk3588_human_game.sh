@@ -4,7 +4,11 @@
 # The existing NPU smoke uploads both PASS and FAIL to ui-test-results.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SERIAL="${1:-${ANDROID_SERIAL:-8719e18a71a2a66c}}"
+SERIAL="${ANDROID_SERIAL:-8719e18a71a2a66c}"
+if [[ $# -gt 0 && "$1" != --* ]]; then
+  SERIAL="$1"
+  shift
+fi
 PKG="com.badukai.java.nputest"
 LOCAL_MODEL="$ROOT/build/rk3588_human/9/katago_human_9x9.rknn"
 REMOTE_MODEL="/data/local/tmp/katago_human_rknn_probe/katago_human_9x9.rknn"
