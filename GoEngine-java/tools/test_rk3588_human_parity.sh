@@ -17,6 +17,7 @@ SDK="$ROOT/build/rknn_sdk"
 GOLDEN="$WORK/human_b18_cpu${SIZE}_reference.bin"
 GOLDEN_META="$WORK/human_b18_cpu${SIZE}_reference.json"
 TAG="rk3588-human-b18-${SIZE}x${SIZE}-experimental-v1"
+[[ "$SIZE" != 11 && "$SIZE" != 15 ]] || TAG="rk3588-dual-human-10b-${SIZE}x${SIZE}-experimental-v1"
 [[ "$SIZE" != 9 ]] || TAG=rk3588-human-b18-9x9-device-verified-v1
 BASE="https://github.com/rstg00po54/go/releases/download/$TAG"
 mkdir -p "$WORK"
