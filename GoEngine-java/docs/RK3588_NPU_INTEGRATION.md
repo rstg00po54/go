@@ -353,3 +353,28 @@ bash tools/test_rk3588_human_game.sh 8719e18a71a2a66c
 可用 `HUMAN_RKNN_SKIP_BUILD=1` 跳过编译，但前提是设备上调试 APK
 已包含本次 C++/JNI/Java 修改。可额外加 `--no-upload` 禁止公开上传日志。
 实机测试结果以 GitHub 上传报告为准；云端编译通过不等于本步骤通过。
+
+### 首次真实局面测试失败及 scale8 修复（2026-10-16）
+
+首次真实 9×9 Human b18 NPU 测试已自动上传到 `ui-test-results` 分支，
+报告 `runs/20261016T032146288480Z_npu_763363_086e3be5.json` 为 `FAIL`。
+10b NPU、Human b18 四输入五输出、原生 `rank_12k` 都正常，
+但五输出头相对 Eigen CPU 的原始值偏差很大，安全回退 Human CPU。
+
+原因：KataGo 1.18.x 的 `dumponnx` 默认启用 `scale8Applied=true`，
+导出的 ONNX 图将激活缩小八倍以避免 FP16 范围溢出，元数据中
+`katago.postProcess.outputScaleMultiplier=8`。独立 ONNX vs RKNN 对比
+均使用相同的 1/8 单位，因此先前可以 20/20 全部通过；
+而 Eigen 原生 `.bin` 推理返回未经缩放的原始输出。
+首次 Android Human RKNN 适配器遗漏了全五输出头 `×8` 还原。
+
+`humanrknnbackend.cpp` 现已在 NCHW→NHWC 处理之前对五头统一乘以 8，
+并在 `HUMAN_RKNN_READY` 日志显示 `scale8Compensation=8`。
+原生五头对比日志现在额外显示最差数据位置的 `cpu` 与 `npu`，
+严格测试脚本还会拒绝缺少缩放标记的旧 APK。
+**该修复仍须重新运行实机验证，不可在新测试结果出现前宣称 PASS。**
+
+```bash
+git pull --ff-only
+bash tools/test_rk3588_human_game.sh 8719e18a71a2a66c
+```
