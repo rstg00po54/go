@@ -12,6 +12,8 @@ on:
       - 'GoEngine-java/app/build.gradle.kts'
       - 'GoEngine-java/tools/stage_rk3588_human_rknn.py'
       - 'GoEngine-java/tools/test_stage_rk3588_human_rknn.py'
+      - 'GoEngine-java/tools/stage_rk3588_10b_11_15.py'
+      - 'GoEngine-java/tools/test_stage_rk3588_10b_11_15.py'
 
 permissions:
   contents: read
@@ -46,6 +48,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 -m unittest discover -s tools -p 'test_stage_rk3588_human_rknn.py' -v
+          python3 -m unittest discover -s tools -p 'test_stage_rk3588_10b_11_15.py' -v
       - name: 编译 Android Java 接口
         shell: bash
         run: |
