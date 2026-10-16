@@ -11,7 +11,7 @@ if [[ "${HUMAN_PARITY_CHILD:-0}" != "1" ]]; then
 fi
 SERIAL="${1:-${ANDROID_SERIAL:-8719e18a71a2a66c}}"
 SIZE="${HUMAN_RKNN_BOARD_SIZE:-9}"
-case "$SIZE" in 9|13|19) ;; *) echo "Unknown Human b18 board $SIZE" >&2; exit 2;; esac
+case "$SIZE" in 9|11|13|15|19 ;; *) echo "Unknown Human b18 board $SIZE" >&2; exit 2;; esac
 WORK="$ROOT/build/rk3588_human/device_probe"
 SDK="$ROOT/build/rknn_sdk"
 GOLDEN="$WORK/human_b18_cpu${SIZE}_reference.bin"
