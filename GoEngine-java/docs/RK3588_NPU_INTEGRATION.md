@@ -409,3 +409,41 @@ HUMAN_RKNN_TIMING_ONLY=1 bash tools/test_rk3588_human_game.sh 8719e18a71a2a66c
 测试程序会检查 Human NPU 初始化、NPU 计时日志和无 CPU 回退，
 并上传 PASS/FAIL 与真实 `runMs`、`totalMs` 统计。
 这与 GTP 黑白落子整步耗时是两种不同指标，不可混淆。
+
+### RK3588 Human b18 真实 NPU 耗时报告及单核/三核对照（2026-10-16）
+
+已完成第一次关闭 CPU 对照的真实 KataGo 9×9 Human b18 运行。
+GitHub 自动报告：`ui-test-results/runs/20261016T033602553257Z_npu_770527_50e136bb.json`，
+`status=PASS`，没有 CPU 回退，原生 `rank_12k` 仍有效。
+
+实机 `rknn_run()` 四次样本分别为 30.000、47.501、51.422、57.196 ms，
+中位数 49.462 ms；包括输入/输出读回在内的总前向中位数 50.187 ms。
+整步落子为黑棋 206 ms、白棋 243 ms，不能与单次 NPU 前向直接比较。
+四次样本仍较少，且耗时有明显上升趋势，不足以直接断定三核一定更快。
+
+为避免重复修改已验证成功的 APK，已增加独立的原始 Human b18 核心调度基准，
+测试时只使用 Android NDK 编译小程序和之前校验过的 `.rknn` 模型：
+
+```bash
+cd /mnt/hgfs/D/code/go/GoEngine-java
+git pull --ff-only
+bash tools/test_rk3588_human_cores.sh 8719e18a71a2a66c
+```
+
+默认依次运行三个阶段：`core0_before`、`core012`、`core0_after`。
+每阶段预热 5 次，再记录 24 次输入设置、`rknn_run` 和输出读回时间。
+报告列出各阶段中位数/P90、三核对单核耗时比，以及五输出头跨核心数值差异。
+如果 RKNN Runtime/模型不支持三核模式，会记录 `HUMAN_BENCH_CORE3_UNAVAILABLE`
+并继续测单核，不会强行修改 Android App。
+
+脚本自动保存本地报告并将成功/失败结果上传到公开的 GitHub
+`ui-test-results` 分支；报告包含设备 ADB 序列号与运行日志，
+但不上传权重或 RKNN 二进制。追加 `--no-upload` 只在本机保存。
+
+```bash
+HUMAN_CORES_RUNS=48 HUMAN_CORES_WARMUP=8 bash tools/test_rk3588_human_cores.sh 8719e18a71a2a66c
+bash tools/test_rk3588_human_cores.sh 8719e18a71a2a66c --no-upload
+```
+
+**基准程序用固定合成输入评估模型前向吞吐；不是 CPU/NPU 精度或正式对弈测试。**
+此前真实 KataGo 9×9 Human b18 的 20/20 五输出头 CPU/NPU 精度检查已单独通过。
