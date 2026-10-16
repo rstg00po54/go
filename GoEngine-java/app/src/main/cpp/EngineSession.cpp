@@ -226,7 +226,7 @@ std::string toUtf8(JNIEnv* env, jstring value) {
 
 extern "C" JNIEXPORT jlong JNICALL
 #if defined(USE_RKNN_BACKEND)
-KATAGO_SESSION_JNI(nativeCreateSession)(JNIEnv* env, jclass, jstring model, jstring config, jstring humanModel, jstring rknnModel) {
+KATAGO_SESSION_JNI(nativeCreateSession)(JNIEnv* env, jclass, jstring model, jstring config, jstring humanModel, jstring rknnModel, jstring humanRknnModel, jboolean compareHumanCpu) {
 #elif defined(USE_MEDIATEK_BACKEND)
 KATAGO_SESSION_JNI(nativeCreateSession)(JNIEnv* env, jclass, jstring model, jstring config, jstring humanModel, jobject runner, jobject humanRunner, jboolean compareCpu) {
 #else
@@ -239,6 +239,21 @@ KATAGO_SESSION_JNI(nativeCreateSession)(JNIEnv* env, jclass, jstring model, jstr
 #if defined(USE_RKNN_BACKEND)
     const std::string rknnPath = toUtf8(env, rknnModel);
     if (rknnPath.empty() || setenv("KATAGO_RKNN_MODEL", rknnPath.c_str(), 1) != 0) return 0;
+    // Deliberately opt-in and isolated from the existing 10b model path.
+    // The caller must stage Human b18 RKNN and request it explicitly.
+    const std::string humanRknnPath = toUtf8(env, humanRknnModel);
+    if (!humanRknnPath.empty()) {
+        if (setenv("KATAGO_RKNN_HUMAN_MODEL", humanRknnPath.c_str(), 1) != 0) return 0;
+        if (compareHumanCpu == JNI_TRUE) {
+            if (setenv("KATAGO_RKNN_HUMAN_COMPARE_CPU", "1", 1) != 0) return 0;
+        } else {
+            unsetenv("KATAGO_RKNN_HUMAN_COMPARE_CPU");
+        }
+    } else {
+        // Prevent an earlier experimental NPU session affecting later CPU Human.
+        unsetenv("KATAGO_RKNN_HUMAN_MODEL");
+        unsetenv("KATAGO_RKNN_HUMAN_COMPARE_CPU");
+    }
 #endif
     if (modelPath.empty() || configPath.empty()) return 0;
     std::lock_guard<std::mutex> lock(sessionsMutex);
