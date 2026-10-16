@@ -281,7 +281,11 @@ def main(argv=None):
         cmd = [args.adb, "-s", serial, "shell", "am", "start", "-n", ACTIVITY,
                "--ez", "npu_switch_smoke", "true", "--es", "npu_smoke_id", run_id,
                "--es", "npu_smoke_sizes", ",".join(map(str, args.sizes)),
-               "--ez", "npu_smoke_human", "false" if args.no_human_sl else "true"]
+               "--ez", "npu_smoke_human", "false" if args.no_human_sl else "true",
+               # Normal games never run CPU parity; explicit RK3588 smoke tests
+               # enable it unless this run requests NPU timing-only measurement.
+               "--ez", "npu_smoke_human_rknn_parity",
+               "true" if args.require_human_rknn and not args.human_rknn_timing_only else "false"]
         print("Starting NPU smoke sizes:", args.sizes, flush=True)
         print(command(cmd, timeout=25).strip(), flush=True)
         started = True
