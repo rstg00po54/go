@@ -111,7 +111,7 @@ def create_reference(onnx_path, output_path, manifest_path, size=9):
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--onnx", type=Path, required=True)
-    ap.add_argument("--size", type=int, default=9, choices=(9, 13, 19))
+    ap.add_argument("--size", type=int, default=9, choices=(9, 11, 13, 15, 19))
     ap.add_argument("--output", type=Path, required=True)
     ap.add_argument("--manifest", type=Path, required=True)
     args = ap.parse_args()
