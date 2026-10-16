@@ -10,6 +10,9 @@ on:
       - 'GoEngine-java/native/KataGo/cpp/neuralnet/humanrknnbackend.h'
       - 'GoEngine-java/native/KataGo/cpp/neuralnet/eigenbackend.cpp'
       - 'GoEngine-java/native/KataGo/cpp/CMakeLists.txt'
+      - 'GoEngine-java/app/src/main/cpp/EngineSession.cpp'
+      - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoNpuNative.java'
+      - 'GoEngine-java/app/src/main/java/com/badukai/engine/KataGoEngine.java'
       - 'GoEngine-java/tools/build_katago_from_source.sh'
 
 permissions:
