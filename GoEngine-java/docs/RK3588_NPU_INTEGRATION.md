@@ -233,8 +233,11 @@ KataGo 1.18.1 `dumponnx`, then 120 mathematically equivalent Mish chains are
 rewritten without changing any of the original 504 initializer tensors.
 All five ONNX output heads passed four CPU parity cases across varying Human
 metadata vectors. The RKNN-Toolkit2 2.3.2 float16-weight/float32-I/O build
-now **compiles successfully** on GitHub Actions for **9x9**, with SHA-256
+now **compiles successfully** on GitHub Actions for **9x9**. The first
+successful build SHA-256 was
 `3692a0726ae4e0f5fd601cdc782cb04fe60e6a0c6f06c2789f6e073d52f61474`.
+Repeat RKNN compilation can produce a different binary digest; each released
+model is therefore verified against its own compiler-generated JSON manifest.
 
 - Successful [CI run](https://github.com/rstg00po54/go/actions/runs/38839604816)
   contains the RKNN artifact, manifest and conversion reports.
