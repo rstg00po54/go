@@ -1,0 +1,47 @@
+name: 将 RK3588 Human b18 实验模型发布说明改成中文
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/rk3588-rknn]
+    paths:
+      - '.github/workflows/localize_rk3588_human_release.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  localize-release:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: 更新发布标题和说明
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          cat > release_notes.md <<'NOTES'
+          ## 模型说明
+
+          这是从 KataGo **原始 Human SL b18（b18c384nbt-humanv0）权重**转换得到的 RK3588 NPU **9×9 棋盘实验模型**。
+
+          - 使用原始权重，等价改写了 120 处 Mish 激活算子，未修改原始权重。
+          - ONNX 模型与优化模型在 CPU 上的五个输出头精度对比：**通过**。
+          - 使用 RKNN-Toolkit2 2.3.2 转换为适用于 RK3588 的 RKNN 模型，未启用 INT8 量化：**编译通过**。
+          - 模型文件：`katago_human_9x9.rknn`；配套校验信息：`katago_human_9x9.json`。
+
+          ## 当前验证范围
+
+          **尚未确认** RK3588 实机 NPU 推理、不同人类棋力等级的落子表现，以及 RK3588 NPU 与 CPU 的输出精度是否一致。
+
+          这是测试用的**预发布版本**，**不是正式可用的生产版本**。现有 KataGo 10b NPU 功能未被此模型替换。
+
+          ## 下一步
+
+          在 Ubuntu 项目目录同步代码，然后用 `bash tools/test_rk3588_human_rknn.sh 8719e18a71a2a66c` 对 RK3588 做独立实机测试，不需要重装 APK。
+          NOTES
+          gh release edit rk3588-human-b18-9x9-experimental-v1 \
+            --title 'RK3588 原始 Human SL b18 9×9 NPU 模型（实验版）' \
+            --notes-file release_notes.md
+          gh release view rk3588-human-b18-9x9-experimental-v1 --json name,body
