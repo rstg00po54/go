@@ -270,3 +270,27 @@ or playing strength. The full Android C++ Human backend must not be enabled
 until those checks have been completed. The exported b18 graph uses
 `scale8Applied=true` and a postprocessing multiplier of 8; that contract
 must be accounted for when integrating the network into KataGo.
+
+## 原始 Human SL b18：CPU / RK3588 NPU 五输出精度验证（9×9）
+
+已新增独立的对照测试，不修改现有围棋 APK 或 10b NPU 后端。
+GitHub Actions 使用原始 `b18c384nbt-humanv0.bin` 导出的 ONNX，
+由 ONNX Runtime CPU 产生 4 组固定测试数据，并把四个输入张量和五个输出头
+打包为 `human_b18_cpu9_reference.bin`。
+
+```bash
+cd /mnt/hgfs/D/code/go/GoEngine-java
+git pull --ff-only
+bash tools/test_rk3588_human_parity.sh 8719e18a71a2a66c
+```
+
+脚本会验证参考数据 SHA-256、编译 Android ARM64 对照程序、通过 ADB
+上传独立测试程序和参考数据，再调用 RK3588 实际 NPU 进行逐元素对比。
+输出包含每个输出头的 `maxAbs`、`meanAbs`、`outOfTolerance` 和最终
+`HUMAN_CPU_NPU_PARITY PASS/FAIL`。首次误差阈值为
+`abs_error <= 0.05 + 0.03 * abs(cpu_value)`，如失败必须核对数据布局、
+转换图和 FP16 精度，不能直接提高阈值来宣称通过。
+
+**验证边界**：这四组仍是确定性的合成输入；即便通过，也不能证明
+原生 KataGo Human SL 棋力编码正确、真实棋局精度或 Android 正式接入完成。
+下一阶段再使用 KataGo C++ 实际生成的棋局特征和人类等级元数据交叉验证。
