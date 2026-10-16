@@ -37,12 +37,18 @@ jobs:
         run: |
           set -euo pipefail
           "$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang++" \
-            -std=c++17 -O2 -fPIE -pie -Wl,-z,max-page-size=16384 \
+            -std=c++17 -O2 -fPIE -pie -static-libstdc++ -Wl,-z,max-page-size=16384 \
             -Isdk/include GoEngine-java/tools/human_rknn_probe.cpp \
             -Lsdk -lrknnrt -o build/human_rknn_probe
           file build/human_rknn_probe
           file sdk/librknnrt.so
           test -s build/human_rknn_probe
+          "$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf" -d build/human_rknn_probe | tee build/elf_deps.txt
+          if grep -Fq 'libc++_shared.so' build/elf_deps.txt; then
+            echo 'ERROR: Android probe unexpectedly depends on libc++_shared.so' >&2
+            exit 1
+          fi
+          echo 'Android probe verified: no libc++_shared.so dependency'
       - name: Upload test executable (not a hardware inference result)
         uses: actions/upload-artifact@v4
         with:
