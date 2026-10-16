@@ -1,0 +1,52 @@
+name: Build RK3588 Human b18 standalone Android probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/rk3588-rknn]
+    paths:
+      - '.github/workflows/rk3588_human_probe_build.yml'
+      - 'GoEngine-java/tools/human_rknn_probe.cpp'
+      - 'GoEngine-java/tools/test_rk3588_human_rknn.sh'
+
+permissions:
+  contents: read
+
+jobs:
+  android-arm64-probe:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install RKNN Android API and find NDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          test -n "$ROOT" && test -d "$ROOT/ndk"
+          NDK="$(find "$ROOT/ndk" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          test -n "$NDK"
+          test -x "$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang++"
+          echo "NDK=$NDK" >> "$GITHUB_ENV"
+          BASE=https://raw.githubusercontent.com/airockchip/rknn-toolkit2/v2.3.2/rknpu2/runtime/Android/librknn_api
+          mkdir -p sdk/include build
+          curl -fL --retry 3 "$BASE/include/rknn_api.h" -o sdk/include/rknn_api.h
+          curl -fL --retry 3 "$BASE/arm64-v8a/librknnrt.so" -o sdk/librknnrt.so
+      - name: Compile standalone Android ARM64 Human RKNN probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang++" \
+            -std=c++17 -O2 -fPIE -pie -Wl,-z,max-page-size=16384 \
+            -Isdk/include GoEngine-java/tools/human_rknn_probe.cpp \
+            -Lsdk -lrknnrt -o build/human_rknn_probe
+          file build/human_rknn_probe
+          file sdk/librknnrt.so
+          test -s build/human_rknn_probe
+      - name: Upload test executable (not a hardware inference result)
+        uses: actions/upload-artifact@v4
+        with:
+          name: human-rknn-probe-android-arm64
+          path: build/human_rknn_probe
+          if-no-files-found: error
+          retention-days: 14
