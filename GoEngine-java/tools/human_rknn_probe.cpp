@@ -54,7 +54,7 @@ struct Probe {
     std::array<int, INPUT_COUNT> inputSlot{{-1,-1,-1,-1}};
     std::array<int, OUTPUT_COUNT> outputSlot{{-1,-1,-1,-1,-1}};
     std::array<std::vector<float>,INPUT_COUNT> input;
-    explicit Probe(const char* path) {
+    explicit Probe(const char* path, rknn_core_mask coreMask = RKNN_NPU_CORE_0) {
         std::ifstream file(path, std::ios::binary);
         if(!file) throw std::runtime_error(std::string("Cannot open ") + path);
         std::vector<char> model((std::istreambuf_iterator<char>(file)), {});
@@ -62,7 +62,7 @@ struct Probe {
         std::cout << "HUMAN_RKNN_LOAD bytes=" << model.size() << "\n";
         check(rknn_init(&runtime.ctx, model.data(), uint32_t(model.size()), 0, nullptr),
               "rknn_init");
-        check(rknn_set_core_mask(runtime.ctx, RKNN_NPU_CORE_0), "rknn_set_core_mask");
+        check(rknn_set_core_mask(runtime.ctx, coreMask), "rknn_set_core_mask");
         rknn_input_output_num io{};
         check(rknn_query(runtime.ctx, RKNN_QUERY_IN_OUT_NUM, &io, sizeof(io)),
               "RKNN_QUERY_IN_OUT_NUM");
@@ -103,7 +103,7 @@ struct Probe {
         std::cout << "HUMAN_RKNN_READY board=9 inputs=4 outputs=5\n";
     }
 
-    std::array<std::vector<float>,OUTPUT_COUNT> infer(int rankFeature, bool preserveMetadata=false) {
+    std::array<std::vector<float>,OUTPUT_COUNT> infer(int rankFeature, bool preserveMetadata=false, bool quiet=false) {
         // In parity mode, all four inputs come directly from the original
         // ONNX CPU fixture. Do not overwrite its 192-dimensional metadata.
         if(!preserveMetadata) {
@@ -152,10 +152,10 @@ struct Probe {
               "rknn_outputs_release");
         auto elapsed=std::chrono::duration_cast<std::chrono::microseconds>(
             std::chrono::steady_clock::now()-start).count();
-        std::cout << "HUMAN_INFER_OK metaIndex=" << rankFeature
+        if(!quiet) std::cout << "HUMAN_INFER_OK metaIndex=" << rankFeature
                   << " totalMs=" << std::fixed << std::setprecision(3)
                   << elapsed/1000.0 << "\n";
-        for(int key=0;key<OUTPUT_COUNT;key++) {
+        if(!quiet) for(int key=0;key<OUTPUT_COUNT;key++) {
             float first=values[key].front();
             float maxAbs=0.0f;
             for(float f:values[key]) maxAbs=std::max(maxAbs,std::abs(f));
