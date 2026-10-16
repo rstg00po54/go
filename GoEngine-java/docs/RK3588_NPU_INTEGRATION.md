@@ -514,3 +514,34 @@ ALLOW_4K_RKNN_RUNTIME=1 bash build.sh --apk-only
 Human b18 9×9、RKNN Android Runtime 与 JNI。
 构建完成后会核对 APK 内每个必要文件及 Human 模型的实际 SHA-256。
 该 4 KB Runtime 专用于 RK3588 Android，**不可在 16 KB 页设备上安装使用**。
+
+
+### 连续新对局避免重复初始化 NPU（2026-10-16）
+
+相同棋盘尺寸和后端的后续对局现在使用已有 KataGo GTP 会话，
+不会重新加载 10b/Human b18 RKNN 模型。UI 复用分支显示
+`正在重置棋盘...` 而非误导性的 `正在初始化棋局...`。
+重置使用已有 GTP 接口：`clear_board`、规则、贴目、让子、
+`maxVisits` / `maxTime` 以及 `humanSLProfile`。
+这些命令在现有会话里执行，无须重新调用 `rknn_init()`。
+
+复用判定 `KataGoEngine.canReuseHumanSession()` 直接检查：
+- 当前 KataGo/Human SL JNI 或 PIE 会话仍然存活；
+- 用户本局请求的 CPU/GPU/NPU 后端与引擎偏好一致；
+- 对 NPU，当前加载 RKNN 图的棋盘尺寸等于本局尺寸。
+
+在 Android `logcat` 中可区分以下事件：
+- `KATAGO_NEW_GAME_SESSION action=REUSE ... noModelReload=true`：
+  使用既有模型，只清空棋盘和设置本局参数。
+- `KATAGO_NEW_GAME_SESSION action=CREATE ... noModelReload=false`：
+  原会话不可复用，或者用户切换了棋盘尺寸/后端。
+- `HUMAN_RKNN_INIT` / `RKNN_READY`：
+  真正的 RKNN 原生初始化日志；与 UI 上显示“准备中”不是一回事。
+
+需要重新加载的情况：首次打开应用、原生会话实际已退出、
+NPU 棋盘尺寸发生变化、后端发生切换、APP 进程被 Android 系统杀死。
+此处复用是**在应用进程存活期间**的连续对局，并未尝试对
+`rknn_context` 做不安全的跨进程缓存。
+
+该项优化与此前真实 NPU 推理精度测试互相独立；
+编译通过不等于已经测得特定设备的换局耗时。
