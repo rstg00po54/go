@@ -34,7 +34,7 @@ std::vector<float> readFloatArray(std::ifstream& f, uint32_t count) {
 int main(int argc, char** argv) {
     try {
         if(argc != 3) {
-            std::cerr << "Usage: human_rknn_parity <katago_human_9x9.rknn> <human_b18_cpu9_reference.bin>\n";
+            std::cerr << "Usage: human_rknn_parity <model.rknn> <human_b18_cpu_reference.bin>\n";
             return 2;
         }
         std::ifstream reference(argv[2], std::ios::binary);
@@ -44,10 +44,10 @@ int main(int argc, char** argv) {
         if(std::memcmp(magic, "B18REF01", 8) != 0)
             throw std::runtime_error("Invalid CPU fixture magic");
         uint32_t size = readU32(reference), cases = readU32(reference);
-        if(size != 9 || cases != 4)
+        if((size != 9 && size != 13 && size != 19) || cases != 4)
             throw std::runtime_error("Incorrect reference board/case count");
         std::cout << "HUMAN_CPU_REFERENCE_LOADED board=" << size << " cases=" << cases << "\n";
-        Probe probe(argv[1]);
+        Probe probe(argv[1], RKNN_NPU_CORE_0, size);
         int badHeads = 0;
         double globalMax = 0.0;
         // Initial float16 NPU smoke tolerance; tighten only after measuring
@@ -56,10 +56,10 @@ int main(int argc, char** argv) {
         constexpr double REL_TOL = 0.03;
         for(uint32_t trial=0;trial<cases;trial++) {
             for(int i=0;i<INPUT_COUNT;i++)
-                probe.input[i] = readFloatArray(reference, IN_COUNTS[i]);
+                probe.input[i] = readFloatArray(reference, probe.inputCounts[i]);
             std::array<std::vector<float>,OUTPUT_COUNT> expected;
             for(int i=0;i<OUTPUT_COUNT;i++)
-                expected[i] = readFloatArray(reference, OUT_COUNTS[i]);
+                expected[i] = readFloatArray(reference, probe.outputCounts[i]);
             // InputSpatial was serialized NHWC; global and meta also match
             // RKNN NHWC 1x1 input tensors. Outputs stay original ONNX NCHW.
             const auto actual = probe.infer(0, true);
