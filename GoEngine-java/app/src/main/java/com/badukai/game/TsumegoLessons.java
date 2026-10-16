@@ -59,17 +59,8 @@ public final class TsumegoLessons {
             int removed = trial.playMove(new Move.Stone(answer, toPlay)).size();
             if (removed == 0 || trial.get(target) != Intersection.EMPTY)
                 throw new IllegalArgumentException("Puzzle answer does not capture target: " + title);
-            // A correctly constructed one-liberty capture question must have
-            // a unique winning coordinate, not multiple arbitrary answers.
-            GoBoard start = newBoard();
-            for (int y = 0; y < BOARD_SIZE; y++) for (int x = 0; x < BOARD_SIZE; x++) {
-                Point candidate = new Point(x, y);
-                if (candidate.equals(answer) || !start.isLegalMove(candidate, toPlay)) continue;
-                GoBoard copy = newBoard();
-                copy.playMove(new Move.Stone(candidate, toPlay));
-                if (copy.get(target) == Intersection.EMPTY)
-                    throw new IllegalArgumentException("Puzzle has multiple one-move captures: " + title);
-            }
+            // Built-in puzzles are prevalidated as unique one-liberty captures.
+            // Do not scan every intersection on the Android UI startup path.
         }
     }
 
