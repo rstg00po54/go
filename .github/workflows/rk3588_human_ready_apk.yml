@@ -83,9 +83,9 @@ jobs:
           wanted=[
             'assets/engine/katago_human_9x9.rknn',
             'assets/engine/katago_human_13x13.rknn',
-            'assets/engine/katago_human_13x13.json',
+            'assets/engine/katago_human_13x13.rknn.json',
             'assets/engine/katago_human_19x19.rknn',
-            'assets/engine/katago_human_19x19.json',
+            'assets/engine/katago_human_19x19.rknn.json',
             'assets/engine/katago_10b_9x9.rknn',
             'assets/engine/katago_10b_13x13.rknn',
             'assets/engine/katago_10b_19x19.rknn',
@@ -113,7 +113,7 @@ jobs:
           with zipfile.ZipFile(p) as z:
             for board,(sha,size) in expected.items():
               name='assets/engine/katago_human_%dx%d'%(board,board)
-              meta=json.loads(z.read(name+'.json'))
+              meta=json.loads(z.read(name+'.rknn.json'))
               assert meta['model']=='b18c384nbt-humanv0'
               assert meta['board']==board
               assert meta['sha256']==sha
