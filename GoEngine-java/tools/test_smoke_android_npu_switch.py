@@ -40,6 +40,25 @@ class NpuLogTests(unittest.TestCase):
         self.assertEqual(report["steps"][1]["whiteMs"], 210)
         self.assertEqual(report["steps"][3]["model"], "katago_10b_9x9.rknn")
 
+    def test_human_npu_requires_real_runner_and_all_five_native_heads(self):
+        base = fixture(sizes=(9,))
+        lines = ["I/KataGoHumanRKNN( 100): HUMAN_RKNN_READY board=9 inputs=4 outputs=5"]
+        for name in ("policyPass", "policy", "value", "score", "ownership"):
+            lines.append("I/KataGoHumanRKNN( 100): HUMAN_RKNN_NATIVE_PARITY "
+                         "board=9 case=0 head=%s maxAbs=0.002 meanAbs=0.001 bad=0" % name)
+        injected = base.replace("I/NpuSmoke( 100): STEP_PASS", "\n".join(lines) +
+                                "\nI/NpuSmoke( 100): STEP_PASS", 1)
+        self.assertEqual(smoke.parse_log(injected, "unique", (9,), True)["status"], "PASS")
+        missing = smoke.parse_log(base, "unique", (9,), True)
+        self.assertEqual(missing["status"], "FAIL")
+        bad = injected.replace("head=policy maxAbs=0.002 meanAbs=0.001 bad=0",
+                               "head=policy maxAbs=0.002 meanAbs=0.001 bad=1")
+        self.assertEqual(smoke.parse_log(bad, "unique", (9,), True)["status"], "FAIL")
+        fallback = injected.replace("I/NpuSmoke( 100): STEP_PASS",
+                                    "E/KataGoHumanRKNN( 100): HUMAN_RKNN_CPU_FALLBACK reason=native_parity_mismatch\n"
+                                    "I/NpuSmoke( 100): STEP_PASS", 1)
+        self.assertEqual(smoke.parse_log(fallback, "unique", (9,), True)["status"], "FAIL")
+
     def test_thirteen_receiving_nine_model_fails(self):
         report = smoke.parse_log(fixture(bad_index=1, bad_mode="wrong-model"), "unique", (9, 13, 19, 9))
         self.assertEqual(report["status"], "FAIL")
