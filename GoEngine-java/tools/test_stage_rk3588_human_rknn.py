@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Unit tests for bundling the pinned RK3588 Human b18 model, without network."""
 import hashlib
+import json
 import io
 from pathlib import Path
 import tempfile
@@ -99,6 +100,74 @@ class BundlingTests(unittest.TestCase):
                     lambda: self.fail("Already-verified APK asset should be reused"))
         self.assertEqual(self.output.read_bytes(), self.body)
         self.assertEqual(self.cache.read_bytes(), b"different graph")
+
+
+    def test_13_19_are_pinned_verified_and_reused_offline(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td)
+            fixtures={}
+            pins={}
+            for size in (13,19):
+                data=(b"RKNN_MULTI_SOURCE_%d_" % size) * 68000
+                sha=hashlib.sha256(data).hexdigest()
+                pins[size]=(sha,len(data))
+                fixtures[size]={
+                    "model":data,
+                    "manifest":json.dumps({
+                        "model":"b18c384nbt-humanv0",
+                        "board":size,"target":"rk3588","quantized":False,
+                        "inputs":{"InputSpatial":[1,22,size,size],
+                                  "InputGlobal":[1,19,1,1],
+                                  "InputMeta":[1,192,1,1],
+                                  "InputMask":[1,1,size,size]},
+                        "outputs":["OutputPolicyPass","OutputPolicy","OutputValue",
+                                   "OutputScoreValue","OutputOwnership"],
+                        "sha256":sha,"runtimeVerified":False
+                    }).encode()
+                }
+            calls=[]
+            def fetch(url):
+                size=13 if "13x13" in url else 19
+                kind="manifest" if url.endswith(".json") else "model"
+                calls.append((size,kind))
+                return io.BytesIO(fixtures[size][kind])
+            with mock.patch.object(model,"PINS",pins):
+                model.stage_extra_models(True, required=True, root=root, fetch=fetch)
+                self.assertEqual(len(calls),4)
+                for size in (13,19):
+                    out=root/f"app/build/generated/rk3588HumanAssets/engine/katago_human_{size}x{size}.rknn"
+                    meta=out.with_suffix(".json")
+                    self.assertTrue(model.verify_extra(size,out,meta))
+                model.stage_extra_models(True, required=True, root=root,
+                    fetch=lambda _:self.fail("Release must be cached after first stage"))
+                self.assertEqual(len(calls),4)
+                model.stage_extra_models(False, root=root)
+                for size in (13,19):
+                    out=root/f"app/build/generated/rk3588HumanAssets/engine/katago_human_{size}x{size}.rknn"
+                    self.assertFalse(out.exists())
+                model.stage_extra_models(True, required=True, root=root,
+                    fetch=lambda _:self.fail("Validated cache must allow offline build"))
+
+    def test_13_19_reject_model_not_matching_release_pin(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td)
+            sha=hashlib.sha256(b"other graph").hexdigest()
+            info={"model":"b18c384nbt-humanv0","board":13,"target":"rk3588",
+                  "quantized":False,"inputs":{"InputSpatial":[1,22,13,13],
+                  "InputGlobal":[1,19,1,1],"InputMeta":[1,192,1,1],
+                  "InputMask":[1,1,13,13]},
+                  "outputs":["OutputPolicyPass","OutputPolicy","OutputValue",
+                             "OutputScoreValue","OutputOwnership"],"sha256":sha}
+            folder=root/"models"
+            folder.mkdir(parents=True)
+            b=folder/"fake.rknn"
+            m=folder/"fake.json"
+            b.write_bytes(b"other graph"*200000)
+            m.write_text(json.dumps(info))
+            self.assertFalse(model.verify_extra(13,b,m))
+            with mock.patch.object(model,"PINS",{13:(sha,b.stat().st_size)}):
+                self.assertFalse(model.verify_extra(13,b,m))
+
 
 
 if __name__=="__main__":
