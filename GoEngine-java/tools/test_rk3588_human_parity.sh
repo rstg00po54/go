@@ -16,7 +16,9 @@ WORK="$ROOT/build/rk3588_human/device_probe"
 SDK="$ROOT/build/rknn_sdk"
 GOLDEN="$WORK/human_b18_cpu${SIZE}_reference.bin"
 GOLDEN_META="$WORK/human_b18_cpu${SIZE}_reference.json"
-BASE="https://github.com/rstg00po54/go/releases/download/rk3588-human-b18-${SIZE}x${SIZE}-experimental-v1"
+TAG="rk3588-human-b18-${SIZE}x${SIZE}-experimental-v1"
+[[ "$SIZE" != 9 ]] || TAG=rk3588-human-b18-9x9-device-verified-v1
+BASE="https://github.com/rstg00po54/go/releases/download/$TAG"
 mkdir -p "$WORK"
 
 # Reuses local model and validates its checksum/manifest. Stages NPU runtime.
