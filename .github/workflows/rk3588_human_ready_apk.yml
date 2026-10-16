@@ -67,7 +67,7 @@ jobs:
           set -euo pipefail
           cd GoEngine-java
           chmod +x ./gradlew
-          ALLOW_4K_RKNN_RUNTIME=1 KATAGO_JOBS=2 bash build.sh --apk-only
+          REQUIRE_HUMAN_RKNN_MULTISIZE=1 ALLOW_4K_RKNN_RUNTIME=1 KATAGO_JOBS=2 bash build.sh --apk-only
 
       - name: 验证 APK 确实包含 10b NPU、Human b18 NPU 和 JNI
         shell: bash
@@ -79,6 +79,10 @@ jobs:
           assert p.is_file()
           wanted=[
             'assets/engine/katago_human_9x9.rknn',
+            'assets/engine/katago_human_13x13.rknn',
+            'assets/engine/katago_human_13x13.json',
+            'assets/engine/katago_human_19x19.rknn',
+            'assets/engine/katago_human_19x19.json',
             'assets/engine/katago_10b_9x9.rknn',
             'assets/engine/katago_10b_13x13.rknn',
             'assets/engine/katago_10b_19x19.rknn',
@@ -98,15 +102,39 @@ jobs:
                 digest.update(chunk); n+=len(chunk)
           assert n==59069801
           assert digest.hexdigest()=='78bee9b2561c4ba14024c1428d750e4a4cec3206011290b6b6b1d7b1e95947c7'
-          print('RK3588_HUMAN_NPU_APK_VERIFIED size=%d modelSha256=%s'%
-                (p.stat().st_size,digest.hexdigest()))
+          expected={
+            13:('8029fdfe086e96d99d2ce7fb7340cc6bab49d232c03fb44fddcfc64866eb5b40',59071345),
+            19:('1bcdddac3687e72705f8cd058bd2c6cd44a1ee221cf30182762598dc0ad43158',59074417),
+          }
+          import json
+          with zipfile.ZipFile(p) as z:
+            for board,(sha,size) in expected.items():
+              name='assets/engine/katago_human_%dx%d'%(board,board)
+              meta=json.loads(z.read(name+'.json'))
+              assert meta['model']=='b18c384nbt-humanv0'
+              assert meta['board']==board
+              assert meta['sha256']==sha
+              assert meta['target']=='rk3588' and meta['quantized'] is False
+              digest=hashlib.sha256()
+              count=0
+              with z.open(name+'.rknn') as graph:
+                while True:
+                  block=graph.read(1024*1024)
+                  if not block: break
+                  digest.update(block)
+                  count+=len(block)
+              assert count==size and digest.hexdigest()==sha
+              print('RK3588_HUMAN_B18_MODEL_VERIFIED board=%d sha=%s bytes=%d'%
+                    (board,sha,count))
+          print('RK3588_HUMAN_NPU_APK_VERIFIED size=%d boardSizes=9,13,19'%
+                p.stat().st_size)
           PY
 
       - name: 保存可以直接安装的 RK3588 Human NPU APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: BadukaiJ-RK3588-10b-Human-b18-NPU-APK
+          name: BadukaiJ-RK3588-10b-Human-b18-9-13-19-NPU-APK
           path: GoEngine-java/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
