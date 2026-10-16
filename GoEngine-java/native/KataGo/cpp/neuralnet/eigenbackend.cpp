@@ -12,6 +12,7 @@
 
 #ifdef USE_RKNN_BACKEND
 #include "rknnbackend.h"
+#include "humanrknnbackend.h"
 #include <cstdlib>
 #endif
 #ifdef USE_MEDIATEK_BACKEND
@@ -1752,6 +1753,8 @@ struct ComputeHandle {
 
 #ifdef USE_RKNN_BACKEND
   std::unique_ptr<KataGoRknnRunner> rknn;
+  std::unique_ptr<KataGoHumanRknnRunner> humanRknn;
+  int humanRknnCompared = 0;
 #endif
 #ifdef USE_MEDIATEK_BACKEND
   std::unique_ptr<KataGoMediaTekRunner> mediatek;
@@ -1781,8 +1784,8 @@ struct ComputeHandle {
     scratch = std::make_unique<ScratchBuffers>(maxBatchSize,context->nnXLen,context->nnYLen);
     buffers = std::make_unique<Buffers>(loadedModel.modelDesc,*model,maxBatchSize,context->nnXLen,context->nnYLen);
 #ifdef USE_RKNN_BACKEND
-    // The published 19x19 RKNN graph matches the g170 10b network only.
-    // Human SL uses its separate b18 network and stays on Eigen.
+    // 10b remains unchanged. Human b18 RKNN must be explicitly enabled;
+    // all other paths continue to use the existing verified Eigen fallback.
     if(loadedModel.modelDesc.name == "g170-b10c128-s1141046784-d204142634") {
       if(context->nnXLen != context->nnYLen ||
          (context->nnXLen != 9 && context->nnXLen != 13 && context->nnXLen != 19))
@@ -1798,6 +1801,32 @@ struct ComputeHandle {
       // A size-specific model may report unexpected tensor metadata on a
       // particular Rockchip runtime. Avoid SIGABRT; use Eigen until fixed.
       if(!rknn->ready()) rknn.reset();
+    }
+    else if(loadedModel.modelDesc.name.find("b18c384nbt-human") == 0) {
+      const char* path = std::getenv("KATAGO_RKNN_HUMAN_MODEL");
+      if(path && *path) {
+        if(context->nnXLen == 9 && context->nnYLen == 9 &&
+           model->numInputChannels == 22 && model->numInputGlobalChannels == 19 &&
+           model->numInputMetaChannels == 192 && model->numPolicyChannels == 2 &&
+           model->numValueChannels == 3 && model->numScoreValueChannels == 6 &&
+           model->numOwnershipChannels == 1) {
+          try {
+            humanRknn.reset(new KataGoHumanRknnRunner(path, context->nnXLen));
+            if(!humanRknn->ready()) humanRknn.reset();
+          }
+          catch(const std::exception& error) {
+            // The experimental Human model must never take down existing 10b.
+            __android_log_print(ANDROID_LOG_ERROR,"KataGoHumanRKNN",
+              "HUMAN_RKNN_CPU_FALLBACK reason=init_failed message=%s",error.what());
+            humanRknn.reset();
+          }
+        }
+        else {
+          __android_log_print(ANDROID_LOG_WARN,"KataGoHumanRKNN",
+            "HUMAN_RKNN_CPU_FALLBACK reason=unsupported_board_or_model board=%dx%d",
+            context->nnXLen,context->nnYLen);
+        }
+      }
     }
     else if(loadedModel.modelDesc.name.find("human") == std::string::npos) {
       throw StringError("RKNN backend does not recognize 10b model: " + loadedModel.modelDesc.name);
@@ -1871,6 +1900,7 @@ ComputeHandle* NeuralNet::createComputeHandle(
     std::string backend = "Eigen (CPU)";
 #ifdef USE_RKNN_BACKEND
     if(handle->rknn != nullptr) backend = "RKNN (RK3588 NPU)";
+    if(handle->humanRknn != nullptr) backend = "RKNN Human b18 (RK3588 NPU, experimental)";
 #endif
 #ifdef USE_MEDIATEK_BACKEND
     if(handle->mediatek != nullptr) backend = "MediaTek LiteRT";
