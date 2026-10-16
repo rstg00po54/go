@@ -1,0 +1,138 @@
+name: RK3588 Human b18 13x13 + 19x19 RKNN 模型构建
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/rk3588-rknn]
+    paths:
+      - '.github/workflows/rk3588_human_rknn_13_19.yml'
+      - 'GoEngine-java/tools/build_rk3588_human_rknn.sh'
+      - 'GoEngine-java/tools/convert_human_onnx_to_rknn.py'
+      - 'GoEngine-java/tools/optimize_human_mish_onnx.py'
+      - 'GoEngine-java/tools/check_human_mish_onnx_parity.py'
+      - 'GoEngine-java/tools/export_human_rknn_cpu_reference.py'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Human b18 ${{ matrix.size }}x${{ matrix.size }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        size: [13, 19]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: 安装 RKNN Toolkit2 和原始 ONNX CPU 参考环境
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install 'rknn-toolkit2==2.3.2' 'onnxruntime>=1.17,<2' 'numpy<=1.26.4' 'onnx==1.16.1'
+          python -c "import onnx; assert hasattr(onnx,'mapping'); print('onnx',onnx.__version__)"
+      - name: 下载相同的 KataGo b18 原始权重与官方 dumponnx
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p source_models kata_dist
+          curl -fL --retry 3 -o source_models/b18.bin.gz \
+            'https://github.com/lightvector/KataGo/releases/download/v1.15.0/b18c384nbt-humanv0.bin.gz'
+          echo '637746e44f0efe00ad1245a50aa9bbf0716efe364c43965ead97bd6835d84ab5  source_models/b18.bin.gz' | sha256sum -c -
+          gzip -t source_models/b18.bin.gz
+          gzip -dc source_models/b18.bin.gz > source_models/b18.bin
+          test "$(wc -c < source_models/b18.bin)" -eq 107185997
+          curl -fL --retry 3 -o katago_dist.zip \
+            'https://github.com/lightvector/KataGo/releases/download/v1.18.1/katago-v1.18.1-onnx-openvino-linux-x64.zip'
+          unzip -q katago_dist.zip -d kata_dist
+          KATAGO_BIN="$(find "$PWD/kata_dist" -type f -name katago -print -quit)"
+          test -n "$KATAGO_BIN"
+          chmod +x "$KATAGO_BIN"
+          echo "KATAGO_DUMPONNX_BIN=$KATAGO_BIN" >> "$GITHUB_ENV"
+          echo "HUMAN_B18_MODEL=$PWD/source_models/b18.bin" >> "$GITHUB_ENV"
+          LIBPATH="$(find "$PWD/kata_dist" -type f -name '*.so*' -printf '%h\n' | sort -u | paste -sd: -)"
+          echo "LD_LIBRARY_PATH=$LIBPATH" >> "$GITHUB_ENV"
+      - name: 按棋盘尺寸导出原始网络、保持 120 Mish 等价、生成 RKNN
+        shell: bash
+        run: |
+          set -o pipefail
+          bash GoEngine-java/tools/build_rk3588_human_rknn.sh "${{ matrix.size }}" 2>&1 | tee rknn_build_${{ matrix.size }}.log
+      - name: 导出原始 Human b18 ONNX CPU 五输出头参考
+        shell: bash
+        run: |
+          set -euo pipefail
+          SIZE="${{ matrix.size }}"
+          OUT="GoEngine-java/build/rk3588_human/$SIZE"
+          python3 GoEngine-java/tools/export_human_rknn_cpu_reference.py \
+            --onnx "$OUT/human_${SIZE}_original.onnx" --size "$SIZE" \
+            --output "$OUT/human_b18_cpu${SIZE}_reference.bin" \
+            --manifest "$OUT/human_b18_cpu${SIZE}_reference.json"
+      - name: 检查 RKNN 张量合同、SHA 和原始 CPU golden
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - "${{ matrix.size }}" <<'PY'
+          import hashlib,json,pathlib,sys
+          n=int(sys.argv[1])
+          out=pathlib.Path(f'GoEngine-java/build/rk3588_human/{n}')
+          model=out/f'katago_human_{n}x{n}.rknn'
+          meta=json.loads((out/f'katago_human_{n}x{n}.json').read_text())
+          assert model.is_file() and model.stat().st_size>1000000
+          assert meta['model']=='b18c384nbt-humanv0'
+          assert meta['board']==n and meta['target']=='rk3588'
+          assert meta['quantized'] is False
+          assert meta['inputs']=={
+            'InputSpatial':[1,22,n,n], 'InputGlobal':[1,19,1,1],
+            'InputMeta':[1,192,1,1], 'InputMask':[1,1,n,n]}
+          assert meta['outputs']==['OutputPolicyPass','OutputPolicy',
+                                   'OutputValue','OutputScoreValue','OutputOwnership']
+          assert meta['runtimeVerified'] is False
+          assert meta['fiveHeadParityVerified'] is False
+          assert hashlib.sha256(model.read_bytes()).hexdigest()==meta['sha256']
+          ref=out/f'human_b18_cpu{n}_reference.bin'
+          gold=json.loads((out/f'human_b18_cpu{n}_reference.json').read_text())
+          assert gold['board']==n and gold['cases']==4
+          assert gold['format']=='B18REF01-le-f32'
+          assert gold['cpuBackend']=='onnxruntime-cpu'
+          assert gold['syntheticInputsOnly'] is True
+          assert hashlib.sha256(ref.read_bytes()).hexdigest()==gold['fixtureSha256']
+          print('HUMAN_RKNN_MULTI_COMPILE_PASS board=%d modelSha=%s fixtureSha=%s'%
+                (n,meta['sha256'],gold['fixtureSha256']))
+          PY
+      - name: 上传全部模型与原始 CPU 精度参考
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rk3588-human-b18-${{ matrix.size }}x${{ matrix.size }}-experimental
+          path: |
+            rknn_build_${{ matrix.size }}.log
+            GoEngine-java/build/rk3588_human/${{ matrix.size }}/*.json
+            GoEngine-java/build/rk3588_human/${{ matrix.size }}/*.rknn
+            GoEngine-java/build/rk3588_human/${{ matrix.size }}/human_b18_cpu${{ matrix.size }}_reference.bin
+          if-no-files-found: warn
+          retention-days: 14
+      - name: 发布可供本地下载和 RK3588 实机验证的 Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          SIZE="${{ matrix.size }}"
+          OUT="GoEngine-java/build/rk3588_human/$SIZE"
+          TAG="rk3588-human-b18-${SIZE}x${SIZE}-experimental-v1"
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --prerelease --target "$GITHUB_SHA" \
+              --title "RK3588 original Human SL b18 ${SIZE}x${SIZE} (experimental)" \
+              --notes 'Original Human b18, 120 exact Mish rewrites, CPU ONNX parity checked. This NPU binary still requires device CPU/NPU five-head parity and real-game tests. Do not describe as runtime verified.'
+          fi
+          gh release upload "$TAG" \
+            "$OUT/katago_human_${SIZE}x${SIZE}.rknn" \
+            "$OUT/katago_human_${SIZE}x${SIZE}.json" \
+            "$OUT/human_b18_cpu${SIZE}_reference.bin" \
+            "$OUT/human_b18_cpu${SIZE}_reference.json" --clobber
