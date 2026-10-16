@@ -42,13 +42,15 @@ class NpuLogTests(unittest.TestCase):
 
     def test_human_npu_requires_real_runner_and_all_five_native_heads(self):
         base = fixture(sizes=(9,))
-        lines = ["I/KataGoHumanRKNN( 100): HUMAN_RKNN_READY board=9 inputs=4 outputs=5"]
+        lines = ["I/KataGoHumanRKNN( 100): HUMAN_RKNN_READY board=9 inputs=4 outputs=5 scale8Compensation=8"]
         for name in ("policyPass", "policy", "value", "score", "ownership"):
             lines.append("I/KataGoHumanRKNN( 100): HUMAN_RKNN_NATIVE_PARITY "
                          "board=9 case=0 head=%s maxAbs=0.002 meanAbs=0.001 bad=0" % name)
         injected = base.replace("I/NpuSmoke( 100): STEP_PASS", "\n".join(lines) +
                                 "\nI/NpuSmoke( 100): STEP_PASS", 1)
         self.assertEqual(smoke.parse_log(injected, "unique", (9,), True)["status"], "PASS")
+        stale = injected.replace(" scale8Compensation=8", "")
+        self.assertEqual(smoke.parse_log(stale, "unique", (9,), True)["status"], "FAIL")
         missing = smoke.parse_log(base, "unique", (9,), True)
         self.assertEqual(missing["status"], "FAIL")
         bad = injected.replace("head=policy maxAbs=0.002 meanAbs=0.001 bad=0",
