@@ -239,7 +239,7 @@ public class KataGoEngine {
 
             String rknnModelName = "katago_10b_" + startupBoardSize + "x" + startupBoardSize + ".rknn";
             String rknnAssetPath = "engine/" + rknnModelName;
-            boolean npuSizeSupported = startupBoardSize == 9 || startupBoardSize == 13 || startupBoardSize == 19;
+            boolean npuSizeSupported = startupBoardSize == 9 || startupBoardSize == 11 || startupBoardSize == 13 || startupBoardSize == 15 || startupBoardSize == 19;
             boolean mtkSizeSupported = npuSizeSupported || startupBoardSize == 11 || startupBoardSize == 15;
             boolean rknnModelAvailable = false;
             if (npuSizeSupported) {
@@ -389,8 +389,7 @@ public class KataGoEngine {
                     // All sizes retain the existing 10b NPU + Human CPU fallback.
                     File experimentalHumanRknn = null;
                     boolean verifyHumanNpuAgainstCpu = false;
-                    if (useHumanSL && (startupBoardSize == 9
-                            || startupBoardSize == 13 || startupBoardSize == 19)) {
+                    if (useHumanSL && npuSizeSupported) {
                         final int humanBoardSize = startupBoardSize;
                         final String stem = "katago_human_" + humanBoardSize
                                 + "x" + humanBoardSize;
@@ -913,7 +912,7 @@ public class KataGoEngine {
      */
     private boolean isTrustedHumanRknnModel(File file, File manifest, int size) {
         if (size == 9) return isTrustedHumanRknnModel(file);
-        if ((size != 13 && size != 19) || file == null || !file.isFile()
+        if ((size != 11 && size != 13 && size != 15 && size != 19) || file == null || !file.isFile()
                 || file.length() < 1000000L || !manifest.isFile()) return false;
         try {
             JSONObject doc = new JSONObject(new String(
