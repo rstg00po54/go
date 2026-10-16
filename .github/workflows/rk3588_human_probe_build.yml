@@ -13,6 +13,10 @@ on:
       - 'GoEngine-java/tools/test_run_rk3588_human_parity.py'
       - 'GoEngine-java/tools/upload_referee_test_results.py'
       - 'GoEngine-java/tools/test_rk3588_human_rknn.sh'
+      - 'GoEngine-java/tools/human_rknn_cores.cpp'
+      - 'GoEngine-java/tools/test_rk3588_human_cores.sh'
+      - 'GoEngine-java/tools/run_rk3588_human_cores.py'
+      - 'GoEngine-java/tools/test_run_rk3588_human_cores.py'
 
 permissions:
   contents: read
@@ -28,8 +32,10 @@ jobs:
         run: |
           set -euo pipefail
           bash -n GoEngine-java/tools/test_rk3588_human_parity.sh
+          bash -n GoEngine-java/tools/test_rk3588_human_cores.sh
           python3 -m py_compile GoEngine-java/tools/run_rk3588_human_parity.py
           python3 -m unittest discover -s GoEngine-java/tools -p 'test_run_rk3588_human_parity.py' -v
+          python3 -m unittest discover -s GoEngine-java/tools -p 'test_run_rk3588_human_cores.py' -v
       - name: Install RKNN Android API and find NDK
         shell: bash
         run: |
@@ -56,6 +62,11 @@ jobs:
             -std=c++17 -O2 -fPIE -pie -static-libstdc++ -Wl,-z,max-page-size=16384 \
             -Isdk/include GoEngine-java/tools/human_rknn_parity.cpp \
             -Lsdk -lrknnrt -o build/human_rknn_parity
+          "$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang++" \
+            -std=c++17 -O2 -fPIE -pie -static-libstdc++ -Wl,-z,max-page-size=16384 \
+            -Isdk/include GoEngine-java/tools/human_rknn_cores.cpp \
+            -Lsdk -lrknnrt -o build/human_rknn_cores
+          test -s build/human_rknn_cores
           test -s build/human_rknn_parity
           file build/human_rknn_probe
           file build/human_rknn_parity
@@ -67,6 +78,11 @@ jobs:
             exit 1
           fi
           echo 'Android probe verified: no libc++_shared.so dependency'
+          "$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf" -d build/human_rknn_cores | tee build/cores_elf_deps.txt
+          if grep -Fq 'libc++_shared.so' build/cores_elf_deps.txt; then
+            echo 'ERROR: Human core benchmark unexpectedly needs libc++_shared.so' >&2
+            exit 1
+          fi
           "$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf" -d build/human_rknn_parity | tee build/parity_elf_deps.txt
           if grep -Fq 'libc++_shared.so' build/parity_elf_deps.txt; then
             echo 'ERROR: Human parity executable unexpectedly needs libc++_shared.so' >&2
@@ -79,5 +95,6 @@ jobs:
           path: |
             build/human_rknn_probe
             build/human_rknn_parity
+            build/human_rknn_cores
           if-no-files-found: error
           retention-days: 14
