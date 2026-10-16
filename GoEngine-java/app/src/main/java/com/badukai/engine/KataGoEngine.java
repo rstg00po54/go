@@ -372,8 +372,27 @@ public class KataGoEngine {
             if (useRknn) {
                 try {
                     phaseNs = System.nanoTime();
+                    // Manual, per-install opt-in for the original b18 9x9 RKNN.
+                    // Never bundle or activate the experimental 59 MB graph
+                    // automatically, and retain Human CPU on all other boards.
+                    File experimentalHumanRknn = null;
+                    boolean verifyHumanNpuAgainstCpu = false;
+                    if (useHumanSL && startupBoardSize == 9) {
+                        File enabled = new File(engineDir, "enable_human_rknn_9x9.flag");
+                        File candidate = new File(engineDir, "katago_human_9x9.rknn");
+                        if (enabled.isFile()) {
+                            if (candidate.isFile() && candidate.length() > 1024 * 1024) {
+                                experimentalHumanRknn = candidate;
+                                verifyHumanNpuAgainstCpu = true;
+                                Log.i(TAG, "HUMAN_RKNN_EXPERIMENT_REQUESTED board=9 model=" + candidate);
+                            } else {
+                                Log.w(TAG, "HUMAN_RKNN_NOT_STAGED: keeping Human CPU");
+                            }
+                        }
+                    }
                     npuSession = KataGoNpuNative.createSession(modelFile, configFile, humanFile,
-                            new File(engineDir, rknnModelName));
+                            new File(engineDir, rknnModelName),
+                            experimentalHumanRknn, verifyHumanNpuAgainstCpu);
                     startupTiming("engine_npu_native_create", phaseNs);
                     if (npuSession == null) throw new IOException("NPU JNI createSession returned null");
                     activeNpuBoardSize = startupBoardSize;
