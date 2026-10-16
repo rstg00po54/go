@@ -43,9 +43,9 @@ if [[ ! -s "$MODEL" ]]; then
 fi
 case "$SIZE" in
   9) EXPECTED="78bee9b2561c4ba14024c1428d750e4a4cec3206011290b6b6b1d7b1e95947c7" ;;
-  11) EXPECTED="${HUMAN_RKNN_11_PIN:?11 RKNN model digest must be pinned before testing}" ;;
+  11) EXPECTED="d5e33822766ff86f4e06dcfda416ae791df3af292f157969f59a69713c46df29" ;;
   13) EXPECTED="8029fdfe086e96d99d2ce7fb7340cc6bab49d232c03fb44fddcfc64866eb5b40" ;;
-  15) EXPECTED="${HUMAN_RKNN_15_PIN:?15 RKNN model digest must be pinned before testing}" ;;
+  15) EXPECTED="73deb6fed2674fdf5061f140d80f994f121390789db534e45843a05a63158705" ;;
   19) EXPECTED="1bcdddac3687e72705f8cd058bd2c6cd44a1ee221cf30182762598dc0ad43158" ;;
 esac
 if [[ -s "$MANIFEST" ]]; then
