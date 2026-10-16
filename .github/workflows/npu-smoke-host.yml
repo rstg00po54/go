@@ -7,6 +7,7 @@ on:
       - '.github/workflows/npu-smoke-host.yml'
       - 'GoEngine-java/tools/smoke_android_npu_switch.py'
       - 'GoEngine-java/tools/test_rk3588_human_game.sh'
+      - 'GoEngine-java/tools/test_rk3588_human_multisize.sh'
       - 'GoEngine-java/tools/test_smoke_android_npu_switch.py'
       - 'GoEngine-java/tools/upload_referee_test_results.py'
       - 'GoEngine-java/tools/test_upload_referee_test_results.py'
@@ -26,6 +27,7 @@ jobs:
       - name: Validate NPU scripts syntax
         run: |
           bash -n GoEngine-java/tools/test_rk3588_human_game.sh
+          bash -n GoEngine-java/tools/test_rk3588_human_multisize.sh
           python3 -m py_compile GoEngine-java/tools/smoke_android_npu_switch.py \
             GoEngine-java/tools/test_smoke_android_npu_switch.py \
             GoEngine-java/tools/upload_referee_test_results.py
