@@ -545,3 +545,83 @@ NPU 棋盘尺寸发生变化、后端发生切换、APP 进程被 Android 系统
 
 该项优化与此前真实 NPU 推理精度测试互相独立；
 编译通过不等于已经测得特定设备的换局耗时。
+
+
+## Human b18 13×13 / 19×19 RKNN 模型和原生集成（2026-10-16）
+
+目标是 RK3588 上 9/13/19 标准棋盘都有独立的
+`10b NPU + Human b18 NPU`，不影响已经可用的 9×9 和 CPU 兜底。
+
+### 原始模型与编译状态
+
+同一份 `b18c384nbt-humanv0.bin` (KataGo 官方原始 Human 模型)，
+通过 KataGo 1.18.1 的 `dumponnx` 以静态棋盘尺寸导出，
+执行 120 个 Mish 等价改写和原始 ONNX/改写图的 CPU 数值检查，
+再用 `rknn-toolkit2==2.3.2` 非量化转换到 RK3588。
+**13、19 云端 RKNN 编译均完成，仍须实机验证！**
+
+| 棋盘 | Human b18 RKNN 字节数 | SHA256 |
+|---|---:|---|
+| 9×9 | 59069801 | `78bee9b2561c4ba14024c1428d750e4a4cec3206011290b6b6b1d7b1e95947c7` |
+| 13×13 | 59071345 | `8029fdfe086e96d99d2ce7fb7340cc6bab49d232c03fb44fddcfc64866eb5b40` |
+| 19×19 | 59074417 | `1bcdddac3687e72705f8cd058bd2c6cd44a1ee221cf30182762598dc0ad43158` |
+
+两个新增模型和原始 ONNX CPU 参考数据已发布：
+- `rk3588-human-b18-13x13-experimental-v1`
+- `rk3588-human-b18-19x19-experimental-v1`
+
+**9×9 验证模型已经固定**在
+`rk3588-human-b18-9x9-device-verified-v1`，不再从可能因 RKNN
+重新编译而不同的实验版 Release 下载，从而避免破坏 9×9 成功版本。
+
+原生 `KataGoHumanRknnRunner` 现按棋盘大小动态分配输入和输出：
+`InputSpatial=22×N×N`，`InputGlobal=19`，
+`InputMeta=192`，`InputMask=N×N`，
+`OutputPolicyPass=2`，`OutputPolicy=2×N×N`，
+`OutputValue=3`，`OutputScoreValue=6`，
+`OutputOwnership=N×N`。保持 ×8 缩放恢复和双通道布局转换。
+
+运行时安全要求：新 13/19 模型须通过文件/Manifest SHA 检查，
+并在最初 4 次真实 KataGo 推理时，与原生 Eigen CPU 五输出头逐项对照。
+只要 NPU 初始化、算子、数值检查失败，立即回退到 Human CPU，
+不修改仍然独立工作的 10b RKNN。**此处不放宽误差门限。**
+
+### 本地编译
+
+在 `GoEngine-java` 目录运行：
+
+```bash
+git pull --ff-only
+RKNN_MULTISIZE=1 bash tools/prepare_rknn.sh
+KATAGO_JOBS=2 bash tools/build_katago_from_source.sh rknnjni
+chmod +x gradlew
+REQUIRE_HUMAN_RKNN_MULTISIZE=1 ALLOW_4K_RKNN_RUNTIME=1 bash build.sh --apk-only
+```
+
+首次打包会下载 9、13、19 已签出校验 SHA 的 Human b18 Release，
+模型缓存后无需重复下载。Gradle 的 `requireHumanRknnMultisize`
+要求三种 Human 模型齐全，否则拒绝声称编译成功。
+只装 9 路时不需要这个环境变量。
+
+### 设备验证：自动上传报告（独立 NPU 和真实对弈）
+
+先测 RK3588 **原始 ONNX CPU 与 RKNN NPU** 20 输出头数值，
+每种尺寸执行一次即可：
+
+```bash
+HUMAN_RKNN_BOARD_SIZE=13 bash tools/test_rk3588_human_parity.sh 8719e18a71a2a66c
+HUMAN_RKNN_BOARD_SIZE=19 bash tools/test_rk3588_human_parity.sh 8719e18a71a2a66c
+```
+
+再用正常 APK 完整测试 13、19 真实 `rank_12k` 对弈、
+人类棋力 192 维元数据和原生 Eigen/NPU 五输出头：
+
+```bash
+bash tools/test_rk3588_human_multisize.sh 8719e18a71a2a66c
+```
+
+该一键脚本会构建/安装 APK，运行 13×13、19×19 真实自动对局，
+自动把 PASS 和 FAIL 上传到 `ui-test-results` 分支。
+已经编译好 APK 的情况下，可用
+`HUMAN_MULTISIZE_SKIP_BUILD=1` 避免重复构建 C++。
+**CPU ONNX 图一致、CI 编译成功都不能代替实际 NPU 验证。**
