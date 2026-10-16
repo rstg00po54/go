@@ -3,7 +3,7 @@ package com.badukai.engine;
 import android.util.Log;
 import java.io.File;
 
-/** RK3588 in-process RKNN GTP transport; 9/13/19 10b and optional 9x9 Human b18. */
+/** RK3588 in-process RKNN GTP transport; 9/11/13/15/19 10b and size-specific Human b18. */
 public final class KataGoNpuNative {
     private static final String TAG = "KataGoNpuNative";
     private static boolean loaded;
