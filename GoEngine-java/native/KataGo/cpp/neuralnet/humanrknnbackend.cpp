@@ -19,6 +19,11 @@ constexpr int AREA = BOARD*BOARD;
 constexpr int SPATIAL_CHANNELS = 22;
 constexpr int GLOBAL_CHANNELS = 19;
 constexpr int META_CHANNELS = 192;
+// Official KataGo dumponnx uses activation scale8 by default; its metadata
+// katago.postProcess.outputScaleMultiplier is 8. Eigen's raw b18 outputs
+// are *unscaled*. Restore all five raw heads to native Eigen units before
+// KataGo blends policy channels and performs its regular post-processing.
+constexpr float HUMAN_ONNX_OUTPUT_SCALE = 8.0f;
 constexpr int IN = 4;
 constexpr int OUT = 5;
 const char* const inputNames[IN] = {
@@ -97,7 +102,7 @@ struct KataGoHumanRknnRunner::Impl {
       for(int i:outSlot) if(i<0) throw std::runtime_error("Missing Human RKNN output");
       available=true;
       __android_log_print(ANDROID_LOG_INFO,"KataGoHumanRKNN",
-        "HUMAN_RKNN_READY board=9 inputs=4 outputs=5");
+        "HUMAN_RKNN_READY board=9 inputs=4 outputs=5 scale8Compensation=8");
     } catch(...) {
       rknn_destroy(ctx);
       ctx=0;
@@ -144,6 +149,17 @@ struct KataGoHumanRknnRunner::Impl {
           if(!std::isfinite(data[i]))
             throw std::runtime_error(std::string("Human RKNN NaN/Inf ")+outputNames[key]);
         values[key].assign(data,data+outputCounts[key]);
+      }
+      // The RKNN is generated from dumponnx without -skip-scale8, so its
+      // raw five-head outputs are 1/8 of native Eigen's raw outputs. This
+      // compensates for the ONNX metadata outputScaleMultiplier=8, which the
+      // custom RKNN runner (unlike KataGo's ONNX backend) must apply itself.
+      for(auto& head : values) {
+        for(float& v : head) {
+          v *= HUMAN_ONNX_OUTPUT_SCALE;
+          if(!std::isfinite(v))
+            throw std::runtime_error("Human RKNN scaled output NaN/Inf");
+        }
       }
       // NPU returns OutputPolicy in NCHW: [channel][board point].
       // KataGo Eigen TENSORMAP4 consumes interleaved channels (NHWC).
