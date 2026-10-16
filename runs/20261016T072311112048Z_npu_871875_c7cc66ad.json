@@ -1,0 +1,56 @@
+{
+  "test": "RK3588 NPU multi-board smoke",
+  "run_id": "2837bfbe77554d61",
+  "sizes": [
+    11,
+    15
+  ],
+  "human_sl": true,
+  "require_human_rknn": true,
+  "human_rknn_timing_only": false,
+  "status": "PASS",
+  "steps": [
+    {
+      "index": 0,
+      "board": 11,
+      "status": "PASS",
+      "npu_initialized": true,
+      "npu_ready": true,
+      "model": "katago_10b_11x11.rknn",
+      "errors": [],
+      "human_npu_timing_samples": 4,
+      "human_npu_total_median_ms": 40.501,
+      "human_npu_run_median_ms": 39.555,
+      "human_npu_total_min_ms": 35.535,
+      "human_npu_total_max_ms": 51.409,
+      "startupMs": 3934,
+      "blackMs": 998,
+      "whiteMs": 948,
+      "black": "H8",
+      "white": "D4"
+    },
+    {
+      "index": 1,
+      "board": 15,
+      "status": "PASS",
+      "npu_initialized": true,
+      "npu_ready": true,
+      "model": "katago_10b_15x15.rknn",
+      "errors": [],
+      "human_npu_timing_samples": 4,
+      "human_npu_total_median_ms": 74.614,
+      "human_npu_run_median_ms": 73.636,
+      "human_npu_total_min_ms": 62.127,
+      "human_npu_total_max_ms": 81.102,
+      "startupMs": 3403,
+      "blackMs": 1628,
+      "whiteMs": 1554,
+      "black": "M12",
+      "white": "C4"
+    }
+  ],
+  "errors": [],
+  "started_utc": "2026-10-16T07:22:35.861092+00:00",
+  "serial": "8719e18a71a2a66c",
+  "finished_utc": "2026-10-16T07:23:11.104190+00:00"
+}
