@@ -28,11 +28,19 @@ public final class KataGoNpuNative {
     }
 
     public static GtpSession createSession(File model, File config, File humanModel, File rknnModel) {
+        return createSession(model, config, humanModel, rknnModel, null, false);
+    }
+
+    // Human NPU is experimental: callers must explicitly stage a verified b18
+    // RKNN file. Null leaves the original CPU Human SL path unchanged.
+    public static GtpSession createSession(File model, File config, File humanModel, File rknnModel,
+                                           File humanRknnModel, boolean compareHumanCpu) {
         long totalNs = System.nanoTime();
         load();
         long startNs = System.nanoTime();
         long handle = nativeCreateSession(model.getAbsolutePath(), config.getAbsolutePath(),
-                humanModel == null ? null : humanModel.getAbsolutePath(), rknnModel.getAbsolutePath());
+                humanModel == null ? null : humanModel.getAbsolutePath(), rknnModel.getAbsolutePath(),
+                humanRknnModel == null ? null : humanRknnModel.getAbsolutePath(), compareHumanCpu);
         Log.i(TAG, "STARTUP_TIMING phase=npu_jni_create_session ms=" +
                 (System.nanoTime() - startNs) / 1000000.0 + " ok=" + (handle != 0));
         Log.i(TAG, "STARTUP_TIMING phase=npu_jni_create_total ms=" +
@@ -87,7 +95,7 @@ public final class KataGoNpuNative {
 
     private static native boolean nativeEndgameAllPassAlive(int size, byte[] cells);
     private static native String nativeBuildStatus();
-    private static native long nativeCreateSession(String modelPath, String configPath, String humanModelPath, String rknnPath);
+    private static native long nativeCreateSession(String modelPath, String configPath, String humanModelPath, String rknnPath, String humanRknnPath, boolean compareHumanCpu);
     private static native boolean nativeSendCommand(long handle, String command);
     private static native String nativeReadOutput(long handle, int timeoutMs);
     private static native boolean nativeIsSessionAlive(long handle);
