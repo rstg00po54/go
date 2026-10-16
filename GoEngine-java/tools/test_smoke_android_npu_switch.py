@@ -33,6 +33,13 @@ def fixture(sizes=(9, 13, 19, 9), run_id="unique", bad_index=None, bad_mode=""):
 
 
 class NpuLogTests(unittest.TestCase):
+    def test_human_rknn_parity_is_only_opted_into_for_strict_smoke(self):
+        # Normal gameplay and timing-only smoke must never invoke CPU parity.
+        self.assertEqual(smoke.human_rknn_parity_intent(False, False), "false")
+        self.assertEqual(smoke.human_rknn_parity_intent(False, True), "false")
+        self.assertEqual(smoke.human_rknn_parity_intent(True, True), "false")
+        self.assertEqual(smoke.human_rknn_parity_intent(True, False), "true")
+
     def test_all_four_stages_and_return_to_nine(self):
         report = smoke.parse_log(fixture(), "unique", (9, 13, 19, 9))
         self.assertEqual(report["status"], "PASS")
