@@ -43,6 +43,11 @@ jobs:
           assert ref["model"]=="b18c384nbt-humanv0" and ref["board"]==9
           assert hashlib.sha256(pathlib.Path(sys.argv[2]).read_bytes()).hexdigest()==ref["fixtureSha256"]
           PY
+          mkdir -p publish
+          cp "$MODEL" publish/katago_human_9x9.rknn
+          cp "$META" publish/katago_human_9x9.json
+          cp "$REF" publish/human_b18_cpu9_reference.bin
+          cp "$REF_META" publish/human_b18_cpu9_reference.json
           echo 'RK3588_HUMAN_9_VERIFIED_ARCHIVE_PASS'
 
       - name: Publish frozen device-verified Human b18 9x9 release
@@ -62,5 +67,5 @@ jobs:
             --title 'RK3588 Human SL b18 9x9 device-verified RKNN' \
             --notes 'Exact SHA256 pinned model from original build 38842174488, verified on RK3588 against 20/20 CPU/NPU heads in real KataGo games. This release is never replaced by automated model recompiles.'
           gh release upload "$TAG" \
-            model/katago_human_9x9.rknn model/katago_human_9x9.json \
-            model/human_b18_cpu9_reference.bin model/human_b18_cpu9_reference.json
+            publish/katago_human_9x9.rknn publish/katago_human_9x9.json \
+            publish/human_b18_cpu9_reference.bin publish/human_b18_cpu9_reference.json
