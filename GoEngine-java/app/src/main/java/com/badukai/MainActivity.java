@@ -235,9 +235,9 @@ public class MainActivity extends AppCompatActivity {
         });
         findViewById(R.id.homeGameTabButton).setOnClickListener(v -> showNewGameDialog());
         findViewById(R.id.homeTabButton).setOnClickListener(v -> showMainPage());
-        View.OnClickListener upcoming = v -> Toast.makeText(this, "功能开发中", Toast.LENGTH_SHORT).show();
         for (int id : new int[]{R.id.homeSettingsButton, R.id.homeSettingsTabButton}) {
-            findViewById(id).setOnClickListener(upcoming);
+            findViewById(id).setOnClickListener(v -> com.badukai.ui.JadeNavigation.open(
+                    this, com.badukai.ui.JadeBottomNavView.SETTINGS));
         }
         // Offline training is isolated from the live KataGo engine and match.
         findViewById(R.id.homeTrainingButton).setOnClickListener(v -> openTsumego());
@@ -285,6 +285,9 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.gameMoreButton).setOnClickListener(this::showGameMoreMenu);
         render("正在启动 AI...");
         showMainPage();
+        if (getIntent() != null && getIntent().getBooleanExtra("navigate_new_game", false)) {
+            mainHandler.post(this::showNewGameDialog);
+        }
         if (isRefereeSmokeIntent()) {
             startDebugRefereeSmoke();
         } else if (isNpuSmokeIntent()) {
@@ -1792,7 +1795,9 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             if (tab == com.badukai.ui.JadeBottomNavView.SETTINGS) {
-                Toast.makeText(this, "设置页面开发中", Toast.LENGTH_SHORT).show();
+                dialog.dismiss();
+                com.badukai.ui.JadeNavigation.open(this,
+                        com.badukai.ui.JadeBottomNavView.SETTINGS);
                 return;
             }
             dialog.dismiss();
@@ -1900,6 +1905,8 @@ public class MainActivity extends AppCompatActivity {
             showMainPage();
         } else if (intent != null && intent.getBooleanExtra("navigate_play", false)) {
             showGamePage();
+        } else if (intent != null && intent.getBooleanExtra("navigate_new_game", false)) {
+            showNewGameDialog();
         }
     }
 

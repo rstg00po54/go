@@ -32,6 +32,7 @@
             android:process=":katago_gpu"
             android:theme="@android:style/Theme.Material.NoActionBar" />
 
+        <activity android:name=".JadeSectionActivity" android:exported="false" />
         <activity android:name=".ReplayActivity" android:exported="false" />
         <activity android:name=".SgfLibraryActivity" android:exported="false" />
         <activity android:name=".TsumegoExplanationActivity" android:exported="false" />
