@@ -28,26 +28,26 @@ public final class JadeIconBinder {
         left(root, R.id.jadeSectionRules, R.drawable.ic_turn, 26);
 
         // Selection cards: transparent image is contained *inside* each tile.
-        // The 512px artwork is visually top-heavy inside the 74dp cards.
-        // Add 8dp of invisible drawable space above it: because Android
-        // vertically centers drawable + label as a group, the visible icon
-        // and label move down by about 4dp without resizing the PNG.
+        // All three selector rows use the same 8dp transparent inset. Android
+        // centers icon+label together, lowering their visual group by ~4dp.
+        // Keep the original transparent PNG artwork and its 38/34dp size.
         topLowered(root, R.id.modeAiButton, R.drawable.ic_mode_ai, 38, 8);
         topLowered(root, R.id.modeLocalButton, R.drawable.ic_mode_human, 38, 8);
         topLowered(root, R.id.modeReplayButton, R.drawable.ic_import_sgf, 38, 8);
-        top(root, R.id.blackRadio, R.drawable.ic_black_stone, 34);
-        top(root, R.id.whiteRadio, R.drawable.ic_white_stone, 34);
-        top(root, R.id.randomRadio, R.drawable.ic_random, 34);
-        top(root, R.id.backendCpuButton, R.drawable.ic_cpu, 38);
-        top(root, R.id.backendGpuButton, R.drawable.ic_gpu, 38);
-        top(root, R.id.backendNpuButton, R.drawable.ic_npu, 38);
+        topLowered(root, R.id.blackRadio, R.drawable.ic_black_stone, 34, 8);
+        topLowered(root, R.id.whiteRadio, R.drawable.ic_white_stone, 34, 8);
+        topLowered(root, R.id.randomRadio, R.drawable.ic_random, 34, 8);
+        topLowered(root, R.id.backendCpuButton, R.drawable.ic_cpu, 38, 8);
+        topLowered(root, R.id.backendGpuButton, R.drawable.ic_gpu, 38, 8);
+        topLowered(root, R.id.backendNpuButton, R.drawable.ic_npu, 38, 8);
 
-        // Bottom tabs and confirm button.
-        top(root, R.id.newGameHomeTab, R.drawable.ic_home, 29);
-        top(root, R.id.newGameRecordTab, R.drawable.ic_records, 29);
-        top(root, R.id.newGamePlayTab, R.drawable.ic_game_tab, 29);
-        top(root, R.id.newGameTrainingTab, R.drawable.ic_training, 29);
-        top(root, R.id.newGameSettingsTab, R.drawable.ic_settings_tab, 29);
+        // Bottom tabs use a smaller 4dp inset to preserve the 60dp navbar.
+        // Confirmation button keeps its original leading artwork.
+        topLowered(root, R.id.newGameHomeTab, R.drawable.ic_home, 29, 4);
+        topLowered(root, R.id.newGameRecordTab, R.drawable.ic_records, 29, 4);
+        topLowered(root, R.id.newGamePlayTab, R.drawable.ic_game_tab, 29, 4);
+        topLowered(root, R.id.newGameTrainingTab, R.drawable.ic_training, 29, 4);
+        topLowered(root, R.id.newGameSettingsTab, R.drawable.ic_settings_tab, 29, 4);
         left(root, R.id.startGameButton, R.drawable.ic_confirm, 30);
     }
 

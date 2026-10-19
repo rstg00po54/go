@@ -231,24 +231,53 @@ class JadeUiTest(unittest.TestCase):
         self.assertNotIn('android:drawableTint="#F5D990"',
                 (ROOT / "app/src/main/res/layout/dialog_new_game.xml").read_text(encoding="utf-8"))
 
-    def test_mode_card_pngs_are_lowered_without_changing_other_icons(self):
-        """Three game-mode icons sit too close to the top on RK3588."""
+    def test_all_selector_icons_are_lowered_consistently(self):
+        """The mode/color/backend icon rows share the same vertical alignment."""
         binder = (ROOT / "app/src/main/java/com/badukai/ui/JadeIconBinder.java"
                   ).read_text(encoding="utf-8")
-        for view_id, png in (
-                ("modeAiButton", "mode_ai"),
-                ("modeLocalButton", "mode_human"),
-                ("modeReplayButton", "import_sgf")):
-            with self.subTest(card=view_id):
+        dialog = ET.parse(ROOT / "app/src/main/res/layout/dialog_new_game.xml").getroot()
+        controls = {}
+        for view in dialog.iter():
+            value = view.get(ANDROID + "id", "")
+            if value.startswith("@+id/"):
+                controls[value[5:]] = view
+
+        card_icons = {
+            "modeAiButton": ("mode_ai", 38),
+            "modeLocalButton": ("mode_human", 38),
+            "modeReplayButton": ("import_sgf", 38),
+            "blackRadio": ("black_stone", 34),
+            "whiteRadio": ("white_stone", 34),
+            "randomRadio": ("random", 34),
+            "backendCpuButton": ("cpu", 38),
+            "backendGpuButton": ("gpu", 38),
+            "backendNpuButton": ("npu", 38),
+        }
+        for name, (resource, size) in card_icons.items():
+            with self.subTest(card=name):
                 self.assertIn(
-                    "topLowered(root, R.id." + view_id
-                    + ", R.drawable.ic_" + png + ", 38, 8);", binder)
+                    "topLowered(root, R.id." + name
+                    + ", R.drawable.ic_" + resource
+                    + ", " + str(size) + ", 8);", binder)
+                self.assertEqual("74dp", controls[name].get(ANDROID + "layout_height"))
+
+        nav_icons = {
+            "newGameHomeTab": "home",
+            "newGameRecordTab": "records",
+            "newGamePlayTab": "game_tab",
+            "newGameTrainingTab": "training",
+            "newGameSettingsTab": "settings_tab",
+        }
+        for name, resource in nav_icons.items():
+            with self.subTest(nav=name):
+                self.assertIn(
+                    "topLowered(root, R.id." + name
+                    + ", R.drawable.ic_" + resource + ", 29, 4);", binder)
+
         self.assertIn("import android.graphics.drawable.InsetDrawable;", binder)
         self.assertIn("new InsetDrawable(art, 0, offset, 0, 0)", binder)
         self.assertIn("lowered.setBounds(0, 0, pixels, pixels + offset)", binder)
-        # Other icon bindings should retain their original geometry.
-        self.assertIn("top(root, R.id.backendNpuButton, R.drawable.ic_npu, 38);", binder)
-        self.assertIn("top(root, R.id.newGameHomeTab, R.drawable.ic_home, 29);", binder)
+        self.assertIn("left(root, R.id.startGameButton, R.drawable.ic_confirm, 30);", binder)
 
     def test_jade_drawables_are_valid(self):
         for path in DRAWABLES.glob("jade_*.xml"):

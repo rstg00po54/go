@@ -172,7 +172,7 @@
                     android:orientation="horizontal" android:padding="3dp"
                     android:background="@drawable/jade_dark_card">
                     <RadioButton android:id="@+id/blackRadio"
-    android:layout_width="0dp" android:layout_height="62dp" android:layout_weight="1"
+    android:layout_width="0dp" android:layout_height="74dp" android:layout_weight="1"
     android:layout_margin="3dp" android:button="@null"
     android:background="@drawable/jade_dark_choice"
     android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
@@ -180,7 +180,7 @@
     android:textStyle="bold" android:minWidth="0dp"
     android:enabled="true" android:stateListAnimator="@null"/>
                     <RadioButton android:id="@+id/whiteRadio"
-    android:layout_width="0dp" android:layout_height="62dp" android:layout_weight="1"
+    android:layout_width="0dp" android:layout_height="74dp" android:layout_weight="1"
     android:layout_margin="3dp" android:button="@null"
     android:background="@drawable/jade_dark_choice"
     android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
@@ -188,7 +188,7 @@
     android:textStyle="bold" android:minWidth="0dp"
     android:enabled="true" android:stateListAnimator="@null"/>
                     <RadioButton android:id="@+id/randomRadio"
-    android:layout_width="0dp" android:layout_height="62dp" android:layout_weight="1"
+    android:layout_width="0dp" android:layout_height="74dp" android:layout_weight="1"
     android:layout_margin="3dp" android:button="@null"
     android:background="@drawable/jade_dark_choice"
     android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
