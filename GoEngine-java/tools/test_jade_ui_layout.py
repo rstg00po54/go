@@ -141,65 +141,95 @@ class JadeUiTest(unittest.TestCase):
                         self.assertTrue((DRAWABLES / name).is_file(),
                             msg="Missing drawable " + name)
 
-    def test_new_game_icons_are_vector_resources_not_unicode_placeholders(self):
+    def test_new_game_uses_all_original_png_icons(self):
+        import json
+        import struct
+        dialog = ET.parse(ROOT / "app/src/main/res/layout/dialog_new_game.xml").getroot()
+        manifest_path = ROOT / "docs/ui/icons/badukai_jade_icons_22/manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        self.assertEqual(22, len(manifest))
+        names = [row["name"] for row in manifest]
+        self.assertEqual(22, len(set(names)))
+        used_icons = set()
+        for view in dialog.iter():
+            for attr in ("src", "drawableStart", "drawableTop"):
+                value = view.get(ANDROID + attr, "")
+                if value.startswith("@drawable/ic_"):
+                    used_icons.add(value[len("@drawable/"):])
+        self.assertEqual(set(names), used_icons)
+        png_dir = ROOT / "app/src/main/res/drawable-nodpi"
+        for row in manifest:
+            name = row["name"]
+            with self.subTest(png=name):
+                path = png_dir / (name + ".png")
+                self.assertTrue(path.is_file(), msg=str(path) + " missing")
+                with path.open("rb") as file:
+                    header = file.read(26)
+                self.assertTrue(header.startswith(bytes.fromhex("89504e470d0a1a0a")))
+                self.assertEqual((512, 512), struct.unpack(">II", header[16:24]))
+                self.assertEqual([512, 512], row["size"])
+        self.assertFalse(any("jade_ic_" in (view.get(ANDROID + "src", "")
+                + view.get(ANDROID + "drawableStart", "")
+                + view.get(ANDROID + "drawableTop", ""))
+                for view in dialog.iter()))
+
+    def test_original_png_icons_have_bounded_display_sizes(self):
         dialog = ET.parse(ROOT / "app/src/main/res/layout/dialog_new_game.xml").getroot()
         controls = {}
         for view in dialog.iter():
             name = view.get(ANDROID + "id", "")
             if name.startswith("@+id/"):
                 controls[name[5:]] = view
-
-        for name in ("closeDialogButton", "dialogSettingsButton"):
-            with self.subTest(header=name):
-                self.assertEqual("ImageView", controls[name].tag)
-                self.assertTrue(controls[name].get(ANDROID + "src", "").startswith("@drawable/jade_ic_"))
-
-        section_titles = {
-            "棋盘大小": "grid", "对弈模式": "users", "AI 等级": "levels",
-            "执子方": "yin", "AI 推理后端": "chip", "对局条件": "rule"
+        expected = {
+            "closeDialogButton": ("src", "back"),
+            "dialogSettingsButton": ("src", "settings_round"),
+            "modeAiButton": ("drawableTop", "mode_ai"),
+            "modeLocalButton": ("drawableTop", "mode_human"),
+            "modeReplayButton": ("drawableTop", "import_sgf"),
+            "blackRadio": ("drawableTop", "black_stone"),
+            "whiteRadio": ("drawableTop", "white_stone"),
+            "randomRadio": ("drawableTop", "random"),
+            "backendCpuButton": ("drawableTop", "cpu"),
+            "backendGpuButton": ("drawableTop", "gpu"),
+            "backendNpuButton": ("drawableTop", "npu"),
+            "newGameHomeTab": ("drawableTop", "home"),
+            "newGameRecordTab": ("drawableTop", "records"),
+            "newGamePlayTab": ("drawableTop", "game_tab"),
+            "newGameTrainingTab": ("drawableTop", "training"),
+            "newGameSettingsTab": ("drawableTop", "settings_tab"),
+            "startGameButton": ("drawableStart", "confirm"),
         }
-        titles = {view.get(ANDROID + "text"): view
-                  for view in dialog.iter() if view.tag == "TextView"}
-        for label, icon in section_titles.items():
-            with self.subTest(section=label):
-                self.assertEqual("@drawable/jade_ic_" + icon,
-                                 titles[label].get(ANDROID + "drawableStart"))
+        for control, (attr, icon) in expected.items():
+            with self.subTest(control=control):
+                self.assertEqual("@drawable/ic_" + icon,
+                                 controls[control].get(ANDROID + attr))
 
-        cards = {
-            "modeAiButton": "robot", "modeLocalButton": "users",
-            "modeReplayButton": "book", "blackRadio": "stone_black",
-            "whiteRadio": "stone_white", "randomRadio": "dice",
-            "backendCpuButton": "chip", "backendGpuButton": "fan",
-            "backendNpuButton": "brain",
-            "newGameHomeTab": "home", "newGameRecordTab": "book",
-            "newGamePlayTab": "go", "newGameTrainingTab": "training",
-            "newGameSettingsTab": "settings"
+        sections = {
+            "jadeSectionBoardSize": "board_size",
+            "jadeSectionMode": "player",
+            "jadeSectionRank": "ai_level",
+            "jadeSectionColor": "turn",
+            "jadeSectionBackend": "backend",
+            "jadeSectionRules": "turn",
         }
-        for name, icon in cards.items():
-            with self.subTest(icon=name):
-                self.assertEqual("@drawable/jade_ic_" + icon,
-                                 controls[name].get(ANDROID + "drawableTop"))
-        self.assertIn("JADE_NEW_GAME_ICONS_V4", self.main_java)
+        for control, icon in sections.items():
+            with self.subTest(section=control):
+                self.assertEqual("@drawable/ic_" + icon,
+                                 controls[control].get(ANDROID + "drawableStart"))
 
-    def test_icon_drawables_are_well_formed(self):
-        dialog = ET.parse(ROOT / "app/src/main/res/layout/dialog_new_game.xml").getroot()
-        icon_names = set()
-        for view in dialog.iter():
-            for field in ("src", "drawableStart", "drawableTop"):
-                resource = view.get(ANDROID + field, "")
-                if resource.startswith("@drawable/jade_ic_"):
-                    icon_names.add(resource.split("/", 1)[1])
-        self.assertGreaterEqual(len(icon_names), 17)
-        for icon in sorted(icon_names):
-            path = DRAWABLES / (icon + ".xml")
-            with self.subTest(icon=icon):
-                self.assertTrue(path.is_file())
-                vector = ET.parse(path).getroot()
-                self.assertEqual("vector", vector.tag)
-                self.assertGreaterEqual(len(vector.findall("path")), 1)
-                for subpath in vector.findall("path"):
-                    self.assertTrue(subpath.get(ANDROID + "pathData"))
-                    self.assertNotEqual("none", subpath.get(ANDROID + "fillColor"))
+        binder = (ROOT / "app/src/main/java/com/badukai/ui/JadeIconBinder.java").read_text(
+                encoding="utf-8")
+        self.assertIn("setBounds(0, 0, pixels, pixels)", binder)
+        self.assertIn("setCompoundDrawablesRelative", binder)
+        for control in expected:
+            if control not in ("closeDialogButton", "dialogSettingsButton"):
+                self.assertIn("R.id." + control, binder)
+        for control in sections:
+            self.assertIn("R.id." + control, binder)
+        self.assertIn("JadeIconBinder.bindNewGame(content)", self.main_java)
+        self.assertIn("JADE_NEW_GAME_ICONS_V5", self.main_java)
+        self.assertNotIn('android:drawableTint="#F5D990"',
+                (ROOT / "app/src/main/res/layout/dialog_new_game.xml").read_text(encoding="utf-8"))
 
     def test_jade_drawables_are_valid(self):
         for path in DRAWABLES.glob("jade_*.xml"):

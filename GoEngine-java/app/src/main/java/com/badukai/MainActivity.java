@@ -1631,7 +1631,9 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "showNewGameDialog in, boardSize=" + boardSize
                 + ", backend=" + selectedBackend);
         View content = LayoutInflater.from(this).inflate(R.layout.dialog_new_game, null, false);
-        Log.i(TAG, "JADE_NEW_GAME_ICONS_V4 vectorDrawables=true");
+        // PNGs ship at 512px; bind realistic dp bounds before showing the dialog.
+        com.badukai.ui.JadeIconBinder.bindNewGame(content);
+        Log.i(TAG, "JADE_NEW_GAME_ICONS_V5 pngAssets=22");
         final android.widget.ScrollView settingsScroll =
                 content.findViewById(R.id.newGameSettingsScroll);
         final View backendSection = content.findViewById(R.id.aiBackendSection);
