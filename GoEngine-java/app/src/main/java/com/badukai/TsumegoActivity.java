@@ -93,6 +93,11 @@ public final class TsumegoActivity extends Activity {
         return Math.round(v * getResources().getDisplayMetrics().density);
     }
 
+    /** Allow the shared Training choice menu to jump without recreating this screen. */
+    public void openPuzzleFromNavigation(int puzzleIndex) {
+        openPuzzle(puzzleIndex);
+    }
+
     private void openPuzzle(int nextIndex) {
         if (nextIndex < 0 || nextIndex >= puzzles.size()) return;
         index = nextIndex;
