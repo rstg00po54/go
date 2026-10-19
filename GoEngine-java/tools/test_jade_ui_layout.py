@@ -313,21 +313,16 @@ class JadeUiTest(unittest.TestCase):
         game_root = self.ids["gamePageContainer"]
         self.assertEqual("FrameLayout", game_root.tag)
         self.assertIn("gameBackdrop", self.ids)
-        self.assertIn("gameTimelineMoves", self.ids)
-        self.assertIn("gameTimelineScroll", self.ids)
         self.assertIn("gameMoreButton", self.ids)
         self.assertIn("gameAnalysisButton", self.ids)
-        self.assertEqual("HorizontalScrollView", self.ids["gameTimelineScroll"].tag)
         self.assertIn("JADE_GAME_V1", self.main_java)
         self.assertIn("JadeIconBinder.bindGame(gamePageContainer)", self.main_java)
-        self.assertIn("updateGameTimeline()", self.main_java)
         self.assertIn("getMoveHistorySnapshot()", self.main_java)
         self.assertIn("showGameMoreMenu(View anchor)", self.main_java)
         self.assertIn("showWinRateChart()", self.main_java)
         self.assertIn("showEndgameScoringOptions()", self.main_java)
         for name in ("gameNavHome", "gameNavRecords", "gameNavPlay",
-                     "gameNavTraining", "gameNavSettings",
-                     "gameTimelineBack", "gameTimelineNext"):
+                     "gameNavTraining", "gameNavSettings"):
             with self.subTest(action=name):
                 self.assertIn(name, self.ids)
                 self.assertIn("R.id." + name, self.main_java)
@@ -338,6 +333,25 @@ class JadeUiTest(unittest.TestCase):
             with self.subTest(data=name):
                 self.assertIn(name, self.ids)
                 self.assertIn("R.id." + name, self.main_java)
+
+    def test_game_timeline_is_removed_without_losing_history_support(self):
+        for view_id in ("gameTimelineBack", "gameTimelineNext",
+                        "gameTimelineScroll", "gameTimelineMoves"):
+            with self.subTest(removed=view_id):
+                self.assertNotIn(view_id, self.ids)
+                self.assertNotIn("R.id." + view_id, self.main_java)
+        self.assertNotIn("updateGameTimeline()", self.main_java)
+        self.assertNotIn("timelineRenderedBoard", self.main_java)
+        self.assertNotIn("棋局开始后显示落子记录",
+                         (ROOT / "app/src/main/res/layout/activity_main.xml")
+                         .read_text(encoding="utf-8"))
+        # Real SGF and replay history are independent of this decorative bar.
+        self.assertIn("getMoveHistorySnapshot()", self.main_java)
+        self.assertIn("openReplay()", self.main_java)
+        self.assertIn("saveReplaySnapshot(", self.main_java)
+        self.assertIn("boardFrame", self.ids)
+        self.assertIn("gameActionPanel", self.ids)
+        self.assertIn("gameNavHome", self.ids)
 
     def test_four_game_facts_use_same_icon_and_two_line_text_columns(self):
         # Regression for RK3588: previous horizontal value rows were

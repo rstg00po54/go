@@ -5,8 +5,6 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.BitmapFactory;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.HorizontalScrollView;
 import android.widget.PopupMenu;
 import android.os.Bundle;
 import android.os.Handler;
@@ -124,8 +122,6 @@ public class MainActivity extends AppCompatActivity {
     private TextView gameModeSummaryText;
     private TextView gameRankSummaryText;
     private TextView gameBackendSummaryText;
-    private GoBoard timelineRenderedBoard;
-    private int timelineRenderedCount = -1;
     private GoBoardView boardView;
     private TextView statusText;
     private TextView nnAreaScoreText;
@@ -277,11 +273,6 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "正在对弈", Toast.LENGTH_SHORT).show());
         findViewById(R.id.gameNavTraining).setOnClickListener(v -> openTsumego());
         findViewById(R.id.gameNavSettings).setOnClickListener(v -> showNewGameDialog());
-        HorizontalScrollView timeline = findViewById(R.id.gameTimelineScroll);
-        findViewById(R.id.gameTimelineBack).setOnClickListener(v ->
-                timeline.smoothScrollBy(-Math.max(1, timeline.getWidth() * 3 / 4), 0));
-        findViewById(R.id.gameTimelineNext).setOnClickListener(v ->
-                timeline.smoothScrollBy(Math.max(1, timeline.getWidth() * 3 / 4), 0));
         render("正在启动 AI...");
         showMainPage();
         if (isRefereeSmokeIntent()) {
@@ -2161,65 +2152,7 @@ public class MainActivity extends AppCompatActivity {
         gameRankSummaryText.setText(aiKyu + "级");
         gameBackendSummaryText.setText(selectedBackend.name());
         gameMoveCountText.setText("第 " + board.getMoveCount() + " 手");
-        updateGameTimeline();
         updateButtons();
-    }
-
-    /**
-     * Browse actual move records. This strip does not alter the live board;
-     * review/edit continues through the existing SGF replay workflow.
-     */
-    private void updateGameTimeline() {
-        if (timelineRenderedBoard == board && timelineRenderedCount == board.getMoveCount()) return;
-        timelineRenderedBoard = board;
-        timelineRenderedCount = board.getMoveCount();
-        LinearLayout holder = findViewById(R.id.gameTimelineMoves);
-        HorizontalScrollView scroll = findViewById(R.id.gameTimelineScroll);
-        holder.removeAllViews();
-        List<Move> moves = board.getMoveHistorySnapshot();
-        holder.setGravity(moves.isEmpty()
-                ? android.view.Gravity.CENTER : android.view.Gravity.CENTER_VERTICAL);
-        if (moves.isEmpty()) {
-            TextView empty = new TextView(this);
-            empty.setText("棋局开始后显示落子记录");
-            empty.setTextColor(0xFFEADDB7);
-            empty.setTextSize(11f);
-            empty.setGravity(android.view.Gravity.CENTER_VERTICAL);
-            holder.addView(empty, new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
-            return;
-        }
-        // Keep the timeline bounded for long 19x19 games. Do not fake missing moves.
-        int start = Math.max(0, moves.size() - 160);
-        for (int index = start; index < moves.size(); index++) {
-            Move move = moves.get(index);
-            LinearLayout cell = new LinearLayout(this);
-            cell.setOrientation(LinearLayout.VERTICAL);
-            cell.setGravity(android.view.Gravity.CENTER);
-            ImageView stone = new ImageView(this);
-            stone.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            if (move instanceof Move.Pass) {
-                stone.setImageResource(R.drawable.ic_board_focus);
-            } else if (index == moves.size() - 1 && move instanceof Move.Stone) {
-                stone.setImageResource(R.drawable.ic_stone_last);
-            } else {
-                stone.setImageResource(move.color == StoneColor.BLACK
-                        ? R.drawable.ic_stone_black : R.drawable.ic_stone_white);
-            }
-            int size = Math.round(26 * getResources().getDisplayMetrics().density);
-            cell.addView(stone, new LinearLayout.LayoutParams(size, size));
-            TextView number = new TextView(this);
-            number.setText(Integer.toString(index + 1));
-            number.setGravity(android.view.Gravity.CENTER);
-            number.setTextSize(10f);
-            number.setTextColor(index == moves.size() - 1 ? 0xFFF6D47A : 0xFFDFE6D7);
-            cell.addView(number, new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            int itemWidth = Math.round(40 * getResources().getDisplayMetrics().density);
-            holder.addView(cell, new LinearLayout.LayoutParams(
-                    itemWidth, ViewGroup.LayoutParams.MATCH_PARENT));
-        }
-        scroll.post(() -> scroll.fullScroll(View.FOCUS_RIGHT));
     }
 
     private void showGameMoreMenu(View anchor) {

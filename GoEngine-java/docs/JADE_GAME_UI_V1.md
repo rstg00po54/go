@@ -17,9 +17,8 @@ pixel-for-pixel reproduction of the 16_人机对弈 mockup.
   situation analysis, AI suggestions, win-rate chart.
 - A compact **更多** popup retains four existing features instead of deleting
   them: new game, resign, intelligent referee, variation preview.
-- The move-history strip renders real `board.getMoveHistorySnapshot()`
-  items; left/right arrows horizontally scroll up to the latest 160 moves.
-  It **does not** change the game board or pretend to be SGF replay.
+- The unnecessary move-history strip and arrow controls have been removed.
+  Move history remains in the game model and the SGF/replay flow.
 - Home, records, training and setup navigation uses existing handlers.
 - Decorative bamboo art is loaded from `assets/home/background.png`, which
   is the pre-existing home artwork; the source PNG is not modified.
@@ -68,7 +67,7 @@ of the concept art. Device screenshots are required to validate spacing.
 
 ## Gameplay controls and capture stats (v3)
 
-Below the board, the statistics panel has a **single horizontal row**:
+Above the board, the statistics panel has a **single horizontal row**:
 AI stone / live captures on the left, genuine dynamically updated NN
 win-rate percentages and progress bar in the center, player's stone / live
 captures on the right. A smaller footer shows current move, turn/status,
@@ -81,3 +80,16 @@ jade/ivory backgrounds. The sixth `更多` tile uses the same geometry and
 opens the existing menu. Buttons still use their original action IDs.
 
 No game-rule or backend code was changed.
+
+## Removal of decorative move strip (v4)
+
+The horizontal strip that displayed "棋局开始后显示落子记录"
+and its previous/next arrow buttons has been removed from
+`activity_main.xml`. The matching `updateGameTimeline()` render
+method and its click handlers have also been deleted from
+`MainActivity.java`.
+
+This only removes the redundant UI. Go move history, SGF
+saving, replay, analysis and KataGo CPU/GPU/NPU processing are unchanged.
+The game buttons now sit directly beneath the square Go board, with the
+fixed five-tab navigation below the scrolling game content.
