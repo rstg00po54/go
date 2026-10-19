@@ -182,7 +182,11 @@ class JadeUiTest(unittest.TestCase):
                 value = view.get(ANDROID + attr, "")
                 if value.startswith("@drawable/ic_"):
                     used_icons.add(value[len("@drawable/"):])
-        self.assertEqual(set(names) - {"ic_confirm"}, used_icons)
+        # The five legacy 512px navbar PNGs are retained in the pack but
+        # the reusable 25-icon JadeBottomNavView owns navigation imagery.
+        removed_nav = {"ic_home", "ic_records", "ic_game_tab",
+                       "ic_training", "ic_settings_tab"}
+        self.assertEqual(set(names) - removed_nav - {"ic_confirm"}, used_icons)
         self.assertNotIn("ic_confirm", used_icons)
         png_dir = ROOT / "app/src/main/res/drawable-nodpi"
         for row in manifest:
