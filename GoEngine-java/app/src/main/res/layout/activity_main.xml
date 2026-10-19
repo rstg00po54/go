@@ -534,7 +534,7 @@
             <!-- One real component for home, game, replay and training.
                  Its highlight is state, not baked into a screenshot. -->
             <com.badukai.ui.JadeBottomNavView android:id="@+id/gameSharedNav"
-                android:layout_width="match_parent" android:layout_height="70dp"
+                android:layout_width="match_parent" android:layout_height="96dp"
                 android:layout_marginStart="9dp" android:layout_marginEnd="9dp"
                 android:layout_marginBottom="3dp"/>
         </LinearLayout>

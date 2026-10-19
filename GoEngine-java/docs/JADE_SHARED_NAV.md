@@ -14,17 +14,19 @@ The native gradient remake was removed. The footer now draws the ORIGINAL
 - Original icon glyphs, Chinese typography and glowing gold Home treatment
 
 Gradle already copies `docs/navbar/*.png` into the APK assets path
-`home/navbar/` via `stageGreenHomeArtwork`. The Java view reads
-`home/navbar/bar.png`, caches the decoded bitmap and stretches it to
-its 70dp-tall host. Five equal, transparent native touch targets sit above
-the art. There are no duplicate redrawn icons or labels.
+`home/navbar/` via `stageGreenHomeArtwork`. The Java view loads the
+original `bar.png` (2172×724), trims only its large transparent margins,
+then displays it with `FIT_CENTER` inside a 96dp footer. Never use
+`FIT_XY`: that flattened the illustrated bar. Five equal transparent
+native touch targets sit over the original. No redrawn text or icons.
 
-The source graphic has Home *baked as its selected tab*. When another
-page is active the view dims the original Home portion with a translucent
-emerald overlay and adds a small gold active-tab underline. This is a
-first-pass compromise so all pages can immediately use the exact original
-art without fabricating new PNGs; the original image itself is not edited.
-When Home is selected, the overlay is absent so the artwork is shown intact.
+The source graphic has the glowing Home icon and gold underline
+*baked into the pixels*. For other tabs, an in-memory copy feathers a
+clone of unmarked nearby jade background across only that fixed Home
+underline, while softly reducing Home's bloom. The real tab gains its
+gold underline independently. Home itself uses the unmodified source.
+No source PNG assets are rewritten; the transformed image is only cached
+at runtime for non-Home tabs.
 
 Hosts: `activity_main.xml` (home and game), `dialog_new_game.xml`,
 `activity_replay.xml`, and `activity_tsumego.xml`.

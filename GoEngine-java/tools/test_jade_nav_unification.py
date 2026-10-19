@@ -52,8 +52,11 @@ class JadeNavTest(unittest.TestCase):
         self.assertIn('private static final String ART = "home/navbar/bar.png";',
                       self.shared)
         self.assertIn("context.getAssets().open(ART)", self.shared)
-        self.assertIn("originalArtwork.setImageBitmap(image)", self.shared)
-        self.assertIn("ImageView.ScaleType.FIT_XY", self.shared)
+        self.assertIn("art.setImageBitmap(selectedHomeArt)", self.shared)
+        self.assertIn("ImageView.ScaleType.FIT_CENTER", self.shared)
+        self.assertNotIn("ImageView.ScaleType.FIT_XY", self.shared)
+        self.assertIn("artworkBounds(full)", self.shared)
+        self.assertIn("Bitmap.createBitmap(full, b[0], b[1], b[2], b[3])", self.shared)
         self.assertIn('{"首页", "对弈", "棋谱", "训练", "设置"}', self.shared)
         self.assertTrue((ROOT / "docs/navbar/bar.png").exists())
         # Confirm the original bar is packaged automatically into assets/home/navbar.
@@ -71,7 +74,9 @@ class JadeNavTest(unittest.TestCase):
             self.assertIn("public static final int " + name + " = " + number + ";",
                           self.shared)
         self.assertIn("public void setSelectedTab(int tab)", self.shared)
-        self.assertIn("homeDimmer.setVisibility(tab == HOME", self.shared)
+        self.assertIn("inactiveVersion(full)", self.shared)
+        self.assertIn("art.setImageBitmap(tab == HOME ? selectedHomeArt : otherTabArt)", self.shared)
+        self.assertIn("result.setPixel(x, y, blend(source.getPixel(x, y), replacement, fade))", self.shared)
         self.assertIn("selectedLines[i].setVisibility(tab != HOME && i == tab",
                       self.shared)
         self.assertIn("cells[i].setSelected(i == tab)", self.shared)
@@ -118,6 +123,9 @@ class JadeNavTest(unittest.TestCase):
         self.assertIn("R.id.homeNavBarArtwork", home_touch)
         self.assertNotIn("R.id.homeGameTabButton", home_touch)
         self.assertNotIn("home/navbar/bar.png", self.main)
+        home_touch = (JAVA / "ui/GoHomeTouchLayout.java").read_text(encoding="utf-8")
+        self.assertIn("Math.round(96 * getResources().getDisplayMetrics().density)", home_touch)
+        self.assertIn("Math.round(getHeight() * .15f)", home_touch)
 
     def test_footers_stay_outside_scrollable_board_content(self):
         for page, nav_id in (
@@ -126,8 +134,8 @@ class JadeNavTest(unittest.TestCase):
             (self.home_layout, "gameSharedNav"),
         ):
             with self.subTest(nav=nav_id):
-                self.assertEqual("70dp", page[nav_id].get(ANDROID + "layout_height"))
-        self.assertEqual("70dp", self.dialog["newGameSharedNav"].get(
+                self.assertEqual("96dp", page[nav_id].get(ANDROID + "layout_height"))
+        self.assertEqual("96dp", self.dialog["newGameSharedNav"].get(
             ANDROID + "layout_height"))
 
 

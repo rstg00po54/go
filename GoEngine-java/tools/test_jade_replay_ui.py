@@ -117,7 +117,7 @@ class JadeReplayUiTest(unittest.TestCase):
         self.assertEqual("0dp", scrolls[0].get(ANDROID + "layout_height"))
         self.assertEqual("1", scrolls[0].get(ANDROID + "layout_weight"))
         footer = self.by_id["replaySharedNav"]
-        self.assertEqual("70dp", footer.get(ANDROID + "layout_height"))
+        self.assertEqual("96dp", footer.get(ANDROID + "layout_height"))
         self.assertNotIn(footer, list(scrolls[0].iter()))
         self.assertIn(self.by_id["replayBoardFrame"], list(scrolls[0].iter()))
 

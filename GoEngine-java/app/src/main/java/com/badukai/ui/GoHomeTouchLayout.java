@@ -61,8 +61,8 @@ public class GoHomeTouchLayout extends FrameLayout {
         // home as on replay/game/training.
         View nav = findViewById(com.badukai.R.id.homeNavBarArtwork);
         int width = Math.round(getWidth() * .94f);
-        int preferred = Math.round(70 * getResources().getDisplayMetrics().density);
-        int height = Math.min(preferred, Math.round(getHeight() * .12f));
+        int preferred = Math.round(96 * getResources().getDisplayMetrics().density);
+        int height = Math.min(preferred, Math.round(getHeight() * .15f));
         int left = (getWidth() - width) / 2;
         int top = getHeight() - height - Math.round(getHeight() * .022f);
         LayoutParams lp = new LayoutParams(width, height);
