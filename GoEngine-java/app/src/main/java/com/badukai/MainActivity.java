@@ -1879,6 +1879,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /** Navigate from independent Jade pages without recreating the game engine. */
+    @Override protected void onNewIntent(android.content.Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (intent != null && intent.getBooleanExtra("navigate_home", false)) {
+            showMainPage();
+        }
+    }
+
     private void openReplay() {
         saveReplaySnapshot(true);
         startActivity(new android.content.Intent(this, ReplayActivity.class));

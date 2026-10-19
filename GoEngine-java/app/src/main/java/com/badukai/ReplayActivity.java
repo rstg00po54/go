@@ -5,12 +5,12 @@ import android.app.AlertDialog;
 import com.badukai.game.SgfArchive;
 import android.os.Bundle;
 import android.content.Intent;
-import android.widget.Button;
 import android.widget.SeekBar;
+import android.widget.ImageView;
+import android.graphics.BitmapFactory;
+import java.io.InputStream;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.view.Gravity;
-import android.widget.LinearLayout;
 import com.badukai.game.GoBoard;
 import com.badukai.game.GoSgf;
 import com.badukai.game.Move;
@@ -28,85 +28,117 @@ public class ReplayActivity extends Activity {
     private GoBoardView boardView;
     private SeekBar seek;
     private TextView counter;
+    private TextView info;
+    private TextView boardMeta;
+    private TextView movesMeta;
 
     @Override public void onCreate(Bundle saved) {
         super.onCreate(saved);
-        LinearLayout page=new LinearLayout(this);
-        page.setOrientation(LinearLayout.VERTICAL);
-        page.setPadding(dp(12),dp(12),dp(12),dp(12));
-        page.setBackgroundColor(0xfff5eedf);
-        TextView title=new TextView(this);
-        title.setText("棋谱复盘");
-        title.setTextSize(23);
-        title.setTextColor(0xff285b42);
-        title.setGravity(Gravity.CENTER);
-        page.addView(title,new LinearLayout.LayoutParams(-1,dp(56)));
-        boardView=new GoBoardView(this);
-        page.addView(boardView,new LinearLayout.LayoutParams(-1,0,1));
-        counter=new TextView(this);
-        counter.setGravity(Gravity.CENTER);
-        counter.setTextSize(17);
-        counter.setTextColor(0xff245039);
-        page.addView(counter,new LinearLayout.LayoutParams(-1,dp(40)));
-        seek=new SeekBar(this);
-        page.addView(seek,new LinearLayout.LayoutParams(-1,dp(50)));
-        seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
-            public void onProgressChanged(SeekBar bar,int progress,boolean fromUser) {
-                if(fromUser)showStep(progress);
+        setContentView(R.layout.activity_replay);
+
+        boardView = findViewById(R.id.replayBoard);
+        boardView.setInputEnabled(false); // Replay never edits the live game.
+        boardView.setBoard(new GoBoard(9));
+        boardMeta = findViewById(R.id.replayBoardMeta);
+        movesMeta = findViewById(R.id.replayMovesMeta);
+        counter = findViewById(R.id.replayCounter);
+        info = findViewById(R.id.replayStepInfo);
+        seek = findViewById(R.id.replaySeek);
+
+        com.badukai.ui.JadeIconBinder.bindReplay(findViewById(android.R.id.content));
+        loadBackdrop();
+
+        seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar bar, int progress, boolean fromUser) {
+                if (fromUser) showStep(progress);
             }
-            public void onStartTrackingTouch(SeekBar b){}
-            public void onStopTrackingTouch(SeekBar b){}
+            @Override public void onStartTrackingTouch(SeekBar bar) {}
+            @Override public void onStopTrackingTouch(SeekBar bar) {}
         });
-        LinearLayout controls=new LinearLayout(this);
-        for(String label:new String[]{"|◀","◀","▶","▶|"}){
-            Button button=new Button(this);
-            button.setText(label);
-            controls.addView(button,new LinearLayout.LayoutParams(0,dp(55),1));
-            button.setOnClickListener(v->{
-                int current=seek.getProgress();
-                int total=game==null?0:game.moves.size();
-                if(label.equals("|◀"))current=0;
-                else if(label.equals("◀"))current=Math.max(0,current-1);
-                else if(label.equals("▶"))current=Math.min(total,current+1);
-                else current=total;
-                showStep(current);
-            });
-        }
-        page.addView(controls);
-        LinearLayout actions=new LinearLayout(this);
-        for(String label:new String[]{"历史棋谱","导出 SGF","分享棋谱"}){
-            Button action=new Button(this);
-            action.setText(label);
-            actions.addView(action,new LinearLayout.LayoutParams(0,dp(52),1));
-            action.setOnClickListener(v->{
-                if(label.equals("历史棋谱"))chooseHistory();
-                else if(label.equals("导出 SGF"))exportSgf();
-                else shareSgf();
-            });
-        }
-        page.addView(actions);
-        Button importButton=new Button(this);
-        importButton.setText("导入 SGF 文件");
-        importButton.setOnClickListener(v->{
-            Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT);
-            intent.setType("*/*");
-            intent.addCategory(Intent.CATEGORY_OPENABLE);
-            startActivityForResult(intent,PICK_SGF);
+
+        findViewById(R.id.replayBackButton).setOnClickListener(v -> finish());
+        findViewById(R.id.replayHistoryButton).setOnClickListener(v -> chooseHistory());
+        findViewById(R.id.replayChooseHistory).setOnClickListener(v -> chooseHistory());
+        findViewById(R.id.replayFirst).setOnClickListener(v -> showStep(0));
+        findViewById(R.id.replayPrev).setOnClickListener(v ->
+                showStep(Math.max(0, seek.getProgress() - 1)));
+        findViewById(R.id.replayNext).setOnClickListener(v ->
+                showStep(Math.min(game == null ? 0 : game.moves.size(),
+                        seek.getProgress() + 1)));
+        findViewById(R.id.replayLast).setOnClickListener(v ->
+                showStep(game == null ? 0 : game.moves.size()));
+        findViewById(R.id.replayImport).setOnClickListener(v -> chooseImport());
+        findViewById(R.id.replayExport).setOnClickListener(v -> exportSgf());
+        findViewById(R.id.replayShare).setOnClickListener(v -> shareSgf());
+        findViewById(R.id.replayTabHome).setOnClickListener(v -> returnHome());
+        findViewById(R.id.replayTabRecords).setOnClickListener(v -> chooseHistory());
+        findViewById(R.id.replayTabPlay).setOnClickListener(v -> finish());
+        findViewById(R.id.replayTabTraining).setOnClickListener(v -> {
+            startActivity(new Intent(this, TsumegoActivity.class));
         });
-        page.addView(importButton);
-        Button close=new Button(this);
-        close.setText("返回");
-        close.setOnClickListener(v->finish());
-        page.addView(close);
-        setContentView(page);
-        String source=getIntent().getStringExtra("sgf");
-        if(source==null){
-            try {source=new String(Files.readAllBytes(
-                    new File(getFilesDir(),"last_game.sgf").toPath()),StandardCharsets.UTF_8);}
-            catch(Exception ex){Toast.makeText(this,"还没有保存的棋谱，可先导入 SGF",Toast.LENGTH_LONG).show();}
+        findViewById(R.id.replayTabSettings).setOnClickListener(v -> showReplayOptions());
+
+        updateNavigationButtons();
+        String source = getIntent().getStringExtra("sgf");
+        if (source == null) {
+            try {
+                source = new String(Files.readAllBytes(
+                        new File(getFilesDir(), "last_game.sgf").toPath()),
+                        StandardCharsets.UTF_8);
+            } catch (Exception ex) {
+                Toast.makeText(this, "还没有保存的棋谱，可导入 SGF 或选择历史棋谱",
+                        Toast.LENGTH_LONG).show();
+            }
         }
-        if(source!=null)load(source);
+        if (source != null) load(source);
     }
+
+    private void loadBackdrop() {
+        try (InputStream in = getAssets().open("home/background.png")) {
+            ImageView background = findViewById(R.id.replayBackdrop);
+            background.setImageBitmap(BitmapFactory.decodeStream(in));
+        } catch (Exception ignored) {
+            // The dark jade gradient is self-contained when external art isn't staged.
+        }
+    }
+
+    private void returnHome() {
+        Intent home = new Intent(this, MainActivity.class).putExtra("navigate_home", true);
+        home.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        startActivity(home);
+        finish();
+    }
+
+    private void showReplayOptions() {
+        new AlertDialog.Builder(this).setTitle("复盘选项")
+                .setItems(new String[]{"历史棋谱", "导入 SGF", "导出 SGF", "分享棋谱"},
+                        (dialog, item) -> {
+                            if (item == 0) chooseHistory();
+                            else if (item == 1) chooseImport();
+                            else if (item == 2) exportSgf();
+                            else shareSgf();
+                        })
+                .setNegativeButton("取消", null).show();
+    }
+
+    private void chooseImport() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.setType("*/*");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        startActivityForResult(intent, PICK_SGF);
+    }
+
+    private void updateNavigationButtons() {
+        int step = seek.getProgress();
+        int total = game == null ? 0 : game.moves.size();
+        findViewById(R.id.replayFirst).setEnabled(game != null && step > 0);
+        findViewById(R.id.replayPrev).setEnabled(game != null && step > 0);
+        findViewById(R.id.replayNext).setEnabled(game != null && step < total);
+        findViewById(R.id.replayLast).setEnabled(game != null && step < total);
+        findViewById(R.id.replayExport).setEnabled(currentSgf != null);
+        findViewById(R.id.replayShare).setEnabled(currentSgf != null);
+    }
+
     private int dp(int value){return Math.round(value*getResources().getDisplayMetrics().density);}
     private void load(String sgf){
         try{
@@ -114,6 +146,8 @@ public class ReplayActivity extends Activity {
             GoSgf.position(parsed,parsed.moves.size()); // Verify main line before showing it.
             game=parsed;
             currentSgf=sgf;
+            boardMeta.setText(game.size + " × " + game.size + " · 贴目 " + game.komi);
+            movesMeta.setText("共 " + game.moves.size() + " 手");
             seek.setMax(game.moves.size());
             showStep(game.moves.size());
         }catch(Exception ex){
@@ -121,40 +155,30 @@ public class ReplayActivity extends Activity {
         }
     }
     private void showStep(int step){
-        if(game==null){counter.setText("暂无棋谱");return;}
+        if(game==null){
+            counter.setText("暂无棋谱");
+            info.setText("导入棋谱或从历史棋谱中选择");
+            updateNavigationButtons();
+            return;
+        }
         try{
             GoBoard position=GoSgf.position(game,step);
             boardView.setBoard(position);
             Move last=step>0?game.moves.get(step-1):null;
             boardView.setLastMove(last instanceof Move.Stone?((Move.Stone)last).point:null);
             seek.setProgress(step);
-            counter.setText("第 "+step+" / "+game.moves.size()+" 手 · "+game.size+" 路");
+            counter.setText("第 " + step + " / " + game.moves.size() + " 手");
+            if (last == null) info.setText("开局 · 可从第 1 手开始浏览");
+            else info.setText((last.color == com.badukai.game.StoneColor.BLACK ? "黑棋" : "白棋")
+                    + (last instanceof Move.Pass ? "停一手" : "落子")
+                    + " · 第 " + step + " 手");
+            updateNavigationButtons();
         }catch(Exception e){Toast.makeText(this,"无法复盘："+e.getMessage(),Toast.LENGTH_SHORT).show();}
     }
     private void chooseHistory() {
-        java.util.List<File> files=SgfArchive.list(this);
-        if(files.isEmpty()){
-            Toast.makeText(this,"暂无历史棋谱",Toast.LENGTH_SHORT).show();
-            return;
-        }
-        String[] labels=new String[files.size()];
-        for(int i=0;i<files.size();i++){
-            try {
-                GoSgf.Game item=GoSgf.decode(new String(
-                        Files.readAllBytes(files.get(i).toPath()),StandardCharsets.UTF_8));
-                labels[i]=(i+1)+".  "+item.size+"路 · "+item.moves.size()+"手 · "
-                        +new java.text.SimpleDateFormat("MM-dd HH:mm",java.util.Locale.getDefault())
-                        .format(new java.util.Date(files.get(i).lastModified()));
-            }catch(Exception ex){labels[i]=(i+1)+".  "+files.get(i).getName();}
-        }
-        new AlertDialog.Builder(this).setTitle("历史棋谱")
-                .setItems(labels,(dialog,which)->{
-                    try{
-                        load(new String(Files.readAllBytes(files.get(which).toPath()),
-                                StandardCharsets.UTF_8));
-                    }catch(Exception ex){Toast.makeText(this,"读取失败："+ex.getMessage(),Toast.LENGTH_LONG).show();}
-                }).setNegativeButton("取消",null).show();
+        startActivityForResult(new Intent(this, SgfLibraryActivity.class), 103);
     }
+
     private void exportSgf() {
         if(currentSgf==null){Toast.makeText(this,"没有可导出的棋谱",Toast.LENGTH_SHORT).show();return;}
         Intent intent=new Intent(Intent.ACTION_CREATE_DOCUMENT);
@@ -173,7 +197,24 @@ public class ReplayActivity extends Activity {
     }
     @Override protected void onActivityResult(int request,int result,Intent data){
         super.onActivityResult(request,result,data);
-        if(result!=RESULT_OK||data==null||data.getData()==null)return;
+        if(result!=RESULT_OK||data==null)return;
+        if(request==103){
+            String selected=data.getStringExtra("selected_sgf_file");
+            if(selected!=null){
+                try {
+                    // SgfArchive files have only SHA-derived names.
+                    if(!selected.matches("[0-9a-f]{24}\\.sgf"))
+                        throw new IllegalArgumentException("无效棋谱名");
+                    File file = new File(SgfArchive.directory(this), selected);
+                    if(file.length()>2_000_000) throw new IllegalArgumentException("棋谱过大");
+                    load(new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8));
+                } catch(Exception ex){
+                    Toast.makeText(this,"打开棋谱失败："+ex.getMessage(),Toast.LENGTH_LONG).show();
+                }
+            }
+            return;
+        }
+        if(data.getData()==null)return;
         if(request==EXPORT_SGF){
             if(currentSgf==null)return;
             try(java.io.OutputStream out=getContentResolver().openOutputStream(data.getData())){

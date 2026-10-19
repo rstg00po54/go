@@ -1,0 +1,58 @@
+name: Jade five-screen UI batch compile
+
+on:
+  push:
+    branches: [feature/jade-home-game-ui]
+    paths:
+      - '.github/workflows/jade_five_ui_batch.yml'
+      - 'GoEngine-java/app/src/main/java/com/badukai/**'
+      - 'GoEngine-java/app/src/main/res/layout/activity_replay.xml'
+      - 'GoEngine-java/app/src/main/res/layout/activity_sgf_library.xml'
+      - 'GoEngine-java/app/src/main/res/layout/activity_tsumego.xml'
+      - 'GoEngine-java/app/src/main/res/layout/activity_tsumego_explanation.xml'
+      - 'GoEngine-java/app/src/main/res/layout/activity_tsumego_results.xml'
+      - 'GoEngine-java/app/src/main/AndroidManifest.xml'
+      - 'GoEngine-java/tools/test_jade_five_pages.py'
+      - 'GoEngine-java/tools/test_jade_replay_ui.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static-and-android:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    defaults:
+      run:
+        working-directory: GoEngine-java
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Jade UI static checks
+        run: |
+          set -e
+          python3 tools/test_jade_five_pages.py -v
+          python3 tools/test_jade_replay_ui.py -v
+          python3 tools/test_jade_ui_layout.py -v
+      - name: Install Android platform 35
+        run: |
+          set -e
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+          test -n "$SDK"
+          if command -v sdkmanager >/dev/null 2>&1; then
+            yes | sdkmanager --licenses >/dev/null || true
+            sdkmanager "platforms;android-35" "build-tools;35.0.0"
+          else
+            test -d "$SDK/platforms/android-35"
+          fi
+      - name: Compile Android resources and Java (skip unrelated KataGo C++)
+        run: |
+          set -e
+          chmod +x ./gradlew
+          ./gradlew :app:compileDebugJavaWithJavac --no-daemon --stacktrace -PskipKataGoNative=true
+          echo "JADE_FIVE_UI_ANDROID_COMPILE_PASS"

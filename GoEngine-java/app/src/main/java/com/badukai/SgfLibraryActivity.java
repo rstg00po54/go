@@ -1,0 +1,166 @@
+package com.badukai;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.graphics.Color;
+import android.os.Bundle;
+import android.view.Gravity;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.badukai.game.GoSgf;
+import com.badukai.game.SgfArchive;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
+/** Offline archive chooser; returns a validated SGF to ReplayActivity. */
+public final class SgfLibraryActivity extends Activity {
+    private static final int PICK_SGF = 302;
+    private LinearLayout list;
+    private TextView count;
+    private TextView empty;
+
+    @Override public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_sgf_library);
+        list = findViewById(R.id.libraryList);
+        count = findViewById(R.id.libraryCount);
+        empty = findViewById(R.id.libraryEmpty);
+        findViewById(R.id.libraryBack).setOnClickListener(v -> finish());
+        findViewById(R.id.libraryReturn).setOnClickListener(v -> finish());
+        findViewById(R.id.libraryImport).setOnClickListener(v -> importSgf());
+        findViewById(R.id.libraryImportButton).setOnClickListener(v -> importSgf());
+        populate();
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        if (list != null) populate();
+    }
+
+    private int dp(float value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    private void populate() {
+        List<File> files = SgfArchive.list(this);
+        list.removeAllViews();
+        count.setText("本地棋谱 " + files.size() + " 局");
+        if (files.isEmpty()) {
+            list.addView(empty, new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, dp(110)));
+            return;
+        }
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+        for (int i = 0; i < files.size(); i++) {
+            File file = files.get(i);
+            LinearLayout item = new LinearLayout(this);
+            item.setGravity(Gravity.CENTER_VERTICAL);
+            item.setOrientation(LinearLayout.HORIZONTAL);
+            item.setPadding(dp(11), dp(7), dp(11), dp(7));
+            item.setBackgroundResource(R.drawable.jade_dark_card);
+
+            ImageView icon = new ImageView(this);
+            icon.setImageResource(R.drawable.ic_book_ivory);
+            icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            item.addView(icon, new LinearLayout.LayoutParams(dp(38), dp(38)));
+
+            LinearLayout details = new LinearLayout(this);
+            details.setPadding(dp(10), 0, dp(3), 0);
+            details.setOrientation(LinearLayout.VERTICAL);
+            TextView heading = new TextView(this);
+            heading.setTextColor(Color.rgb(247, 226, 164));
+            heading.setTextSize(15);
+            TextView sub = new TextView(this);
+            sub.setTextColor(Color.rgb(197, 218, 204));
+            sub.setTextSize(11);
+            try {
+                String data = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+                GoSgf.Game game = GoSgf.decode(data);
+                heading.setText((i + 1) + ".  " + game.size + " × " + game.size
+                        + " · " + game.moves.size() + " 手");
+                sub.setText(format.format(new Date(file.lastModified()))
+                        + "  ·  贴目 " + game.komi);
+            } catch (Exception ex) {
+                heading.setText((i + 1) + ".  棋谱文件");
+                sub.setText(file.getName() + " · 无法预览");
+            }
+            details.addView(heading);
+            details.addView(sub);
+            item.addView(details, new LinearLayout.LayoutParams(0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+
+            TextView arrow = new TextView(this);
+            arrow.setText("›");
+            arrow.setTextColor(Color.rgb(247, 226, 164));
+            arrow.setTextSize(29);
+            item.addView(arrow);
+            item.setOnClickListener(v -> selectFile(file));
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, dp(70));
+            params.bottomMargin = dp(8);
+            list.addView(item, params);
+        }
+    }
+
+    private void selectFile(File file) {
+        try {
+            if (file.length() > 2_000_000) throw new IllegalArgumentException("棋谱文件过大");
+            String sgf = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+            GoSgf.Game parsed = GoSgf.decode(sgf);
+            GoSgf.position(parsed, parsed.moves.size());
+            returnFile(file);
+        } catch (Exception ex) {
+            Toast.makeText(this, "棋谱读取失败：" + ex.getMessage(),
+                    Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void returnFile(File file) {
+        Intent result = new Intent();
+        result.putExtra("selected_sgf_file", file.getName());
+        setResult(RESULT_OK, result);
+        finish();
+    }
+
+    private void importSgf() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.setType("*/*");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        startActivityForResult(intent, PICK_SGF);
+    }
+
+    @Override protected void onActivityResult(int request, int result, Intent data) {
+        super.onActivityResult(request, result, data);
+        if (request != PICK_SGF || result != RESULT_OK || data == null
+                || data.getData() == null) return;
+        try (InputStream in = getContentResolver().openInputStream(data.getData())) {
+            if (in == null) throw new IllegalArgumentException("文件无法打开");
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            byte[] buffer = new byte[4096];
+            int n;
+            while ((n = in.read(buffer)) >= 0) {
+                bytes.write(buffer, 0, n);
+                if (bytes.size() > 2_000_000) throw new IllegalArgumentException("文件过大");
+            }
+            String sgf = bytes.toString("UTF-8");
+            GoSgf.Game parsed = GoSgf.decode(sgf);
+            GoSgf.position(parsed, parsed.moves.size());
+            File saved = SgfArchive.save(this, sgf);
+            returnFile(saved);
+        } catch (Exception ex) {
+            Toast.makeText(this, "导入失败：" + ex.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+}

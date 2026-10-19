@@ -62,6 +62,24 @@ public final class JadeIconBinder {
         top(root, R.id.gameNavSettings, R.drawable.ic_settings_ivory, 26);
     }
 
+    /** Set explicit 26dp bounds for the 256px original jade replay-tab PNGs. */
+    public static void bindReplay(View root) {
+        top(root, R.id.replayTabHome, R.drawable.ic_home_ivory, 26);
+        top(root, R.id.replayTabRecords, R.drawable.ic_book_ivory, 26);
+        top(root, R.id.replayTabPlay, R.drawable.ic_game_gold, 26);
+        top(root, R.id.replayTabTraining, R.drawable.ic_training_ivory, 26);
+        top(root, R.id.replayTabSettings, R.drawable.ic_settings_ivory, 26);
+    }
+
+    /** Consistent jade footer sizing in the independent 9x9 training page. */
+    public static void bindTsumego(View root) {
+        top(root, R.id.tsumegoTabHome, R.drawable.ic_home_ivory, 26);
+        top(root, R.id.tsumegoTabRecords, R.drawable.ic_book_ivory, 26);
+        top(root, R.id.tsumegoTabPlay, R.drawable.ic_game_gold, 26);
+        top(root, R.id.tsumegoTabTraining, R.drawable.ic_training_ivory, 26);
+        top(root, R.id.tsumegoTabSettings, R.drawable.ic_settings_ivory, 26);
+    }
+
     private static void left(View root, int viewId, int resourceId, int sizeDp) {
         apply(root, viewId, resourceId, sizeDp, true);
     }

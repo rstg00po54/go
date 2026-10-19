@@ -33,6 +33,9 @@
             android:theme="@android:style/Theme.Material.NoActionBar" />
 
         <activity android:name=".ReplayActivity" android:exported="false" />
+        <activity android:name=".SgfLibraryActivity" android:exported="false" />
+        <activity android:name=".TsumegoExplanationActivity" android:exported="false" />
+        <activity android:name=".TsumegoResultsActivity" android:exported="false" />
         <activity android:name=".TsumegoActivity" android:exported="false" />
 
         <activity
