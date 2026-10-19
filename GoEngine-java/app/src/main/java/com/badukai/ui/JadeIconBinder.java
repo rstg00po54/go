@@ -1,6 +1,7 @@
 package com.badukai.ui;
 
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.InsetDrawable;
 import android.view.View;
 import android.widget.TextView;
 
@@ -27,9 +28,13 @@ public final class JadeIconBinder {
         left(root, R.id.jadeSectionRules, R.drawable.ic_turn, 26);
 
         // Selection cards: transparent image is contained *inside* each tile.
-        top(root, R.id.modeAiButton, R.drawable.ic_mode_ai, 38);
-        top(root, R.id.modeLocalButton, R.drawable.ic_mode_human, 38);
-        top(root, R.id.modeReplayButton, R.drawable.ic_import_sgf, 38);
+        // The 512px artwork is visually top-heavy inside the 74dp cards.
+        // Add 8dp of invisible drawable space above it: because Android
+        // vertically centers drawable + label as a group, the visible icon
+        // and label move down by about 4dp without resizing the PNG.
+        topLowered(root, R.id.modeAiButton, R.drawable.ic_mode_ai, 38, 8);
+        topLowered(root, R.id.modeLocalButton, R.drawable.ic_mode_human, 38, 8);
+        topLowered(root, R.id.modeReplayButton, R.drawable.ic_import_sgf, 38, 8);
         top(root, R.id.blackRadio, R.drawable.ic_black_stone, 34);
         top(root, R.id.whiteRadio, R.drawable.ic_white_stone, 34);
         top(root, R.id.randomRadio, R.drawable.ic_random, 34);
@@ -54,8 +59,18 @@ public final class JadeIconBinder {
         apply(root, viewId, resourceId, sizeDp, false);
     }
 
+    private static void topLowered(View root, int viewId, int resourceId,
+                                   int sizeDp, int topInsetDp) {
+        apply(root, viewId, resourceId, sizeDp, false, topInsetDp);
+    }
+
     private static void apply(View root, int viewId, int resourceId,
                               int sizeDp, boolean leading) {
+        apply(root, viewId, resourceId, sizeDp, leading, 0);
+    }
+
+    private static void apply(View root, int viewId, int resourceId,
+                              int sizeDp, boolean leading, int topInsetDp) {
         View view = root.findViewById(viewId);
         if (!(view instanceof TextView)) {
             throw new IllegalStateException("Expected icon TextView: " + viewId);
@@ -70,6 +85,12 @@ public final class JadeIconBinder {
         art = art.mutate();
         int pixels = Math.round(sizeDp * target.getResources().getDisplayMetrics().density);
         art.setBounds(0, 0, pixels, pixels);
+        if (!leading && topInsetDp > 0) {
+            int offset = Math.round(topInsetDp * target.getResources().getDisplayMetrics().density);
+            InsetDrawable lowered = new InsetDrawable(art, 0, offset, 0, 0);
+            lowered.setBounds(0, 0, pixels, pixels + offset);
+            art = lowered;
+        }
         if (leading) {
             target.setCompoundDrawablesRelative(art, null, null, null);
         } else {
