@@ -50,3 +50,20 @@ To compare both screens, capture the home screen, start a match, capture the
 game screen; test 9x9 and 19x19, AI and player colors reversed, and a tall
 phone / 1080x1920 RK3588 portrait display. UI layout checks do not replace
 an APK build or real-device interaction test.
+
+## New-game dialog revision (v2)
+
+The initial home/game UI commit intentionally left the new-game dialog unchanged,
+which made the RK3588 screenshots look like the old UI. The follow-up restyles
+`dialog_new_game.xml` with a dark jade header, grouped ivory selection cards,
+custom jade spinner rows and dropdowns, and a gold-accented green launch button.
+A bounded-height scroll region keeps the launch control accessible on short screens.
+All existing backend, board, rules, player color, Human SL rank and NPU choices
+stay wired to the same MainActivity logic.
+
+The on-device marker `JADE_NEW_GAME_DIALOG_V2` is written when opening the dialog.
+After a rebuild and install, verify it by:
+
+```bash
+adb logcat -d -v time | grep JADE_NEW_GAME_DIALOG_V2
+```

@@ -68,6 +68,36 @@ class JadeUiTest(unittest.TestCase):
                      "homeRecordButton", "homeTrainingButton"):
             self.assertIn("R.id." + name, self.home_java)
 
+    def test_new_game_dialog_preserves_npu_and_inputs(self):
+        dialog = ET.parse(ROOT / "app/src/main/res/layout/dialog_new_game.xml").getroot()
+        controls = {}
+        for view in dialog.iter():
+            value = view.get(ANDROID + "id", "")
+            if value.startswith("@+id/"):
+                name = value[5:]
+                self.assertNotIn(name, controls)
+                controls[name] = view
+
+        for name in ("deviceModelText", "hardwareInfoText", "sizeSpinner",
+                     "conditionSpinner", "colorGroup", "randomRadio",
+                     "blackRadio", "whiteRadio", "backendSpinner",
+                     "difficultySpinner", "closeDialogButton", "startGameButton"):
+            with self.subTest(control=name):
+                self.assertIn(name, controls)
+                self.assertIn("R.id." + name, self.main_java)
+
+        self.assertIn("newGameSettingsScroll", controls)
+        self.assertEqual("ScrollView", controls["newGameSettingsScroll"].tag)
+        self.assertEqual("@drawable/jade_dialog_launch",
+                         controls["startGameButton"].get(ANDROID + "background"))
+        self.assertIn("JADE_NEW_GAME_DIALOG_V2", self.main_java)
+        self.assertEqual(4, self.main_java.count("R.layout.item_jade_spinner,"))
+        self.assertEqual(4, self.main_java.count("setDropDownViewResource(R.layout.item_jade_spinner_dropdown)"))
+        ET.parse(ROOT / "app/src/main/res/layout/item_jade_spinner.xml")
+        ET.parse(ROOT / "app/src/main/res/layout/item_jade_spinner_dropdown.xml")
+        self.assertIn("supportsMediaTekGame", self.main_java)
+        self.assertIn("hasBundledNpuModel(requestedBoardSize)", self.main_java)
+
     def test_jade_drawables_are_valid(self):
         for path in DRAWABLES.glob("jade_*.xml"):
             with self.subTest(drawable=path.name):

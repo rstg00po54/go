@@ -1636,16 +1636,16 @@ public class MainActivity extends AppCompatActivity {
         Button closeButton = content.findViewById(R.id.closeDialogButton);
 
         int[] boardSizes = BOARD_SIZES;
-        ArrayAdapter<String> sizeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{"9路", "11路", "13路", "15路", "19路"});
-        sizeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        ArrayAdapter<String> sizeAdapter = new ArrayAdapter<>(this, R.layout.item_jade_spinner, new String[]{"9路", "11路", "13路", "15路", "19路"});
+        sizeAdapter.setDropDownViewResource(R.layout.item_jade_spinner_dropdown);
         sizeSpinner.setAdapter(sizeAdapter);
         int selectedSize = 0;
         for (int i = 0; i < boardSizes.length; i++) if (boardSizes[i] == boardSize) selectedSize = i;
         sizeSpinner.setSelection(selectedSize);
 
-        ArrayAdapter<String> conditionAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item,
+        ArrayAdapter<String> conditionAdapter = new ArrayAdapter<>(this, R.layout.item_jade_spinner,
                 new String[]{"分先", "让先", "让2子", "让3子", "让4子", "让5子", "让6子", "让7子", "让8子", "让9子"});
-        conditionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        conditionAdapter.setDropDownViewResource(R.layout.item_jade_spinner_dropdown);
         conditionSpinner.setAdapter(conditionAdapter);
         conditionSpinner.setSelection(gameCondition);
 
@@ -1674,8 +1674,8 @@ public class MainActivity extends AppCompatActivity {
             backendChoices.add(KataGoEngine.BackendPreference.NPU);
             backendNames.add(npuLabel);
         }
-        ArrayAdapter<String> backendAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, backendNames);
-        backendAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        ArrayAdapter<String> backendAdapter = new ArrayAdapter<>(this, R.layout.item_jade_spinner, backendNames);
+        backendAdapter.setDropDownViewResource(R.layout.item_jade_spinner_dropdown);
         backendSpinner.setAdapter(backendAdapter);
         int backendIndex = backendChoices.indexOf(selectedBackend);
         backendSpinner.setSelection(Math.max(0, backendIndex));
@@ -1706,8 +1706,8 @@ public class MainActivity extends AppCompatActivity {
         colorGroup.check(playerColor == StoneColor.WHITE ? R.id.whiteRadio : R.id.blackRadio);
         String[] kyuLabels = new String[18];
         for (int i = 0; i < kyuLabels.length; i++) kyuLabels[i] = (18 - i) + "级";
-        ArrayAdapter<String> difficultyAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, kyuLabels);
-        difficultyAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        ArrayAdapter<String> difficultyAdapter = new ArrayAdapter<>(this, R.layout.item_jade_spinner, kyuLabels);
+        difficultyAdapter.setDropDownViewResource(R.layout.item_jade_spinner_dropdown);
         difficultySpinner.setAdapter(difficultyAdapter);
         difficultySpinner.setSelection(18 - aiKyu);
 
@@ -1756,9 +1756,16 @@ public class MainActivity extends AppCompatActivity {
         dialog.setOnShowListener(ignored -> {
             if (dialog.getWindow() != null) {
                 dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-                int width = getResources().getDisplayMetrics().widthPixels;
-                int maxWidth = (int) (420 * getResources().getDisplayMetrics().density);
-                dialog.getWindow().setLayout(Math.min((int) (width * 0.88f), maxWidth), ViewGroup.LayoutParams.WRAP_CONTENT);
+                android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+                int dialogWidth = Math.min(Math.round(dm.widthPixels * 0.92f),
+                        Math.round(440f * dm.density));
+                // ScrollView in the jade dialog keeps the fixed header and
+                // launch button reachable on both RK3588 and tall phone screens.
+                int dialogHeight = Math.min(Math.round(dm.heightPixels * 0.88f),
+                        Math.round(620f * dm.density));
+                dialog.getWindow().setLayout(dialogWidth, dialogHeight);
+                Log.i(TAG, "JADE_NEW_GAME_DIALOG_V2 width=" + dialogWidth
+                        + " height=" + dialogHeight + " board=" + boardSize);
             }
         });
         dialog.show();
