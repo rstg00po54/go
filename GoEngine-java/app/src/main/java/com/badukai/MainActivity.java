@@ -283,6 +283,12 @@ public class MainActivity extends AppCompatActivity {
         variationButton.setOnClickListener(v -> showVariations());
         findViewById(R.id.gameAnalysisButton).setOnClickListener(v -> showWinRateChart());
         findViewById(R.id.gameMoreButton).setOnClickListener(this::showGameMoreMenu);
+        android.widget.ScrollView gameScroll = findViewById(R.id.gameContentScroll);
+        gameScroll.addOnLayoutChangeListener((view, left, top, right, bottom,
+                oldLeft, oldTop, oldRight, oldBottom) -> {
+            if (right - left != oldRight - oldLeft || bottom - top != oldBottom - oldTop)
+                view.post(this::fitGameBoardToViewport);
+        });
         render("正在启动 AI...");
         showMainPage();
         if (getIntent() != null && getIntent().getBooleanExtra("navigate_new_game", false)) {
@@ -1934,6 +1940,38 @@ public class MainActivity extends AppCompatActivity {
                 com.badukai.ui.JadeBottomNavView.HOME);
     }
 
+
+    /**
+     * Size the square board to the free height above the fixed bottom nav.
+     * Keep both button rows visible without scrolling on phone-size screens.
+     */
+    private void fitGameBoardToViewport() {
+        android.widget.ScrollView scroll = findViewById(R.id.gameContentScroll);
+        View frame = findViewById(R.id.boardFrame);
+        if (scroll == null || frame == null || scroll.getHeight() <= 0
+                || scroll.getChildCount() == 0) return;
+        View content = scroll.getChildAt(0);
+        if (content.getWidth() <= 0 || frame.getHeight() <= 0) return;
+
+        float density = getResources().getDisplayMetrics().density;
+        int remaining = scroll.getHeight() - (content.getHeight() - frame.getHeight());
+        int maxWidth = content.getWidth() - Math.round(18 * density);
+        int side = Math.min(maxWidth, remaining - Math.round(4 * density));
+        side = Math.min(maxWidth, Math.max(Math.round(180 * density), side));
+        if (side <= 0) return;
+
+        android.widget.LinearLayout.LayoutParams lp =
+                (android.widget.LinearLayout.LayoutParams) frame.getLayoutParams();
+        if (lp.width != side || lp.height != side
+                || lp.gravity != android.view.Gravity.CENTER_HORIZONTAL) {
+            lp.width = side;
+            lp.height = side;
+            lp.gravity = android.view.Gravity.CENTER_HORIZONTAL;
+            frame.setLayoutParams(lp);
+        }
+        if (scroll.getScrollY() != 0) scroll.scrollTo(0, 0);
+    }
+
     private void showGamePage() {
         DebugLog.enter(TAG, "showGamePage in, boardSize=" + boardSize);
         mainPageContainer.setVisibility(View.GONE);
@@ -1945,6 +1983,7 @@ public class MainActivity extends AppCompatActivity {
         gameModeSummaryText.setText("人机对弈");
         gameRankSummaryText.setText(aiKyu + "级");
         gameBackendSummaryText.setText(selectedBackend.name());
+        findViewById(R.id.gameContentScroll).post(this::fitGameBoardToViewport);
     }
 
     private void startNewGame() {
