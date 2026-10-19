@@ -147,28 +147,27 @@
                     android:layout_height="wrap_content" android:orientation="vertical"
                     android:paddingTop="4dp">
             <!-- Jade title plaque -->
-            <LinearLayout android:layout_width="match_parent" android:layout_height="61dp"
+            <LinearLayout android:layout_width="match_parent" android:layout_height="52dp"
                 android:gravity="center_vertical" android:paddingStart="10dp" android:paddingEnd="10dp"
                 android:orientation="horizontal">
-                <Button android:id="@+id/backButton" android:layout_width="44dp"
-                    android:layout_height="44dp" android:background="@drawable/btn_round_back"
+                <Button android:id="@+id/backButton" android:layout_width="38dp"
+                    android:layout_height="38dp" android:background="@drawable/btn_round_back"
                     android:text="" android:contentDescription="返回首页" android:stateListAnimator="@null"/>
                 <TextView android:layout_width="0dp" android:layout_weight="1"
                     android:layout_marginStart="13dp" android:layout_marginEnd="13dp"
-                    android:layout_height="53dp" android:gravity="center"
+                    android:layout_height="46dp" android:gravity="center"
                     android:background="@drawable/jade_dark_title"
                     android:text="人 机 对 弈" android:textColor="#173C2E"
-                    android:textStyle="bold" android:fontFamily="serif" android:textSize="22sp"/>
-                <Button android:id="@+id/newGameButton" android:layout_width="44dp"
-                    android:layout_height="44dp" android:background="@drawable/btn_round_settings"
+                    android:textStyle="bold" android:fontFamily="serif" android:textSize="20sp"/>
+                <Button android:id="@+id/newGameButton" android:layout_width="38dp"
+                    android:layout_height="38dp" android:background="@drawable/btn_round_settings"
                     android:text="" android:contentDescription="新局设置" android:stateListAnimator="@null"/>
             </LinearLayout>
-            <!-- Four matched 40dp icons are vertically centered against the entire
-                 23+18dp text column; keep labels visible on narrow screens. -->
+            <!-- Compact four-fact banner: 34dp icons beside 21+16dp text columns. -->
             <LinearLayout android:layout_width="match_parent"
-                android:layout_height="76dp" android:orientation="horizontal"
+                android:layout_height="62dp" android:orientation="horizontal"
                 android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
-                android:layout_marginTop="5dp" android:layout_marginBottom="6dp"
+                android:layout_marginTop="3dp" android:layout_marginBottom="4dp"
                 android:paddingStart="5dp" android:paddingEnd="5dp"
                 android:background="@drawable/jade_dark_card">
                 <!-- The PNG and both text lines use the same fixed start;
@@ -177,7 +176,7 @@
                     android:layout_height="match_parent" android:layout_weight="1"
                     android:orientation="horizontal" android:gravity="center_vertical"
                     android:paddingStart="1dp" android:paddingEnd="0dp">
-                    <ImageView android:layout_width="40dp" android:layout_height="40dp"
+                    <ImageView android:layout_width="34dp" android:layout_height="34dp"
                         android:layout_gravity="center_vertical"
                         android:layout_marginEnd="3dp" android:scaleType="fitCenter"
                         android:src="@drawable/ic_board_grid_gold"
@@ -187,19 +186,19 @@
                         android:layout_weight="1" android:layout_height="wrap_content"
                         android:orientation="vertical" android:gravity="start">
                         <TextView android:id="@+id/gameTitleText"
-                            android:layout_width="match_parent" android:layout_height="23dp"
+                            android:layout_width="match_parent" android:layout_height="21dp"
                             android:gravity="start|center_vertical"
                             android:text="11×11" android:textColor="#F4E2B1"
                             android:textSize="11sp" android:textStyle="bold"
                             android:singleLine="true" android:ellipsize="end"/>
                         <TextView android:layout_width="match_parent"
-                            android:layout_height="18dp" android:gravity="start|center_vertical"
+                            android:layout_height="16dp" android:gravity="start|center_vertical"
                             android:text="棋盘大小" android:textColor="#BED4C5"
                             android:textSize="9sp" android:singleLine="true"/>
                     </LinearLayout>
                 </LinearLayout>
                 <View android:layout_width="1dp"
-                    android:layout_height="46dp" android:layout_gravity="center_vertical"
+                    android:layout_height="38dp" android:layout_gravity="center_vertical"
                     android:background="#627D6C" android:importantForAccessibility="no"/>
                 <!-- The PNG and both text lines use the same fixed start;
                      the dynamic value no longer changes the icon's x-coordinate. -->
@@ -207,7 +206,7 @@
                     android:layout_height="match_parent" android:layout_weight="1"
                     android:orientation="horizontal" android:gravity="center_vertical"
                     android:paddingStart="1dp" android:paddingEnd="0dp">
-                    <ImageView android:layout_width="40dp" android:layout_height="40dp"
+                    <ImageView android:layout_width="34dp" android:layout_height="34dp"
                         android:layout_gravity="center_vertical"
                         android:layout_marginEnd="3dp" android:scaleType="fitCenter"
                         android:src="@drawable/ic_robot_ivory"
@@ -217,19 +216,19 @@
                         android:layout_weight="1" android:layout_height="wrap_content"
                         android:orientation="vertical" android:gravity="start">
                         <TextView android:id="@+id/gameModeSummaryText"
-                            android:layout_width="match_parent" android:layout_height="23dp"
+                            android:layout_width="match_parent" android:layout_height="21dp"
                             android:gravity="start|center_vertical"
                             android:text="人机对弈" android:textColor="#F4E2B1"
                             android:textSize="11sp" android:textStyle="bold"
                             android:singleLine="true" android:ellipsize="end"/>
                         <TextView android:layout_width="match_parent"
-                            android:layout_height="18dp" android:gravity="start|center_vertical"
+                            android:layout_height="16dp" android:gravity="start|center_vertical"
                             android:text="对弈模式" android:textColor="#BED4C5"
                             android:textSize="9sp" android:singleLine="true"/>
                     </LinearLayout>
                 </LinearLayout>
                 <View android:layout_width="1dp"
-                    android:layout_height="46dp" android:layout_gravity="center_vertical"
+                    android:layout_height="38dp" android:layout_gravity="center_vertical"
                     android:background="#627D6C" android:importantForAccessibility="no"/>
                 <!-- The PNG and both text lines use the same fixed start;
                      the dynamic value no longer changes the icon's x-coordinate. -->
@@ -237,7 +236,7 @@
                     android:layout_height="match_parent" android:layout_weight="1"
                     android:orientation="horizontal" android:gravity="center_vertical"
                     android:paddingStart="1dp" android:paddingEnd="0dp">
-                    <ImageView android:layout_width="40dp" android:layout_height="40dp"
+                    <ImageView android:layout_width="34dp" android:layout_height="34dp"
                         android:layout_gravity="center_vertical"
                         android:layout_marginEnd="3dp" android:scaleType="fitCenter"
                         android:src="@drawable/ic_difficulty_gold"
@@ -247,19 +246,19 @@
                         android:layout_weight="1" android:layout_height="wrap_content"
                         android:orientation="vertical" android:gravity="start">
                         <TextView android:id="@+id/gameRankSummaryText"
-                            android:layout_width="match_parent" android:layout_height="23dp"
+                            android:layout_width="match_parent" android:layout_height="21dp"
                             android:gravity="start|center_vertical"
                             android:text="12级" android:textColor="#F4E2B1"
                             android:textSize="11sp" android:textStyle="bold"
                             android:singleLine="true" android:ellipsize="end"/>
                         <TextView android:layout_width="match_parent"
-                            android:layout_height="18dp" android:gravity="start|center_vertical"
+                            android:layout_height="16dp" android:gravity="start|center_vertical"
                             android:text="AI难度" android:textColor="#BED4C5"
                             android:textSize="9sp" android:singleLine="true"/>
                     </LinearLayout>
                 </LinearLayout>
                 <View android:layout_width="1dp"
-                    android:layout_height="46dp" android:layout_gravity="center_vertical"
+                    android:layout_height="38dp" android:layout_gravity="center_vertical"
                     android:background="#627D6C" android:importantForAccessibility="no"/>
                 <!-- The PNG and both text lines use the same fixed start;
                      the dynamic value no longer changes the icon's x-coordinate. -->
@@ -267,7 +266,7 @@
                     android:layout_height="match_parent" android:layout_weight="1"
                     android:orientation="horizontal" android:gravity="center_vertical"
                     android:paddingStart="1dp" android:paddingEnd="0dp">
-                    <ImageView android:layout_width="40dp" android:layout_height="40dp"
+                    <ImageView android:layout_width="34dp" android:layout_height="34dp"
                         android:layout_gravity="center_vertical"
                         android:layout_marginEnd="3dp" android:scaleType="fitCenter"
                         android:src="@drawable/ic_npu_ivory"
@@ -277,13 +276,13 @@
                         android:layout_weight="1" android:layout_height="wrap_content"
                         android:orientation="vertical" android:gravity="start">
                         <TextView android:id="@+id/gameBackendSummaryText"
-                            android:layout_width="match_parent" android:layout_height="23dp"
+                            android:layout_width="match_parent" android:layout_height="21dp"
                             android:gravity="start|center_vertical"
                             android:text="NPU" android:textColor="#F4E2B1"
                             android:textSize="11sp" android:textStyle="bold"
                             android:singleLine="true" android:ellipsize="end"/>
                         <TextView android:layout_width="match_parent"
-                            android:layout_height="18dp" android:gravity="start|center_vertical"
+                            android:layout_height="16dp" android:gravity="start|center_vertical"
                             android:text="本地推理" android:textColor="#BED4C5"
                             android:textSize="9sp" android:singleLine="true"/>
                     </LinearLayout>
@@ -294,27 +293,27 @@
             <LinearLayout android:id="@+id/gameStatsPanel"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
-                android:layout_marginBottom="7dp" android:padding="7dp"
+                android:layout_marginBottom="5dp" android:padding="4dp"
                 android:orientation="vertical" android:background="@drawable/jade_dark_card">
                 <LinearLayout android:layout_width="match_parent"
-                    android:layout_height="72dp" android:orientation="horizontal"
+                    android:layout_height="60dp" android:orientation="horizontal"
                     android:gravity="center_vertical">
                     <!-- Captures for AI's stone color (black or white). -->
                     <LinearLayout android:layout_width="0dp"
                         android:layout_height="match_parent" android:layout_weight="1"
                         android:gravity="center" android:orientation="vertical">
                         <View android:id="@+id/aiStoneView"
-                            android:layout_width="29dp" android:layout_height="29dp"
+                            android:layout_width="25dp" android:layout_height="25dp"
                             android:background="@drawable/txwq_white_stone"/>
                         <TextView android:id="@+id/aiCaptureText"
                             android:layout_width="match_parent" android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp" android:gravity="center"
+                            android:layout_marginTop="2dp" android:gravity="center"
                             android:singleLine="true" android:ellipsize="end"
                             android:text="白棋提子 0" android:textSize="10sp"
                             android:textColor="#E7ECDD"/>
                     </LinearLayout>
 
-                    <View android:layout_width="1dp" android:layout_height="52dp"
+                    <View android:layout_width="1dp" android:layout_height="43dp"
                         android:background="#647B67"/>
                     <!-- The actual live win rate is exactly between the stones. -->
                     <LinearLayout android:layout_width="0dp"
@@ -340,7 +339,7 @@
                             android:contentDescription="点击查看真实胜率曲线"
                             android:progressDrawable="@drawable/jade_winrate_progress"/>
                     </LinearLayout>
-                    <View android:layout_width="1dp" android:layout_height="52dp"
+                    <View android:layout_width="1dp" android:layout_height="43dp"
                         android:background="#647B67"/>
 
                     <!-- Captures for the user's stone color. -->
@@ -348,11 +347,11 @@
                         android:layout_height="match_parent" android:layout_weight="1"
                         android:gravity="center" android:orientation="vertical">
                         <View android:id="@+id/playerStoneView"
-                            android:layout_width="29dp" android:layout_height="29dp"
+                            android:layout_width="25dp" android:layout_height="25dp"
                             android:background="@drawable/txwq_black_stone"/>
                         <TextView android:id="@+id/playerCaptureText"
                             android:layout_width="match_parent" android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp" android:gravity="center"
+                            android:layout_marginTop="2dp" android:gravity="center"
                             android:singleLine="true" android:ellipsize="end"
                             android:text="黑棋提子 0" android:textSize="10sp"
                             android:textColor="#E7ECDD"/>
@@ -360,8 +359,8 @@
                 </LinearLayout>
 
                 <View android:layout_width="match_parent" android:layout_height="1dp"
-                    android:background="#547B6856" android:layout_marginTop="2dp"/>
-                <LinearLayout android:layout_width="match_parent" android:layout_height="27dp"
+                    android:background="#547B6856" android:layout_marginTop="1dp"/>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="23dp"
                     android:orientation="horizontal" android:gravity="center_vertical">
                     <TextView android:id="@+id/gameMoveCountText"
                         android:layout_width="0dp" android:layout_weight="0.65"

@@ -356,7 +356,7 @@ class JadeUiTest(unittest.TestCase):
                 value = self.ids[name]
                 self.assertIsNone(value.get(ANDROID + "drawableStart"))
                 self.assertEqual("match_parent", value.get(ANDROID + "layout_width"))
-                self.assertEqual("23dp", value.get(ANDROID + "layout_height"))
+                self.assertEqual("21dp", value.get(ANDROID + "layout_height"))
                 self.assertEqual("start|center_vertical", value.get(ANDROID + "gravity"))
                 text_column = parent[value]
                 self.assertEqual("LinearLayout", text_column.tag)
@@ -369,7 +369,7 @@ class JadeUiTest(unittest.TestCase):
                 self.assertEqual("match_parent", caption_view.get(ANDROID + "layout_width"))
                 self.assertEqual("start|center_vertical",
                                  caption_view.get(ANDROID + "gravity"))
-                self.assertEqual("18dp", caption_view.get(ANDROID + "layout_height"))
+                self.assertEqual("16dp", caption_view.get(ANDROID + "layout_height"))
                 cell = parent[text_column]
                 self.assertEqual("horizontal", cell.get(ANDROID + "orientation"))
                 self.assertEqual("0dp", cell.get(ANDROID + "layout_width"))
@@ -378,8 +378,8 @@ class JadeUiTest(unittest.TestCase):
                 self.assertIs(actual_text_col, text_column)
                 self.assertEqual("ImageView", icon_view.tag)
                 self.assertEqual("@drawable/" + icon, icon_view.get(ANDROID + "src"))
-                self.assertEqual("40dp", icon_view.get(ANDROID + "layout_width"))
-                self.assertEqual("40dp", icon_view.get(ANDROID + "layout_height"))
+                self.assertEqual("34dp", icon_view.get(ANDROID + "layout_width"))
+                self.assertEqual("34dp", icon_view.get(ANDROID + "layout_height"))
                 self.assertEqual("3dp", icon_view.get(ANDROID + "layout_marginEnd"))
                 self.assertEqual("center_vertical", icon_view.get(ANDROID + "layout_gravity"))
                 self.assertIsNone(icon_view.get(ANDROID + "layout_marginTop"))
@@ -389,7 +389,7 @@ class JadeUiTest(unittest.TestCase):
                 if summary is None:
                     summary = parent[cell]
                 self.assertIs(summary, parent[cell])
-        self.assertEqual("76dp", summary.get(ANDROID + "layout_height"))
+        self.assertEqual("62dp", summary.get(ANDROID + "layout_height"))
         self.assertEqual(7, len(summary))  # 4 cells + 3 thin dividers
         for separator in list(summary)[1::2]:
             self.assertEqual("View", separator.tag)
@@ -398,6 +398,34 @@ class JadeUiTest(unittest.TestCase):
                   ).read_text(encoding="utf-8")
         for name, _, _ in facts:
             self.assertNotIn("R.id." + name, binder)
+
+    def test_compact_game_header_and_statistics_heights(self):
+        game = self.ids["gamePageContainer"]
+        parents = {child: parent for parent in self.root.iter() for child in parent}
+        title = self.ids["backButton"]
+        title_bar = parents[title]
+        self.assertEqual("52dp", title_bar.get(ANDROID + "layout_height"))
+        self.assertEqual("38dp", title.get(ANDROID + "layout_height"))
+        self.assertEqual("38dp", self.ids["newGameButton"].get(ANDROID + "layout_height"))
+        title_plaque = list(title_bar)[1]
+        self.assertEqual("46dp", title_plaque.get(ANDROID + "layout_height"))
+
+        summary = parents[parents[parents[self.ids["gameTitleText"]]]]
+        self.assertEqual("62dp", summary.get(ANDROID + "layout_height"))
+        self.assertEqual("3dp", summary.get(ANDROID + "layout_marginTop"))
+        self.assertEqual("4dp", summary.get(ANDROID + "layout_marginBottom"))
+
+        stats = self.ids["gameStatsPanel"]
+        self.assertEqual("4dp", stats.get(ANDROID + "padding"))
+        self.assertEqual("5dp", stats.get(ANDROID + "layout_marginBottom"))
+        row = list(stats)[0]
+        self.assertEqual("60dp", row.get(ANDROID + "layout_height"))
+        self.assertEqual("23dp", list(stats)[2].get(ANDROID + "layout_height"))
+        self.assertEqual("25dp", self.ids["aiStoneView"].get(ANDROID + "layout_width"))
+        self.assertEqual("25dp", self.ids["playerStoneView"].get(ANDROID + "layout_width"))
+        # Keep exactly the requested order above the live board.
+        siblings = list(parents[stats])
+        self.assertLess(siblings.index(stats), siblings.index(self.ids["boardFrame"]))
 
     def test_capture_winrate_panel_is_above_board_not_below(self):
         # Requested RK3588 layout order:
@@ -425,7 +453,7 @@ class JadeUiTest(unittest.TestCase):
         self.assertEqual("vertical", panel.get(ANDROID + "orientation"))
         self.assertEqual("wrap_content", panel.get(ANDROID + "layout_height"))
         line = list(panel)[0]
-        self.assertEqual("72dp", line.get(ANDROID + "layout_height"))
+        self.assertEqual("60dp", line.get(ANDROID + "layout_height"))
         self.assertEqual("horizontal", line.get(ANDROID + "orientation"))
         self.assertEqual(5, len(line))  # three columns + two separators
         left, sep1, center, sep2, right = list(line)
