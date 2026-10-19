@@ -26,6 +26,20 @@ Tab order remains 首页 / 对弈 / 棋谱 / 训练 / 设置.
 Navigation continues to use `JadeNavigation` and the same host click
 handlers. Engine, board, replay and training behavior is unchanged.
 
+## Footer placement and feature entry
+
+Home now anchors the shared footer at the same 96dp height, 9dp side
+margins and 3dp bottom margin as Game, Replay, Training and New Game.
+Home no longer positions its footer by a percentage of window height.
+
+Records and Training footer taps present a feature choice dialog over
+the *currently visible* page instead of launching immediately.
+Records supports recent SGF replay, history and SGF import. Training
+supports resuming, restarting or choosing a bundled life-and-death puzzle.
+Cancel leaves the current game/replay/training page untouched.
+After a selection the actual activity starts without a transition
+animation, without routing through Home and without restarting KataGo.
+
 ## Verification
 
 Run from `GoEngine-java`:
