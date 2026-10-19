@@ -1,41 +1,34 @@
-# Shared Jade navigation — original artwork restored
+# Shared Jade navigation: bar0 background + ten aligned icon states
 
-The same `JadeBottomNavView` remains responsible for all footer tab clicks,
-with fixed order **首页 / 对弈 / 棋谱 / 训练 / 设置**. The public tab API and
-all page-routing handlers remain intact.
+The shared `JadeBottomNavView` powers Home, Game, New Game, Replay and Training.
 
-## Visual appearance
+## Art source
 
-The native gradient remake was removed. The footer now draws the ORIGINAL
-`GoEngine-java/docs/navbar/bar.png` art, unmodified:
+- Background: `docs/navbar/bar0.png`, staged by `stageGreenHomeArtwork`
+  as the APK asset `home/navbar/bar0.png`.
+- Actual normal/selected images: `app/src/main/res/drawable-nodpi/jade_nav_*.png`
+  (5 destinations x 2 states = 10 files).
+- High-resolution master files and previews: `docs/navbar/states/`.
 
-- Hand-painted bamboo leaves and clouds
-- Gold filigree border and original translucent jade textures
-- Original icon glyphs, Chinese typography and glowing gold Home treatment
+Each tab contains exactly one ImageView. Icons, captions and glow are baked
+into the respective 256x256 PNG, so the app does not paint captions, draw an
+underline, or copy pixels from other tabs. Both states share identical
+ImageView bounds, proportions and alignment. The selected state changes only
+the drawable resource, not the size, scale or text position.
 
-Gradle already copies `docs/navbar/*.png` into the APK assets path
-`home/navbar/` via `stageGreenHomeArtwork`. The Java view loads the
-original `bar.png` (2172×724), trims only its large transparent margins,
-then displays it with `FIT_CENTER` inside a 96dp footer. Never use
-`FIT_XY`: that flattened the illustrated bar. Five equal transparent
-native touch targets sit over the original. No redrawn text or icons.
+`bar0.png` is an independent FIT_CENTER backdrop. The renderer may crop
+transparent outer margins but never paints over the source background. The
+old `bar.png` is no longer used by the shared footer.
 
-The source graphic has the glowing Home icon and gold underline
-*baked into the pixels*. For other tabs, an in-memory copy feathers a
-clone of unmarked nearby jade background across only that fixed Home
-underline, while softly reducing Home's bloom. The real tab gains its
-gold underline independently. Home itself uses the unmodified source.
-No source PNG assets are rewritten; the transformed image is only cached
-at runtime for non-Home tabs.
+## Interaction
 
-Hosts: `activity_main.xml` (home and game), `dialog_new_game.xml`,
-`activity_replay.xml`, and `activity_tsumego.xml`.
+Tab order remains 首页 / 对弈 / 棋谱 / 训练 / 设置.
+Navigation continues to use `JadeNavigation` and the same host click
+handlers. Engine, board, replay and training behavior is unchanged.
 
-## Navigation and verification
+## Verification
 
-Tab behavior stays centralized in `JadeNavigation` and host callbacks.
-MainActivity's live SGF snapshot actions and KataGo CPU/GPU/NPU engine are
-unchanged. Settings remains a placeholder notification.
+Run from `GoEngine-java`:
 
 ```bash
 python3 tools/test_jade_nav_unification.py -v
@@ -45,5 +38,5 @@ python3 tools/test_jade_five_pages.py -v
 ./gradlew :app:compileDebugJavaWithJavac -PskipKataGoNative=true --no-daemon
 ```
 
-Android compilation is validated in `.github/workflows/jade_five_ui_batch.yml`.
-Actual RK3588 display accuracy should be checked by installing the APK.
+Inspect the installed APK on the RK3588 and vivo for halo clipping or
+position shifts; source assertions are not a substitute for device tests.
