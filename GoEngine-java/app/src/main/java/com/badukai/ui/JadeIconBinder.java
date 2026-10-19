@@ -2,6 +2,10 @@ package com.badukai.ui;
 
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.InsetDrawable;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ImageSpan;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.TextView;
 
@@ -53,16 +57,49 @@ public final class JadeIconBinder {
     public static void bindGame(View root) {
         // Game summary icons are independent 21dp ImageViews in the layout,
         // not compound text drawables. This keeps their values aligned.
-        left(root, R.id.passButton, R.drawable.ic_pass_jade, 21);
-        left(root, R.id.undoButton, R.drawable.ic_undo_jade, 21);
-        left(root, R.id.situationButton, R.drawable.ic_territory_jade, 21);
-        left(root, R.id.aiSuggestionButton, R.drawable.ic_hint_gold, 21);
-        left(root, R.id.gameAnalysisButton, R.drawable.ic_analysis_jade, 21);
+        // Inline image spans participate in TextView's centered text layout.
+        // drawableStart would pin the art against the *left edge* of each button.
+        centeredAction(root, R.id.passButton, R.drawable.ic_pass_jade, 21);
+        centeredAction(root, R.id.undoButton, R.drawable.ic_undo_jade, 21);
+        centeredAction(root, R.id.situationButton, R.drawable.ic_territory_jade, 21);
+        centeredAction(root, R.id.aiSuggestionButton, R.drawable.ic_hint_gold, 21);
+        centeredAction(root, R.id.gameAnalysisButton, R.drawable.ic_analysis_jade, 21);
         top(root, R.id.gameNavHome, R.drawable.ic_home_ivory, 26);
         top(root, R.id.gameNavRecords, R.drawable.ic_book_ivory, 26);
         top(root, R.id.gameNavPlay, R.drawable.ic_game_gold, 26);
         top(root, R.id.gameNavTraining, R.drawable.ic_training_ivory, 26);
         top(root, R.id.gameNavSettings, R.drawable.ic_settings_ivory, 26);
+    }
+
+    /**
+     * Centers the icon and text as a single string. Android compound
+     * drawableStart always stays at the button edge even with gravity=center.
+     * ImageSpan puts the real PNG into the text flow so varying label lengths
+     * still produce a centered icon+label group, with no custom touch handling.
+     */
+    private static void centeredAction(View root, int viewId, int resourceId, int sizeDp) {
+        View view = root.findViewById(viewId);
+        if (!(view instanceof TextView)) {
+            throw new IllegalStateException("Expected game action button: " + viewId);
+        }
+        TextView target = (TextView) view;
+        Drawable icon = androidx.appcompat.content.res.AppCompatResources
+                .getDrawable(target.getContext(), resourceId);
+        if (icon == null) {
+            throw new IllegalStateException("Missing game action icon: " + resourceId);
+        }
+        icon = icon.mutate();
+        int px = Math.round(sizeDp * target.getResources().getDisplayMetrics().density);
+        icon.setBounds(0, 0, px, px);
+        // Strip the XML compound drawable, or the artwork would appear twice.
+        target.setCompoundDrawablesRelative(null, null, null, null);
+        String text = target.getText().toString();
+        SpannableStringBuilder label = new SpannableStringBuilder("  ");
+        label.append(text);
+        label.setSpan(new ImageSpan(icon, ImageSpan.ALIGN_CENTER),
+                0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        target.setText(label, TextView.BufferType.SPANNABLE);
+        target.setGravity(Gravity.CENTER);
     }
 
     private static void left(View root, int viewId, int resourceId, int sizeDp) {

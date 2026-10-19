@@ -410,7 +410,7 @@
                         android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
                         android:text="停一手" android:textAllCaps="false"
                         android:textColor="#214E3D" android:textSize="12sp" android:textStyle="bold"
-                        android:drawableStart="@drawable/ic_pass_jade" android:drawablePadding="2dp"
+                        android:contentDescription="停一手"
                         android:background="@drawable/jade_game_white_button"
                         android:stateListAnimator="@null"/>
                     <Button android:id="@+id/undoButton"
@@ -420,7 +420,7 @@
                         android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
                         android:text="悔棋" android:textAllCaps="false"
                         android:textColor="#214E3D" android:textSize="12sp" android:textStyle="bold"
-                        android:drawableStart="@drawable/ic_undo_jade" android:drawablePadding="2dp"
+                        android:contentDescription="悔棋"
                         android:background="@drawable/jade_game_white_button"
                         android:stateListAnimator="@null"/>
                     <Button android:id="@+id/situationButton"
@@ -430,7 +430,7 @@
                         android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
                         android:text="形势" android:textAllCaps="false"
                         android:textColor="#214E3D" android:textSize="12sp" android:textStyle="bold"
-                        android:drawableStart="@drawable/ic_territory_jade" android:drawablePadding="2dp"
+                        android:contentDescription="形势"
                         android:background="@drawable/jade_game_white_button"
                         android:stateListAnimator="@null"/>
                 </LinearLayout>
@@ -443,7 +443,7 @@
                         android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
                         android:text="落子提示" android:textAllCaps="false"
                         android:textColor="#214E3D" android:textSize="12sp" android:textStyle="bold"
-                        android:drawableStart="@drawable/ic_hint_gold" android:drawablePadding="2dp"
+                        android:contentDescription="落子提示"
                         android:background="@drawable/jade_game_white_button"
                         android:stateListAnimator="@null"/>
                     <Button android:id="@+id/gameAnalysisButton"
@@ -453,7 +453,7 @@
                         android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
                         android:text="AI分析" android:textAllCaps="false"
                         android:textColor="#214E3D" android:textSize="12sp" android:textStyle="bold"
-                        android:drawableStart="@drawable/ic_analysis_jade" android:drawablePadding="2dp"
+                        android:contentDescription="AI分析"
                         android:background="@drawable/jade_game_white_button"
                         android:stateListAnimator="@null"/>
                     <Button android:id="@+id/gameMoreButton"

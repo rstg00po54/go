@@ -480,6 +480,34 @@ class JadeUiTest(unittest.TestCase):
         self.assertIn("showGameMoreMenu", self.main_java)
         self.assertIn("showAiSuggestions()", self.main_java)
 
+    def test_game_action_icons_are_inline_and_centered_with_text(self):
+        # A Button's drawableStart is anchored to the left edge regardless of
+        # gravity=center. ImageSpan joins the PNG and label in the same
+        # centered text layout, for short and long button names alike.
+        binder = (ROOT / "app/src/main/java/com/badukai/ui/JadeIconBinder.java"
+                  ).read_text(encoding="utf-8")
+        expected = {
+            "passButton": "ic_pass_jade",
+            "undoButton": "ic_undo_jade",
+            "situationButton": "ic_territory_jade",
+            "aiSuggestionButton": "ic_hint_gold",
+            "gameAnalysisButton": "ic_analysis_jade",
+        }
+        for button_id, drawable in expected.items():
+            with self.subTest(button=button_id):
+                self.assertIsNone(self.ids[button_id].get(ANDROID + "drawableStart"))
+                self.assertIsNone(self.ids[button_id].get(ANDROID + "drawablePadding"))
+                self.assertIn(
+                    "centeredAction(root, R.id." + button_id
+                    + ", R.drawable." + drawable + ", 21);", binder)
+                self.assertEqual("center", self.ids[button_id].get(ANDROID + "gravity"))
+        self.assertIsNone(self.ids["gameMoreButton"].get(ANDROID + "drawableStart"))
+        self.assertIn("new ImageSpan(icon, ImageSpan.ALIGN_CENTER)", binder)
+        self.assertIn("target.setCompoundDrawablesRelative(null, null, null, null)", binder)
+        self.assertIn("target.setText(label, TextView.BufferType.SPANNABLE)", binder)
+        self.assertIn("target.setGravity(Gravity.CENTER)", binder)
+        self.assertIn("Spanned.SPAN_EXCLUSIVE_EXCLUSIVE", binder)
+
     def test_game_icons_and_drawables_are_present(self):
         png = ROOT / "app/src/main/res/drawable-nodpi"
         paths = set()
@@ -495,6 +523,16 @@ class JadeUiTest(unittest.TestCase):
                     if name.startswith("jade_"):
                         self.assertTrue((DRAWABLES / (name + ".xml")).is_file(),
                                         msg="Missing gameplay style: " + name)
+        # Five gameplay button icons are intentionally referenced from Java as
+        # centered inline ImageSpans, not XML drawableStart (which pins left).
+        binder = (ROOT / "app/src/main/java/com/badukai/ui/JadeIconBinder.java"
+                  ).read_text(encoding="utf-8")
+        for name in ("ic_pass_jade", "ic_undo_jade", "ic_territory_jade",
+                     "ic_hint_gold", "ic_analysis_jade"):
+            self.assertIn("R.drawable." + name, binder)
+            paths.add(name)
+            self.assertTrue((png / (name + ".png")).is_file(),
+                            msg="Missing inline gameplay PNG: " + name)
         self.assertGreaterEqual(len(paths), 15)
         binder = (ROOT / "app/src/main/java/com/badukai/ui/JadeIconBinder.java"
                   ).read_text(encoding="utf-8")
