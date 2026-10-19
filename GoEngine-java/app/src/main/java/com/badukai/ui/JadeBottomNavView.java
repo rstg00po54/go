@@ -130,10 +130,10 @@ public final class JadeBottomNavView extends FrameLayout {
     /** Remove only Home's baked selected underline; don't touch 首页 glyphs. */
     private static void quietOriginalHomeUnderline(Bitmap bitmap, int[] box) {
         int w = bitmap.getWidth(), h = bitmap.getHeight();
-        int cx = Math.round(box[0] + box[2] * .103f);
+        int cx = Math.round(box[0] + box[2] * .139f);
         // The original selected underline is inside the source, near 0.70H.
-        int left = Math.max(0, cx - Math.round(box[2] * .030f));
-        int right = Math.min(w - 1, cx + Math.round(box[2] * .030f));
+        int left = Math.max(0, cx - Math.round(box[2] * .051f));
+        int right = Math.min(w - 1, cx + Math.round(box[2] * .051f));
         int top = Math.round(h * .645f);
         int bottom = Math.round(h * .737f);
         int featherX = Math.max(3, Math.round(w * .006f));
@@ -151,7 +151,7 @@ public final class JadeBottomNavView extends FrameLayout {
     private static void drawSelectedUnderline(Bitmap bitmap, int tab, int[] box) {
         Canvas canvas = new Canvas(bitmap);
         Paint glow = new Paint(Paint.ANTI_ALIAS_FLAG);
-        int cx = Math.round(box[0] + box[2] * (.103f + tab * .200f));
+        int cx = Math.round(box[0] + box[2] * (.139f + tab * .185f));
         float y = bitmap.getHeight() * .688f;
         float half = box[2] * .018f;
         float thickness = Math.max(4, bitmap.getHeight() * .010f);

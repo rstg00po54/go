@@ -18,8 +18,8 @@ def preview(tab):
     if tab>0:
         arr=np.array(picture)
         w,h=im.size
-        cx=round(left+(right-left)*.103)
-        x0=max(0,cx-round((right-left)*.030));x1=min(w-1,cx+round((right-left)*.030))
+        cx=round(left+(right-left)*.139)
+        x0=max(0,cx-round((right-left)*.051));x1=min(w-1,cx+round((right-left)*.051))
         y0=round(h*.645);y1=round(h*.737)
         fx=max(3,round(w*.006));fy=max(3,round(h*.008))
         for y in range(y0,y1+1):
@@ -31,7 +31,7 @@ def preview(tab):
                 arr[y,x]=old.astype('uint8')
         picture=Image.fromarray(arr,'RGBA')
         draw=ImageDraw.Draw(picture)
-        xc=round(left+(right-left)*(.103+tab*.20))
+        xc=round(left+(right-left)*(.139+tab*.185))
         y=h*.688
         half=(right-left)*.018
         th=max(4,h*.010)
