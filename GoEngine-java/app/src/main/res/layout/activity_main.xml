@@ -402,68 +402,132 @@
                 android:layout_marginBottom="4dp" android:orientation="vertical">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="48dp"
                     android:orientation="horizontal" android:gravity="center_vertical">
-                    <Button android:id="@+id/passButton"
-                        android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="42dp" android:layout_margin="3dp"
+                    <FrameLayout android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="42dp" android:layout_margin="3dp">
+                        <Button android:id="@+id/passButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
                         android:minWidth="0dp" android:minHeight="0dp"
-                        android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
+                        android:gravity="center" android:includeFontPadding="false"
+                        android:paddingStart="2dp" android:paddingEnd="2dp"
                         android:text="停一手" android:textAllCaps="false"
                         android:textColor="#214E3D" android:textSize="12sp" android:textStyle="bold"
                         android:contentDescription="停一手"
                         android:background="@drawable/jade_game_white_button"
                         android:stateListAnimator="@null"/>
-                    <Button android:id="@+id/undoButton"
-                        android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="42dp" android:layout_margin="3dp"
+                        <ImageView android:layout_width="18dp" android:layout_height="18dp"
+                            android:layout_gravity="start|center_vertical"
+                            android:layout_marginStart="8dp"
+                            android:src="@drawable/ic_pass_jade"
+                            android:scaleType="fitCenter"
+                            android:clickable="false" android:focusable="false"
+                            android:importantForAccessibility="no"
+                            android:contentDescription="@null"/>
+                    </FrameLayout>
+                    <FrameLayout android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="42dp" android:layout_margin="3dp">
+                        <Button android:id="@+id/undoButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
                         android:minWidth="0dp" android:minHeight="0dp"
-                        android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
+                        android:gravity="center" android:includeFontPadding="false"
+                        android:paddingStart="2dp" android:paddingEnd="2dp"
                         android:text="悔棋" android:textAllCaps="false"
                         android:textColor="#214E3D" android:textSize="12sp" android:textStyle="bold"
                         android:contentDescription="悔棋"
                         android:background="@drawable/jade_game_white_button"
                         android:stateListAnimator="@null"/>
-                    <Button android:id="@+id/situationButton"
-                        android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="42dp" android:layout_margin="3dp"
+                        <ImageView android:layout_width="18dp" android:layout_height="18dp"
+                            android:layout_gravity="start|center_vertical"
+                            android:layout_marginStart="8dp"
+                            android:src="@drawable/ic_undo_jade"
+                            android:scaleType="fitCenter"
+                            android:clickable="false" android:focusable="false"
+                            android:importantForAccessibility="no"
+                            android:contentDescription="@null"/>
+                    </FrameLayout>
+                    <FrameLayout android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="42dp" android:layout_margin="3dp">
+                        <Button android:id="@+id/situationButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
                         android:minWidth="0dp" android:minHeight="0dp"
-                        android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
+                        android:gravity="center" android:includeFontPadding="false"
+                        android:paddingStart="2dp" android:paddingEnd="2dp"
                         android:text="形势" android:textAllCaps="false"
                         android:textColor="#214E3D" android:textSize="12sp" android:textStyle="bold"
                         android:contentDescription="形势"
                         android:background="@drawable/jade_game_white_button"
                         android:stateListAnimator="@null"/>
+                        <ImageView android:layout_width="18dp" android:layout_height="18dp"
+                            android:layout_gravity="start|center_vertical"
+                            android:layout_marginStart="8dp"
+                            android:src="@drawable/ic_territory_jade"
+                            android:scaleType="fitCenter"
+                            android:clickable="false" android:focusable="false"
+                            android:importantForAccessibility="no"
+                            android:contentDescription="@null"/>
+                    </FrameLayout>
                 </LinearLayout>
                 <LinearLayout android:layout_width="match_parent" android:layout_height="48dp"
                     android:orientation="horizontal" android:gravity="center_vertical">
-                    <Button android:id="@+id/aiSuggestionButton"
-                        android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="42dp" android:layout_margin="3dp"
+                    <FrameLayout android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="42dp" android:layout_margin="3dp">
+                        <Button android:id="@+id/aiSuggestionButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
                         android:minWidth="0dp" android:minHeight="0dp"
-                        android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
+                        android:gravity="center" android:includeFontPadding="false"
+                        android:paddingStart="2dp" android:paddingEnd="2dp"
                         android:text="落子提示" android:textAllCaps="false"
                         android:textColor="#214E3D" android:textSize="12sp" android:textStyle="bold"
                         android:contentDescription="落子提示"
                         android:background="@drawable/jade_game_white_button"
                         android:stateListAnimator="@null"/>
-                    <Button android:id="@+id/gameAnalysisButton"
-                        android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="42dp" android:layout_margin="3dp"
+                        <ImageView android:layout_width="18dp" android:layout_height="18dp"
+                            android:layout_gravity="start|center_vertical"
+                            android:layout_marginStart="8dp"
+                            android:src="@drawable/ic_hint_gold"
+                            android:scaleType="fitCenter"
+                            android:clickable="false" android:focusable="false"
+                            android:importantForAccessibility="no"
+                            android:contentDescription="@null"/>
+                    </FrameLayout>
+                    <FrameLayout android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="42dp" android:layout_margin="3dp">
+                        <Button android:id="@+id/gameAnalysisButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
                         android:minWidth="0dp" android:minHeight="0dp"
-                        android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
+                        android:gravity="center" android:includeFontPadding="false"
+                        android:paddingStart="2dp" android:paddingEnd="2dp"
                         android:text="AI分析" android:textAllCaps="false"
                         android:textColor="#214E3D" android:textSize="12sp" android:textStyle="bold"
                         android:contentDescription="AI分析"
                         android:background="@drawable/jade_game_white_button"
                         android:stateListAnimator="@null"/>
-                    <Button android:id="@+id/gameMoreButton"
-                        android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="42dp" android:layout_margin="3dp"
+                        <ImageView android:layout_width="18dp" android:layout_height="18dp"
+                            android:layout_gravity="start|center_vertical"
+                            android:layout_marginStart="8dp"
+                            android:src="@drawable/ic_analysis_jade"
+                            android:scaleType="fitCenter"
+                            android:clickable="false" android:focusable="false"
+                            android:importantForAccessibility="no"
+                            android:contentDescription="@null"/>
+                    </FrameLayout>
+                    <FrameLayout android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="42dp" android:layout_margin="3dp">
+                        <Button android:id="@+id/gameMoreButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
                         android:minWidth="0dp" android:minHeight="0dp"
-                        android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
+                        android:gravity="center" android:includeFontPadding="false"
+                        android:paddingStart="2dp" android:paddingEnd="2dp"
                         android:text="更多" android:textAllCaps="false"
                         android:textColor="#214E3D" android:textSize="12sp" android:textStyle="bold"
                         android:background="@drawable/jade_game_white_button"
                         android:stateListAnimator="@null"/>
+                    </FrameLayout>
                 </LinearLayout>
             </LinearLayout>
                 </LinearLayout>

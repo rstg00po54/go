@@ -497,58 +497,73 @@ class JadeUiTest(unittest.TestCase):
         self.assertIn("updateWinRateLabels()", self.main_java)
 
     def test_game_action_buttons_are_two_equal_rows_of_three(self):
+        # Six equal FrameLayouts hold clickable native Buttons, preserving
+        # all original IDs and onClick/enabled-state bindings.
         panel = self.ids["gameActionPanel"]
         self.assertEqual("96dp", panel.get(ANDROID + "layout_height"))
         rows = list(panel)
         self.assertEqual(2, len(rows))
         expected = (("passButton", "undoButton", "situationButton"),
                     ("aiSuggestionButton", "gameAnalysisButton", "gameMoreButton"))
-        for row, names in zip(rows, expected):
-            with self.subTest(row=names):
-                self.assertEqual("horizontal", row.get(ANDROID + "orientation"))
-                self.assertEqual("48dp", row.get(ANDROID + "layout_height"))
-                self.assertEqual(3, len(row))
-                for button, name in zip(row, names):
-                    self.assertIs(button, self.ids[name])
-                    self.assertEqual("Button", button.tag)
-                    self.assertEqual("0dp", button.get(ANDROID + "layout_width"))
-                    self.assertEqual("1", button.get(ANDROID + "layout_weight"))
-                    self.assertEqual("42dp", button.get(ANDROID + "layout_height"))
-                    self.assertEqual("3dp", button.get(ANDROID + "layout_margin"))
-                    self.assertEqual("center", button.get(ANDROID + "gravity"))
-                    self.assertEqual("12sp", button.get(ANDROID + "textSize"))
-                    self.assertEqual("@drawable/jade_game_white_button",
-                                     button.get(ANDROID + "background"))
-        self.assertIn("showGameMoreMenu", self.main_java)
-        self.assertIn("showAiSuggestions()", self.main_java)
-
-    def test_game_action_icons_are_inline_and_centered_with_text(self):
-        # A Button's drawableStart is anchored to the left edge regardless of
-        # gravity=center. ImageSpan joins the PNG and label in the same
-        # centered text layout, for short and long button names alike.
-        binder = (ROOT / "app/src/main/java/com/badukai/ui/JadeIconBinder.java"
-                  ).read_text(encoding="utf-8")
-        expected = {
+        icons = {
             "passButton": "ic_pass_jade",
             "undoButton": "ic_undo_jade",
             "situationButton": "ic_territory_jade",
             "aiSuggestionButton": "ic_hint_gold",
             "gameAnalysisButton": "ic_analysis_jade",
         }
-        for button_id, drawable in expected.items():
-            with self.subTest(button=button_id):
-                self.assertIsNone(self.ids[button_id].get(ANDROID + "drawableStart"))
-                self.assertIsNone(self.ids[button_id].get(ANDROID + "drawablePadding"))
-                self.assertIn(
-                    "centeredAction(root, R.id." + button_id
-                    + ", R.drawable." + drawable + ", 21);", binder)
-                self.assertEqual("center", self.ids[button_id].get(ANDROID + "gravity"))
-        self.assertIsNone(self.ids["gameMoreButton"].get(ANDROID + "drawableStart"))
-        self.assertIn("new ImageSpan(icon, ImageSpan.ALIGN_CENTER)", binder)
-        self.assertIn("target.setCompoundDrawablesRelative(null, null, null, null)", binder)
-        self.assertIn("target.setText(label, TextView.BufferType.SPANNABLE)", binder)
-        self.assertIn("target.setGravity(Gravity.CENTER)", binder)
-        self.assertIn("Spanned.SPAN_EXCLUSIVE_EXCLUSIVE", binder)
+        for row, names in zip(rows, expected):
+            with self.subTest(row=names):
+                self.assertEqual("horizontal", row.get(ANDROID + "orientation"))
+                self.assertEqual("48dp", row.get(ANDROID + "layout_height"))
+                self.assertEqual(3, len(row))
+                for wrapper, name in zip(row, names):
+                    with self.subTest(button=name):
+                        self.assertEqual("FrameLayout", wrapper.tag)
+                        self.assertEqual("0dp", wrapper.get(ANDROID + "layout_width"))
+                        self.assertEqual("1", wrapper.get(ANDROID + "layout_weight"))
+                        self.assertEqual("42dp", wrapper.get(ANDROID + "layout_height"))
+                        self.assertEqual("3dp", wrapper.get(ANDROID + "layout_margin"))
+                        self.assertIs(list(wrapper)[0], self.ids[name])
+                        button = self.ids[name]
+                        self.assertEqual("Button", button.tag)
+                        self.assertEqual("match_parent", button.get(ANDROID + "layout_width"))
+                        self.assertEqual("match_parent", button.get(ANDROID + "layout_height"))
+                        self.assertEqual("center", button.get(ANDROID + "gravity"))
+                        self.assertEqual("false", button.get(ANDROID + "includeFontPadding"))
+                        self.assertEqual("12sp", button.get(ANDROID + "textSize"))
+                        self.assertEqual("@drawable/jade_game_white_button",
+                                         button.get(ANDROID + "background"))
+                        self.assertIsNone(button.get(ANDROID + "drawableStart"))
+                        if name in icons:
+                            self.assertEqual(2, len(wrapper))
+                            image = list(wrapper)[1]
+                            self.assertEqual("ImageView", image.tag)
+                            self.assertEqual("@drawable/" + icons[name],
+                                             image.get(ANDROID + "src"))
+                            self.assertEqual("18dp", image.get(ANDROID + "layout_width"))
+                            self.assertEqual("18dp", image.get(ANDROID + "layout_height"))
+                            self.assertEqual("start|center_vertical",
+                                             image.get(ANDROID + "layout_gravity"))
+                            self.assertEqual("8dp", image.get(ANDROID + "layout_marginStart"))
+                            self.assertEqual("false", image.get(ANDROID + "clickable"))
+                            self.assertEqual("false", image.get(ANDROID + "focusable"))
+                            self.assertEqual("no", image.get(ANDROID + "importantForAccessibility"))
+                        else:
+                            self.assertEqual(1, len(wrapper))
+        self.assertIn("showGameMoreMenu", self.main_java)
+        self.assertIn("showAiSuggestions()", self.main_java)
+
+    def test_game_action_text_baseline_is_not_moved_by_icon_spans(self):
+        binder = (ROOT / "app/src/main/java/com/badukai/ui/JadeIconBinder.java"
+                  ).read_text(encoding="utf-8")
+        self.assertNotIn("centeredAction(", binder)
+        self.assertNotIn("ImageSpan", binder)
+        self.assertNotIn("SpannableStringBuilder", binder)
+        for name in ("passButton", "undoButton", "situationButton",
+                     "aiSuggestionButton", "gameAnalysisButton", "gameMoreButton"):
+            self.assertEqual("center", self.ids[name].get(ANDROID + "gravity"))
+            self.assertEqual("false", self.ids[name].get(ANDROID + "includeFontPadding"))
 
     def test_game_icons_and_drawables_are_present(self):
         png = ROOT / "app/src/main/res/drawable-nodpi"
@@ -565,16 +580,8 @@ class JadeUiTest(unittest.TestCase):
                     if name.startswith("jade_"):
                         self.assertTrue((DRAWABLES / (name + ".xml")).is_file(),
                                         msg="Missing gameplay style: " + name)
-        # Five gameplay button icons are intentionally referenced from Java as
-        # centered inline ImageSpans, not XML drawableStart (which pins left).
-        binder = (ROOT / "app/src/main/java/com/badukai/ui/JadeIconBinder.java"
-                  ).read_text(encoding="utf-8")
-        for name in ("ic_pass_jade", "ic_undo_jade", "ic_territory_jade",
-                     "ic_hint_gold", "ic_analysis_jade"):
-            self.assertIn("R.drawable." + name, binder)
-            paths.add(name)
-            self.assertTrue((png / (name + ".png")).is_file(),
-                            msg="Missing inline gameplay PNG: " + name)
+        # The five action PNGs now belong to the sibling ImageViews in XML;
+        # no icon binding in Java or TextView inline ImageSpans is required.
         self.assertGreaterEqual(len(paths), 15)
         binder = (ROOT / "app/src/main/java/com/badukai/ui/JadeIconBinder.java"
                   ).read_text(encoding="utf-8")
