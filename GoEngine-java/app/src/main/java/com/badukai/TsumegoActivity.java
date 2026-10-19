@@ -55,7 +55,10 @@ public final class TsumegoActivity extends Activity {
         results = findViewById(R.id.tsumegoResults);
         previous = findViewById(R.id.tsumegoPrev);
         next = findViewById(R.id.tsumegoNext);
-        com.badukai.ui.JadeIconBinder.bindTsumego(findViewById(android.R.id.content));
+        com.badukai.ui.JadeBottomNavView nav = findViewById(R.id.tsumegoSharedNav);
+        nav.setSelectedTab(com.badukai.ui.JadeBottomNavView.TRAINING);
+        nav.setOnTabClickListener(tab ->
+                com.badukai.ui.JadeNavigation.open(this, tab));
 
         hint.setOnClickListener(v -> showHint());
         reset.setOnClickListener(v -> resetPuzzle());
@@ -70,27 +73,7 @@ public final class TsumegoActivity extends Activity {
         results.setOnClickListener(v -> showResults());
         findViewById(R.id.tsumegoResultsTop).setOnClickListener(v -> showResults());
         findViewById(R.id.tsumegoBack).setOnClickListener(v -> finish());
-        findViewById(R.id.tsumegoTabHome).setOnClickListener(v -> {
-            Intent home = new Intent(this, MainActivity.class).putExtra("navigate_home", true);
-            home.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(home);
-            finish();
-        });
-        findViewById(R.id.tsumegoTabRecords).setOnClickListener(v ->
-                startActivity(new Intent(this, ReplayActivity.class)));
-        findViewById(R.id.tsumegoTabPlay).setOnClickListener(v -> finish());
-        findViewById(R.id.tsumegoTabTraining).setOnClickListener(v ->
-                android.widget.Toast.makeText(this, "正在训练", android.widget.Toast.LENGTH_SHORT).show());
-        findViewById(R.id.tsumegoTabSettings).setOnClickListener(v ->
-                new AlertDialog.Builder(this).setTitle("训练选项")
-                        .setItems(new String[]{"重做当前题", "查看训练结果", "查看答案解析"},
-                                (dialog, which) -> {
-                                    if (which == 0) resetPuzzle();
-                                    else if (which == 1) showResults();
-                                    else if (solved) explain.performClick();
-                                    else Toast.makeText(this, "答对后可查看答案解析",
-                                            Toast.LENGTH_SHORT).show();
-                                }).setNegativeButton("取消", null).show());
+
         openPuzzle(index);
     }
 

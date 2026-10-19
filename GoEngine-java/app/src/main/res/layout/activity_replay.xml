@@ -173,42 +173,9 @@
             </LinearLayout>
         </ScrollView>
 
-        <!-- Functional navigation, not a static mockup: Home/Play return to
-             the parent activity, Records stays in this replay screen. -->
-        <LinearLayout android:layout_width="match_parent" android:layout_height="58dp"
-            android:orientation="horizontal" android:background="@drawable/jade_dark_footer"
-            android:paddingStart="4dp" android:paddingEnd="4dp">
-            <TextView android:id="@+id/replayTabHome"
-                android:layout_width="0dp" android:layout_weight="1"
-                android:layout_height="match_parent" android:gravity="center"
-                android:drawableTop="@drawable/ic_home_ivory" android:drawablePadding="2dp"
-                android:text="首页" android:textColor="#EAF0E4" android:textSize="11sp"
-                android:clickable="true" android:focusable="true"/>
-            <TextView android:id="@+id/replayTabRecords"
-                android:layout_width="0dp" android:layout_weight="1"
-                android:layout_height="match_parent" android:gravity="center"
-                android:background="@drawable/jade_game_active_tab"
-                android:drawableTop="@drawable/ic_book_ivory" android:drawablePadding="2dp"
-                android:text="棋谱" android:textColor="#F6D47A" android:textSize="11sp"
-                android:clickable="true" android:focusable="true"/>
-            <TextView android:id="@+id/replayTabPlay"
-                android:layout_width="0dp" android:layout_weight="1"
-                android:layout_height="match_parent" android:gravity="center"
-                android:drawableTop="@drawable/ic_game_gold" android:drawablePadding="2dp"
-                android:text="对弈" android:textColor="#EAF0E4" android:textSize="11sp"
-                android:clickable="true" android:focusable="true"/>
-            <TextView android:id="@+id/replayTabTraining"
-                android:layout_width="0dp" android:layout_weight="1"
-                android:layout_height="match_parent" android:gravity="center"
-                android:drawableTop="@drawable/ic_training_ivory" android:drawablePadding="2dp"
-                android:text="训练" android:textColor="#EAF0E4" android:textSize="11sp"
-                android:clickable="true" android:focusable="true"/>
-            <TextView android:id="@+id/replayTabSettings"
-                android:layout_width="0dp" android:layout_weight="1"
-                android:layout_height="match_parent" android:gravity="center"
-                android:drawableTop="@drawable/ic_settings_ivory" android:drawablePadding="2dp"
-                android:text="设置" android:textColor="#EAF0E4" android:textSize="11sp"
-                android:clickable="true" android:focusable="true"/>
-        </LinearLayout>
+        <com.badukai.ui.JadeBottomNavView android:id="@+id/replaySharedNav"
+            android:layout_width="match_parent" android:layout_height="70dp"
+            android:layout_marginStart="9dp" android:layout_marginEnd="9dp"
+            android:layout_marginBottom="3dp"/>
     </LinearLayout>
 </FrameLayout>

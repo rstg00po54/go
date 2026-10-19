@@ -83,7 +83,8 @@ class JadeUiTest(unittest.TestCase):
                  and v.get(ANDROID + "layout_height") == "match_parent"]
         self.assertEqual(1, len(outer))
         self.assertIn(scroll, list(outer[0]))
-        self.assertIn(self.ids["gameNavHome"], list(outer[0])[-1].iter())
+        self.assertIs(self.ids["gameSharedNav"], list(outer[0])[-1])
+        self.assertEqual("com.badukai.ui.JadeBottomNavView", self.ids["gameSharedNav"].tag)
 
     def test_home_art_and_navigation(self):
         for name in ("homeArtwork", "homeNavBarArtwork", "homeTopShade",
@@ -119,9 +120,7 @@ class JadeUiTest(unittest.TestCase):
                      "backendGroup", "backendCpuButton", "backendGpuButton",
                      "backendNpuButton", "conditionSpinner", "deviceModelText",
                      "hardwareInfoText", "aiRankValueText", "startGameButton",
-                     "closeDialogButton", "dialogSettingsButton", "newGameHomeTab",
-                     "newGameRecordTab", "newGamePlayTab", "newGameTrainingTab",
-                     "newGameSettingsTab", "newGameBackdrop"):
+                     "closeDialogButton", "dialogSettingsButton", "newGameSharedNav", "newGameBackdrop"):
             with self.subTest(control=name):
                 self.assertIn(name, controls)
                 self.assertIn("R.id." + name, self.main_java)
@@ -220,11 +219,6 @@ class JadeUiTest(unittest.TestCase):
             "backendCpuButton": ("drawableTop", "cpu"),
             "backendGpuButton": ("drawableTop", "gpu"),
             "backendNpuButton": ("drawableTop", "npu"),
-            "newGameHomeTab": ("drawableTop", "home"),
-            "newGameRecordTab": ("drawableTop", "records"),
-            "newGamePlayTab": ("drawableTop", "game_tab"),
-            "newGameTrainingTab": ("drawableTop", "training"),
-            "newGameSettingsTab": ("drawableTop", "settings_tab"),
         }
         for control, (attr, icon) in expected.items():
             with self.subTest(control=control):
@@ -288,18 +282,10 @@ class JadeUiTest(unittest.TestCase):
                     + ", " + str(size) + ", 8);", binder)
                 self.assertEqual("74dp", controls[name].get(ANDROID + "layout_height"))
 
-        nav_icons = {
-            "newGameHomeTab": "home",
-            "newGameRecordTab": "records",
-            "newGamePlayTab": "game_tab",
-            "newGameTrainingTab": "training",
-            "newGameSettingsTab": "settings_tab",
-        }
-        for name, resource in nav_icons.items():
-            with self.subTest(nav=name):
-                self.assertIn(
-                    "topLowered(root, R.id." + name
-                    + ", R.drawable.ic_" + resource + ", 29, 4);", binder)
+        self.assertEqual("com.badukai.ui.JadeBottomNavView",
+                         controls["newGameSharedNav"].tag)
+        self.assertIn("dialogNav.setSelectedTab(", self.main_java)
+        self.assertIn("dialogNav.setOnTabClickListener(", self.main_java)
 
         self.assertIn("import android.graphics.drawable.InsetDrawable;", binder)
         self.assertIn("new InsetDrawable(art, 0, offset, 0, 0)", binder)
@@ -316,16 +302,15 @@ class JadeUiTest(unittest.TestCase):
         self.assertIn("gameMoreButton", self.ids)
         self.assertIn("gameAnalysisButton", self.ids)
         self.assertIn("JADE_GAME_V1", self.main_java)
-        self.assertIn("JadeIconBinder.bindGame(gamePageContainer)", self.main_java)
+        self.assertIn("R.id.gameSharedNav", self.main_java)
+        self.assertIn("gameNav.setOnTabClickListener(", self.main_java)
         self.assertIn("getMoveHistorySnapshot()", self.main_java)
         self.assertIn("showGameMoreMenu(View anchor)", self.main_java)
         self.assertIn("showWinRateChart()", self.main_java)
         self.assertIn("showEndgameScoringOptions()", self.main_java)
-        for name in ("gameNavHome", "gameNavRecords", "gameNavPlay",
-                     "gameNavTraining", "gameNavSettings"):
-            with self.subTest(action=name):
-                self.assertIn(name, self.ids)
-                self.assertIn("R.id." + name, self.main_java)
+        self.assertIn("gameSharedNav", self.ids)
+        self.assertEqual("com.badukai.ui.JadeBottomNavView",
+                         self.ids["gameSharedNav"].tag)
         for name in ("aiStoneView", "playerStoneView", "aiCaptureText",
                      "playerCaptureText", "aiWinRateText", "playerWinRateText",
                      "aiMoveTimeText", "nnAreaScoreText", "aiDifficultyText",
@@ -351,7 +336,7 @@ class JadeUiTest(unittest.TestCase):
         self.assertIn("saveReplaySnapshot(", self.main_java)
         self.assertIn("boardFrame", self.ids)
         self.assertIn("gameActionPanel", self.ids)
-        self.assertIn("gameNavHome", self.ids)
+        self.assertIn("gameSharedNav", self.ids)
 
     def test_four_game_facts_use_same_icon_and_two_line_text_columns(self):
         # Regression for RK3588: previous horizontal value rows were
@@ -582,13 +567,13 @@ class JadeUiTest(unittest.TestCase):
                                         msg="Missing gameplay style: " + name)
         # The five action PNGs now belong to the sibling ImageViews in XML;
         # no icon binding in Java or TextView inline ImageSpans is required.
-        self.assertGreaterEqual(len(paths), 15)
+        self.assertGreaterEqual(len(paths), 10)
         binder = (ROOT / "app/src/main/java/com/badukai/ui/JadeIconBinder.java"
                   ).read_text(encoding="utf-8")
-        self.assertIn("public static void bindGame(View root)", binder)
-        # Five action icons are in independent XML ImageViews; only the
-        # game bottom tabs still need compound drawables bound from Java.
-        self.assertIn("R.id.gameNavHome", binder)
+        shared = (ROOT / "app/src/main/java/com/badukai/ui/JadeBottomNavView.java"
+                  ).read_text(encoding="utf-8")
+        self.assertIn("public void setSelectedTab(int tab)", shared)
+        self.assertNotIn("R.id.gameNavHome", binder)
         for view in ("passButton", "undoButton", "situationButton",
                      "aiSuggestionButton", "gameAnalysisButton"):
             self.assertIn(view, self.ids)

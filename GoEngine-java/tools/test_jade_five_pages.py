@@ -106,11 +106,15 @@ class JadeFiveScreensTest(unittest.TestCase):
         self.assertIn('getBooleanExtra("navigate_home", false)', main)
 
     def test_all_navigation_intents_target_declared_activities(self):
+        shared = (JAVA / "ui/JadeNavigation.java").read_text(encoding="utf-8")
         for name in ("ReplayActivity", "SgfLibraryActivity", "TsumegoActivity",
                      "TsumegoExplanationActivity", "TsumegoResultsActivity"):
             target = name + ".class"
-            self.assertTrue(any(target in code for code in self.java.values()),
+            self.assertTrue(any(target in code for code in self.java.values())
+                            or target in shared,
                             msg="No navigation to " + target)
+        self.assertIn('R.id.replaySharedNav', self.java["activity_replay"])
+        self.assertIn('R.id.tsumegoSharedNav', self.java["activity_tsumego"])
 
 
 if __name__ == "__main__":

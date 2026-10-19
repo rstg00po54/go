@@ -14,6 +14,7 @@ on:
       - 'GoEngine-java/app/src/main/AndroidManifest.xml'
       - 'GoEngine-java/tools/test_jade_five_pages.py'
       - 'GoEngine-java/tools/test_jade_replay_ui.py'
+      - 'GoEngine-java/tools/test_jade_nav_unification.py'
       - 'GoEngine-java/tools/test_jade_ui_layout.py'
   workflow_dispatch:
 
@@ -39,6 +40,7 @@ jobs:
           set -e
           python3 tools/test_jade_five_pages.py -v
           python3 tools/test_jade_replay_ui.py -v
+          python3 tools/test_jade_nav_unification.py -v
           python3 tools/test_jade_ui_layout.py -v
       - name: Install Android platform 35
         run: |

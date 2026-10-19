@@ -120,40 +120,9 @@
                 </LinearLayout>
             </LinearLayout>
         </ScrollView>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="58dp"
-            android:orientation="horizontal" android:background="@drawable/jade_dark_footer"
-            android:paddingStart="4dp" android:paddingEnd="4dp">
-            <TextView android:id="@+id/tsumegoTabHome"
-                android:layout_width="0dp" android:layout_weight="1"
-                android:layout_height="match_parent" android:gravity="center"
-                android:drawableTop="@drawable/ic_home_ivory" android:drawablePadding="2dp"
-                android:text="首页" android:textColor="#EAF0E4" android:textSize="11sp"
-                android:clickable="true" android:focusable="true"/>
-            <TextView android:id="@+id/tsumegoTabRecords"
-                android:layout_width="0dp" android:layout_weight="1"
-                android:layout_height="match_parent" android:gravity="center"
-                android:drawableTop="@drawable/ic_book_ivory" android:drawablePadding="2dp"
-                android:text="棋谱" android:textColor="#EAF0E4" android:textSize="11sp"
-                android:clickable="true" android:focusable="true"/>
-            <TextView android:id="@+id/tsumegoTabPlay"
-                android:layout_width="0dp" android:layout_weight="1"
-                android:layout_height="match_parent" android:gravity="center"
-                android:drawableTop="@drawable/ic_game_gold" android:drawablePadding="2dp"
-                android:text="对弈" android:textColor="#EAF0E4" android:textSize="11sp"
-                android:clickable="true" android:focusable="true"/>
-            <TextView android:id="@+id/tsumegoTabTraining"
-                android:layout_width="0dp" android:layout_weight="1"
-                android:layout_height="match_parent" android:gravity="center"
-                android:background="@drawable/jade_game_active_tab"
-                android:drawableTop="@drawable/ic_training_ivory" android:drawablePadding="2dp"
-                android:text="训练" android:textColor="#F6D47A" android:textSize="11sp"
-                android:clickable="true" android:focusable="true"/>
-            <TextView android:id="@+id/tsumegoTabSettings"
-                android:layout_width="0dp" android:layout_weight="1"
-                android:layout_height="match_parent" android:gravity="center"
-                android:drawableTop="@drawable/ic_settings_ivory" android:drawablePadding="2dp"
-                android:text="选项" android:textColor="#EAF0E4" android:textSize="11sp"
-                android:clickable="true" android:focusable="true"/>
-        </LinearLayout>
+        <com.badukai.ui.JadeBottomNavView android:id="@+id/tsumegoSharedNav"
+            android:layout_width="match_parent" android:layout_height="70dp"
+            android:layout_marginStart="9dp" android:layout_marginEnd="9dp"
+            android:layout_marginBottom="3dp"/>
     </LinearLayout>
 </FrameLayout>

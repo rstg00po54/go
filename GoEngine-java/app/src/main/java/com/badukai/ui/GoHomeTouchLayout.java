@@ -56,39 +56,18 @@ public class GoHomeTouchLayout extends FrameLayout {
         placeArt(com.badukai.R.id.aiBattleButton, .067f, .662f, .866f, .112f);
         placeArt(com.badukai.R.id.homeRecordButton, .052f, .787f, .422f, .101f);
         placeArt(com.badukai.R.id.homeTrainingButton, .526f, .787f, .422f, .101f);
-        // Match the PNG's intrinsic aspect ratio. fitCenter inside a short box
-        // previously shrank the artwork to a tiny strip.
+        // The shared real component replaces the old baked navbar PNG and
+        // its five invisible touch hotspots. It uses the same proportions on
+        // home as on replay/game/training.
         View nav = findViewById(com.badukai.R.id.homeNavBarArtwork);
-        android.graphics.drawable.Drawable image =
-                nav instanceof android.widget.ImageView
-                        ? ((android.widget.ImageView) nav).getDrawable() : null;
-        float ratio = image != null && image.getIntrinsicWidth() > 0
-                && image.getIntrinsicHeight() > 0
-                ? (float) image.getIntrinsicWidth() / image.getIntrinsicHeight() : 3.9f;
         int width = Math.round(getWidth() * .94f);
-        int height = Math.round(width / ratio);
-        int maxHeight = Math.round(getHeight() * .155f);
-        if (height > maxHeight) {
-            height = maxHeight;
-            width = Math.round(height * ratio);
-        }
+        int preferred = Math.round(70 * getResources().getDisplayMetrics().density);
+        int height = Math.min(preferred, Math.round(getHeight() * .12f));
         int left = (getWidth() - width) / 2;
         int top = getHeight() - height - Math.round(getHeight() * .022f);
         LayoutParams lp = new LayoutParams(width, height);
         lp.leftMargin = left;
         lp.topMargin = top;
         nav.setLayoutParams(lp);
-        for (int i = 0; i < 5; i++) {
-            int[] ids = {com.badukai.R.id.homeTabButton,
-                    com.badukai.R.id.homeGameTabButton,
-                    com.badukai.R.id.homeRecordTabButton,
-                    com.badukai.R.id.homeTrainingTabButton,
-                    com.badukai.R.id.homeSettingsTabButton};
-            View tab = findViewById(ids[i]);
-            LayoutParams hit = new LayoutParams(width / 5, height);
-            hit.leftMargin = left + Math.round(i * width / 5f);
-            hit.topMargin = top;
-            tab.setLayoutParams(hit);
-        }
     }
 }

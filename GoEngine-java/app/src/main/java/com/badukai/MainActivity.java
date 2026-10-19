@@ -201,7 +201,6 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "Game engine preference=" + (forceLegacy ? "PIE forced" : "JNI if bundled")
                 + "; preload boardSize=" + boardSize + "; backend=" + selectedBackend + "; winrate engine=PIE");
         bindViews();
-        com.badukai.ui.JadeIconBinder.bindGame(gamePageContainer);
         setHomeImageArt(R.id.gameBackdrop, "home/background.png");
         Log.i(TAG, "JADE_GAME_V1 nativeBoard=true artPack=25");
         // Each home UI element is a separate PNG (not a painted button hotspot).
@@ -215,8 +214,25 @@ public class MainActivity extends AppCompatActivity {
         setHomeButtonArt(R.id.homeRecordButton, "home/record.png");
         setHomeButtonArt(R.id.homeTrainingButton, "home/training.png");
         setHomeButtonArt(R.id.homeSettingsButton, "home/settings.png");
-        setHomeImageArt(R.id.homeNavBarArtwork, "home/navbar/bar.png");
         ((com.badukai.ui.GoHomeTouchLayout) mainPageContainer).refreshPositions();
+        com.badukai.ui.JadeBottomNavView homeNav = findViewById(R.id.homeNavBarArtwork);
+        com.badukai.ui.JadeBottomNavView gameNav = findViewById(R.id.gameSharedNav);
+        homeNav.setSelectedTab(com.badukai.ui.JadeBottomNavView.HOME);
+        gameNav.setSelectedTab(com.badukai.ui.JadeBottomNavView.PLAY);
+        homeNav.setOnTabClickListener(tab -> {
+            if (tab == com.badukai.ui.JadeBottomNavView.HOME) showMainPage();
+            else if (tab == com.badukai.ui.JadeBottomNavView.PLAY) showNewGameDialog();
+            else if (tab == com.badukai.ui.JadeBottomNavView.RECORDS) openReplay();
+            else if (tab == com.badukai.ui.JadeBottomNavView.TRAINING) openTsumego();
+            else com.badukai.ui.JadeNavigation.open(this, tab);
+        });
+        gameNav.setOnTabClickListener(tab -> {
+            if (tab == com.badukai.ui.JadeBottomNavView.HOME) showMainPage();
+            else if (tab == com.badukai.ui.JadeBottomNavView.PLAY) showGamePage();
+            else if (tab == com.badukai.ui.JadeBottomNavView.RECORDS) openReplay();
+            else if (tab == com.badukai.ui.JadeBottomNavView.TRAINING) openTsumego();
+            else com.badukai.ui.JadeNavigation.open(this, tab);
+        });
         findViewById(R.id.homeGameTabButton).setOnClickListener(v -> showNewGameDialog());
         findViewById(R.id.homeTabButton).setOnClickListener(v -> showMainPage());
         View.OnClickListener upcoming = v -> Toast.makeText(this, "功能开发中", Toast.LENGTH_SHORT).show();
@@ -267,12 +283,6 @@ public class MainActivity extends AppCompatActivity {
         variationButton.setOnClickListener(v -> showVariations());
         findViewById(R.id.gameAnalysisButton).setOnClickListener(v -> showWinRateChart());
         findViewById(R.id.gameMoreButton).setOnClickListener(this::showGameMoreMenu);
-        findViewById(R.id.gameNavHome).setOnClickListener(v -> showMainPage());
-        findViewById(R.id.gameNavRecords).setOnClickListener(v -> openReplay());
-        findViewById(R.id.gameNavPlay).setOnClickListener(v ->
-                Toast.makeText(this, "正在对弈", Toast.LENGTH_SHORT).show());
-        findViewById(R.id.gameNavTraining).setOnClickListener(v -> openTsumego());
-        findViewById(R.id.gameNavSettings).setOnClickListener(v -> showNewGameDialog());
         render("正在启动 AI...");
         showMainPage();
         if (isRefereeSmokeIntent()) {
@@ -1770,24 +1780,27 @@ public class MainActivity extends AppCompatActivity {
 
         final AlertDialog dialog = new AlertDialog.Builder(this).setView(content).create();
         closeButton.setOnClickListener(v -> dialog.dismiss());
-        content.findViewById(R.id.newGameHomeTab).setOnClickListener(v -> {
-            dialog.dismiss();
-            showMainPage();
-        });
-        content.findViewById(R.id.newGameRecordTab).setOnClickListener(v -> {
-            dialog.dismiss();
-            openReplay();
-        });
-        content.findViewById(R.id.newGameTrainingTab).setOnClickListener(v -> {
-            dialog.dismiss();
-            openTsumego();
-        });
-        content.findViewById(R.id.newGamePlayTab).setOnClickListener(v ->
-                settingsScroll.smoothScrollTo(0, 0));
+        com.badukai.ui.JadeBottomNavView dialogNav =
+                content.findViewById(R.id.newGameSharedNav);
+        dialogNav.setSelectedTab(com.badukai.ui.JadeBottomNavView.PLAY);
         View.OnClickListener gotoBackend = v ->
                 settingsScroll.smoothScrollTo(0, backendSection.getTop());
         content.findViewById(R.id.dialogSettingsButton).setOnClickListener(gotoBackend);
-        content.findViewById(R.id.newGameSettingsTab).setOnClickListener(gotoBackend);
+        dialogNav.setOnTabClickListener(tab -> {
+            if (tab == com.badukai.ui.JadeBottomNavView.PLAY) {
+                settingsScroll.smoothScrollTo(0, 0);
+                return;
+            }
+            if (tab == com.badukai.ui.JadeBottomNavView.SETTINGS) {
+                Toast.makeText(this, "设置页面开发中", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            dialog.dismiss();
+            if (tab == com.badukai.ui.JadeBottomNavView.HOME) showMainPage();
+            else if (tab == com.badukai.ui.JadeBottomNavView.RECORDS) openReplay();
+            else if (tab == com.badukai.ui.JadeBottomNavView.TRAINING) openTsumego();
+            else com.badukai.ui.JadeNavigation.open(this, tab);
+        });
         content.findViewById(R.id.modeLocalButton).setEnabled(false);
         // Offline Human-vs-Human mode is not implemented; its tile is visibly
         // disabled rather than silently running a Human SL AI match.
@@ -1885,6 +1898,8 @@ public class MainActivity extends AppCompatActivity {
         setIntent(intent);
         if (intent != null && intent.getBooleanExtra("navigate_home", false)) {
             showMainPage();
+        } else if (intent != null && intent.getBooleanExtra("navigate_play", false)) {
+            showGamePage();
         }
     }
 
@@ -1903,12 +1918,18 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "showMainPage in");
         mainPageContainer.setVisibility(View.VISIBLE);
         gamePageContainer.setVisibility(View.GONE);
+        ((com.badukai.ui.JadeBottomNavView)
+                findViewById(R.id.homeNavBarArtwork)).setSelectedTab(
+                com.badukai.ui.JadeBottomNavView.HOME);
     }
 
     private void showGamePage() {
         DebugLog.enter(TAG, "showGamePage in, boardSize=" + boardSize);
         mainPageContainer.setVisibility(View.GONE);
         gamePageContainer.setVisibility(View.VISIBLE);
+        ((com.badukai.ui.JadeBottomNavView)
+                findViewById(R.id.gameSharedNav)).setSelectedTab(
+                com.badukai.ui.JadeBottomNavView.PLAY);
         gameTitleText.setText(boardSize + "×" + boardSize);
         gameModeSummaryText.setText("人机对弈");
         gameRankSummaryText.setText(aiKyu + "级");

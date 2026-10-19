@@ -50,8 +50,7 @@ class JadeReplayUiTest(unittest.TestCase):
             "replayBackButton", "replayHistoryButton", "replayFirst",
             "replayPrev", "replayNext", "replayLast", "replayChooseHistory",
             "replayImport", "replayExport", "replayShare",
-            "replayTabHome", "replayTabRecords", "replayTabPlay",
-            "replayTabTraining", "replayTabSettings",
+            "replaySharedNav",
         )
         for name in actions:
             with self.subTest(control=name):
@@ -105,25 +104,20 @@ class JadeReplayUiTest(unittest.TestCase):
                 else:
                     self.assertTrue((DRAWABLES / (res + ".xml")).is_file(),
                                     msg="Drawable not found: " + res)
-        self.assertGreaterEqual(len(used_png), 8)
-        self.assertIn("JadeIconBinder.bindReplay(", self.java)
-        for name, icon in (
-            ("replayTabHome", "ic_home_ivory"),
-            ("replayTabRecords", "ic_book_ivory"),
-            ("replayTabPlay", "ic_game_gold"),
-            ("replayTabTraining", "ic_training_ivory"),
-            ("replayTabSettings", "ic_settings_ivory"),
-        ):
-            self.assertIn("top(root, R.id." + name + ", R.drawable." + icon
-                          + ", 26);", self.binder)
+        self.assertGreaterEqual(len(used_png), 4)
+        self.assertIn("nav.setSelectedTab(", self.java)
+        self.assertIn("nav.setOnTabClickListener(", self.java)
+        self.assertIn("JadeNavigation.open(this, tab)", self.java)
+        self.assertEqual("com.badukai.ui.JadeBottomNavView",
+                         self.by_id["replaySharedNav"].tag)
 
     def test_fixed_footer_and_scrollable_content(self):
         scrolls = [v for v in self.root.iter() if v.tag == "ScrollView"]
         self.assertEqual(1, len(scrolls))
         self.assertEqual("0dp", scrolls[0].get(ANDROID + "layout_height"))
         self.assertEqual("1", scrolls[0].get(ANDROID + "layout_weight"))
-        footer = self.parents[self.by_id["replayTabHome"]]
-        self.assertEqual("58dp", footer.get(ANDROID + "layout_height"))
+        footer = self.by_id["replaySharedNav"]
+        self.assertEqual("70dp", footer.get(ANDROID + "layout_height"))
         self.assertNotIn(footer, list(scrolls[0].iter()))
         self.assertIn(self.by_id["replayBoardFrame"], list(scrolls[0].iter()))
 

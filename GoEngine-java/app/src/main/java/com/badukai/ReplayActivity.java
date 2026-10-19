@@ -45,7 +45,10 @@ public class ReplayActivity extends Activity {
         info = findViewById(R.id.replayStepInfo);
         seek = findViewById(R.id.replaySeek);
 
-        com.badukai.ui.JadeIconBinder.bindReplay(findViewById(android.R.id.content));
+        com.badukai.ui.JadeBottomNavView nav = findViewById(R.id.replaySharedNav);
+        nav.setSelectedTab(com.badukai.ui.JadeBottomNavView.RECORDS);
+        nav.setOnTabClickListener(tab ->
+                com.badukai.ui.JadeNavigation.open(this, tab));
         loadBackdrop();
 
         seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -70,13 +73,7 @@ public class ReplayActivity extends Activity {
         findViewById(R.id.replayImport).setOnClickListener(v -> chooseImport());
         findViewById(R.id.replayExport).setOnClickListener(v -> exportSgf());
         findViewById(R.id.replayShare).setOnClickListener(v -> shareSgf());
-        findViewById(R.id.replayTabHome).setOnClickListener(v -> returnHome());
-        findViewById(R.id.replayTabRecords).setOnClickListener(v -> chooseHistory());
-        findViewById(R.id.replayTabPlay).setOnClickListener(v -> finish());
-        findViewById(R.id.replayTabTraining).setOnClickListener(v -> {
-            startActivity(new Intent(this, TsumegoActivity.class));
-        });
-        findViewById(R.id.replayTabSettings).setOnClickListener(v -> showReplayOptions());
+
 
         updateNavigationButtons();
         String source = getIntent().getStringExtra("sgf");

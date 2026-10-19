@@ -41,43 +41,7 @@ public final class JadeIconBinder {
         topLowered(root, R.id.backendGpuButton, R.drawable.ic_gpu, 38, 8);
         topLowered(root, R.id.backendNpuButton, R.drawable.ic_npu, 38, 8);
 
-        // Bottom tabs use a smaller 4dp inset to preserve the 60dp navbar.
-        topLowered(root, R.id.newGameHomeTab, R.drawable.ic_home, 29, 4);
-        topLowered(root, R.id.newGameRecordTab, R.drawable.ic_records, 29, 4);
-        topLowered(root, R.id.newGamePlayTab, R.drawable.ic_game_tab, 29, 4);
-        topLowered(root, R.id.newGameTrainingTab, R.drawable.ic_training, 29, 4);
-        topLowered(root, R.id.newGameSettingsTab, R.drawable.ic_settings_tab, 29, 4);
-    }
 
-    /** Fit the provided 25 game art PNGs to compact, clickable native widgets. */
-    public static void bindGame(View root) {
-        // Game summary icons are independent 21dp ImageViews in the layout,
-        // not compound text drawables. This keeps their values aligned.
-        // Gameplay Buttons center their own labels; icons live in sibling
-        // ImageViews, so image height never shifts the text baseline.
-        top(root, R.id.gameNavHome, R.drawable.ic_home_ivory, 26);
-        top(root, R.id.gameNavRecords, R.drawable.ic_book_ivory, 26);
-        top(root, R.id.gameNavPlay, R.drawable.ic_game_gold, 26);
-        top(root, R.id.gameNavTraining, R.drawable.ic_training_ivory, 26);
-        top(root, R.id.gameNavSettings, R.drawable.ic_settings_ivory, 26);
-    }
-
-    /** Set explicit 26dp bounds for the 256px original jade replay-tab PNGs. */
-    public static void bindReplay(View root) {
-        top(root, R.id.replayTabHome, R.drawable.ic_home_ivory, 26);
-        top(root, R.id.replayTabRecords, R.drawable.ic_book_ivory, 26);
-        top(root, R.id.replayTabPlay, R.drawable.ic_game_gold, 26);
-        top(root, R.id.replayTabTraining, R.drawable.ic_training_ivory, 26);
-        top(root, R.id.replayTabSettings, R.drawable.ic_settings_ivory, 26);
-    }
-
-    /** Consistent jade footer sizing in the independent 9x9 training page. */
-    public static void bindTsumego(View root) {
-        top(root, R.id.tsumegoTabHome, R.drawable.ic_home_ivory, 26);
-        top(root, R.id.tsumegoTabRecords, R.drawable.ic_book_ivory, 26);
-        top(root, R.id.tsumegoTabPlay, R.drawable.ic_game_gold, 26);
-        top(root, R.id.tsumegoTabTraining, R.drawable.ic_training_ivory, 26);
-        top(root, R.id.tsumegoTabSettings, R.drawable.ic_settings_ivory, 26);
     }
 
     private static void left(View root, int viewId, int resourceId, int sizeDp) {

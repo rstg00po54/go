@@ -72,10 +72,9 @@
             android:textSize="13sp"
             android:contentDescription="设置"
             android:padding="0dp" android:stateListAnimator="@null" />
-        <ImageView android:id="@+id/homeNavBarArtwork"
+        <com.badukai.ui.JadeBottomNavView android:id="@+id/homeNavBarArtwork"
             android:layout_width="1dp" android:layout_height="1dp"
-            android:scaleType="fitCenter" android:importantForAccessibility="no"
-            android:contentDescription="翡翠底部导航栏" />
+            android:contentDescription="翡翠公共底部导航栏"/>
         <Button android:id="@+id/homeTabButton"
             android:layout_width="1dp" android:layout_height="1dp"
             android:background="@android:color/transparent"
@@ -84,7 +83,7 @@
             android:textColor="#FFF0CB"
             android:textSize="13sp"
             android:contentDescription="首页"
-            android:padding="0dp" android:stateListAnimator="@null" />
+            android:padding="0dp" android:visibility="gone" android:stateListAnimator="@null" />
         <Button android:id="@+id/homeGameTabButton"
             android:layout_width="1dp" android:layout_height="1dp"
             android:background="@android:color/transparent"
@@ -93,7 +92,7 @@
             android:textColor="#FFF0CB"
             android:textSize="13sp"
             android:contentDescription="对弈"
-            android:padding="0dp" android:stateListAnimator="@null" />
+            android:padding="0dp" android:visibility="gone" android:stateListAnimator="@null" />
         <Button android:id="@+id/homeRecordTabButton"
             android:layout_width="1dp" android:layout_height="1dp"
             android:background="@android:color/transparent"
@@ -102,7 +101,7 @@
             android:textColor="#FFF0CB"
             android:textSize="13sp"
             android:contentDescription="棋谱"
-            android:padding="0dp" android:stateListAnimator="@null" />
+            android:padding="0dp" android:visibility="gone" android:stateListAnimator="@null" />
         <Button android:id="@+id/homeTrainingTabButton"
             android:layout_width="1dp" android:layout_height="1dp"
             android:background="@android:color/transparent"
@@ -111,7 +110,7 @@
             android:textColor="#FFF0CB"
             android:textSize="13sp"
             android:contentDescription="训练"
-            android:padding="0dp" android:stateListAnimator="@null" />
+            android:padding="0dp" android:visibility="gone" android:stateListAnimator="@null" />
         <Button android:id="@+id/homeSettingsTabButton"
             android:layout_width="1dp" android:layout_height="1dp"
             android:background="@android:color/transparent"
@@ -120,7 +119,7 @@
             android:textColor="#FFF0CB"
             android:textSize="13sp"
             android:contentDescription="设置"
-            android:padding="0dp" android:stateListAnimator="@null" />
+            android:padding="0dp" android:visibility="gone" android:stateListAnimator="@null" />
     </com.badukai.ui.GoHomeTouchLayout>
 
 
@@ -532,41 +531,12 @@
             </LinearLayout>
                 </LinearLayout>
             </ScrollView>
-            <!-- Consistent navigation with new-game screen; no baked screenshot hitboxes. -->
-            <LinearLayout android:layout_width="match_parent" android:layout_height="58dp"
-                android:orientation="horizontal" android:background="@drawable/jade_dark_footer"
-                android:paddingStart="4dp" android:paddingEnd="4dp">
-                <TextView android:id="@+id/gameNavHome" android:layout_width="0dp"
- android:layout_weight="1" android:layout_height="match_parent" android:gravity="center"
- android:clickable="true" android:focusable="true" android:contentDescription="首页"
- android:background="@android:color/transparent"
- android:drawableTop="@drawable/ic_home_ivory" android:drawablePadding="2dp"
- android:text="首页" android:textColor="#EAF0E4" android:textSize="11sp"/>
-                <TextView android:id="@+id/gameNavRecords" android:layout_width="0dp"
- android:layout_weight="1" android:layout_height="match_parent" android:gravity="center"
- android:clickable="true" android:focusable="true" android:contentDescription="棋谱"
- android:background="@android:color/transparent"
- android:drawableTop="@drawable/ic_book_ivory" android:drawablePadding="2dp"
- android:text="棋谱" android:textColor="#EAF0E4" android:textSize="11sp"/>
-                <TextView android:id="@+id/gameNavPlay" android:layout_width="0dp"
- android:layout_weight="1" android:layout_height="match_parent" android:gravity="center"
- android:clickable="true" android:focusable="true" android:contentDescription="对弈"
- android:background="@drawable/jade_game_active_tab"
- android:drawableTop="@drawable/ic_game_gold" android:drawablePadding="2dp"
- android:text="对弈" android:textColor="#F6D47A" android:textSize="11sp"/>
-                <TextView android:id="@+id/gameNavTraining" android:layout_width="0dp"
- android:layout_weight="1" android:layout_height="match_parent" android:gravity="center"
- android:clickable="true" android:focusable="true" android:contentDescription="训练"
- android:background="@android:color/transparent"
- android:drawableTop="@drawable/ic_training_ivory" android:drawablePadding="2dp"
- android:text="训练" android:textColor="#EAF0E4" android:textSize="11sp"/>
-                <TextView android:id="@+id/gameNavSettings" android:layout_width="0dp"
- android:layout_weight="1" android:layout_height="match_parent" android:gravity="center"
- android:clickable="true" android:focusable="true" android:contentDescription="设置"
- android:background="@android:color/transparent"
- android:drawableTop="@drawable/ic_settings_ivory" android:drawablePadding="2dp"
- android:text="设置" android:textColor="#EAF0E4" android:textSize="11sp"/>
-            </LinearLayout>
+            <!-- One real component for home, game, replay and training.
+                 Its highlight is state, not baked into a screenshot. -->
+            <com.badukai.ui.JadeBottomNavView android:id="@+id/gameSharedNav"
+                android:layout_width="match_parent" android:layout_height="70dp"
+                android:layout_marginStart="9dp" android:layout_marginEnd="9dp"
+                android:layout_marginBottom="3dp"/>
         </LinearLayout>
         <!-- Keep handlers, enabled states and legacy features reachable from More. -->
         <LinearLayout android:layout_width="1dp" android:layout_height="1dp"
