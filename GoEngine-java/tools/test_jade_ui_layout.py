@@ -72,7 +72,7 @@ class JadeUiTest(unittest.TestCase):
         self.assertIn("drawCoordinates(canvas, n);", board)
         self.assertIn("drawCircle(cx, cy, radius * 1.04f, paint)", board)
         self.assertIn("cellSize * 0.57f", board)
-        self.assertIn("holder.setGravity(moves.isEmpty()", self.main_java)
+        self.assertNotIn("updateGameTimeline()", self.main_java)
         captions = {view.get(ANDROID + "text") for view in scroll.iter()
                     if view.tag == "TextView"}
         for caption in ("棋盘大小", "对弈模式", "AI难度", "本地推理"):
@@ -586,9 +586,13 @@ class JadeUiTest(unittest.TestCase):
         binder = (ROOT / "app/src/main/java/com/badukai/ui/JadeIconBinder.java"
                   ).read_text(encoding="utf-8")
         self.assertIn("public static void bindGame(View root)", binder)
+        # Five action icons are in independent XML ImageViews; only the
+        # game bottom tabs still need compound drawables bound from Java.
+        self.assertIn("R.id.gameNavHome", binder)
         for view in ("passButton", "undoButton", "situationButton",
-                     "aiSuggestionButton", "gameAnalysisButton", "gameNavHome"):
-            self.assertIn("R.id." + view, binder)
+                     "aiSuggestionButton", "gameAnalysisButton"):
+            self.assertIn(view, self.ids)
+        self.assertNotIn("centeredAction(", binder)
         for view in self.ids["gamePageContainer"].iter():
             self.assertIsNotNone(view.get(ANDROID + "layout_width"))
             self.assertIsNotNone(view.get(ANDROID + "layout_height"))
