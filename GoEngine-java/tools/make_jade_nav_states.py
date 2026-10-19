@@ -20,7 +20,7 @@ def preview(tab):
         w,h=im.size
         cx=round(left+(right-left)*.103)
         x0=max(0,cx-round((right-left)*.030));x1=min(w-1,cx+round((right-left)*.030))
-        y0=round(h*.677);y1=round(h*.739)
+        y0=round(h*.645);y1=round(h*.737)
         fx=max(3,round(w*.006));fy=max(3,round(h*.008))
         for y in range(y0,y1+1):
             for x in range(x0,x1+1):
@@ -32,7 +32,7 @@ def preview(tab):
         picture=Image.fromarray(arr,'RGBA')
         draw=ImageDraw.Draw(picture)
         xc=round(left+(right-left)*(.103+tab*.20))
-        y=h*.705
+        y=h*.688
         half=(right-left)*.018
         th=max(4,h*.010)
         draw.rounded_rectangle((xc-half-8,y-5,xc+half+8,y+th+5),radius=8,fill=(245,210,125,112))

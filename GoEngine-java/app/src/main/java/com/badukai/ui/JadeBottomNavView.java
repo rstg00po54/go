@@ -134,8 +134,8 @@ public final class JadeBottomNavView extends FrameLayout {
         // The original selected underline is inside the source, near 0.70H.
         int left = Math.max(0, cx - Math.round(box[2] * .030f));
         int right = Math.min(w - 1, cx + Math.round(box[2] * .030f));
-        int top = Math.round(h * .677f);
-        int bottom = Math.round(h * .739f);
+        int top = Math.round(h * .645f);
+        int bottom = Math.round(h * .737f);
         int featherX = Math.max(3, Math.round(w * .006f));
         int featherY = Math.max(3, Math.round(h * .008f));
         for (int y = top; y <= bottom; y++) {
@@ -152,7 +152,7 @@ public final class JadeBottomNavView extends FrameLayout {
         Canvas canvas = new Canvas(bitmap);
         Paint glow = new Paint(Paint.ANTI_ALIAS_FLAG);
         int cx = Math.round(box[0] + box[2] * (.103f + tab * .200f));
-        float y = bitmap.getHeight() * .705f;
+        float y = bitmap.getHeight() * .688f;
         float half = box[2] * .018f;
         float thickness = Math.max(4, bitmap.getHeight() * .010f);
         glow.setColor(0x70F5D27D);
