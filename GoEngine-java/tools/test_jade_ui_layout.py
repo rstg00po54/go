@@ -116,6 +116,31 @@ class JadeUiTest(unittest.TestCase):
         self.assertIn("public void setBoardSize(int n)", source)
         self.assertIn("for(int i=0;i<boardSize;i++)", source)
 
+    def test_every_new_game_view_has_both_layout_dimensions(self):
+        # Android's AAPT accepts missing dimensions; the layout inflater
+        # crashes at runtime. Guard every view, including unlabeled views.
+        dialog_path = ROOT / "app/src/main/res/layout/dialog_new_game.xml"
+        for view in ET.parse(dialog_path).getroot().iter():
+            label = view.get(ANDROID + "id", view.tag)
+            with self.subTest(view=label):
+                self.assertIsNotNone(
+                    view.get(ANDROID + "layout_width"),
+                    msg="Missing android:layout_width in " + str(label))
+                self.assertIsNotNone(
+                    view.get(ANDROID + "layout_height"),
+                    msg="Missing android:layout_height in " + str(label))
+
+    def test_new_game_drawable_resources_exist(self):
+        dialog_path = ROOT / "app/src/main/res/layout/dialog_new_game.xml"
+        for view in ET.parse(dialog_path).getroot().iter():
+            for attr in ("background", "thumb", "progressDrawable"):
+                value = view.get(ANDROID + attr, "")
+                if value.startswith("@drawable/jade_"):
+                    name = value.split("/", 1)[1] + ".xml"
+                    with self.subTest(view=view.tag, drawable=name):
+                        self.assertTrue((DRAWABLES / name).is_file(),
+                            msg="Missing drawable " + name)
+
     def test_jade_drawables_are_valid(self):
         for path in DRAWABLES.glob("jade_*.xml"):
             with self.subTest(drawable=path.name):
