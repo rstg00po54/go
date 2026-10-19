@@ -14,6 +14,7 @@ on:
       - 'GoEngine-java/app/src/main/AndroidManifest.xml'
       - 'GoEngine-java/tools/test_jade_five_pages.py'
       - 'GoEngine-java/tools/test_jade_replay_ui.py'
+      - 'GoEngine-java/tools/test_jade_ui_layout.py'
   workflow_dispatch:
 
 permissions:
