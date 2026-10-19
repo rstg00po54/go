@@ -399,6 +399,68 @@ class JadeUiTest(unittest.TestCase):
         for name, _, _ in facts:
             self.assertNotIn("R.id." + name, binder)
 
+    def test_game_stats_capture_winrate_capture_order(self):
+        # Screen: stone/captures | live win rate | stone/captures.
+        parent = {child: node for node in self.root.iter() for child in node}
+        panel = self.ids["gameStatsPanel"]
+        self.assertEqual("vertical", panel.get(ANDROID + "orientation"))
+        self.assertEqual("wrap_content", panel.get(ANDROID + "layout_height"))
+        line = list(panel)[0]
+        self.assertEqual("72dp", line.get(ANDROID + "layout_height"))
+        self.assertEqual("horizontal", line.get(ANDROID + "orientation"))
+        self.assertEqual(5, len(line))  # three columns + two separators
+        left, sep1, center, sep2, right = list(line)
+        self.assertEqual("1", left.get(ANDROID + "layout_weight"))
+        self.assertEqual("1.42", center.get(ANDROID + "layout_weight"))
+        self.assertEqual("1", right.get(ANDROID + "layout_weight"))
+        self.assertEqual("1dp", sep1.get(ANDROID + "layout_width"))
+        self.assertEqual("1dp", sep2.get(ANDROID + "layout_width"))
+        self.assertIs(parent[self.ids["aiStoneView"]], left)
+        self.assertIs(parent[self.ids["aiCaptureText"]], left)
+        self.assertIs(parent[self.ids["playerStoneView"]], right)
+        self.assertIs(parent[self.ids["playerCaptureText"]], right)
+        for name in ("playerWinRateText", "aiWinRateText", "winRateProgress"):
+            with self.subTest(winrate=name):
+                self.assertIs(parent[self.ids[name]], center)
+        self.assertEqual("center", self.ids["playerWinRateText"].get(ANDROID + "gravity"))
+        self.assertEqual("center", self.ids["aiWinRateText"].get(ANDROID + "gravity"))
+        self.assertEqual("6dp", self.ids["winRateProgress"].get(ANDROID + "layout_height"))
+        self.assertEqual("@drawable/jade_winrate_progress",
+                         self.ids["winRateProgress"].get(ANDROID + "progressDrawable"))
+        self.assertEqual("horizontal", list(panel)[2].get(ANDROID + "orientation"))
+        for name in ("gameMoveCountText", "statusText", "aiMoveTimeText"):
+            self.assertIs(parent[self.ids[name]], list(panel)[2])
+        self.assertIs(parent[self.ids["nnAreaScoreText"]], panel)
+        self.assertIn("playerCaptureText.setText(", self.main_java)
+        self.assertIn("aiCaptureText.setText(", self.main_java)
+        self.assertIn("updateWinRateLabels()", self.main_java)
+
+    def test_game_action_buttons_are_two_equal_rows_of_three(self):
+        panel = self.ids["gameActionPanel"]
+        self.assertEqual("96dp", panel.get(ANDROID + "layout_height"))
+        rows = list(panel)
+        self.assertEqual(2, len(rows))
+        expected = (("passButton", "undoButton", "situationButton"),
+                    ("aiSuggestionButton", "gameAnalysisButton", "gameMoreButton"))
+        for row, names in zip(rows, expected):
+            with self.subTest(row=names):
+                self.assertEqual("horizontal", row.get(ANDROID + "orientation"))
+                self.assertEqual("48dp", row.get(ANDROID + "layout_height"))
+                self.assertEqual(3, len(row))
+                for button, name in zip(row, names):
+                    self.assertIs(button, self.ids[name])
+                    self.assertEqual("Button", button.tag)
+                    self.assertEqual("0dp", button.get(ANDROID + "layout_width"))
+                    self.assertEqual("1", button.get(ANDROID + "layout_weight"))
+                    self.assertEqual("42dp", button.get(ANDROID + "layout_height"))
+                    self.assertEqual("3dp", button.get(ANDROID + "layout_margin"))
+                    self.assertEqual("center", button.get(ANDROID + "gravity"))
+                    self.assertEqual("12sp", button.get(ANDROID + "textSize"))
+                    self.assertEqual("@drawable/jade_game_white_button",
+                                     button.get(ANDROID + "background"))
+        self.assertIn("showGameMoreMenu", self.main_java)
+        self.assertIn("showAiSuggestions()", self.main_java)
+
     def test_game_icons_and_drawables_are_present(self):
         png = ROOT / "app/src/main/res/drawable-nodpi"
         paths = set()

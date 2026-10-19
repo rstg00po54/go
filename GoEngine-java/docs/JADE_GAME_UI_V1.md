@@ -64,3 +64,20 @@ positions, hit testing, game rules and CPU/GPU/NPU paths remain unchanged.
 
 This is a first visual-correction pass, not a pixel-identical reproduction
 of the concept art. Device screenshots are required to validate spacing.
+
+
+## Gameplay controls and capture stats (v3)
+
+Below the board, the statistics panel has a **single horizontal row**:
+AI stone / live captures on the left, genuine dynamically updated NN
+win-rate percentages and progress bar in the center, player's stone / live
+captures on the right. A smaller footer shows current move, turn/status,
+and measured per-move time, while optional area-score text remains available.
+This keeps all the original data view IDs and click handlers.
+
+Below it, the six actions are a strict **3 columns × 2 rows**, with equal
+`layout_weight=1`, `42dp` button heights, matching margins and
+jade/ivory backgrounds. The sixth `更多` tile uses the same geometry and
+opens the existing menu. Buttons still use their original action IDs.
+
+No game-rule or backend code was changed.
