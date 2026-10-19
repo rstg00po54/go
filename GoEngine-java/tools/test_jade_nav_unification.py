@@ -49,13 +49,13 @@ class JadeNavTest(unittest.TestCase):
                                   self.replay_layout, self.training_layout)))
 
     def test_original_illustrated_artwork_is_restored(self):
-        self.assertIn('private static final String ART = "home/navbar/bar.png";',
+        self.assertIn('private static final String SOURCE = "home/navbar/bar.png";',
                       self.shared)
-        self.assertIn("context.getAssets().open(ART)", self.shared)
+        self.assertIn("context.getAssets().open(SOURCE)", self.shared)
         self.assertIn("art.setImageBitmap(TAB_IMAGES[tab])", self.shared)
         self.assertIn("ImageView.ScaleType.FIT_CENTER", self.shared)
         self.assertNotIn("ImageView.ScaleType.FIT_XY", self.shared)
-        self.assertIn("artworkBounds(full)", self.shared)
+        self.assertIn("artBounds(original)", self.shared)
         self.assertIn("Bitmap.createBitmap(original,", self.shared)
         self.assertIn('{"首页", "对弈", "棋谱", "训练", "设置"}', self.shared)
         self.assertTrue((ROOT / "docs/navbar/bar.png").exists())
@@ -80,8 +80,8 @@ class JadeNavTest(unittest.TestCase):
         self.assertIn("drawSelectedUnderline(",
                       self.shared)
         self.assertIn("hitTargets[i].setSelected(i == tab)", self.shared)
-        self.assertIn("cell.setOnClickListener(v ->", self.shared)
-        self.assertIn("if (listener != null) listener.onTabClick(tab)", self.shared)
+        self.assertIn("hit.setOnClickListener(v ->", self.shared)
+        self.assertIn("if (callback != null) callback.onTabClick(tab)", self.shared)
 
     def test_each_host_selects_correct_tab(self):
         for source, token in (

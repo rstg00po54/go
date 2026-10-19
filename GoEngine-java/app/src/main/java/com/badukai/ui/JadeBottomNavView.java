@@ -25,7 +25,11 @@ import java.io.InputStream;
  * reproduced neighboring Chinese glyphs over 首页.
  */
 public final class JadeBottomNavView extends FrameLayout {
-    public static final int HOME = 0, PLAY = 1, RECORDS = 2, TRAINING = 3, SETTINGS = 4;
+    public static final int HOME = 0;
+    public static final int PLAY = 1;
+    public static final int RECORDS = 2;
+    public static final int TRAINING = 3;
+    public static final int SETTINGS = 4;
 
     private static final String SOURCE = "home/navbar/bar.png";
     private static final String[] NAMES = {"首页", "对弈", "棋谱", "训练", "设置"};
@@ -127,11 +131,11 @@ public final class JadeBottomNavView extends FrameLayout {
     private static void quietOriginalHomeUnderline(Bitmap bitmap, int[] box) {
         int w = bitmap.getWidth(), h = bitmap.getHeight();
         int cx = Math.round(box[0] + box[2] * .103f);
-        // The original selected underline is inside the source, near 0.60H.
+        // The original selected underline is inside the source, near 0.70H.
         int left = Math.max(0, cx - Math.round(box[2] * .030f));
         int right = Math.min(w - 1, cx + Math.round(box[2] * .030f));
-        int top = Math.round(h * .574f);
-        int bottom = Math.round(h * .637f);
+        int top = Math.round(h * .677f);
+        int bottom = Math.round(h * .739f);
         int featherX = Math.max(3, Math.round(w * .006f));
         int featherY = Math.max(3, Math.round(h * .008f));
         for (int y = top; y <= bottom; y++) {
@@ -148,7 +152,7 @@ public final class JadeBottomNavView extends FrameLayout {
         Canvas canvas = new Canvas(bitmap);
         Paint glow = new Paint(Paint.ANTI_ALIAS_FLAG);
         int cx = Math.round(box[0] + box[2] * (.103f + tab * .200f));
-        float y = bitmap.getHeight() * .603f;
+        float y = bitmap.getHeight() * .705f;
         float half = box[2] * .018f;
         float thickness = Math.max(4, bitmap.getHeight() * .010f);
         glow.setColor(0x70F5D27D);
