@@ -70,7 +70,7 @@ public class GoHomeTouchLayout extends FrameLayout {
         int side = Math.round(9 * getResources().getDisplayMetrics().density);
         lp.leftMargin = side;
         lp.rightMargin = side;
-        lp.bottomMargin = Math.round(3 * getResources().getDisplayMetrics().density);
+        lp.bottomMargin = 0;
         nav.setLayoutParams(lp);
     }
 }

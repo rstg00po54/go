@@ -387,7 +387,7 @@
             <com.badukai.ui.JadeSquareBoardFrame android:id="@+id/boardFrame"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginStart="9dp" android:layout_marginEnd="9dp"
-                android:layout_marginBottom="5dp" android:padding="7dp"
+                android:layout_marginBottom="2dp" android:padding="7dp"
                 android:background="@drawable/jade_game_wood_panel">
                 <com.badukai.ui.GoBoardView android:id="@+id/boardView"
                     android:layout_width="match_parent" android:layout_height="match_parent"
@@ -398,7 +398,7 @@
             <LinearLayout android:id="@+id/gameActionPanel"
                 android:layout_width="match_parent" android:layout_height="96dp"
                 android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
-                android:layout_marginBottom="4dp" android:orientation="vertical">
+                android:layout_marginBottom="0dp" android:orientation="vertical">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="48dp"
                     android:orientation="horizontal" android:gravity="center_vertical">
                     <FrameLayout android:layout_width="0dp" android:layout_weight="1"
@@ -536,7 +536,7 @@
             <com.badukai.ui.JadeBottomNavView android:id="@+id/gameSharedNav"
                 android:layout_width="match_parent" android:layout_height="96dp"
                 android:layout_marginStart="9dp" android:layout_marginEnd="9dp"
-                android:layout_marginBottom="3dp"/>
+                android:layout_marginBottom="0dp"/>
         </LinearLayout>
         <!-- Keep handlers, enabled states and legacy features reachable from More. -->
         <LinearLayout android:layout_width="1dp" android:layout_height="1dp"

@@ -176,6 +176,6 @@
         <com.badukai.ui.JadeBottomNavView android:id="@+id/replaySharedNav"
             android:layout_width="match_parent" android:layout_height="96dp"
             android:layout_marginStart="9dp" android:layout_marginEnd="9dp"
-            android:layout_marginBottom="3dp"/>
+            android:layout_marginBottom="0dp"/>
     </LinearLayout>
 </FrameLayout>
