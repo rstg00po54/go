@@ -52,11 +52,11 @@ class JadeNavTest(unittest.TestCase):
         self.assertIn('private static final String ART = "home/navbar/bar.png";',
                       self.shared)
         self.assertIn("context.getAssets().open(ART)", self.shared)
-        self.assertIn("art.setImageBitmap(selectedHomeArt)", self.shared)
+        self.assertIn("art.setImageBitmap(TAB_IMAGES[tab])", self.shared)
         self.assertIn("ImageView.ScaleType.FIT_CENTER", self.shared)
         self.assertNotIn("ImageView.ScaleType.FIT_XY", self.shared)
         self.assertIn("artworkBounds(full)", self.shared)
-        self.assertIn("Bitmap.createBitmap(full, b[0], b[1], b[2], b[3])", self.shared)
+        self.assertIn("Bitmap.createBitmap(original,", self.shared)
         self.assertIn('{"首页", "对弈", "棋谱", "训练", "设置"}', self.shared)
         self.assertTrue((ROOT / "docs/navbar/bar.png").exists())
         # Confirm the original bar is packaged automatically into assets/home/navbar.
@@ -74,12 +74,12 @@ class JadeNavTest(unittest.TestCase):
             self.assertIn("public static final int " + name + " = " + number + ";",
                           self.shared)
         self.assertIn("public void setSelectedTab(int tab)", self.shared)
-        self.assertIn("inactiveVersion(full)", self.shared)
-        self.assertIn("art.setImageBitmap(tab == HOME ? selectedHomeArt : otherTabArt)", self.shared)
-        self.assertIn("result.setPixel(x, y, blend(source.getPixel(x, y), replacement, fade))", self.shared)
-        self.assertIn("selectedLines[i].setVisibility(tab != HOME && i == tab",
+        self.assertIn("quietOriginalHomeUnderline(variation, bounds)", self.shared)
+        self.assertIn("drawSelectedUnderline(variation, tab, bounds)", self.shared)
+        self.assertIn("bitmap.setPixel(x, y, shade(bitmap.getPixel(x, y), f))", self.shared)
+        self.assertIn("drawSelectedUnderline(",
                       self.shared)
-        self.assertIn("cells[i].setSelected(i == tab)", self.shared)
+        self.assertIn("hitTargets[i].setSelected(i == tab)", self.shared)
         self.assertIn("cell.setOnClickListener(v ->", self.shared)
         self.assertIn("if (listener != null) listener.onTabClick(tab)", self.shared)
 
