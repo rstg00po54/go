@@ -88,6 +88,14 @@ public class ReplayActivity extends Activity {
             }
         }
         if (source != null) load(source);
+        // A chosen action opens only after the replay UI has been laid out.
+        // The caller never has to show Home before selecting a SGF source.
+        String entry = getIntent().getStringExtra("replay_entry_action");
+        if ("history".equals(entry)) {
+            getWindow().getDecorView().post(this::chooseHistory);
+        } else if ("import".equals(entry)) {
+            getWindow().getDecorView().post(this::chooseImport);
+        }
     }
 
     private void loadBackdrop() {
@@ -116,6 +124,14 @@ public class ReplayActivity extends Activity {
                             else shareSgf();
                         })
                 .setNegativeButton("取消", null).show();
+    }
+
+    public void openImportFromNavigation() {
+        chooseImport();
+    }
+
+    public void openHistoryFromNavigation() {
+        chooseHistory();
     }
 
     private void chooseImport() {
