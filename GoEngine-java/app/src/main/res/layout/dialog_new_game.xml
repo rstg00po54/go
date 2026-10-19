@@ -1,241 +1,321 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Jade new-game v2: scrollable sections; preserve control IDs and NPU selection. -->
+<!-- v3: true design-based page, not a restyled legacy form. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/jadeNewGameRoot"
     android:layout_width="match_parent" android:layout_height="match_parent"
-    android:background="@drawable/jade_dialog_surface" android:clipToOutline="true">
-    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
-        android:orientation="vertical">
-        <LinearLayout android:layout_width="match_parent" android:layout_height="84dp"
-            android:orientation="vertical" android:gravity="center"
-            android:background="@drawable/jade_game_header"
-            android:paddingStart="18dp" android:paddingEnd="18dp">
-            <TextView android:layout_width="match_parent" android:layout_height="38dp"
-                android:gravity="center" android:text="新 开 一 局"
-                android:textColor="#F5E4B6" android:textSize="22sp"
-                android:textStyle="bold"/>
-            <TextView android:id="@+id/deviceModelText"
-                android:layout_width="match_parent" android:layout_height="24dp"
-                android:gravity="center" android:singleLine="true"
-                android:ellipsize="end" android:textSize="11sp"
-                android:textColor="#D6E8D1"/>
+    android:background="#08261D">
+    <ImageView android:id="@+id/newGameBackdrop"
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:scaleType="centerCrop"/>
+    <View android:layout_width="match_parent" android:layout_height="match_parent"
+        android:background="@drawable/jade_forest_scrim"
+        android:importantForAccessibility="no"/>
+
+    <LinearLayout android:layout_width="match_parent"
+        android:layout_height="match_parent" android:orientation="vertical">
+
+        <!-- Gold-edged title plaque, separate back and configuration controls. -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="76dp"
+            android:paddingStart="9dp" android:paddingEnd="9dp"
+            android:gravity="center_vertical" android:orientation="horizontal">
+            <TextView android:id="@+id/closeDialogButton"
+                android:layout_width="47dp" android:layout_height="47dp"
+                android:gravity="center" android:text="‹" android:textSize="36sp"
+                android:textColor="#F7DCA0" android:background="@drawable/jade_dark_action"
+                android:contentDescription="返回"/>
+            <TextView android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="57dp" android:layout_marginStart="9dp"
+                android:layout_marginEnd="9dp" android:background="@drawable/jade_dark_title"
+                android:gravity="center" android:fontFamily="serif"
+                android:text="新建对局" android:textStyle="bold"
+                android:textColor="#143B2C" android:textSize="25sp"/>
+            <TextView android:id="@+id/dialogSettingsButton"
+                android:layout_width="47dp" android:layout_height="47dp"
+                android:gravity="center" android:text="⚙" android:textSize="26sp"
+                android:textColor="#F7DCA0" android:background="@drawable/jade_dark_action"
+                android:contentDescription="AI 后端设置"/>
         </LinearLayout>
+
         <ScrollView android:id="@+id/newGameSettingsScroll"
             android:layout_width="match_parent" android:layout_height="0dp"
             android:layout_weight="1" android:fillViewport="false"
-            android:clipToPadding="false" android:fadeScrollbars="true">
-            <LinearLayout android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingStart="17dp" android:paddingEnd="17dp"
-                android:paddingBottom="14dp">
-
-                <LinearLayout android:layout_width="match_parent" android:layout_height="33dp"
-             android:orientation="horizontal" android:gravity="center_vertical"
-             android:layout_marginTop="12dp" android:paddingStart="5dp">
-             <View android:layout_width="3dp" android:layout_height="15dp"
-                 android:background="#B39A62"/>
-             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                 android:layout_marginStart="8dp" android:text="对弈设置"
-                 android:textStyle="bold" android:textSize="14sp" android:textColor="#28543F"/>
-             <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-                 android:layout_weight="1" android:gravity="end"
-                 android:paddingEnd="5dp" android:text="一方落子 · 万般变化"
-                 android:textSize="10sp" android:textColor="#748575"/>
-          </LinearLayout>
-                <LinearLayout android:layout_width="match_parent"
-                    android:layout_height="wrap_content" android:orientation="vertical"
-                    android:background="@drawable/jade_dialog_card">
-                    <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="59dp"
-                android:orientation="horizontal" android:gravity="center_vertical"
-                android:paddingStart="12dp" android:paddingEnd="12dp">
-                <TextView android:layout_width="80dp" android:layout_height="wrap_content"
-                    android:text="棋盘路数" android:textColor="#385743"
-                    android:textSize="13sp"/>
-                <FrameLayout
-                    android:layout_width="0dp" android:layout_height="44dp"
-                    android:layout_weight="1">
-                    <Spinner android:id="@+id/sizeSpinner"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/jade_dialog_field"
-                        android:paddingStart="12dp" android:paddingEnd="29dp"
-                        android:spinnerMode="dropdown"/>
-                    <TextView android:layout_width="wrap_content"
-                        android:layout_height="match_parent" android:layout_gravity="end"
-                        android:gravity="center" android:layout_marginEnd="12dp"
-                        android:importantForAccessibility="no" android:text="⌄"
-                        android:textColor="#3C7259" android:textSize="21sp"/>
-                </FrameLayout>
-            </LinearLayout>
-            <View android:layout_width="match_parent" android:layout_height="1dp"
-            android:layout_marginStart="12dp" android:layout_marginEnd="12dp"
-            android:background="#E6DFC9"/>
-                    <LinearLayout android:layout_width="match_parent"
-                        android:layout_height="60dp" android:orientation="horizontal"
-                        android:gravity="center_vertical" android:paddingStart="12dp"
-                        android:paddingEnd="10dp">
-                        <TextView android:layout_width="80dp"
-                            android:layout_height="wrap_content" android:text="执棋颜色"
-                            android:textColor="#385743" android:textSize="13sp"/>
-                        <RadioGroup android:id="@+id/colorGroup"
-                            android:layout_width="0dp" android:layout_weight="1"
-                            android:layout_height="match_parent"
-                            android:gravity="center_vertical" android:orientation="horizontal">
-                            <RadioButton android:id="@+id/randomRadio"
-                                android:layout_width="0dp" android:layout_weight="1"
-                                android:layout_height="match_parent" android:minWidth="0dp"
-                                android:padding="0dp" android:gravity="center_vertical"
-                                android:buttonTint="#347657" android:text="猜先"
-                                android:textColor="#214D3A" android:textSize="12sp"/>
-                            <RadioButton android:id="@+id/blackRadio"
-                                android:layout_width="0dp" android:layout_weight="1"
-                                android:layout_height="match_parent" android:minWidth="0dp"
-                                android:padding="0dp" android:gravity="center_vertical"
-                                android:buttonTint="#347657" android:text="执黑"
-                                android:textColor="#214D3A" android:textSize="12sp"/>
-                            <RadioButton android:id="@+id/whiteRadio"
-                                android:layout_width="0dp" android:layout_weight="1"
-                                android:layout_height="match_parent" android:minWidth="0dp"
-                                android:padding="0dp" android:gravity="center_vertical"
-                                android:buttonTint="#347657" android:text="执白"
-                                android:textColor="#214D3A" android:textSize="12sp"/>
-                        </RadioGroup>
-                    </LinearLayout>
-                    <View android:layout_width="match_parent" android:layout_height="1dp"
-            android:layout_marginStart="12dp" android:layout_marginEnd="12dp"
-            android:background="#E6DFC9"/>
-                    <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="59dp"
-                android:orientation="horizontal" android:gravity="center_vertical"
-                android:paddingStart="12dp" android:paddingEnd="12dp">
-                <TextView android:layout_width="80dp" android:layout_height="wrap_content"
-                    android:text="对局条件" android:textColor="#385743"
-                    android:textSize="13sp"/>
-                <FrameLayout
-                    android:layout_width="0dp" android:layout_height="44dp"
-                    android:layout_weight="1">
-                    <Spinner android:id="@+id/conditionSpinner"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/jade_dialog_field"
-                        android:paddingStart="12dp" android:paddingEnd="29dp"
-                        android:spinnerMode="dropdown"/>
-                    <TextView android:layout_width="wrap_content"
-                        android:layout_height="match_parent" android:layout_gravity="end"
-                        android:gravity="center" android:layout_marginEnd="12dp"
-                        android:importantForAccessibility="no" android:text="⌄"
-                        android:textColor="#3C7259" android:textSize="21sp"/>
-                </FrameLayout>
-            </LinearLayout>
-            
+            android:clipToPadding="false" android:scrollbars="none">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:paddingStart="10dp"
+                android:paddingEnd="10dp" android:paddingBottom="8dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="31dp"
+    android:layout_marginTop="7dp" android:orientation="horizontal" android:gravity="center_vertical">
+    <TextView android:layout_width="wrap_content" android:layout_height="match_parent"
+        android:gravity="center_vertical" android:text="▦  棋盘大小"
+        android:textColor="#F2DCA0" android:textStyle="bold" android:textSize="15sp"/>
+    
+</LinearLayout>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:background="@drawable/jade_dark_card" android:orientation="horizontal"
+                    android:paddingStart="5dp" android:paddingEnd="5dp" android:paddingTop="7dp"
+                    android:paddingBottom="7dp" android:gravity="center_vertical">
+                    <com.badukai.ui.JadeBoardSizeView
+    android:id="@+id/boardTile9"
+    android:layout_width="0dp" android:layout_height="103dp"
+    android:layout_weight="1" android:layout_margin="1dp"/>
+<com.badukai.ui.JadeBoardSizeView
+    android:id="@+id/boardTile11"
+    android:layout_width="0dp" android:layout_height="103dp"
+    android:layout_weight="1" android:layout_margin="1dp"/>
+<com.badukai.ui.JadeBoardSizeView
+    android:id="@+id/boardTile13"
+    android:layout_width="0dp" android:layout_height="103dp"
+    android:layout_weight="1" android:layout_margin="1dp"/>
+<com.badukai.ui.JadeBoardSizeView
+    android:id="@+id/boardTile15"
+    android:layout_width="0dp" android:layout_height="103dp"
+    android:layout_weight="1" android:layout_margin="1dp"/>
+<com.badukai.ui.JadeBoardSizeView
+    android:id="@+id/boardTile19"
+    android:layout_width="0dp" android:layout_height="103dp"
+    android:layout_weight="1" android:layout_margin="1dp"/>
                 </LinearLayout>
 
-                <LinearLayout android:layout_width="match_parent" android:layout_height="33dp"
-             android:orientation="horizontal" android:gravity="center_vertical"
-             android:layout_marginTop="12dp" android:paddingStart="5dp">
-             <View android:layout_width="3dp" android:layout_height="15dp"
-                 android:background="#B39A62"/>
-             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                 android:layout_marginStart="8dp" android:text="AI 棋手"
-                 android:textStyle="bold" android:textSize="14sp" android:textColor="#28543F"/>
-             <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-                 android:layout_weight="1" android:gravity="end"
-                 android:paddingEnd="5dp" android:text="离线模型 · 设备加速"
-                 android:textSize="10sp" android:textColor="#748575"/>
-          </LinearLayout>
-                <LinearLayout android:layout_width="match_parent"
-                    android:layout_height="wrap_content" android:orientation="vertical"
-                    android:background="@drawable/jade_dialog_card">
-                    <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="59dp"
-                android:orientation="horizontal" android:gravity="center_vertical"
-                android:paddingStart="12dp" android:paddingEnd="12dp">
-                <TextView android:layout_width="80dp" android:layout_height="wrap_content"
-                    android:text="运行后端" android:textColor="#385743"
-                    android:textSize="13sp"/>
-                <FrameLayout
-                    android:layout_width="0dp" android:layout_height="44dp"
-                    android:layout_weight="1">
-                    <Spinner android:id="@+id/backendSpinner"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/jade_dialog_field"
-                        android:paddingStart="12dp" android:paddingEnd="29dp"
-                        android:spinnerMode="dropdown"/>
-                    <TextView android:layout_width="wrap_content"
-                        android:layout_height="match_parent" android:layout_gravity="end"
-                        android:gravity="center" android:layout_marginEnd="12dp"
-                        android:importantForAccessibility="no" android:text="⌄"
-                        android:textColor="#3C7259" android:textSize="21sp"/>
-                </FrameLayout>
-            </LinearLayout>
-            
+                <LinearLayout android:layout_width="match_parent" android:layout_height="31dp"
+    android:layout_marginTop="7dp" android:orientation="horizontal" android:gravity="center_vertical">
+    <TextView android:layout_width="wrap_content" android:layout_height="match_parent"
+        android:gravity="center_vertical" android:text="♟  对弈模式"
+        android:textColor="#F2DCA0" android:textStyle="bold" android:textSize="15sp"/>
+    
+</LinearLayout>
+                <RadioGroup android:id="@+id/modeGroup"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:padding="3dp"
+                    android:background="@drawable/jade_dark_card">
+                    <RadioButton android:id="@+id/modeAiButton"
+    android:layout_width="0dp" android:layout_height="62dp" android:layout_weight="1"
+    android:layout_margin="3dp" android:button="@null"
+    android:background="@drawable/jade_dark_choice"
+    android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
+    android:text="♙&#10;人机对弈" android:textSize="13sp" android:textColor="#F5F1DB"
+    android:textStyle="bold" android:minWidth="0dp"
+    android:enabled="true" android:stateListAnimator="@null"/>
+                    <RadioButton android:id="@+id/modeLocalButton"
+    android:layout_width="0dp" android:layout_height="62dp" android:layout_weight="1"
+    android:layout_margin="3dp" android:button="@null"
+    android:background="@drawable/jade_dark_choice"
+    android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
+    android:text="♟&#10;人人对弈 · 待开放" android:textSize="13sp" android:textColor="#F5F1DB"
+    android:textStyle="bold" android:minWidth="0dp"
+    android:enabled="false" android:stateListAnimator="@null"/>
+                    <RadioButton android:id="@+id/modeReplayButton"
+    android:layout_width="0dp" android:layout_height="62dp" android:layout_weight="1"
+    android:layout_margin="3dp" android:button="@null"
+    android:background="@drawable/jade_dark_choice"
+    android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
+    android:text="▣&#10;载入棋谱" android:textSize="13sp" android:textColor="#F5F1DB"
+    android:textStyle="bold" android:minWidth="0dp"
+    android:enabled="true" android:stateListAnimator="@null"/>
+                </RadioGroup>
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="31dp"
+    android:layout_marginTop="7dp" android:orientation="horizontal" android:gravity="center_vertical">
+    <TextView android:layout_width="wrap_content" android:layout_height="match_parent"
+        android:gravity="center_vertical" android:text="▥  AI 等级"
+        android:textColor="#F2DCA0" android:textStyle="bold" android:textSize="15sp"/>
+    
+</LinearLayout>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:padding="9dp"
+                    android:background="@drawable/jade_dark_card">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="29dp"
+                        android:orientation="horizontal" android:gravity="center_vertical">
+                        <TextView android:layout_width="0dp" android:layout_weight="1"
+                            android:layout_height="wrap_content" android:text="Human SL · 模拟人类棋力"
+                            android:textColor="#C9D9C2" android:textSize="11sp"/>
+                        <TextView android:id="@+id/aiRankValueText"
+                            android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="12级" android:textStyle="bold"
+                            android:textColor="#F4D27A" android:textSize="20sp"/>
+                    </LinearLayout>
+                    <SeekBar android:id="@+id/rankSeekBar"
+                        android:layout_width="match_parent" android:layout_height="36dp"
+                        android:max="17" android:progress="11"
+                        android:progressDrawable="@drawable/jade_dark_slider"
+                        android:thumb="@drawable/jade_slider_thumb"
+                        android:splitTrack="false"/>
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView android:layout_width="0dp" android:layout_weight="1"
+                            android:text="1级" android:gravity="start"
+                            android:textColor="#CED4C7" android:textSize="10sp"/>
+                        <TextView android:layout_width="0dp" android:layout_weight="1"
+                            android:text="5级" android:gravity="center"
+                            android:textColor="#CED4C7" android:textSize="10sp"/>
+                        <TextView android:layout_width="0dp" android:layout_weight="1"
+                            android:text="10级" android:gravity="center"
+                            android:textColor="#CED4C7" android:textSize="10sp"/>
+                        <TextView android:layout_width="0dp" android:layout_weight="1"
+                            android:text="14级" android:gravity="center"
+                            android:textColor="#CED4C7" android:textSize="10sp"/>
+                        <TextView android:layout_width="0dp" android:layout_weight="1"
+                            android:text="18级" android:gravity="end"
+                            android:textColor="#CED4C7" android:textSize="10sp"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="31dp"
+    android:layout_marginTop="7dp" android:orientation="horizontal" android:gravity="center_vertical">
+    <TextView android:layout_width="wrap_content" android:layout_height="match_parent"
+        android:gravity="center_vertical" android:text="◉  执子方"
+        android:textColor="#F2DCA0" android:textStyle="bold" android:textSize="15sp"/>
+    
+</LinearLayout>
+                <RadioGroup android:id="@+id/colorGroup"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:padding="3dp"
+                    android:background="@drawable/jade_dark_card">
+                    <RadioButton android:id="@+id/blackRadio"
+    android:layout_width="0dp" android:layout_height="62dp" android:layout_weight="1"
+    android:layout_margin="3dp" android:button="@null"
+    android:background="@drawable/jade_dark_choice"
+    android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
+    android:text="●  黑先" android:textSize="13sp" android:textColor="#F5F1DB"
+    android:textStyle="bold" android:minWidth="0dp"
+    android:enabled="true" android:stateListAnimator="@null"/>
+                    <RadioButton android:id="@+id/whiteRadio"
+    android:layout_width="0dp" android:layout_height="62dp" android:layout_weight="1"
+    android:layout_margin="3dp" android:button="@null"
+    android:background="@drawable/jade_dark_choice"
+    android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
+    android:text="○  白先" android:textSize="13sp" android:textColor="#F5F1DB"
+    android:textStyle="bold" android:minWidth="0dp"
+    android:enabled="true" android:stateListAnimator="@null"/>
+                    <RadioButton android:id="@+id/randomRadio"
+    android:layout_width="0dp" android:layout_height="62dp" android:layout_weight="1"
+    android:layout_margin="3dp" android:button="@null"
+    android:background="@drawable/jade_dark_choice"
+    android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
+    android:text="⚄  随机" android:textSize="13sp" android:textColor="#F5F1DB"
+    android:textStyle="bold" android:minWidth="0dp"
+    android:enabled="true" android:stateListAnimator="@null"/>
+                </RadioGroup>
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="31dp"
+    android:layout_marginTop="7dp" android:orientation="horizontal" android:gravity="center_vertical">
+    <TextView android:layout_width="wrap_content" android:layout_height="match_parent"
+        android:gravity="center_vertical" android:text="▣  AI 推理后端"
+        android:textColor="#F2DCA0" android:textStyle="bold" android:textSize="15sp"/>
+    
+</LinearLayout>
+                <LinearLayout android:id="@+id/aiBackendSection"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:padding="7dp" android:orientation="vertical"
+                    android:background="@drawable/jade_dark_card">
+                    <RadioGroup android:id="@+id/backendGroup"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <RadioButton android:id="@+id/backendCpuButton"
+    android:layout_width="0dp" android:layout_height="62dp" android:layout_weight="1"
+    android:layout_margin="3dp" android:button="@null"
+    android:background="@drawable/jade_dark_choice"
+    android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
+    android:text="▣&#10;CPU" android:textSize="13sp" android:textColor="#F5F1DB"
+    android:textStyle="bold" android:minWidth="0dp"
+    android:enabled="true" android:stateListAnimator="@null"/>
+                        <RadioButton android:id="@+id/backendGpuButton"
+    android:layout_width="0dp" android:layout_height="62dp" android:layout_weight="1"
+    android:layout_margin="3dp" android:button="@null"
+    android:background="@drawable/jade_dark_choice"
+    android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
+    android:text="◈&#10;GPU" android:textSize="13sp" android:textColor="#F5F1DB"
+    android:textStyle="bold" android:minWidth="0dp"
+    android:enabled="true" android:stateListAnimator="@null"/>
+                        <RadioButton android:id="@+id/backendNpuButton"
+    android:layout_width="0dp" android:layout_height="62dp" android:layout_weight="1"
+    android:layout_margin="3dp" android:button="@null"
+    android:background="@drawable/jade_dark_choice"
+    android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
+    android:text="✥&#10;NPU" android:textSize="13sp" android:textColor="#F5F1DB"
+    android:textStyle="bold" android:minWidth="0dp"
+    android:enabled="true" android:stateListAnimator="@null"/>
+                    </RadioGroup>
+                    <TextView android:id="@+id/modelInfoText"
+                        android:layout_width="match_parent" android:layout_height="36dp"
+                        android:layout_marginTop="4dp" android:gravity="center_vertical"
+                        android:background="@drawable/jade_dark_outline"
+                        android:paddingStart="11dp"
+                        android:text="模型     Human SL b18（人类棋力）"
+                        android:textColor="#EEEAD7" android:textSize="12sp"/>
+                    <TextView android:id="@+id/deviceModelText"
+                        android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp" android:singleLine="true"
+                        android:ellipsize="end" android:textSize="10sp"
+                        android:textColor="#C2CFBB"/>
                     <TextView android:id="@+id/hardwareInfoText"
                         android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:minHeight="46dp" android:paddingStart="13dp"
-                        android:paddingEnd="13dp" android:paddingBottom="9dp"
-                        android:lineSpacingExtra="2dp"
-                        android:textColor="#68816C" android:textSize="10sp"/>
-                    <View android:layout_width="match_parent" android:layout_height="1dp"
-            android:layout_marginStart="12dp" android:layout_marginEnd="12dp"
-            android:background="#E6DFC9"/>
-                    <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="59dp"
-                android:orientation="horizontal" android:gravity="center_vertical"
-                android:paddingStart="12dp" android:paddingEnd="12dp">
-                <TextView android:layout_width="80dp" android:layout_height="wrap_content"
-                    android:text="棋力等级" android:textColor="#385743"
-                    android:textSize="13sp"/>
-                <FrameLayout
-                    android:layout_width="0dp" android:layout_height="44dp"
-                    android:layout_weight="1">
-                    <Spinner android:id="@+id/difficultySpinner"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="@drawable/jade_dialog_field"
-                        android:paddingStart="12dp" android:paddingEnd="29dp"
-                        android:spinnerMode="dropdown"/>
-                    <TextView android:layout_width="wrap_content"
-                        android:layout_height="match_parent" android:layout_gravity="end"
-                        android:gravity="center" android:layout_marginEnd="12dp"
-                        android:importantForAccessibility="no" android:text="⌄"
-                        android:textColor="#3C7259" android:textSize="21sp"/>
-                </FrameLayout>
-            </LinearLayout>
-            
+                        android:layout_marginTop="3dp"
+                        android:maxLines="3" android:ellipsize="end"
+                        android:textSize="10sp" android:textColor="#A6C0AD"/>
                 </LinearLayout>
-                <TextView android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:gravity="center"
-                    android:text="棋力由 Human SL 决定 · 运行后端可切换"
-                    android:textColor="#738371" android:textSize="10sp"/>
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="31dp"
+    android:layout_marginTop="7dp" android:orientation="horizontal" android:gravity="center_vertical">
+    <TextView android:layout_width="wrap_content" android:layout_height="match_parent"
+        android:gravity="center_vertical" android:text="♢  对局条件"
+        android:textColor="#F2DCA0" android:textStyle="bold" android:textSize="15sp"/>
+    
+</LinearLayout>
+                <LinearLayout android:layout_width="match_parent"
+                    android:layout_height="51dp" android:background="@drawable/jade_dark_card"
+                    android:paddingStart="12dp" android:paddingEnd="10dp"
+                    android:gravity="center_vertical" android:orientation="horizontal">
+                    <TextView android:layout_width="85dp" android:layout_height="wrap_content"
+                        android:text="分先 / 让子" android:textColor="#E4E2CE"
+                        android:textSize="12sp"/>
+                    <Spinner android:id="@+id/conditionSpinner"
+                        android:layout_width="0dp" android:layout_height="38dp"
+                        android:layout_weight="1" android:background="@drawable/jade_dark_outline"
+                        android:paddingStart="9dp" android:spinnerMode="dropdown"/>
+                </LinearLayout>
             </LinearLayout>
         </ScrollView>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="86dp"
-            android:gravity="center" android:orientation="vertical"
-            android:paddingStart="23dp" android:paddingEnd="23dp"
-            android:background="@drawable/jade_dialog_footer">
+
+        <FrameLayout android:layout_width="match_parent" android:layout_height="76dp"
+            android:paddingStart="19dp" android:paddingEnd="19dp"
+            android:paddingTop="8dp" android:paddingBottom="7dp"
+            android:background="@drawable/jade_dark_footer">
             <Button android:id="@+id/startGameButton"
-                android:layout_width="match_parent" android:layout_height="51dp"
-                android:background="@drawable/jade_dialog_launch"
-                android:text="开始对局  ›" android:textAllCaps="false"
-                android:textColor="#FFF2CD" android:textSize="17sp"
-                android:textStyle="bold" android:stateListAnimator="@null"/>
+                android:layout_width="match_parent" android:layout_height="match_parent"
+                android:background="@drawable/jade_dark_action"
+                android:text="开 始 对 局" android:textStyle="bold"
+                android:textColor="#F4EACF" android:textSize="21sp"
+                android:fontFamily="serif" android:textAllCaps="false"
+                android:stateListAnimator="@null"/>
+        </FrameLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="60dp"
+            android:orientation="horizontal" android:background="@drawable/jade_dark_footer">
+            <TextView android:id="@+id/newGameHomeTab"
+    android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+    android:gravity="center" android:clickable="true"
+    android:text="⌂&#10;首页" android:textSize="12sp"
+    android:textColor="#DDDFD1"/>
+            <TextView android:id="@+id/newGameRecordTab"
+    android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+    android:gravity="center" android:clickable="true"
+    android:text="▣&#10;棋谱" android:textSize="12sp"
+    android:textColor="#DDDFD1"/>
+            <TextView android:id="@+id/newGamePlayTab"
+    android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+    android:gravity="center" android:clickable="true"
+    android:text="◉&#10;对弈" android:textSize="12sp"
+    android:textColor="#F5D990"/>
+            <TextView android:id="@+id/newGameTrainingTab"
+    android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+    android:gravity="center" android:clickable="true"
+    android:text="✧&#10;训练" android:textSize="12sp"
+    android:textColor="#DDDFD1"/>
+            <TextView android:id="@+id/newGameSettingsTab"
+    android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
+    android:gravity="center" android:clickable="true"
+    android:text="⚙&#10;设置" android:textSize="12sp"
+    android:textColor="#DDDFD1"/>
         </LinearLayout>
     </LinearLayout>
-    <Button android:id="@+id/closeDialogButton"
-        android:layout_width="42dp" android:layout_height="42dp"
-        android:layout_gravity="top|end" android:layout_marginEnd="7dp"
-        android:layout_marginTop="8dp" android:minWidth="0dp"
-        android:minHeight="0dp" android:padding="0dp"
-        android:background="@android:color/transparent"
-        android:text="×" android:textAllCaps="false"
-        android:contentDescription="关闭新对局设置"
-        android:textColor="#F2DBA4" android:textSize="27sp"/>
 </FrameLayout>

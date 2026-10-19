@@ -68,7 +68,7 @@ class JadeUiTest(unittest.TestCase):
                      "homeRecordButton", "homeTrainingButton"):
             self.assertIn("R.id." + name, self.home_java)
 
-    def test_new_game_dialog_preserves_npu_and_inputs(self):
+    def test_new_game_is_real_selection_page(self):
         dialog = ET.parse(ROOT / "app/src/main/res/layout/dialog_new_game.xml").getroot()
         controls = {}
         for view in dialog.iter():
@@ -78,25 +78,43 @@ class JadeUiTest(unittest.TestCase):
                 self.assertNotIn(name, controls)
                 controls[name] = view
 
-        for name in ("deviceModelText", "hardwareInfoText", "sizeSpinner",
-                     "conditionSpinner", "colorGroup", "randomRadio",
-                     "blackRadio", "whiteRadio", "backendSpinner",
-                     "difficultySpinner", "closeDialogButton", "startGameButton"):
+        for size in (9, 11, 13, 15, 19):
+            tile = controls["boardTile" + str(size)]
+            self.assertEqual("com.badukai.ui.JadeBoardSizeView", tile.tag)
+            self.assertIn("R.id.boardTile" + str(size), self.main_java)
+        self.assertNotIn("sizeSpinner", controls)
+        self.assertNotIn("backendSpinner", controls)
+        self.assertNotIn("difficultySpinner", controls)
+        self.assertEqual("SeekBar", controls["rankSeekBar"].tag)
+        self.assertIn("rankSeek.setOnSeekBarChangeListener", self.main_java)
+        for name in ("modeGroup", "modeAiButton", "modeLocalButton", "modeReplayButton",
+                     "colorGroup", "blackRadio", "whiteRadio", "randomRadio",
+                     "backendGroup", "backendCpuButton", "backendGpuButton",
+                     "backendNpuButton", "conditionSpinner", "deviceModelText",
+                     "hardwareInfoText", "aiRankValueText", "startGameButton",
+                     "closeDialogButton", "dialogSettingsButton", "newGameHomeTab",
+                     "newGameRecordTab", "newGamePlayTab", "newGameTrainingTab",
+                     "newGameSettingsTab", "newGameBackdrop"):
             with self.subTest(control=name):
                 self.assertIn(name, controls)
                 self.assertIn("R.id." + name, self.main_java)
 
-        self.assertIn("newGameSettingsScroll", controls)
         self.assertEqual("ScrollView", controls["newGameSettingsScroll"].tag)
-        self.assertEqual("@drawable/jade_dialog_launch",
+        self.assertEqual("@drawable/jade_dark_action",
                          controls["startGameButton"].get(ANDROID + "background"))
-        self.assertIn("JADE_NEW_GAME_DIALOG_V2", self.main_java)
-        self.assertEqual(4, self.main_java.count("R.layout.item_jade_spinner,"))
-        self.assertEqual(4, self.main_java.count("setDropDownViewResource(R.layout.item_jade_spinner_dropdown)"))
-        ET.parse(ROOT / "app/src/main/res/layout/item_jade_spinner.xml")
-        ET.parse(ROOT / "app/src/main/res/layout/item_jade_spinner_dropdown.xml")
-        self.assertIn("supportsMediaTekGame", self.main_java)
-        self.assertIn("hasBundledNpuModel(requestedBoardSize)", self.main_java)
+        self.assertIn("JADE_NEW_GAME_DIALOG_V3", self.main_java)
+        self.assertIn("JADE_NEW_GAME_START", self.main_java)
+        self.assertIn("hasBundledNpuModel(requestedSize)", self.main_java)
+        self.assertIn("npuChoice.setEnabled(npuSupported)", self.main_java)
+        self.assertIn("gpuChoice.setEnabled(gpuBundled", self.main_java)
+        self.assertIn("content.findViewById(R.id.modeLocalButton).setEnabled(false)", self.main_java)
+        self.assertEqual("match_parent", dialog.get(ANDROID + "layout_height"))
+        self.assertEqual("match_parent", dialog.get(ANDROID + "layout_width"))
+        ET.parse(ROOT / "app/src/main/res/layout/item_jade_dark_spinner.xml")
+        ET.parse(ROOT / "app/src/main/res/layout/item_jade_dark_dropdown.xml")
+        source = (ROOT / "app/src/main/java/com/badukai/ui/JadeBoardSizeView.java").read_text(encoding="utf-8")
+        self.assertIn("public void setBoardSize(int n)", source)
+        self.assertIn("for(int i=0;i<boardSize;i++)", source)
 
     def test_jade_drawables_are_valid(self):
         for path in DRAWABLES.glob("jade_*.xml"):
