@@ -124,6 +124,7 @@ public class MainActivity extends AppCompatActivity {
     private GpuStartupLogProgress gpuProgressTracker;
     private int gpuStartupGeneration;
     private long gpuStartupStartedMs;
+    private android.widget.ProgressBar winRateProgress;
     private TextView aiWinRateText;
     private TextView aiMoveTimeText;
     private TextView playerWinRateText;
@@ -244,6 +245,7 @@ public class MainActivity extends AppCompatActivity {
         boardView.setOnIntersectionClickListener(this::onBoardTap);
         aiWinRateText.setOnClickListener(v -> showWinRateChart());
         playerWinRateText.setOnClickListener(v -> showWinRateChart());
+        winRateProgress.setOnClickListener(v -> showWinRateChart());
         aiBattleButton.setOnClickListener(v -> showNewGameDialog());
         newGameButton.setOnClickListener(v -> showNewGameDialog());
         backButton.setOnClickListener(v -> showMainPage());
@@ -699,6 +701,7 @@ public class MainActivity extends AppCompatActivity {
         statusText = findViewById(R.id.statusText);
         nnAreaScoreText = findViewById(R.id.nnAreaScoreText);
         aiWinRateText = findViewById(R.id.aiWinRateText);
+        winRateProgress = findViewById(R.id.winRateProgress);
         aiMoveTimeText = findViewById(R.id.aiMoveTimeText);
         playerWinRateText = findViewById(R.id.playerWinRateText);
         aiCaptureText = findViewById(R.id.aiCaptureText);
@@ -931,6 +934,8 @@ public class MainActivity extends AppCompatActivity {
         boolean available = turn < blackWinHistory.size() && Float.isFinite(blackWinHistory.get(turn));
         float black = available ? blackWinHistory.get(turn) : Float.NaN;
         float white = available ? whiteWinHistory.get(turn) : Float.NaN;
+        // Progress is always the black side; keep the empty state neutral at 50%.
+        winRateProgress.setProgress(available ? Math.round(black * 1000f) : 500);
         float aiRate = playerColor == StoneColor.BLACK ? white : black;
         float myRate = playerColor == StoneColor.BLACK ? black : white;
         String aiName = playerColor == StoneColor.BLACK ? "白" : "黑";

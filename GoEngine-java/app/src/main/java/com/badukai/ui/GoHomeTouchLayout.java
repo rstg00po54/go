@@ -46,14 +46,16 @@ public class GoHomeTouchLayout extends FrameLayout {
     public void refreshPositions() { post(this::positionButtons); }
     private void positionButtons() {
         if (getWidth() == 0 || getHeight() == 0) return;
-        // The background is a full-screen scene, while controls are independently rendered.
-        place(com.badukai.R.id.homeTitle,.055f,.023f,.78f,.055f);
-        place(com.badukai.R.id.homeSubtitle,.06f,.082f,.65f,.032f);
-        place(com.badukai.R.id.homeSettingsButton,.865f,.018f,.115f,.066f);
+        // Layer a subtle tint behind the title, never behind the jade artwork.
+        place(com.badukai.R.id.homeTopShade, 0f, 0f, 1f, .25f);
+        place(com.badukai.R.id.homeTitle, .067f, .041f, .79f, .058f);
+        place(com.badukai.R.id.homeSubtitle, .072f, .104f, .82f, .035f);
+        place(com.badukai.R.id.homeLocalBadge, .07f, .155f, .57f, .040f);
+        place(com.badukai.R.id.homeSettingsButton, .855f, .025f, .125f, .065f);
         // Preserve each artwork's intrinsic aspect ratio and center around its original position.
-        placeArt(com.badukai.R.id.aiBattleButton, .067f, .678f, .866f, .112f);
-        placeArt(com.badukai.R.id.homeRecordButton, .052f, .8015f, .422f, .101f);
-        placeArt(com.badukai.R.id.homeTrainingButton, .526f, .8015f, .422f, .101f);
+        placeArt(com.badukai.R.id.aiBattleButton, .067f, .662f, .866f, .112f);
+        placeArt(com.badukai.R.id.homeRecordButton, .052f, .787f, .422f, .101f);
+        placeArt(com.badukai.R.id.homeTrainingButton, .526f, .787f, .422f, .101f);
         // Match the PNG's intrinsic aspect ratio. fitCenter inside a short box
         // previously shrank the artwork to a tiny strip.
         View nav = findViewById(com.badukai.R.id.homeNavBarArtwork);
