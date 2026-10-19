@@ -60,14 +60,17 @@ public class GoHomeTouchLayout extends FrameLayout {
         // its five invisible touch hotspots. It uses the same proportions on
         // home as on replay/game/training.
         View nav = findViewById(com.badukai.R.id.homeNavBarArtwork);
-        int width = Math.round(getWidth() * .94f);
-        int preferred = Math.round(96 * getResources().getDisplayMetrics().density);
-        int height = Math.min(preferred, Math.round(getHeight() * .15f));
-        int left = (getWidth() - width) / 2;
-        int top = getHeight() - height - Math.round(getHeight() * .022f);
-        LayoutParams lp = new LayoutParams(width, height);
-        lp.leftMargin = left;
-        lp.topMargin = top;
+        // Match the game, replay, training and new-game footers exactly:
+        // 96dp high, 9dp on each side and 3dp above the window bottom.
+        // Do not use a fraction of screen height: it shifts with aspect ratio.
+        LayoutParams lp = new LayoutParams(
+                LayoutParams.MATCH_PARENT,
+                Math.round(96 * getResources().getDisplayMetrics().density),
+                android.view.Gravity.BOTTOM);
+        int side = Math.round(9 * getResources().getDisplayMetrics().density);
+        lp.leftMargin = side;
+        lp.rightMargin = side;
+        lp.bottomMargin = Math.round(3 * getResources().getDisplayMetrics().density);
         nav.setLayoutParams(lp);
     }
 }
