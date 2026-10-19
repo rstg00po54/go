@@ -51,10 +51,8 @@ public final class JadeIconBinder {
 
     /** Fit the provided 25 game art PNGs to compact, clickable native widgets. */
     public static void bindGame(View root) {
-        left(root, R.id.gameTitleText, R.drawable.ic_board_grid_gold, 19);
-        left(root, R.id.gameModeSummaryText, R.drawable.ic_robot_ivory, 19);
-        left(root, R.id.gameRankSummaryText, R.drawable.ic_difficulty_gold, 19);
-        left(root, R.id.gameBackendSummaryText, R.drawable.ic_npu_ivory, 19);
+        // Game summary icons are independent 21dp ImageViews in the layout,
+        // not compound text drawables. This keeps their values aligned.
         left(root, R.id.passButton, R.drawable.ic_pass_jade, 21);
         left(root, R.id.undoButton, R.drawable.ic_undo_jade, 21);
         left(root, R.id.situationButton, R.drawable.ic_territory_jade, 21);

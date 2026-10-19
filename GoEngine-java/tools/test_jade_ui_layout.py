@@ -339,6 +339,50 @@ class JadeUiTest(unittest.TestCase):
                 self.assertIn(name, self.ids)
                 self.assertIn("R.id." + name, self.main_java)
 
+    def test_four_game_facts_have_aligned_image_and_value_rows(self):
+        # Unlike drawableStart, a real ImageView gives every icon the same
+        # measured 21dp box, independent of its PNG transparent margins.
+        parents = {child: parent
+                   for parent in self.root.iter() for child in parent}
+        facts = (
+            ("gameTitleText", "ic_board_grid_gold", "棋盘大小"),
+            ("gameModeSummaryText", "ic_robot_ivory", "对弈模式"),
+            ("gameRankSummaryText", "ic_difficulty_gold", "AI难度"),
+            ("gameBackendSummaryText", "ic_npu_ivory", "本地推理"),
+        )
+        summary = None
+        for view_id, icon_name, caption in facts:
+            with self.subTest(fact=view_id):
+                value = self.ids[view_id]
+                self.assertEqual("TextView", value.tag)
+                self.assertIsNone(value.get(ANDROID + "drawableStart"))
+                row = parents[value]
+                self.assertEqual("LinearLayout", row.tag)
+                self.assertEqual("28dp", row.get(ANDROID + "layout_height"))
+                self.assertEqual("horizontal", row.get(ANDROID + "orientation"))
+                icon, text = list(row)
+                self.assertIs(text, value)
+                self.assertEqual("ImageView", icon.tag)
+                self.assertEqual("@drawable/" + icon_name, icon.get(ANDROID + "src"))
+                self.assertEqual("21dp", icon.get(ANDROID + "layout_width"))
+                self.assertEqual("21dp", icon.get(ANDROID + "layout_height"))
+                cell = parents[row]
+                self.assertEqual("0dp", cell.get(ANDROID + "layout_width"))
+                self.assertEqual("1", cell.get(ANDROID + "layout_weight"))
+                self.assertEqual("vertical", cell.get(ANDROID + "orientation"))
+                caption_view = list(cell)[1]
+                self.assertEqual(caption, caption_view.get(ANDROID + "text"))
+                self.assertEqual("18dp", caption_view.get(ANDROID + "layout_height"))
+                self.assertEqual("center", caption_view.get(ANDROID + "gravity"))
+                if summary is None:
+                    summary = parents[cell]
+                self.assertIs(summary, parents[cell])
+        self.assertEqual("74dp", summary.get(ANDROID + "layout_height"))
+        self.assertEqual(7, len(summary))  # Four cells and three gold dividers
+        binder = (ROOT / "app/src/main/java/com/badukai/ui/JadeIconBinder.java").read_text(encoding="utf-8")
+        for view_id, _, _ in facts:
+            self.assertNotIn("R.id." + view_id, binder)
+
     def test_game_icons_and_drawables_are_present(self):
         png = ROOT / "app/src/main/res/drawable-nodpi"
         paths = set()
