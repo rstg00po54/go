@@ -48,37 +48,40 @@ class JadeNavTest(unittest.TestCase):
                                  (self.home_layout, self.dialog,
                                   self.replay_layout, self.training_layout)))
 
-    def test_original_illustrated_artwork_is_restored(self):
-        self.assertIn('private static final String SOURCE = "home/navbar/bar.png";',
+    def test_layered_background_and_exact_nav_pngs(self):
+        self.assertIn('private static final String BACKGROUND_ASSET = "home/navbar/bar0.png";',
                       self.shared)
-        self.assertIn("context.getAssets().open(SOURCE)", self.shared)
-        self.assertIn("art.setImageBitmap(TAB_IMAGES[tab])", self.shared)
+        self.assertIn("context.getAssets().open(BACKGROUND_ASSET)", self.shared)
         self.assertIn("ImageView.ScaleType.FIT_CENTER", self.shared)
         self.assertNotIn("ImageView.ScaleType.FIT_XY", self.shared)
-        self.assertIn("artBounds(original)", self.shared)
-        self.assertIn("Bitmap.createBitmap(original,", self.shared)
+        self.assertIn("trimTransparentMargins(bitmap)", self.shared)
         self.assertIn('{"首页", "对弈", "棋谱", "训练", "设置"}', self.shared)
-        self.assertTrue((ROOT / "docs/navbar/bar.png").exists())
-        # Confirm the original bar is packaged automatically into assets/home/navbar.
+        self.assertTrue((ROOT / "docs/navbar/bar0.png").is_file())
+        self.assertNotIn('home/navbar/bar.png', self.shared)
+        self.assertNotIn("quietOriginalHomeUnderline", self.shared)
+        self.assertNotIn("drawSelectedUnderline", self.shared)
+        self.assertNotIn("bitmap.setPixel(", self.shared)
+        self.assertNotIn("new TextView(context)", self.shared)
+        for tab in ("home", "game", "record", "training", "settings"):
+            for state in ("normal", "selected"):
+                name = f"jade_nav_{tab}_{state}"
+                self.assertIn(f"R.drawable.{name}", self.shared)
+                self.assertTrue((ROOT / "app/src/main/res/drawable-nodpi" /
+                                 (name + ".png")).is_file(), name)
         gradle = (ROOT / "app/build.gradle.kts").read_text(encoding="utf-8")
         self.assertIn('from(rootProject.file("docs/navbar"))', gradle)
         self.assertIn('into("navbar")', gradle)
-        self.assertIn('dependsOn(stageGreenHomeArtwork)', gradle)
-        # Native redraw of the five fonts and icons caused the style regression.
-        self.assertNotIn("new TextView(context)", self.shared)
-        self.assertNotIn("setImageResource(ICONS[i])", self.shared)
+        self.assertIn("dependsOn(stageGreenHomeArtwork)", gradle)
 
-    def test_original_five_tab_order_and_selection(self):
+    def test_five_tab_order_and_fixed_png_geometry(self):
         for name, number in (("HOME", "0"), ("PLAY", "1"), ("RECORDS", "2"),
                              ("TRAINING", "3"), ("SETTINGS", "4")):
             self.assertIn("public static final int " + name + " = " + number + ";",
                           self.shared)
         self.assertIn("public void setSelectedTab(int tab)", self.shared)
-        self.assertIn("quietOriginalHomeUnderline(variation, bounds)", self.shared)
-        self.assertIn("drawSelectedUnderline(variation, tab, bounds)", self.shared)
-        self.assertIn("bitmap.setPixel(x, y, shade(bitmap.getPixel(x, y), f))", self.shared)
-        self.assertIn("drawSelectedUnderline(",
+        self.assertIn("tabArtwork[i].setImageResource(TAB_DRAWABLES[i][i == tab ? 1 : 0])",
                       self.shared)
+        self.assertIn("image.setAdjustViewBounds(false)", self.shared)
         self.assertIn("hitTargets[i].setSelected(i == tab)", self.shared)
         self.assertIn("hit.setOnClickListener(v ->", self.shared)
         self.assertIn("if (callback != null) callback.onTabClick(tab)", self.shared)
