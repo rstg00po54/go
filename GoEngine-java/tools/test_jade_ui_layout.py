@@ -399,6 +399,25 @@ class JadeUiTest(unittest.TestCase):
         for name, _, _ in facts:
             self.assertNotIn("R.id." + name, binder)
 
+    def test_capture_winrate_panel_is_above_board_not_below(self):
+        # Requested RK3588 layout order:
+        # four game facts -> captures/win rate -> board -> six action buttons.
+        board = self.ids["boardFrame"]
+        stats = self.ids["gameStatsPanel"]
+        actions = self.ids["gameActionPanel"]
+        parent = {child: node for node in self.root.iter() for child in node}
+        self.assertIs(parent[stats], parent[board])
+        self.assertIs(parent[board], parent[actions])
+        children = list(parent[board])
+        self.assertLess(children.index(stats), children.index(board))
+        self.assertLess(children.index(board), children.index(actions))
+        self.assertEqual(1, children.count(stats))
+        # The actual playable board view must still be inside its frame.
+        self.assertIn(self.ids["boardView"], list(board))
+        # The banner remains within the scrollable game content.
+        scroll = self.ids["gameContentScroll"]
+        self.assertIn(stats, list(scroll.iter()))
+
     def test_game_stats_capture_winrate_capture_order(self):
         # Screen: stone/captures | live win rate | stone/captures.
         parent = {child: node for node in self.root.iter() for child in node}

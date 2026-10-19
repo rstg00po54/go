@@ -289,16 +289,6 @@
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
-            <!-- Adaptive square board. A lower bar never shrinks the board's touch hitboxes. -->
-            <com.badukai.ui.JadeSquareBoardFrame android:id="@+id/boardFrame"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:layout_marginStart="9dp" android:layout_marginEnd="9dp"
-                android:layout_marginBottom="5dp" android:padding="7dp"
-                android:background="@drawable/jade_game_wood_panel">
-                <com.badukai.ui.GoBoardView android:id="@+id/boardView"
-                    android:layout_width="match_parent" android:layout_height="match_parent"
-                    android:layout_gravity="center"/>
-            </com.badukai.ui.JadeSquareBoardFrame>
             <!-- White/black captures flank the real NN win rate. Keep role-based
                  stone IDs and result IDs so either human color remains correct. -->
             <LinearLayout android:id="@+id/gameStatsPanel"
@@ -395,6 +385,16 @@
                     android:textSize="9sp" android:gravity="center" android:visibility="gone"/>
             </LinearLayout>
 
+            <!-- Adaptive square board. A lower bar never shrinks the board's touch hitboxes. -->
+            <com.badukai.ui.JadeSquareBoardFrame android:id="@+id/boardFrame"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginStart="9dp" android:layout_marginEnd="9dp"
+                android:layout_marginBottom="5dp" android:padding="7dp"
+                android:background="@drawable/jade_game_wood_panel">
+                <com.badukai.ui.GoBoardView android:id="@+id/boardView"
+                    android:layout_width="match_parent" android:layout_height="match_parent"
+                    android:layout_gravity="center"/>
+            </com.badukai.ui.JadeSquareBoardFrame>
             <!-- Two strictly equal rows of three compact buttons. All six use
                  matching weights, heights, margins and text alignment. -->
             <LinearLayout android:id="@+id/gameActionPanel"
