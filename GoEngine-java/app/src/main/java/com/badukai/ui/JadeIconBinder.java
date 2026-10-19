@@ -49,6 +49,24 @@ public final class JadeIconBinder {
         topLowered(root, R.id.newGameSettingsTab, R.drawable.ic_settings_tab, 29, 4);
     }
 
+    /** Fit the provided 25 game art PNGs to compact, clickable native widgets. */
+    public static void bindGame(View root) {
+        left(root, R.id.gameTitleText, R.drawable.ic_board_grid_gold, 19);
+        left(root, R.id.gameModeSummaryText, R.drawable.ic_robot_ivory, 19);
+        left(root, R.id.gameRankSummaryText, R.drawable.ic_difficulty_gold, 19);
+        left(root, R.id.gameBackendSummaryText, R.drawable.ic_npu_ivory, 19);
+        left(root, R.id.passButton, R.drawable.ic_pass_jade, 21);
+        left(root, R.id.undoButton, R.drawable.ic_undo_jade, 21);
+        left(root, R.id.situationButton, R.drawable.ic_territory_jade, 21);
+        left(root, R.id.aiSuggestionButton, R.drawable.ic_hint_gold, 21);
+        left(root, R.id.gameAnalysisButton, R.drawable.ic_analysis_jade, 21);
+        top(root, R.id.gameNavHome, R.drawable.ic_home_ivory, 26);
+        top(root, R.id.gameNavRecords, R.drawable.ic_book_ivory, 26);
+        top(root, R.id.gameNavPlay, R.drawable.ic_game_gold, 26);
+        top(root, R.id.gameNavTraining, R.drawable.ic_training_ivory, 26);
+        top(root, R.id.gameNavSettings, R.drawable.ic_settings_ivory, 26);
+    }
+
     private static void left(View root, int viewId, int resourceId, int sizeDp) {
         apply(root, viewId, resourceId, sizeDp, true);
     }

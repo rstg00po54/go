@@ -282,6 +282,62 @@ class JadeUiTest(unittest.TestCase):
         self.assertIsNone(controls["startGameButton"].get(ANDROID + "drawableStart"))
         self.assertIsNone(controls["startGameButton"].get(ANDROID + "drawablePadding"))
 
+    def test_jade_game_page_is_real_and_keeps_existing_handlers(self):
+        game_root = self.ids["gamePageContainer"]
+        self.assertEqual("FrameLayout", game_root.tag)
+        self.assertIn("gameBackdrop", self.ids)
+        self.assertIn("gameTimelineMoves", self.ids)
+        self.assertIn("gameTimelineScroll", self.ids)
+        self.assertIn("gameMoreButton", self.ids)
+        self.assertIn("gameAnalysisButton", self.ids)
+        self.assertEqual("HorizontalScrollView", self.ids["gameTimelineScroll"].tag)
+        self.assertIn("JADE_GAME_V1", self.main_java)
+        self.assertIn("JadeIconBinder.bindGame(gamePageContainer)", self.main_java)
+        self.assertIn("updateGameTimeline()", self.main_java)
+        self.assertIn("getMoveHistorySnapshot()", self.main_java)
+        self.assertIn("showGameMoreMenu(View anchor)", self.main_java)
+        self.assertIn("showWinRateChart()", self.main_java)
+        self.assertIn("showEndgameScoringOptions()", self.main_java)
+        for name in ("gameNavHome", "gameNavRecords", "gameNavPlay",
+                     "gameNavTraining", "gameNavSettings",
+                     "gameTimelineBack", "gameTimelineNext"):
+            with self.subTest(action=name):
+                self.assertIn(name, self.ids)
+                self.assertIn("R.id." + name, self.main_java)
+        for name in ("aiStoneView", "playerStoneView", "aiCaptureText",
+                     "playerCaptureText", "aiWinRateText", "playerWinRateText",
+                     "aiMoveTimeText", "nnAreaScoreText", "aiDifficultyText",
+                     "statusText", "winRateProgress"):
+            with self.subTest(data=name):
+                self.assertIn(name, self.ids)
+                self.assertIn("R.id." + name, self.main_java)
+
+    def test_game_icons_and_drawables_are_present(self):
+        png = ROOT / "app/src/main/res/drawable-nodpi"
+        paths = set()
+        for view in self.ids["gamePageContainer"].iter():
+            for prop in ("background", "drawableStart", "drawableTop", "src"):
+                item = view.get(ANDROID + prop, "")
+                if item.startswith("@drawable/"):
+                    name = item.split("/", 1)[1]
+                    if name.startswith("btn_round_") or name.startswith("ic_"):
+                        paths.add(name)
+                        self.assertTrue((png / (name + ".png")).is_file(),
+                                        msg="Missing gameplay PNG: " + name)
+                    if name.startswith("jade_"):
+                        self.assertTrue((DRAWABLES / (name + ".xml")).is_file(),
+                                        msg="Missing gameplay style: " + name)
+        self.assertGreaterEqual(len(paths), 15)
+        binder = (ROOT / "app/src/main/java/com/badukai/ui/JadeIconBinder.java"
+                  ).read_text(encoding="utf-8")
+        self.assertIn("public static void bindGame(View root)", binder)
+        for view in ("passButton", "undoButton", "situationButton",
+                     "aiSuggestionButton", "gameAnalysisButton", "gameNavHome"):
+            self.assertIn("R.id." + view, binder)
+        for view in self.ids["gamePageContainer"].iter():
+            self.assertIsNotNone(view.get(ANDROID + "layout_width"))
+            self.assertIsNotNone(view.get(ANDROID + "layout_height"))
+
     def test_jade_drawables_are_valid(self):
         for path in DRAWABLES.glob("jade_*.xml"):
             with self.subTest(drawable=path.name):

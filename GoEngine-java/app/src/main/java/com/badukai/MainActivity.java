@@ -5,6 +5,9 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.BitmapFactory;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.HorizontalScrollView;
+import android.widget.PopupMenu;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -117,6 +120,12 @@ public class MainActivity extends AppCompatActivity {
 
     private View mainPageContainer;
     private View gamePageContainer;
+    private TextView gameMoveCountText;
+    private TextView gameModeSummaryText;
+    private TextView gameRankSummaryText;
+    private TextView gameBackendSummaryText;
+    private GoBoard timelineRenderedBoard;
+    private int timelineRenderedCount = -1;
     private GoBoardView boardView;
     private TextView statusText;
     private TextView nnAreaScoreText;
@@ -196,6 +205,9 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "Game engine preference=" + (forceLegacy ? "PIE forced" : "JNI if bundled")
                 + "; preload boardSize=" + boardSize + "; backend=" + selectedBackend + "; winrate engine=PIE");
         bindViews();
+        com.badukai.ui.JadeIconBinder.bindGame(gamePageContainer);
+        setHomeImageArt(R.id.gameBackdrop, "home/background.png");
+        Log.i(TAG, "JADE_GAME_V1 nativeBoard=true artPack=25");
         // Each home UI element is a separate PNG (not a painted button hotspot).
         try (InputStream in = getAssets().open("home/background.png")) {
             ((ImageView) findViewById(R.id.homeArtwork))
@@ -257,6 +269,19 @@ public class MainActivity extends AppCompatActivity {
         aiSuggestionButton.setOnClickListener(v -> showAiSuggestions());
         countTerritoryButton.setOnClickListener(v -> showEndgameScoringOptions());
         variationButton.setOnClickListener(v -> showVariations());
+        findViewById(R.id.gameAnalysisButton).setOnClickListener(v -> showWinRateChart());
+        findViewById(R.id.gameMoreButton).setOnClickListener(this::showGameMoreMenu);
+        findViewById(R.id.gameNavHome).setOnClickListener(v -> showMainPage());
+        findViewById(R.id.gameNavRecords).setOnClickListener(v -> openReplay());
+        findViewById(R.id.gameNavPlay).setOnClickListener(v ->
+                Toast.makeText(this, "正在对弈", Toast.LENGTH_SHORT).show());
+        findViewById(R.id.gameNavTraining).setOnClickListener(v -> openTsumego());
+        findViewById(R.id.gameNavSettings).setOnClickListener(v -> showNewGameDialog());
+        HorizontalScrollView timeline = findViewById(R.id.gameTimelineScroll);
+        findViewById(R.id.gameTimelineBack).setOnClickListener(v ->
+                timeline.smoothScrollBy(-Math.max(1, timeline.getWidth() * 3 / 4), 0));
+        findViewById(R.id.gameTimelineNext).setOnClickListener(v ->
+                timeline.smoothScrollBy(Math.max(1, timeline.getWidth() * 3 / 4), 0));
         render("正在启动 AI...");
         showMainPage();
         if (isRefereeSmokeIntent()) {
@@ -697,6 +722,10 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "bindViews in");
         mainPageContainer = findViewById(R.id.mainPageContainer);
         gamePageContainer = findViewById(R.id.gamePageContainer);
+        gameMoveCountText = findViewById(R.id.gameMoveCountText);
+        gameModeSummaryText = findViewById(R.id.gameModeSummaryText);
+        gameRankSummaryText = findViewById(R.id.gameRankSummaryText);
+        gameBackendSummaryText = findViewById(R.id.gameBackendSummaryText);
         boardView = findViewById(R.id.boardView);
         statusText = findViewById(R.id.statusText);
         nnAreaScoreText = findViewById(R.id.nnAreaScoreText);
@@ -1880,7 +1909,10 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "showGamePage in, boardSize=" + boardSize);
         mainPageContainer.setVisibility(View.GONE);
         gamePageContainer.setVisibility(View.VISIBLE);
-        gameTitleText.setText(gameResultText == null ? boardSize + "路　" + conditionName() + "　　第" + (board.getMoveCount() + 1) + "手" : gameResultText);
+        gameTitleText.setText(boardSize + "×" + boardSize);
+        gameModeSummaryText.setText("人机对弈");
+        gameRankSummaryText.setText(aiKyu + "级");
+        gameBackendSummaryText.setText(selectedBackend.name());
     }
 
     private void startNewGame() {
@@ -2113,8 +2145,8 @@ public class MainActivity extends AppCompatActivity {
         boardView.setInputEnabled(engineReady && gameReady && !engineStarting && !thinking
                 && !evaluating && currentPlayer == playerColor && !board.isGameOver());
         boolean detailedResult = boardView.hasRecommendations();
-        statusText.setMaxLines(detailedResult ? 3 : 2);
-        statusText.setTextSize(detailedResult ? 10f : 13f);
+        statusText.setMaxLines(1);
+        statusText.setTextSize(10f);
         boolean playerBlack = playerColor == StoneColor.BLACK;
         playerStoneView.setBackgroundResource(playerBlack ? R.drawable.txwq_black_stone : R.drawable.txwq_white_stone);
         aiStoneView.setBackgroundResource(playerBlack ? R.drawable.txwq_white_stone : R.drawable.txwq_black_stone);
@@ -2124,9 +2156,88 @@ public class MainActivity extends AppCompatActivity {
         int aiCaptures = playerBlack ? whiteCaptures : blackCaptures;
         playerCaptureText.setText(String.format(Locale.CHINA, "%s棋提子 %d", playerBlack ? "黑" : "白", playerCaptures));
         aiCaptureText.setText(String.format(Locale.CHINA, "%s棋提子 %d", playerBlack ? "白" : "黑", aiCaptures));
-        gameTitleText.setText(variationBoard != null ? "AI 推荐变化图 · 仅供预览"
-                : gameResultText == null ? boardSize + "路　" + conditionName() + "　　第" + (board.getMoveCount() + 1) + "手" : gameResultText);
+        gameTitleText.setText(boardSize + "×" + boardSize);
+        gameModeSummaryText.setText(variationBoard == null ? "人机对弈" : "变化预览");
+        gameRankSummaryText.setText(aiKyu + "级");
+        gameBackendSummaryText.setText(selectedBackend.name());
+        gameMoveCountText.setText("第 " + board.getMoveCount() + " 手");
+        updateGameTimeline();
         updateButtons();
+    }
+
+    /**
+     * Browse actual move records. This strip does not alter the live board;
+     * review/edit continues through the existing SGF replay workflow.
+     */
+    private void updateGameTimeline() {
+        if (timelineRenderedBoard == board && timelineRenderedCount == board.getMoveCount()) return;
+        timelineRenderedBoard = board;
+        timelineRenderedCount = board.getMoveCount();
+        LinearLayout holder = findViewById(R.id.gameTimelineMoves);
+        HorizontalScrollView scroll = findViewById(R.id.gameTimelineScroll);
+        holder.removeAllViews();
+        List<Move> moves = board.getMoveHistorySnapshot();
+        if (moves.isEmpty()) {
+            TextView empty = new TextView(this);
+            empty.setText("棋局开始后显示落子记录");
+            empty.setTextColor(0xFFEADDB7);
+            empty.setTextSize(11f);
+            empty.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            holder.addView(empty, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            return;
+        }
+        // Keep the timeline bounded for long 19x19 games. Do not fake missing moves.
+        int start = Math.max(0, moves.size() - 160);
+        for (int index = start; index < moves.size(); index++) {
+            Move move = moves.get(index);
+            LinearLayout cell = new LinearLayout(this);
+            cell.setOrientation(LinearLayout.VERTICAL);
+            cell.setGravity(android.view.Gravity.CENTER);
+            ImageView stone = new ImageView(this);
+            stone.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            if (move instanceof Move.Pass) {
+                stone.setImageResource(R.drawable.ic_board_focus);
+            } else if (index == moves.size() - 1 && move instanceof Move.Stone) {
+                stone.setImageResource(R.drawable.ic_stone_last);
+            } else {
+                stone.setImageResource(move.color == StoneColor.BLACK
+                        ? R.drawable.ic_stone_black : R.drawable.ic_stone_white);
+            }
+            int size = Math.round(26 * getResources().getDisplayMetrics().density);
+            cell.addView(stone, new LinearLayout.LayoutParams(size, size));
+            TextView number = new TextView(this);
+            number.setText(Integer.toString(index + 1));
+            number.setGravity(android.view.Gravity.CENTER);
+            number.setTextSize(10f);
+            number.setTextColor(index == moves.size() - 1 ? 0xFFF6D47A : 0xFFDFE6D7);
+            cell.addView(number, new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            int itemWidth = Math.round(40 * getResources().getDisplayMetrics().density);
+            holder.addView(cell, new LinearLayout.LayoutParams(
+                    itemWidth, ViewGroup.LayoutParams.MATCH_PARENT));
+        }
+        scroll.post(() -> scroll.fullScroll(View.FOCUS_RIGHT));
+    }
+
+    private void showGameMoreMenu(View anchor) {
+        PopupMenu menu = new PopupMenu(this, anchor);
+        menu.getMenu().add(0, 1, 0, "新开一局")
+                .setEnabled(newRoundButton.isEnabled());
+        menu.getMenu().add(0, 2, 1, "认输")
+                .setEnabled(resignButton.isEnabled());
+        menu.getMenu().add(0, 3, 2, "智能裁判")
+                .setEnabled(countTerritoryButton.isEnabled());
+        menu.getMenu().add(0, 4, 3, "后续变化")
+                .setEnabled(variationButton.isEnabled());
+        menu.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == 1) return newRoundButton.performClick();
+            if (item.getItemId() == 2) return resignButton.performClick();
+            if (item.getItemId() == 3) return countTerritoryButton.performClick();
+            if (item.getItemId() == 4) return variationButton.performClick();
+            return false;
+        });
+        menu.show();
     }
 
     private void updateButtons() {
