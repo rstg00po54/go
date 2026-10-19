@@ -39,8 +39,8 @@ def clean_background(src: Image.Image, bounds):
     mask = np.zeros(arr.shape[:2], dtype=np.uint8)
     centers = [left + w * (0.10 + i * .20) for i in range(5)]
     for cx in centers:
-        x0, x1 = round(cx - w * .070), round(cx + w * .070)
-        y0, y1 = round(top + h * .14), round(top + h * .86)
+        x0, x1 = round(cx - w * .087), round(cx + w * .087)
+        y0, y1 = round(top + h * .045), round(top + h * .965)
         cv2.rectangle(mask, (x0, y0), (x1, y1), 255, -1)
     image_bgr = cv2.cvtColor(arr[:,:,:3], cv2.COLOR_RGB2BGR)
     filled = cv2.inpaint(image_bgr, mask, 9, cv2.INPAINT_TELEA)
@@ -95,7 +95,7 @@ def render_states(output: Path, preview=False):
         canvas = base.copy()
         for i, key in enumerate(ORDER):
             img = clean_icon(Image.open(ART / f"{key}.png"), active=(i==selected), is_home=(i==0))
-            target = min(round(w * .17), round(h*.80))
+            target = min(round(w * .145), round(h*.72))
             scale = min(target/img.width, target/img.height)
             img = img.resize((round(img.width*scale), round(img.height*scale)), Image.Resampling.LANCZOS)
             cx, cy = centers[i], top+h*.52
@@ -106,7 +106,7 @@ def render_states(output: Path, preview=False):
                 canvas.alpha_composite(img, position)
             if i == selected and i != 0:
                 line_width = round(w*.041)
-                ly = round(top+h*.81)
+                ly = round(top+h*.955)
                 draw = ImageDraw.Draw(canvas)
                 draw.rounded_rectangle((round(cx-line_width/2), ly,
                                         round(cx+line_width/2),ly+round(h*.020)),
