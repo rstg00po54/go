@@ -2177,6 +2177,8 @@ public class MainActivity extends AppCompatActivity {
         HorizontalScrollView scroll = findViewById(R.id.gameTimelineScroll);
         holder.removeAllViews();
         List<Move> moves = board.getMoveHistorySnapshot();
+        holder.setGravity(moves.isEmpty()
+                ? android.view.Gravity.CENTER : android.view.Gravity.CENTER_VERTICAL);
         if (moves.isEmpty()) {
             TextView empty = new TextView(this);
             empty.setText("棋局开始后显示落子记录");

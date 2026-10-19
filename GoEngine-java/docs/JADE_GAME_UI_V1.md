@@ -44,3 +44,23 @@ adb logcat -d | grep JADE_GAME_V1
 
 Device testing is required. No APK or RK3588 runtime verification occurred
 during the GitHub-side change.
+
+## RK3588 board sizing fix (v2)
+
+The first release used `boardFrame layout_height=0dp, layout_weight=1`
+inside a vertical LinearLayout. On the 1080x1920 RK3588 display the
+remaining height was much smaller than the board width; `GoBoardView`
+measured a tiny square, leaving wide empty wooden margins.
+
+The board frame is now a native `JadeSquareBoardFrame`, with its measured
+height always equal to its available width. It is inside
+`gameContentScroll`, so on shorter aspect-ratio screens the user can
+scroll to the results and controls instead of losing the usable board.
+The bottom five-tab bar stays fixed.
+
+`GoBoardView` also draws letter/number grid coordinates and uses a gold
+outline for the last stone, like the reference. The underlying intersection
+positions, hit testing, game rules and CPU/GPU/NPU paths remain unchanged.
+
+This is a first visual-correction pass, not a pixel-identical reproduction
+of the concept art. Device screenshots are required to validate spacing.

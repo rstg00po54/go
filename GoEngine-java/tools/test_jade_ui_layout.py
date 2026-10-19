@@ -51,12 +51,39 @@ class JadeUiTest(unittest.TestCase):
         self.assertIn("winRateProgress.setProgress(", self.main_java)
         self.assertIn("winRateProgress.setOnClickListener(", self.main_java)
 
-    def test_board_stays_weighted_and_centered(self):
+    def test_board_is_square_and_game_content_can_scroll(self):
+        # A weighted board was squeezed to about half the available width on
+        # the 1080x1920 RK3588 screen. The board's width now sets its height.
         board_frame = self.ids["boardFrame"]
+        self.assertEqual("com.badukai.ui.JadeSquareBoardFrame", board_frame.tag)
         self.assertIn(self.ids["boardView"], list(board_frame))
-        self.assertEqual("0dp", board_frame.get(ANDROID + "layout_height"))
-        self.assertEqual("1", board_frame.get(ANDROID + "layout_weight"))
+        self.assertEqual("wrap_content", board_frame.get(ANDROID + "layout_height"))
+        self.assertIsNone(board_frame.get(ANDROID + "layout_weight"))
         self.assertEqual("center", self.ids["boardView"].get(ANDROID + "layout_gravity"))
+        scroll = self.ids["gameContentScroll"]
+        self.assertEqual("ScrollView", scroll.tag)
+        self.assertEqual("0dp", scroll.get(ANDROID + "layout_height"))
+        self.assertEqual("1", scroll.get(ANDROID + "layout_weight"))
+        square = (ROOT / "app/src/main/java/com/badukai/ui/JadeSquareBoardFrame.java").read_text(encoding="utf-8")
+        self.assertIn("protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec)", square)
+        self.assertIn("MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY)", square)
+        self.assertNotIn('android:layout_height="0dp"\n                android:layout_weight="1"\n                android:layout_marginStart="9dp"', (ROOT / "app/src/main/res/layout/activity_main.xml").read_text(encoding="utf-8"))
+        board = (ROOT / "app/src/main/java/com/badukai/ui/GoBoardView.java").read_text(encoding="utf-8")
+        self.assertIn("drawCoordinates(canvas, n);", board)
+        self.assertIn("drawCircle(cx, cy, radius * 1.04f, paint)", board)
+        self.assertIn("cellSize * 0.57f", board)
+        self.assertIn("holder.setGravity(moves.isEmpty()", self.main_java)
+        captions = {view.get(ANDROID + "text") for view in scroll.iter()
+                    if view.tag == "TextView"}
+        for caption in ("棋盘大小", "对弈模式", "AI难度", "本地推理"):
+            self.assertIn(caption, captions)
+        # Bottom navigation is deliberately outside the ScrollView.
+        game = self.ids["gamePageContainer"]
+        outer = [v for v in game if v.tag == "LinearLayout"
+                 and v.get(ANDROID + "layout_height") == "match_parent"]
+        self.assertEqual(1, len(outer))
+        self.assertIn(scroll, list(outer[0]))
+        self.assertIn(self.ids["gameNavHome"], list(outer[0])[-1].iter())
 
     def test_home_art_and_navigation(self):
         for name in ("homeArtwork", "homeNavBarArtwork", "homeTopShade",

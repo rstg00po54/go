@@ -187,12 +187,13 @@ public class GoBoardView extends View {
         // Reserve space for the entire stone shadow, not only the grid lines.
         // The shadow extends about 0.65 cell beyond an edge intersection.
         float outerInset = dp(2f);
-        float edgeCells = 0.68f;
+        float edgeCells = 0.88f; // room for coordinate labels outside the grid
         cellSize = n > 1 ? (size - 2f * outerInset) / (n - 1f + 2f * edgeCells) : size;
         padding = outerInset + edgeCells * cellSize;
         boardPixels = (n - 1f) * cellSize;
         drawGrid(canvas, n);
         drawStarPoints(canvas, n);
+        drawCoordinates(canvas, n);
         if (previewBoard == null) drawOwnership(canvas, n);
         drawStones(canvas, n, shown, previewBoard == null ? lastMove : null);
         if (previewBoard == null) {
@@ -236,6 +237,33 @@ public class GoBoardView extends View {
     private int[][] grid3(int a, int b, int c) {
         DebugLog.v(TAG, "grid3 in, a=" + a + ", b=" + b + ", c=" + c);
         return new int[][]{{a,a},{b,a},{c,a},{a,b},{b,b},{c,b},{a,c},{b,c},{c,c}};
+    }
+
+    /** Board coordinates follow Go notation: A-H, J-T (skip I). */
+    private void drawCoordinates(Canvas canvas, int n) {
+        if (n < 2 || cellSize <= 0f) return;
+        paint.setShader(null);
+        paint.setColor(Color.rgb(74, 51, 28));
+        paint.setStyle(Paint.Style.FILL);
+        paint.setTypeface(Typeface.SERIF);
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setTextSize(Math.min(dp(12f), cellSize * 0.26f));
+        Paint.FontMetrics fm = paint.getFontMetrics();
+        float textMid = -(fm.ascent + fm.descent) * 0.5f;
+        float xOffset = cellSize * 0.57f;
+        float yOffset = cellSize * 0.58f;
+        for (int i = 0; i < n; i++) {
+            // Coordinate letters (top down) skip the letter I.
+            char letter = (char) ('A' + i + (i >= 8 ? 1 : 0));
+            float x = padding + i * cellSize;
+            float y = padding + i * cellSize;
+            canvas.drawText(Character.toString(letter), x,
+                    padding + (n - 1) * cellSize + yOffset + textMid, paint);
+            canvas.drawText(Integer.toString(n - i),
+                    padding - xOffset, y + textMid, paint);
+        }
+        paint.setTextAlign(Paint.Align.LEFT);
+        paint.setTypeface(Typeface.DEFAULT);
     }
 
     private void prepareStoneShaders(float radius) {
@@ -354,9 +382,11 @@ public class GoBoardView extends View {
                 if (markedMove != null && markedMove.x == x && markedMove.y == y) {
                     paint.setShader(null);
                     paint.setStyle(Paint.Style.STROKE);
-                    paint.setStrokeWidth(Math.max(dp(2), radius * 0.10f));
-                    paint.setColor(Color.rgb(220, 48, 48));
-                    canvas.drawCircle(cx, cy, radius * 0.30f, paint);
+                    // Highlight the most recent stone like the jade/gold mockup.
+                    paint.setStrokeWidth(Math.max(dp(1.5f), radius * 0.10f));
+                    paint.setColor(0xFFFFD878);
+                    canvas.drawCircle(cx, cy, radius * 1.04f, paint);
+                    paint.setStyle(Paint.Style.FILL);
                 }
             }
         }

@@ -136,7 +136,16 @@
             android:importantForAccessibility="no"/>
 
         <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
-            android:orientation="vertical" android:paddingTop="4dp">
+            android:orientation="vertical">
+            <!-- Scroll the game details, not the board smaller. The bottom navigation
+                 remains visible even on the shorter 1080x1920 RK3588 display. -->
+            <ScrollView android:id="@+id/gameContentScroll"
+                android:layout_width="match_parent" android:layout_height="0dp"
+                android:layout_weight="1" android:fillViewport="false"
+                android:scrollbars="none" android:clipToPadding="false">
+                <LinearLayout android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:orientation="vertical"
+                    android:paddingTop="4dp">
             <!-- Jade title plaque -->
             <LinearLayout android:layout_width="match_parent" android:layout_height="61dp"
                 android:gravity="center_vertical" android:paddingStart="10dp" android:paddingEnd="10dp"
@@ -155,7 +164,7 @@
                     android:text="" android:contentDescription="新局设置" android:stateListAnimator="@null"/>
             </LinearLayout>
             <!-- Always-updating four-column game facts -->
-            <LinearLayout android:layout_width="match_parent" android:layout_height="55dp"
+            <LinearLayout android:layout_width="match_parent" android:layout_height="66dp"
                 android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
                 android:layout_marginTop="5dp" android:layout_marginBottom="6dp"
                 android:background="@drawable/jade_dark_card"
@@ -168,6 +177,9 @@
   android:gravity="center" android:text="9×9" android:textColor="#F4E2B1"
   android:textSize="12sp" android:textStyle="bold" android:maxLines="1"
   android:ellipsize="end" android:drawableStart="@drawable/ic_board_grid_gold" android:drawablePadding="3dp"/>
+ <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+  android:gravity="center" android:text="棋盘大小" android:textColor="#BED4C5"
+  android:textSize="9sp" android:singleLine="true"/>
  </LinearLayout>
                 <LinearLayout android:layout_width="0dp" android:layout_weight="1"
  android:layout_height="match_parent" android:gravity="center" android:orientation="vertical"
@@ -176,6 +188,9 @@
   android:gravity="center" android:text="人机对弈" android:textColor="#F4E2B1"
   android:textSize="12sp" android:textStyle="bold" android:maxLines="1"
   android:ellipsize="end" android:drawableStart="@drawable/ic_robot_ivory" android:drawablePadding="3dp"/>
+ <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+  android:gravity="center" android:text="对弈模式" android:textColor="#BED4C5"
+  android:textSize="9sp" android:singleLine="true"/>
  </LinearLayout>
                 <LinearLayout android:layout_width="0dp" android:layout_weight="1"
  android:layout_height="match_parent" android:gravity="center" android:orientation="vertical"
@@ -184,6 +199,9 @@
   android:gravity="center" android:text="12级" android:textColor="#F4E2B1"
   android:textSize="12sp" android:textStyle="bold" android:maxLines="1"
   android:ellipsize="end" android:drawableStart="@drawable/ic_difficulty_gold" android:drawablePadding="3dp"/>
+ <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+  android:gravity="center" android:text="AI难度" android:textColor="#BED4C5"
+  android:textSize="9sp" android:singleLine="true"/>
  </LinearLayout>
                 <LinearLayout android:layout_width="0dp" android:layout_weight="1"
  android:layout_height="match_parent" android:gravity="center" android:orientation="vertical"
@@ -192,19 +210,21 @@
   android:gravity="center" android:text="NPU" android:textColor="#F4E2B1"
   android:textSize="12sp" android:textStyle="bold" android:maxLines="1"
   android:ellipsize="end" android:drawableStart="@drawable/ic_npu_ivory" android:drawablePadding="3dp"/>
+ <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+  android:gravity="center" android:text="本地推理" android:textColor="#BED4C5"
+  android:textSize="9sp" android:singleLine="true"/>
  </LinearLayout>
             </LinearLayout>
             <!-- Adaptive square board. A lower bar never shrinks the board's touch hitboxes. -->
-            <FrameLayout android:id="@+id/boardFrame"
-                android:layout_width="match_parent" android:layout_height="0dp"
-                android:layout_weight="1"
+            <com.badukai.ui.JadeSquareBoardFrame android:id="@+id/boardFrame"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginStart="9dp" android:layout_marginEnd="9dp"
                 android:layout_marginBottom="5dp" android:padding="7dp"
                 android:background="@drawable/jade_game_wood_panel">
                 <com.badukai.ui.GoBoardView android:id="@+id/boardView"
                     android:layout_width="match_parent" android:layout_height="match_parent"
                     android:layout_gravity="center"/>
-            </FrameLayout>
+            </com.badukai.ui.JadeSquareBoardFrame>
             <!-- Real captures, turn, win rate and engine timings; retain original IDs. -->
             <LinearLayout android:layout_width="match_parent" android:layout_height="83dp"
                 android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
@@ -340,7 +360,7 @@
                     android:background="@drawable/btn_round_back" android:contentDescription="向前浏览落子记录"/>
                 <HorizontalScrollView android:id="@+id/gameTimelineScroll"
                     android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent"
-                    android:fillViewport="false" android:scrollbars="none">
+                    android:fillViewport="true" android:scrollbars="none">
                     <LinearLayout android:id="@+id/gameTimelineMoves"
                         android:layout_width="wrap_content" android:layout_height="match_parent"
                         android:orientation="horizontal" android:gravity="center_vertical"/>
@@ -349,6 +369,8 @@
                     android:layout_width="35dp" android:layout_height="35dp"
                     android:background="@drawable/btn_round_next" android:contentDescription="向后浏览落子记录"/>
             </LinearLayout>
+                </LinearLayout>
+            </ScrollView>
             <!-- Consistent navigation with new-game screen; no baked screenshot hitboxes. -->
             <LinearLayout android:layout_width="match_parent" android:layout_height="58dp"
                 android:orientation="horizontal" android:background="@drawable/jade_dark_footer"
