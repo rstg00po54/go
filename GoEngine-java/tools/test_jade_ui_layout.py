@@ -141,6 +141,66 @@ class JadeUiTest(unittest.TestCase):
                         self.assertTrue((DRAWABLES / name).is_file(),
                             msg="Missing drawable " + name)
 
+    def test_new_game_icons_are_vector_resources_not_unicode_placeholders(self):
+        dialog = ET.parse(ROOT / "app/src/main/res/layout/dialog_new_game.xml").getroot()
+        controls = {}
+        for view in dialog.iter():
+            name = view.get(ANDROID + "id", "")
+            if name.startswith("@+id/"):
+                controls[name[5:]] = view
+
+        for name in ("closeDialogButton", "dialogSettingsButton"):
+            with self.subTest(header=name):
+                self.assertEqual("ImageView", controls[name].tag)
+                self.assertTrue(controls[name].get(ANDROID + "src", "").startswith("@drawable/jade_ic_"))
+
+        section_titles = {
+            "棋盘大小": "grid", "对弈模式": "users", "AI 等级": "levels",
+            "执子方": "yin", "AI 推理后端": "chip", "对局条件": "rule"
+        }
+        titles = {view.get(ANDROID + "text"): view
+                  for view in dialog.iter() if view.tag == "TextView"}
+        for label, icon in section_titles.items():
+            with self.subTest(section=label):
+                self.assertEqual("@drawable/jade_ic_" + icon,
+                                 titles[label].get(ANDROID + "drawableStart"))
+
+        cards = {
+            "modeAiButton": "robot", "modeLocalButton": "users",
+            "modeReplayButton": "book", "blackRadio": "stone_black",
+            "whiteRadio": "stone_white", "randomRadio": "dice",
+            "backendCpuButton": "chip", "backendGpuButton": "fan",
+            "backendNpuButton": "brain",
+            "newGameHomeTab": "home", "newGameRecordTab": "book",
+            "newGamePlayTab": "go", "newGameTrainingTab": "training",
+            "newGameSettingsTab": "settings"
+        }
+        for name, icon in cards.items():
+            with self.subTest(icon=name):
+                self.assertEqual("@drawable/jade_ic_" + icon,
+                                 controls[name].get(ANDROID + "drawableTop"))
+        self.assertIn("JADE_NEW_GAME_ICONS_V4", self.main_java)
+
+    def test_icon_drawables_are_well_formed(self):
+        dialog = ET.parse(ROOT / "app/src/main/res/layout/dialog_new_game.xml").getroot()
+        icon_names = set()
+        for view in dialog.iter():
+            for field in ("src", "drawableStart", "drawableTop"):
+                resource = view.get(ANDROID + field, "")
+                if resource.startswith("@drawable/jade_ic_"):
+                    icon_names.add(resource.split("/", 1)[1])
+        self.assertGreaterEqual(len(icon_names), 17)
+        for icon in sorted(icon_names):
+            path = DRAWABLES / (icon + ".xml")
+            with self.subTest(icon=icon):
+                self.assertTrue(path.is_file())
+                vector = ET.parse(path).getroot()
+                self.assertEqual("vector", vector.tag)
+                self.assertGreaterEqual(len(vector.findall("path")), 1)
+                for subpath in vector.findall("path"):
+                    self.assertTrue(subpath.get(ANDROID + "pathData"))
+                    self.assertNotEqual("none", subpath.get(ANDROID + "fillColor"))
+
     def test_jade_drawables_are_valid(self):
         for path in DRAWABLES.glob("jade_*.xml"):
             with self.subTest(drawable=path.name):

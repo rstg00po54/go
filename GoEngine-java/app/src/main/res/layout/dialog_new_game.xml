@@ -19,22 +19,22 @@
         <LinearLayout android:layout_width="match_parent" android:layout_height="76dp"
             android:paddingStart="9dp" android:paddingEnd="9dp"
             android:gravity="center_vertical" android:orientation="horizontal">
-            <TextView android:id="@+id/closeDialogButton"
+            <ImageView android:id="@+id/closeDialogButton"
                 android:layout_width="47dp" android:layout_height="47dp"
-                android:gravity="center" android:text="‹" android:textSize="36sp"
-                android:textColor="#F7DCA0" android:background="@drawable/jade_dark_action"
-                android:contentDescription="返回"/>
+                android:gravity="center"
+                android:background="@drawable/jade_dark_action"
+                android:contentDescription="返回" android:src="@drawable/jade_ic_back" android:scaleType="fitCenter" android:padding="11dp" />
             <TextView android:layout_width="0dp" android:layout_weight="1"
                 android:layout_height="57dp" android:layout_marginStart="9dp"
                 android:layout_marginEnd="9dp" android:background="@drawable/jade_dark_title"
                 android:gravity="center" android:fontFamily="serif"
                 android:text="新建对局" android:textStyle="bold"
                 android:textColor="#143B2C" android:textSize="25sp"/>
-            <TextView android:id="@+id/dialogSettingsButton"
+            <ImageView android:id="@+id/dialogSettingsButton"
                 android:layout_width="47dp" android:layout_height="47dp"
-                android:gravity="center" android:text="⚙" android:textSize="26sp"
-                android:textColor="#F7DCA0" android:background="@drawable/jade_dark_action"
-                android:contentDescription="AI 后端设置"/>
+                android:gravity="center"
+                android:background="@drawable/jade_dark_action"
+                android:contentDescription="AI 后端设置" android:src="@drawable/jade_ic_settings" android:scaleType="fitCenter" android:padding="11dp" />
         </LinearLayout>
 
         <ScrollView android:id="@+id/newGameSettingsScroll"
@@ -47,7 +47,7 @@
                 <LinearLayout android:layout_width="match_parent" android:layout_height="31dp"
     android:layout_marginTop="7dp" android:orientation="horizontal" android:gravity="center_vertical">
     <TextView android:layout_width="wrap_content" android:layout_height="match_parent"
-        android:gravity="center_vertical" android:text="▦  棋盘大小"
+        android:gravity="center_vertical" android:text="棋盘大小" android:drawableStart="@drawable/jade_ic_grid" android:drawablePadding="8dp"
         android:textColor="#F2DCA0" android:textStyle="bold" android:textSize="15sp"/>
     
 </LinearLayout>
@@ -80,7 +80,7 @@
                 <LinearLayout android:layout_width="match_parent" android:layout_height="31dp"
     android:layout_marginTop="7dp" android:orientation="horizontal" android:gravity="center_vertical">
     <TextView android:layout_width="wrap_content" android:layout_height="match_parent"
-        android:gravity="center_vertical" android:text="♟  对弈模式"
+        android:gravity="center_vertical" android:text="对弈模式" android:drawableStart="@drawable/jade_ic_users" android:drawablePadding="8dp"
         android:textColor="#F2DCA0" android:textStyle="bold" android:textSize="15sp"/>
     
 </LinearLayout>
@@ -93,7 +93,7 @@
     android:layout_margin="3dp" android:button="@null"
     android:background="@drawable/jade_dark_choice"
     android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
-    android:text="♙&#10;人机对弈" android:textSize="13sp" android:textColor="#F5F1DB"
+    android:text="人机对弈" android:drawableTop="@drawable/jade_ic_robot" android:drawablePadding="4dp" android:textSize="13sp" android:textColor="#F5F1DB"
     android:textStyle="bold" android:minWidth="0dp"
     android:enabled="true" android:stateListAnimator="@null"/>
                     <RadioButton android:id="@+id/modeLocalButton"
@@ -101,7 +101,7 @@
     android:layout_margin="3dp" android:button="@null"
     android:background="@drawable/jade_dark_choice"
     android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
-    android:text="♟&#10;人人对弈 · 待开放" android:textSize="13sp" android:textColor="#F5F1DB"
+    android:text="人人对弈·待开放" android:drawableTop="@drawable/jade_ic_users" android:drawablePadding="4dp" android:textSize="13sp" android:textColor="#F5F1DB"
     android:textStyle="bold" android:minWidth="0dp"
     android:enabled="false" android:stateListAnimator="@null"/>
                     <RadioButton android:id="@+id/modeReplayButton"
@@ -109,7 +109,7 @@
     android:layout_margin="3dp" android:button="@null"
     android:background="@drawable/jade_dark_choice"
     android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
-    android:text="▣&#10;载入棋谱" android:textSize="13sp" android:textColor="#F5F1DB"
+    android:text="载入棋谱" android:drawableTop="@drawable/jade_ic_book" android:drawablePadding="4dp" android:textSize="13sp" android:textColor="#F5F1DB"
     android:textStyle="bold" android:minWidth="0dp"
     android:enabled="true" android:stateListAnimator="@null"/>
                 </RadioGroup>
@@ -117,7 +117,7 @@
                 <LinearLayout android:layout_width="match_parent" android:layout_height="31dp"
     android:layout_marginTop="7dp" android:orientation="horizontal" android:gravity="center_vertical">
     <TextView android:layout_width="wrap_content" android:layout_height="match_parent"
-        android:gravity="center_vertical" android:text="▥  AI 等级"
+        android:gravity="center_vertical" android:text="AI 等级" android:drawableStart="@drawable/jade_ic_levels" android:drawablePadding="8dp"
         android:textColor="#F2DCA0" android:textStyle="bold" android:textSize="15sp"/>
     
 </LinearLayout>
@@ -163,7 +163,7 @@
                 <LinearLayout android:layout_width="match_parent" android:layout_height="31dp"
     android:layout_marginTop="7dp" android:orientation="horizontal" android:gravity="center_vertical">
     <TextView android:layout_width="wrap_content" android:layout_height="match_parent"
-        android:gravity="center_vertical" android:text="◉  执子方"
+        android:gravity="center_vertical" android:text="执子方" android:drawableStart="@drawable/jade_ic_yin" android:drawablePadding="8dp"
         android:textColor="#F2DCA0" android:textStyle="bold" android:textSize="15sp"/>
     
 </LinearLayout>
@@ -176,7 +176,7 @@
     android:layout_margin="3dp" android:button="@null"
     android:background="@drawable/jade_dark_choice"
     android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
-    android:text="●  黑先" android:textSize="13sp" android:textColor="#F5F1DB"
+    android:text="黑先" android:drawableTop="@drawable/jade_ic_stone_black" android:drawablePadding="4dp" android:textSize="13sp" android:textColor="#F5F1DB"
     android:textStyle="bold" android:minWidth="0dp"
     android:enabled="true" android:stateListAnimator="@null"/>
                     <RadioButton android:id="@+id/whiteRadio"
@@ -184,7 +184,7 @@
     android:layout_margin="3dp" android:button="@null"
     android:background="@drawable/jade_dark_choice"
     android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
-    android:text="○  白先" android:textSize="13sp" android:textColor="#F5F1DB"
+    android:text="白先" android:drawableTop="@drawable/jade_ic_stone_white" android:drawablePadding="4dp" android:textSize="13sp" android:textColor="#F5F1DB"
     android:textStyle="bold" android:minWidth="0dp"
     android:enabled="true" android:stateListAnimator="@null"/>
                     <RadioButton android:id="@+id/randomRadio"
@@ -192,7 +192,7 @@
     android:layout_margin="3dp" android:button="@null"
     android:background="@drawable/jade_dark_choice"
     android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
-    android:text="⚄  随机" android:textSize="13sp" android:textColor="#F5F1DB"
+    android:text="随机" android:drawableTop="@drawable/jade_ic_dice" android:drawablePadding="4dp" android:textSize="13sp" android:textColor="#F5F1DB"
     android:textStyle="bold" android:minWidth="0dp"
     android:enabled="true" android:stateListAnimator="@null"/>
                 </RadioGroup>
@@ -200,7 +200,7 @@
                 <LinearLayout android:layout_width="match_parent" android:layout_height="31dp"
     android:layout_marginTop="7dp" android:orientation="horizontal" android:gravity="center_vertical">
     <TextView android:layout_width="wrap_content" android:layout_height="match_parent"
-        android:gravity="center_vertical" android:text="▣  AI 推理后端"
+        android:gravity="center_vertical" android:text="AI 推理后端" android:drawableStart="@drawable/jade_ic_chip" android:drawablePadding="8dp"
         android:textColor="#F2DCA0" android:textStyle="bold" android:textSize="15sp"/>
     
 </LinearLayout>
@@ -216,7 +216,7 @@
     android:layout_margin="3dp" android:button="@null"
     android:background="@drawable/jade_dark_choice"
     android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
-    android:text="▣&#10;CPU" android:textSize="13sp" android:textColor="#F5F1DB"
+    android:text="CPU" android:drawableTop="@drawable/jade_ic_chip" android:drawablePadding="4dp" android:textSize="13sp" android:textColor="#F5F1DB"
     android:textStyle="bold" android:minWidth="0dp"
     android:enabled="true" android:stateListAnimator="@null"/>
                         <RadioButton android:id="@+id/backendGpuButton"
@@ -224,7 +224,7 @@
     android:layout_margin="3dp" android:button="@null"
     android:background="@drawable/jade_dark_choice"
     android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
-    android:text="◈&#10;GPU" android:textSize="13sp" android:textColor="#F5F1DB"
+    android:text="GPU" android:drawableTop="@drawable/jade_ic_fan" android:drawablePadding="4dp" android:textSize="13sp" android:textColor="#F5F1DB"
     android:textStyle="bold" android:minWidth="0dp"
     android:enabled="true" android:stateListAnimator="@null"/>
                         <RadioButton android:id="@+id/backendNpuButton"
@@ -232,7 +232,7 @@
     android:layout_margin="3dp" android:button="@null"
     android:background="@drawable/jade_dark_choice"
     android:gravity="center" android:paddingStart="2dp" android:paddingEnd="2dp"
-    android:text="✥&#10;NPU" android:textSize="13sp" android:textColor="#F5F1DB"
+    android:text="NPU" android:drawableTop="@drawable/jade_ic_brain" android:drawablePadding="4dp" android:textSize="13sp" android:textColor="#F5F1DB"
     android:textStyle="bold" android:minWidth="0dp"
     android:enabled="true" android:stateListAnimator="@null"/>
                     </RadioGroup>
@@ -258,7 +258,7 @@
                 <LinearLayout android:layout_width="match_parent" android:layout_height="31dp"
     android:layout_marginTop="7dp" android:orientation="horizontal" android:gravity="center_vertical">
     <TextView android:layout_width="wrap_content" android:layout_height="match_parent"
-        android:gravity="center_vertical" android:text="♢  对局条件"
+        android:gravity="center_vertical" android:text="对局条件" android:drawableStart="@drawable/jade_ic_rule" android:drawablePadding="8dp"
         android:textColor="#F2DCA0" android:textStyle="bold" android:textSize="15sp"/>
     
 </LinearLayout>
@@ -294,27 +294,27 @@
             <TextView android:id="@+id/newGameHomeTab"
     android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
     android:gravity="center" android:clickable="true"
-    android:text="⌂&#10;首页" android:textSize="12sp"
+    android:text="首页" android:drawableTop="@drawable/jade_ic_home" android:drawablePadding="4dp" android:textSize="12sp"
     android:textColor="#DDDFD1"/>
             <TextView android:id="@+id/newGameRecordTab"
     android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
     android:gravity="center" android:clickable="true"
-    android:text="▣&#10;棋谱" android:textSize="12sp"
+    android:text="棋谱" android:drawableTop="@drawable/jade_ic_book" android:drawablePadding="4dp" android:textSize="12sp"
     android:textColor="#DDDFD1"/>
             <TextView android:id="@+id/newGamePlayTab"
     android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
     android:gravity="center" android:clickable="true"
-    android:text="◉&#10;对弈" android:textSize="12sp"
+    android:text="对弈" android:drawableTop="@drawable/jade_ic_go" android:drawablePadding="4dp" android:drawableTint="#F5D990" android:textSize="12sp"
     android:textColor="#F5D990"/>
             <TextView android:id="@+id/newGameTrainingTab"
     android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
     android:gravity="center" android:clickable="true"
-    android:text="✧&#10;训练" android:textSize="12sp"
+    android:text="训练" android:drawableTop="@drawable/jade_ic_training" android:drawablePadding="4dp" android:textSize="12sp"
     android:textColor="#DDDFD1"/>
             <TextView android:id="@+id/newGameSettingsTab"
     android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"
     android:gravity="center" android:clickable="true"
-    android:text="⚙&#10;设置" android:textSize="12sp"
+    android:text="设置" android:drawableTop="@drawable/jade_ic_settings" android:drawablePadding="4dp" android:textSize="12sp"
     android:textColor="#DDDFD1"/>
         </LinearLayout>
     </LinearLayout>
