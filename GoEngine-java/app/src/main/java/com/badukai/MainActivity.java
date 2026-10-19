@@ -1904,13 +1904,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void openReplay() {
+        // The active board stays visible behind the chooser; do not briefly
+        // reveal Home or start a ReplayActivity until a choice is made.
         saveReplaySnapshot(true);
-        startActivity(new android.content.Intent(this, ReplayActivity.class));
+        com.badukai.ui.JadeNavigation.open(this,
+                com.badukai.ui.JadeBottomNavView.RECORDS);
     }
 
     private void openTsumego() {
         saveReplaySnapshot(true);
-        startActivity(new android.content.Intent(this, TsumegoActivity.class));
+        com.badukai.ui.JadeNavigation.open(this,
+                com.badukai.ui.JadeBottomNavView.TRAINING);
     }
 
     private void showMainPage() {
