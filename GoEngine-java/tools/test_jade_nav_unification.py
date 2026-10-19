@@ -48,21 +48,35 @@ class JadeNavTest(unittest.TestCase):
                                  (self.home_layout, self.dialog,
                                   self.replay_layout, self.training_layout)))
 
-    def test_original_five_tab_order_and_real_dynamic_highlight(self):
+    def test_original_illustrated_artwork_is_restored(self):
+        self.assertIn('private static final String ART = "home/navbar/bar.png";',
+                      self.shared)
+        self.assertIn("context.getAssets().open(ART)", self.shared)
+        self.assertIn("originalArtwork.setImageBitmap(image)", self.shared)
+        self.assertIn("ImageView.ScaleType.FIT_XY", self.shared)
         self.assertIn('{"首页", "对弈", "棋谱", "训练", "设置"}', self.shared)
+        self.assertTrue((ROOT / "docs/navbar/bar.png").exists())
+        # Confirm the original bar is packaged automatically into assets/home/navbar.
+        gradle = (ROOT / "app/build.gradle.kts").read_text(encoding="utf-8")
+        self.assertIn('from(rootProject.file("docs/navbar"))', gradle)
+        self.assertIn('into("navbar")', gradle)
+        self.assertIn('dependsOn(stageGreenHomeArtwork)', gradle)
+        # Native redraw of the five fonts and icons caused the style regression.
+        self.assertNotIn("new TextView(context)", self.shared)
+        self.assertNotIn("setImageResource(ICONS[i])", self.shared)
+
+    def test_original_five_tab_order_and_selection(self):
         for name, number in (("HOME", "0"), ("PLAY", "1"), ("RECORDS", "2"),
                              ("TRAINING", "3"), ("SETTINGS", "4")):
             self.assertIn("public static final int " + name + " = " + number + ";",
                           self.shared)
-        for icon in ("ic_home_ivory", "ic_board_grid_gold", "ic_book_ivory",
-                     "ic_training_ivory", "ic_settings_ivory"):
-            self.assertIn("R.drawable." + icon, self.shared)
-            self.assertTrue((ROOT / "app/src/main/res/drawable-nodpi"
-                             / (icon + ".png")).exists())
         self.assertIn("public void setSelectedTab(int tab)", self.shared)
-        self.assertIn("underlines[i].setVisibility(active", self.shared)
-        self.assertIn("cells[i].setBackground(active ?", self.shared)
-        self.assertIn("labels[i].setTextColor(active ?", self.shared)
+        self.assertIn("homeDimmer.setVisibility(tab == HOME", self.shared)
+        self.assertIn("selectedLines[i].setVisibility(tab != HOME && i == tab",
+                      self.shared)
+        self.assertIn("cells[i].setSelected(i == tab)", self.shared)
+        self.assertIn("cell.setOnClickListener(v ->", self.shared)
+        self.assertIn("if (listener != null) listener.onTabClick(tab)", self.shared)
 
     def test_each_host_selects_correct_tab(self):
         for source, token in (
