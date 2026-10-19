@@ -3,7 +3,7 @@
 Source: `docs/ui/icons/badukai_jade_icons_22/manifest.json` and
 `app/src/main/res/drawable-nodpi/ic_*.png`, uploaded in commit `bc0c9f0`.
 
-The `dialog_new_game.xml` screen uses all 22 originals. Each icon retains
+The icon pack contains 22 originals; the new-game screen uses 21 of them. Each icon retains
 the emerald/gold lighting and transparent pixels from the image pack, rather
 than the earlier flat `jade_ic_*.xml` vector approximations.
 
@@ -14,15 +14,15 @@ than the earlier flat `jade_ic_*.xml` vector approximations.
 | Game mode cards | `ic_mode_ai`, `ic_mode_human`, `ic_import_sgf` |
 | Player color cards | `ic_black_stone`, `ic_white_stone`, `ic_random` |
 | NPU selection cards | `ic_cpu`, `ic_gpu`, `ic_npu` |
-| Start match | `ic_confirm` |
+| Start match | No icon, centered text (the optional `ic_confirm` PNG stays in the asset pack) |
 | Bottom navigation | `ic_home`, `ic_records`, `ic_game_tab`, `ic_training`, `ic_settings_tab` |
 
 **Important Android detail:** each PNG is 512x512 in `drawable-nodpi`.
 Using these directly as compound drawables gives a huge intrinsic size,
 so `JadeIconBinder.bindNewGame(content)` assigns explicit bounds in dp
 before the dialog is shown: 26dp on section headings, 34–38dp on
-selection cards, 29dp on the bottom navigation, and 30dp on the launch
-button. Header icon views use explicit sizes directly. Do not tint the
+selection cards, and 29dp on the bottom navigation. The launch button
+has text only; header icon views use explicit sizes directly. Do not tint the
 PNG artwork.
 
 The original `jade_ic_*.xml` files are left untouched as rollback

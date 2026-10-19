@@ -284,7 +284,7 @@
             <Button android:id="@+id/startGameButton"
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:background="@drawable/jade_dark_action"
-                android:text="开 始 对 局" android:drawableStart="@drawable/ic_confirm" android:drawablePadding="9dp" android:textStyle="bold"
+                android:text="开 始 对 局" android:textStyle="bold"
                 android:textColor="#F4EACF" android:textSize="21sp"
                 android:fontFamily="serif" android:textAllCaps="false"
                 android:stateListAnimator="@null"/>

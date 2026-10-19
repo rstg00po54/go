@@ -42,13 +42,11 @@ public final class JadeIconBinder {
         topLowered(root, R.id.backendNpuButton, R.drawable.ic_npu, 38, 8);
 
         // Bottom tabs use a smaller 4dp inset to preserve the 60dp navbar.
-        // Confirmation button keeps its original leading artwork.
         topLowered(root, R.id.newGameHomeTab, R.drawable.ic_home, 29, 4);
         topLowered(root, R.id.newGameRecordTab, R.drawable.ic_records, 29, 4);
         topLowered(root, R.id.newGamePlayTab, R.drawable.ic_game_tab, 29, 4);
         topLowered(root, R.id.newGameTrainingTab, R.drawable.ic_training, 29, 4);
         topLowered(root, R.id.newGameSettingsTab, R.drawable.ic_settings_tab, 29, 4);
-        left(root, R.id.startGameButton, R.drawable.ic_confirm, 30);
     }
 
     private static void left(View root, int viewId, int resourceId, int sizeDp) {

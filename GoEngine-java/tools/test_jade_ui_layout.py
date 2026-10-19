@@ -156,7 +156,8 @@ class JadeUiTest(unittest.TestCase):
                 value = view.get(ANDROID + attr, "")
                 if value.startswith("@drawable/ic_"):
                     used_icons.add(value[len("@drawable/"):])
-        self.assertEqual(set(names), used_icons)
+        self.assertEqual(set(names) - {"ic_confirm"}, used_icons)
+        self.assertNotIn("ic_confirm", used_icons)
         png_dir = ROOT / "app/src/main/res/drawable-nodpi"
         for row in manifest:
             name = row["name"]
@@ -197,7 +198,6 @@ class JadeUiTest(unittest.TestCase):
             "newGamePlayTab": ("drawableTop", "game_tab"),
             "newGameTrainingTab": ("drawableTop", "training"),
             "newGameSettingsTab": ("drawableTop", "settings_tab"),
-            "startGameButton": ("drawableStart", "confirm"),
         }
         for control, (attr, icon) in expected.items():
             with self.subTest(control=control):
@@ -277,7 +277,10 @@ class JadeUiTest(unittest.TestCase):
         self.assertIn("import android.graphics.drawable.InsetDrawable;", binder)
         self.assertIn("new InsetDrawable(art, 0, offset, 0, 0)", binder)
         self.assertIn("lowered.setBounds(0, 0, pixels, pixels + offset)", binder)
-        self.assertIn("left(root, R.id.startGameButton, R.drawable.ic_confirm, 30);", binder)
+        self.assertNotIn("R.id.startGameButton", binder)
+        self.assertNotIn("R.drawable.ic_confirm", binder)
+        self.assertIsNone(controls["startGameButton"].get(ANDROID + "drawableStart"))
+        self.assertIsNone(controls["startGameButton"].get(ANDROID + "drawablePadding"))
 
     def test_jade_drawables_are_valid(self):
         for path in DRAWABLES.glob("jade_*.xml"):
