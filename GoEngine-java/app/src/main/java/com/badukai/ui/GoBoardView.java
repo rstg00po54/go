@@ -36,6 +36,11 @@ public class GoBoardView extends View {
         void onIntersectionClick(int x, int y);
     }
 
+    /** Taps on AI recommendation markers work even when normal board input is disabled. */
+    public interface OnRecommendationClickListener {
+        void onRecommendationClick(int rank);
+    }
+
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint stonePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint shadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -57,6 +62,11 @@ public class GoBoardView extends View {
     private Point[] previewMoves;
     private StoneColor[] previewColors;
     private int[] previewNumbers;
+    // Optional overlays used only by the integrated SGF/AI review screen.
+    private int[] analysisMoveNumbers;
+    private Point actualNextMove;
+    private OnRecommendationClickListener recommendationListener;
+    private float touchDownX, touchDownY;
     private OnIntersectionClickListener listener;
     private boolean inputEnabled = true;
     private SharedPreferences visualPreferences;
@@ -167,6 +177,25 @@ public class GoBoardView extends View {
 
     public boolean hasRecommendations() { return recommendedPoints != null && recommendedPoints.length > 0; }
 
+    /** Every surviving stone can show the SGF move at which it was placed. */
+    public void setAnalysisMoveNumbers(int[] numbers) {
+        analysisMoveNumbers = numbers != null && board != null
+                && numbers.length == board.getSize() * board.getSize()
+                ? numbers.clone() : null;
+        invalidate();
+    }
+
+    /** Gold marker for the SGF's actual NEXT move, independent of AI suggestions. */
+    public void setActualNextMove(Point point) {
+        actualNextMove = point;
+        invalidate();
+    }
+
+    public void setOnRecommendationClickListener(OnRecommendationClickListener listener) {
+        recommendationListener = listener;
+        setClickable(listener != null || this.listener != null);
+    }
+
     /** Show KataGo's proposed sequence on an independent board; the live board is untouched. */
     public void setVariationPreview(GoBoard preview, Point[] moves, StoneColor[] colors, int[] numbers) {
         if (preview == null || board == null || preview.getSize() != board.getSize()
@@ -207,6 +236,7 @@ public class GoBoardView extends View {
     public void setOnIntersectionClickListener(OnIntersectionClickListener listener) {
         DebugLog.enter(TAG, "setOnIntersectionClickListener in, listener=" + listener);
         this.listener = listener;
+        setClickable(listener != null || recommendationListener != null);
     }
 
     @Override
@@ -239,9 +269,11 @@ public class GoBoardView extends View {
         if (previewBoard == null) drawOwnership(canvas, n);
         drawStones(canvas, n, shown, previewBoard == null && showLastMove ? lastMove : null);
         if (previewBoard == null) {
+            drawAnalysisMoveNumbers(canvas, n);
             drawDeadStoneMarks(canvas, n);
             drawTrainingTarget(canvas);
             drawRecommendations(canvas);
+            drawActualNextMove(canvas, n);
         } else drawPreviewMoveNumbers(canvas);
     }
 
@@ -549,12 +581,96 @@ public class GoBoardView extends View {
         paint.setTextAlign(Paint.Align.LEFT);
     }
 
+    /** Only surviving stones are numbered; captured stones must not keep old labels. */
+    private void drawAnalysisMoveNumbers(Canvas canvas, int n) {
+        if (analysisMoveNumbers == null || analysisMoveNumbers.length != n * n) return;
+        paint.setShader(null);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setTypeface(Typeface.DEFAULT_BOLD);
+        for (int y = 0; y < n; y++) {
+            for (int x = 0; x < n; x++) {
+                int moveNumber = analysisMoveNumbers[y * n + x];
+                if (moveNumber <= 0) continue;
+                Intersection color = board.get(x, y);
+                if (color == Intersection.EMPTY) continue;
+                String number = Integer.toString(moveNumber);
+                float availableWidth = cellSize * 0.76f;
+                paint.setTextSize(Math.min(dp(16), cellSize * 0.45f));
+                // 100+ and 200+ move numbers must fit inside a 19-road stone.
+                if (paint.measureText(number) > availableWidth) {
+                    paint.setTextSize(paint.getTextSize() * availableWidth
+                            / paint.measureText(number));
+                }
+                paint.setColor(color == Intersection.BLACK ? Color.WHITE : 0xFF202820);
+                Paint.FontMetrics fm = paint.getFontMetrics();
+                canvas.drawText(number, padding + x * cellSize,
+                        padding + y * cellSize - (fm.ascent + fm.descent) * 0.5f, paint);
+            }
+        }
+        paint.setTextAlign(Paint.Align.LEFT);
+        paint.setTypeface(Typeface.DEFAULT);
+    }
+
+    /** The actual SGF next move has a gold marker, never mistaken for green AI ranks. */
+    private void drawActualNextMove(Canvas canvas, int n) {
+        Point point = actualNextMove;
+        if (point == null || !board.isInside(point.x, point.y)
+                || board.get(point) != Intersection.EMPTY) return;
+        float cx = padding + point.x * cellSize;
+        float cy = padding + point.y * cellSize;
+        float radius = cellSize * 0.44f;
+        boolean coincides = false;
+        if (recommendedPoints != null) {
+            for (Point recommended : recommendedPoints) {
+                if (point.equals(recommended)) { coincides = true; break; }
+            }
+        }
+        paint.setShader(null);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(Math.max(dp(1.5f), cellSize * 0.075f));
+        paint.setColor(0xFFFFC451);
+        canvas.drawCircle(cx, cy, radius, paint);
+        paint.setStyle(Paint.Style.FILL);
+        if (!coincides) {
+            paint.setColor(0xFFF2C768);
+            canvas.drawCircle(cx, cy, radius * 0.81f, paint);
+        } else {
+            // Keep the green rank legible while tagging a matching actual move.
+            paint.setColor(0xFF5D3216);
+            canvas.drawCircle(cx + radius * 0.71f, cy - radius * 0.72f,
+                    radius * 0.40f, paint);
+        }
+        paint.setTypeface(Typeface.DEFAULT_BOLD);
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setTextSize(Math.min(dp(13), cellSize * (coincides ? 0.30f : 0.43f)));
+        paint.setColor(coincides ? Color.WHITE : 0xFF402B16);
+        Paint.FontMetrics fm = paint.getFontMetrics();
+        float tx = coincides ? cx + radius * 0.71f : cx;
+        float ty = coincides ? cy - radius * 0.72f : cy;
+        canvas.drawText("实", tx, ty - (fm.ascent + fm.descent) * 0.5f, paint);
+        paint.setTextAlign(Paint.Align.LEFT);
+        paint.setTypeface(Typeface.DEFAULT);
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        DebugLog.v(TAG, "onTouchEvent in, action=" + event.getAction() + ", x=" + event.getX() + ", y=" + event.getY() + ", inputEnabled=" + inputEnabled);
-        if (!inputEnabled || listener == null || board == null) return true;
-        if (event.getAction() != MotionEvent.ACTION_UP) return true;
-        if (cellSize <= 0) return true;
+        DebugLog.v(TAG, "onTouchEvent in, action=" + event.getAction()
+                + ", x=" + event.getX() + ", y=" + event.getY()
+                + ", inputEnabled=" + inputEnabled);
+        if (board == null || (recommendationListener == null
+                && (!inputEnabled || listener == null))) return true;
+        int action = event.getActionMasked();
+        if (action == MotionEvent.ACTION_DOWN) {
+            touchDownX = event.getX();
+            touchDownY = event.getY();
+            return true;
+        }
+        if (action != MotionEvent.ACTION_UP || cellSize <= 0) return true;
+        float dxSwipe = event.getX() - touchDownX;
+        float dySwipe = event.getY() - touchDownY;
+        if (dxSwipe * dxSwipe + dySwipe * dySwipe > cellSize * cellSize * 0.35f)
+            return true;
         int n = board.getSize();
         int x = Math.round((event.getX() - padding) / cellSize);
         int y = Math.round((event.getY() - padding) / cellSize);
@@ -563,9 +679,23 @@ public class GoBoardView extends View {
         float cy = padding + y * cellSize;
         float dx = event.getX() - cx;
         float dy = event.getY() - cy;
-        if (dx * dx + dy * dy > cellSize * cellSize * 0.45f) return true;
-        listener.onIntersectionClick(x, y);
-        performClick();
+        if (dx * dx + dy * dy > cellSize * cellSize * 0.28f) return true;
+
+        if (previewBoard == null && recommendationListener != null
+                && recommendedPoints != null) {
+            for (int i = 0; i < recommendedPoints.length; i++) {
+                Point p = recommendedPoints[i];
+                if (p != null && p.x == x && p.y == y) {
+                    recommendationListener.onRecommendationClick(i + 1);
+                    performClick();
+                    return true;
+                }
+            }
+        }
+        if (inputEnabled && listener != null) {
+            listener.onIntersectionClick(x, y);
+            performClick();
+        }
         return true;
     }
 
