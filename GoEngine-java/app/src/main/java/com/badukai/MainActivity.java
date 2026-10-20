@@ -1169,6 +1169,7 @@ public class MainActivity extends AppCompatActivity {
                     render("落子同步失败，请重新开局");
                     return;
                 }
+                saveReplaySnapshot(false);
                 queueWinRateMove(color, gtp, color.opposite(), snapshot, moveCount);
                 requestAiMove();
             });
@@ -1210,8 +1211,11 @@ public class MainActivity extends AppCompatActivity {
             board.playMove(new Move.Pass(aiColor));
             currentPlayer = aiColor.opposite();
             lastMove = null;
-            if (board.isGameOver()) finishByScore(null);
-            else {
+            if (board.isGameOver()) {
+                saveReplaySnapshot(false);
+                finishByScore(null);
+            } else {
+                saveReplaySnapshot(false);
                 render("AI 停一手，你下");
                 queueWinRateMove(aiColor, "pass", currentPlayer, board, board.getMoveCount());
             }
@@ -1231,6 +1235,7 @@ public class MainActivity extends AppCompatActivity {
         board.playMove(new Move.Stone(point, aiColor));
         lastMove = point;
         currentPlayer = aiColor.opposite();
+        saveReplaySnapshot(false);
         render("轮到你了");
         queueWinRateMove(aiColor, move, currentPlayer, board, board.getMoveCount());
     }
@@ -1244,6 +1249,7 @@ public class MainActivity extends AppCompatActivity {
         board.playMove(new Move.Pass(color));
         lastMove = null;
         if (board.isGameOver()) {
+            saveReplaySnapshot(false);
             render("正在数目...");
             finishByScore(color.toGtp());
             return;
@@ -1256,6 +1262,7 @@ public class MainActivity extends AppCompatActivity {
             boolean synced = engine.playMove(color.toGtp(), "pass");
             mainHandler.post(() -> {
                 if (synced) {
+                    saveReplaySnapshot(false);
                     queueWinRateMove(color, "pass", color.opposite(), snapshot, moveCount);
                     requestAiMove();
                 } else render("停一手同步失败");
@@ -1290,6 +1297,10 @@ public class MainActivity extends AppCompatActivity {
             mainHandler.post(() -> {
                 if (snapshot != board) return;
                 evaluating = false;
+                if (second) {
+                    if (board.getMoveCount() == 0) UnfinishedGameStore.clear(this);
+                    else saveReplaySnapshot(false);
+                }
                 if (second && engine.usesNpuBackend())
                     queueNpuWinRateEvaluation(snapshot, moveCount, winRateSession, winRateEpoch);
                 render(second ? "已悔棋，轮到你了" : "引擎悔棋同步失败");
