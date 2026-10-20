@@ -70,32 +70,31 @@ public final class JadeSectionActivity extends Activity {
         heading.setText("棋 谱 中 心");
         subtitle.setText("复盘、收藏与导入 · 留住每一局棋");
         addHeading("选择棋谱功能");
-        addCard("复盘最近一局", "查看刚刚结束或保存的对局",
-                R.drawable.ic_records, () -> openReplay(null), false);
-        addCard("历史棋谱", "从本地保存的对局中选择一盘",
-                R.drawable.ic_book_ivory, this::openHistory, false);
-        addCard("AI 分析最近一局", "胜率趋势、目数与推荐着法",
-                R.drawable.ic_ai_level, () -> {
+        addCard("复盘最近一局", "直接进入 AI 分析，逐手查看整盘棋",
+                R.drawable.ic_records, () -> {
                     startActivity(new Intent(this, AiAnalysisActivity.class));
                     overridePendingTransition(0, 0);
                 }, false);
-        addCard("导入 SGF", "从设备文件中读取外部棋谱",
-                R.drawable.ic_import_sgf, () -> openReplay("import"), false);
-        addNote("棋谱分析与回放沿用现有功能；进入前不会中断当前对弈。");
+        addCard("历史棋谱", "从本地保存的对局中选择一盘",
+                R.drawable.ic_book_ivory, this::openHistory, false);
+        addCard("导入 SGF", "导入后直接进入 AI 分析",
+                R.drawable.ic_import_sgf, this::openImport, false);
+        addNote("复盘和 AI 分析已合并为同一页面；进入前不会中断当前对弈。");
     }
 
     private void openHistory() {
         // Choose a saved SGF first; never reveal the replay board underneath.
         Intent library = new Intent(this, SgfLibraryActivity.class);
-        library.putExtra(SgfLibraryActivity.EXTRA_OPEN_REPLAY_ON_SELECT, true);
+        library.putExtra(SgfLibraryActivity.EXTRA_OPEN_ANALYSIS_ON_SELECT, true);
         startActivity(library);
         overridePendingTransition(0, 0);
     }
 
-    private void openReplay(String action) {
-        Intent intent = new Intent(this, ReplayActivity.class);
-        if (action != null) intent.putExtra("replay_entry_action", action);
-        startActivity(intent);
+    private void openImport() {
+        Intent library = new Intent(this, SgfLibraryActivity.class);
+        library.putExtra(SgfLibraryActivity.EXTRA_OPEN_ANALYSIS_ON_SELECT, true);
+        library.putExtra(SgfLibraryActivity.EXTRA_IMPORT_ON_START, true);
+        startActivity(library);
         overridePendingTransition(0, 0);
     }
 
