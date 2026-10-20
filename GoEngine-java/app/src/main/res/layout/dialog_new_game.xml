@@ -44,39 +44,30 @@
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="vertical" android:paddingStart="10dp"
                 android:paddingEnd="10dp" android:paddingBottom="8dp">
-                <LinearLayout android:layout_width="match_parent" android:layout_height="31dp"
-    android:layout_marginTop="7dp" android:orientation="horizontal" android:gravity="center_vertical">
-    <TextView android:layout_width="wrap_content" android:layout_height="match_parent"
-        android:gravity="center_vertical" android:id="@+id/jadeSectionBoardSize" android:text="棋盘大小" android:drawableStart="@drawable/ic_board_size" android:drawablePadding="8dp"
-        android:textColor="#F2DCA0" android:textStyle="bold" android:textSize="15sp"/>
-    
-</LinearLayout>
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:background="@drawable/jade_dark_card" android:orientation="horizontal"
-                    android:paddingStart="5dp" android:paddingEnd="5dp" android:paddingTop="7dp"
-                    android:paddingBottom="7dp" android:gravity="center_vertical">
-                    <com.badukai.ui.JadeBoardSizeView
-    android:id="@+id/boardTile9"
-    android:layout_width="0dp" android:layout_height="103dp"
-    android:layout_weight="1" android:layout_margin="1dp"/>
-<com.badukai.ui.JadeBoardSizeView
-    android:id="@+id/boardTile11"
-    android:layout_width="0dp" android:layout_height="103dp"
-    android:layout_weight="1" android:layout_margin="1dp"/>
-<com.badukai.ui.JadeBoardSizeView
-    android:id="@+id/boardTile13"
-    android:layout_width="0dp" android:layout_height="103dp"
-    android:layout_weight="1" android:layout_margin="1dp"/>
-<com.badukai.ui.JadeBoardSizeView
-    android:id="@+id/boardTile15"
-    android:layout_width="0dp" android:layout_height="103dp"
-    android:layout_weight="1" android:layout_margin="1dp"/>
-<com.badukai.ui.JadeBoardSizeView
-    android:id="@+id/boardTile19"
-    android:layout_width="0dp" android:layout_height="103dp"
-    android:layout_weight="1" android:layout_margin="1dp"/>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="52dp"
+                    android:layout_marginTop="7dp" android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <TextView android:id="@+id/jadeSectionBoardSize"
+                        android:layout_width="0dp" android:layout_height="match_parent"
+                        android:layout_weight="1" android:gravity="center_vertical"
+                        android:text="棋盘大小" android:drawableStart="@drawable/ic_board_size"
+                        android:drawablePadding="8dp" android:textColor="#F2DCA0"
+                        android:textStyle="bold" android:textSize="15sp" />
+                    <FrameLayout android:layout_width="148dp" android:layout_height="42dp"
+                        android:background="@drawable/jade_dark_card">
+                        <Spinner android:id="@+id/boardSizeSpinner"
+                            android:layout_width="match_parent" android:layout_height="match_parent"
+                            android:spinnerMode="dropdown" android:dropDownWidth="148dp"
+                            android:contentDescription="选择棋盘大小"
+                            android:background="@android:color/transparent" />
+                        <TextView android:layout_width="wrap_content"
+                            android:layout_height="match_parent" android:layout_gravity="end"
+                            android:gravity="center_vertical" android:paddingEnd="13dp"
+                            android:text="▾" android:textColor="#F2DCA0"
+                            android:textSize="19sp" android:clickable="false"
+                            android:importantForAccessibility="no" />
+                    </FrameLayout>
                 </LinearLayout>
-
                 <LinearLayout android:layout_width="match_parent" android:layout_height="31dp"
     android:layout_marginTop="7dp" android:orientation="horizontal" android:gravity="center_vertical">
     <TextView android:layout_width="wrap_content" android:layout_height="match_parent"
