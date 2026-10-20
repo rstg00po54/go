@@ -140,18 +140,18 @@
             <Button android:id="@+id/analysisPrevious"
                 android:layout_width="0dp" android:layout_weight="1" android:layout_height="39dp"
                 android:layout_marginEnd="3dp" android:minWidth="0dp" android:minHeight="0dp"
-                android:background="@drawable/jade_game_white_button" android:text="◀ 上一手"
+                android:background="@drawable/jade_game_white_button" android:text="▶ 播放"
                 android:textAllCaps="false" android:textSize="12sp" android:textColor="#184A39"/>
             <Button android:id="@+id/analysisPlay"
                 android:layout_width="0dp" android:layout_weight="1" android:layout_height="39dp"
                 android:layout_marginStart="3dp" android:layout_marginEnd="3dp"
                 android:minWidth="0dp" android:minHeight="0dp"
-                android:background="@drawable/jade_game_white_button" android:text="▶ 播放"
-                android:textAllCaps="false" android:textSize="12sp" android:textColor="#184A39"/>
+                android:background="@drawable/jade_game_white_button" android:text="▶▶ 自动播放"
+                android:textAllCaps="false" android:textSize="11sp" android:textColor="#184A39"/>
             <Button android:id="@+id/analysisCurrent"
                 android:layout_width="0dp" android:layout_weight="1" android:layout_height="39dp"
                 android:layout_marginStart="3dp" android:minWidth="0dp" android:minHeight="0dp"
-                android:background="@drawable/jade_game_white_button" android:text="跳到终局"
+                android:background="@drawable/jade_game_white_button" android:text="↶ 切换到本手"
                 android:textAllCaps="false" android:textSize="12sp" android:textColor="#184A39"/>
         </LinearLayout>
         <com.badukai.ui.JadeBottomNavView android:id="@+id/analysisSharedNav"
