@@ -172,9 +172,11 @@ public final class AiAnalysisActivity extends Activity {
         });
         playButton.setOnClickListener(v -> {
             if (game == null) return;
-            if (autoplay) stopAutoplay();
-            else {
-                if (step >= game.moves.size()) showStep(0);
+            if (autoplay) {
+                stopAutoplay();
+                analyzeSelectedStep();
+            } else {
+                if (step >= game.moves.size()) showStep(0, false);
                 autoplay = true;
                 playButton.setText("Ⅱ 暂停");
                 ui.postDelayed(autoplayTick, 500);
@@ -285,7 +287,7 @@ public final class AiAnalysisActivity extends Activity {
         board.setBoard(shownPosition);
         Move last = step > 0 ? game.moves.get(step - 1) : null;
         board.setLastMove(last instanceof Move.Stone ? ((Move.Stone) last).point : null);
-        boardMeta.setText(game.size + "×" + game.size + " · 贴目 " + game.komi + "\\n第 " + step
+        boardMeta.setText(game.size + "×" + game.size + " · 贴目 " + game.komi + "\n第 " + step
                 + "/" + game.moves.size() + " 手");
         captures.setText("黑提子 " + shownPosition.getCapturedWhite()
                 + "  白提子 " + shownPosition.getCapturedBlack());
