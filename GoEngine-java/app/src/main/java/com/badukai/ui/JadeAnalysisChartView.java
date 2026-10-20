@@ -85,6 +85,15 @@ public final class JadeAnalysisChartView extends View {
         paint.setStrokeJoin(Paint.Join.ROUND);
         paint.setColor(0xFFFFDA7D);
         canvas.drawPath(curve, paint);
+        // A quick single-step analysis must be visible as a real sample,
+        // without falsely drawing a line across unanalysed positions.
+        paint.setStyle(Paint.Style.FILL);
+        for (int i = 0; i < blackWins.length; i++) {
+            if (!Float.isFinite(blackWins[i])) continue;
+            float x = x0 + (x1 - x0) * i / count;
+            float y = y1 - (y1 - y0) * blackWins[i];
+            canvas.drawCircle(x, y, dp(2.5f), paint);
+        }
         if (valid == 0) {
             paint.setStyle(Paint.Style.FILL);
             paint.setColor(0xFFD2DFC9);
