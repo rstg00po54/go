@@ -295,9 +295,9 @@ public final class AiAnalysisActivity extends Activity {
                     }
                 }
             }
-            captures.setText("黑方估空 " + blackEmpty + " 目\\n白方估空 " + whiteEmpty
-                    + " 目\\n黑棋提子 " + shownPosition.getCapturedWhite()
-                    + "\\n白棋提子 " + shownPosition.getCapturedBlack());
+            captures.setText("黑方估空 " + blackEmpty + " 目\n白方估空 " + whiteEmpty
+                    + " 目\n黑棋提子 " + shownPosition.getCapturedWhite()
+                    + "\n白棋提子 " + shownPosition.getCapturedBlack());
         } else {
             blackWin.setText("--");
             lead.setText("未取得评估");
