@@ -4,7 +4,9 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.PorterDuff;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -52,6 +54,7 @@ public final class SettingsActivity extends Activity {
     private LinearLayout sidebar, content;
     private ScrollView contentScroll;
     private ImageView backdrop;
+    private Bitmap themePreview;
     private final List<View> sidebarViews = new ArrayList<>();
     private int category;
 
@@ -67,6 +70,11 @@ public final class SettingsActivity extends Activity {
         try (InputStream input = getAssets().open("home/background.png")) {
             backdrop.setImageBitmap(BitmapFactory.decodeStream(input));
         } catch (Exception ignored) { /* dark jade fallback stays visible */ }
+        try (InputStream input = getAssets().open("home/background.png")) {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inSampleSize = 8;
+            themePreview = BitmapFactory.decodeStream(input, null, options);
+        } catch (Exception ignored) { /* solid color thumbnails remain usable */ }
         findViewById(R.id.settingsBack).setOnClickListener(v -> finish());
         JadeBottomNavView nav = findViewById(R.id.settingsSharedNav);
         nav.setSelectedTab(JadeBottomNavView.SETTINGS);
@@ -287,10 +295,21 @@ public final class SettingsActivity extends Activity {
             option.setPadding(dp(2), dp(3), dp(2), dp(2));
             FrameLayout preview = new FrameLayout(this);
             preview.setBackground(swatch(colors[i], i == selected));
-            TextView glyph = text(i == 2 ? "⚪" : "●", 19,
-                    i == 2 ? 0xFF6A5843 : GOLD, true);
-            glyph.setGravity(Gravity.CENTER);
-            preview.addView(glyph, new FrameLayout.LayoutParams(-1, -1));
+            preview.setClipToOutline(true);
+            if (themePreview != null) {
+                ImageView picture = new ImageView(this);
+                picture.setImageBitmap(themePreview);
+                picture.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                if (i == 1) picture.setColorFilter(0xFF475253, PorterDuff.Mode.MULTIPLY);
+                else if (i == 2) picture.setColorFilter(0xFFFAEDDB, PorterDuff.Mode.SCREEN);
+                FrameLayout.LayoutParams imageParams = new FrameLayout.LayoutParams(-1, -1);
+                imageParams.setMargins(dp(2), dp(2), dp(2), dp(2));
+                preview.addView(picture, imageParams);
+            } else {
+                TextView glyph = text("●", 19, GOLD, true);
+                glyph.setGravity(Gravity.CENTER);
+                preview.addView(glyph, new FrameLayout.LayoutParams(-1, -1));
+            }
             option.addView(preview, new LinearLayout.LayoutParams(-1, dp(48)));
             TextView caption = text(labels[i], 10, i == selected ? GOLD : MUTED, false);
             caption.setGravity(Gravity.CENTER);
