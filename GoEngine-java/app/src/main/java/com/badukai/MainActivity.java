@@ -1107,7 +1107,8 @@ public class MainActivity extends AppCompatActivity {
                 nnAreaScoreMoves = moves;
                 nnAreaScoreMessage = summary.toString();
                 liveAnalysisShowing = true;
-                render(count > 0 ? "AI分析完成，绿色编号为推荐落点" : "已显示当前局面估分");
+                // The analysis details are already shown in the line below; keep the top status clear.
+                render("");
             });
         });
     }
