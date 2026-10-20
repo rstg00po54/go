@@ -70,7 +70,7 @@ public final class JadeAnalysisChartView extends View {
         paint.setColor(0xFFC8DAC8);
         canvas.drawText(String.valueOf(first), x0, getHeight() - dp(5), paint);
         paint.setTextAlign(Paint.Align.RIGHT);
-        canvas.drawText(String.valueOf(count), x1, getHeight() - dp(5), paint);
+        canvas.drawText(String.valueOf(blackWins.length - 1), x1, getHeight() - dp(5), paint);
         paint.setTextAlign(Paint.Align.LEFT);
 
         Path curve = new Path();
