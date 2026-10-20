@@ -14,9 +14,14 @@ public final class GoSgf {
         public final float komi;
         public final List<Point> handicap;
         public final List<Move> moves;
+        /** The human's side, or null for imported/legacy SGF with no reliable role metadata. */
+        public final StoneColor humanColor;
         Game(int s, float k, List<Point> h, List<Move> m) {
+            this(s, k, h, m, null);
+        }
+        Game(int s, float k, List<Point> h, List<Move> m, StoneColor human) {
             size=s; komi=k; handicap=Collections.unmodifiableList(h);
-            moves=Collections.unmodifiableList(m);
+            moves=Collections.unmodifiableList(m); humanColor=human;
         }
     }
     private static String vertex(Point p,int size) {
@@ -30,9 +35,22 @@ public final class GoSgf {
         return new Point(x,y);
     }
     public static String encode(int size,float komi,List<Point> handicap,List<Move> moves) {
+        return encode(size, komi, handicap, moves, null);
+    }
+    /** Only locally played human-vs-AI games receive reliable human side metadata. */
+    public static String encode(int size,float komi,List<Point> handicap,List<Move> moves,
+            StoneColor humanColor) {
         if(size!=9&&size!=11&&size!=13&&size!=15&&size!=19)throw new IllegalArgumentException("Board");
         StringBuilder out=new StringBuilder("(;FF[4]GM[1]CA[UTF-8]SZ[");
         out.append(size).append("]KM[").append(komi).append("]RU[Chinese]");
+        if (humanColor != null) {
+            // PB/PW are standard SGF metadata for third-party viewers.
+            // XUC is a deliberately explicit app-specific human-color marker.
+            out.append("XUC[").append(humanColor == StoneColor.BLACK ? 'B' : 'W').append(']');
+            out.append("PB[").append(humanColor == StoneColor.BLACK ? "玩家" : "KataGo")
+                    .append("]PW[").append(humanColor == StoneColor.WHITE ? "玩家" : "KataGo")
+                    .append(']');
+        }
         if(handicap!=null&&!handicap.isEmpty()){
             out.append("HA[").append(handicap.size()).append("]");
             for(Point p:handicap)out.append("AB[").append(vertex(p,size)).append("]");
@@ -55,6 +73,12 @@ public final class GoSgf {
             throw new IllegalArgumentException("Unsupported board size");
         Matcher km=Pattern.compile("KM\\[([-+0-9.]+)\\]").matcher(sgf);
         float komi=km.find()?Float.parseFloat(km.group(1)):0;
+        // Check only the SGF root node, never a later move comment.
+        String root=sgf.substring(2,sgf.indexOf(';', 2)>=0 ? sgf.indexOf(';', 2) : sgf.length());
+        Matcher role=Pattern.compile("XUC\\\\[([BW])\\\\]").matcher(root);
+        StoneColor humanColor=role.find()
+                ? ("B".equals(role.group(1)) ? StoneColor.BLACK : StoneColor.WHITE)
+                : null;
         List<Point> handicap=new ArrayList<>();
         List<Move> moves=new ArrayList<>();
         String[] nodes=sgf.substring(2).split(";");
@@ -71,7 +95,7 @@ public final class GoSgf {
                         :new Move.Stone(point(m.group(2),size),color));
             }
         }
-        return new Game(size,komi,handicap,moves);
+        return new Game(size,komi,handicap,moves,humanColor);
     }
     public static GoBoard position(Game game,int count) {
         if(count<0||count>game.moves.size())throw new IllegalArgumentException("Step");
