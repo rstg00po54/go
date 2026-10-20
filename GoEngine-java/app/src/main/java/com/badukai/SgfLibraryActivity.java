@@ -24,9 +24,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-/** Offline archive chooser; returns a validated SGF to ReplayActivity. */
+/** Offline SGF chooser; opens unified AI review or returns a result to legacy callers. */
 public final class SgfLibraryActivity extends Activity {
     public static final String EXTRA_OPEN_REPLAY_ON_SELECT = "open_replay_on_select";
+    public static final String EXTRA_OPEN_ANALYSIS_ON_SELECT = "open_analysis_on_select";
+    public static final String EXTRA_IMPORT_ON_START = "import_on_start";
     private static final int PICK_SGF = 302;
     private LinearLayout list;
     private TextView count;
@@ -43,6 +45,10 @@ public final class SgfLibraryActivity extends Activity {
         findViewById(R.id.libraryImport).setOnClickListener(v -> importSgf());
         findViewById(R.id.libraryImportButton).setOnClickListener(v -> importSgf());
         populate();
+        if (getIntent().getBooleanExtra(EXTRA_IMPORT_ON_START, false)) {
+            // Open Android's document picker directly, without first showing a replay board.
+            importSgf();
+        }
     }
 
     @Override protected void onResume() {
@@ -129,6 +135,15 @@ public final class SgfLibraryActivity extends Activity {
     }
 
     private void returnFile(File file) {
+        if (getIntent().getBooleanExtra(EXTRA_OPEN_ANALYSIS_ON_SELECT, false)) {
+            Intent analysis = new Intent(this, AiAnalysisActivity.class);
+            analysis.putExtra(AiAnalysisActivity.EXTRA_SELECTED_SGF_FILE, file.getName());
+            startActivity(analysis);
+            overridePendingTransition(0, 0);
+            finish();
+            overridePendingTransition(0, 0);
+            return;
+        }
         if (getIntent().getBooleanExtra(EXTRA_OPEN_REPLAY_ON_SELECT, false)) {
             // Entered from the Records center: show the board only after selection.
             Intent replay = new Intent(this, ReplayActivity.class);
@@ -156,8 +171,12 @@ public final class SgfLibraryActivity extends Activity {
 
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
-        if (request != PICK_SGF || result != RESULT_OK || data == null
-                || data.getData() == null) return;
+        if (request != PICK_SGF) return;
+        if (result != RESULT_OK || data == null || data.getData() == null) {
+            // Direct-import entry returns to the Records center on cancellation.
+            if (getIntent().getBooleanExtra(EXTRA_IMPORT_ON_START, false)) finish();
+            return;
+        }
         try (InputStream in = getContentResolver().openInputStream(data.getData())) {
             if (in == null) throw new IllegalArgumentException("文件无法打开");
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
