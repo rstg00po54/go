@@ -1764,7 +1764,8 @@ public class MainActivity extends AppCompatActivity {
         if (board == null || board.getMoveCount() == 0) return;
         try {
             String sgf = GoSgf.encode(boardSize, komiFor(boardSize),
-                    board.getInitialHandicapSnapshot(), board.getMoveHistorySnapshot());
+                    board.getInitialHandicapSnapshot(), board.getMoveHistorySnapshot(),
+                    playerColor);
             java.nio.file.Files.write(new File(getFilesDir(), "last_game.sgf").toPath(),
                     sgf.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             if (archive) SgfArchive.save(this, sgf);
