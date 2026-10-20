@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -72,9 +73,10 @@ public final class AiAnalysisActivity extends Activity {
     private GoBoardView board;
     private JadeAnalysisChartView chart;
     private LinearLayout candidates;
-    private TextView blackWin, lead, captures, boardMeta, status;
+    private TextView blackWin, lead, captures, boardMeta, status, moveLabel;
     private ProgressBar winProgress;
-    private Button fullButton, playButton, quickTabButton, variationTabButton;
+    private SeekBar moveSeek;
+    private Button fullButton, playButton;
     private Button trendTabButton, movesTabButton;
     private View trendPanel, movesPanel;
     private final Runnable autoplayTick = new Runnable() {
@@ -82,9 +84,12 @@ public final class AiAnalysisActivity extends Activity {
             if (!alive || !autoplay || game == null) return;
             if (step >= game.moves.size()) {
                 stopAutoplay();
+                analyzeSelectedStep();
                 return;
             }
-            showStep(step + 1);
+            // Playback is responsive even when the CPU analysis engine is busy.
+            // Analyze the final selected position after playback stops.
+            showStep(step + 1, false);
             ui.postDelayed(this, 1350);
         }
     };
@@ -102,6 +107,11 @@ public final class AiAnalysisActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         setContentView(R.layout.activity_ai_analysis);
+        // Use all the available width unless the viewport genuinely lacks
+        // height. The fixed bottom navigation always remains visible.
+        com.badukai.ui.BoardViewportFitter.attach(
+                findViewById(R.id.analysisContentScroll),
+                findViewById(R.id.analysisBoardFrame));
         board = findViewById(R.id.analysisBoard);
         board.setInputEnabled(false);
         chart = findViewById(R.id.analysisChart);
@@ -114,8 +124,8 @@ public final class AiAnalysisActivity extends Activity {
         winProgress = findViewById(R.id.analysisWinProgress);
         fullButton = findViewById(R.id.analysisFullButton);
         playButton = findViewById(R.id.analysisPlay);
-        quickTabButton = findViewById(R.id.analysisQuickTab);
-        variationTabButton = findViewById(R.id.analysisVariationTab);
+        moveSeek = findViewById(R.id.analysisMoveSeek);
+        moveLabel = findViewById(R.id.analysisMoveLabel);
         trendTabButton = findViewById(R.id.analysisTrendTab);
         movesTabButton = findViewById(R.id.analysisMovesTab);
         trendPanel = findViewById(R.id.analysisTrendPanel);
@@ -136,14 +146,29 @@ public final class AiAnalysisActivity extends Activity {
         findViewById(R.id.analysisBack).setOnClickListener(v -> finish());
         findViewById(R.id.analysisPrevious).setOnClickListener(v -> {
             stopAutoplay();
-            if (game == null) return;
-            showStep(step < game.moves.size() ? step + 1 : 0);
+            showStep(step - 1);
+        });
+        findViewById(R.id.analysisNext).setOnClickListener(v -> {
+            stopAutoplay();
+            showStep(step + 1);
         });
         findViewById(R.id.analysisCurrent).setOnClickListener(v -> {
             stopAutoplay();
-            if (game == null) return;
             selectTab(false);
             showStep(step);
+        });
+        moveSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onStartTrackingTouch(SeekBar seek) {
+                stopAutoplay();
+            }
+            @Override public void onProgressChanged(SeekBar seek, int progress, boolean fromUser) {
+                // Display the requested SGF position immediately while dragging.
+                // Run the expensive search only once, when the finger is released.
+                if (fromUser) showStep(progress, false);
+            }
+            @Override public void onStopTrackingTouch(SeekBar seek) {
+                analyzeSelectedStep();
+            }
         });
         playButton.setOnClickListener(v -> {
             if (game == null) return;
@@ -151,7 +176,7 @@ public final class AiAnalysisActivity extends Activity {
             else {
                 if (step >= game.moves.size()) showStep(0);
                 autoplay = true;
-                playButton.setText("Ⅱ 暂停播放");
+                playButton.setText("Ⅱ 暂停");
                 ui.postDelayed(autoplayTick, 500);
             }
         });
@@ -162,8 +187,6 @@ public final class AiAnalysisActivity extends Activity {
         ((android.widget.Switch) findViewById(R.id.analysisFromStep))
                 .setOnCheckedChangeListener((button, enabled) ->
                         chart.setFromSelectedStep(enabled));
-        quickTabButton.setOnClickListener(v -> selectTab(false));
-        variationTabButton.setOnClickListener(v -> selectTab(true));
         fullButton.setOnClickListener(v -> {
             if (globalRunning) {
                 generation.incrementAndGet();
@@ -181,6 +204,8 @@ public final class AiAnalysisActivity extends Activity {
             rates = new float[game.moves.size() + 1];
             Arrays.fill(rates, Float.NaN);
             analyzed = new StepAnalysis[rates.length];
+            moveSeek.setMax(game.moves.size());
+            moveSeek.setEnabled(true);
             int initial = getIntent().getIntExtra(EXTRA_START_STEP, game.moves.size());
             showStep(Math.max(0, Math.min(initial, game.moves.size())));
         } catch (Exception error) {
@@ -188,6 +213,7 @@ public final class AiAnalysisActivity extends Activity {
             status.setText("无法打开棋谱：" + error.getMessage());
             showPlaceholder("暂无棋谱，请从棋谱中心选择棋局");
             fullButton.setEnabled(false);
+            moveSeek.setEnabled(false);
         }
     }
 
@@ -231,7 +257,7 @@ public final class AiAnalysisActivity extends Activity {
     private void stopAutoplay() {
         autoplay = false;
         ui.removeCallbacks(autoplayTick);
-        if (playButton != null) playButton.setText("▶▶ 自动播放");
+        if (playButton != null) playButton.setText("▶ 自动播放");
     }
 
     private StoneColor nextPlayer(int index) {
@@ -241,16 +267,25 @@ public final class AiAnalysisActivity extends Activity {
     }
 
     private void showStep(int requested) {
+        showStep(requested, true);
+    }
+
+    private void showStep(int requested, boolean runAnalysis) {
         if (game == null) return;
         int next = Math.max(0, Math.min(requested, game.moves.size()));
         step = next;
+        variationTab = false;
+        // Updating SeekBar programmatically does not trigger the user-only
+        // scrub path, so this remains safe during autoplay and chart taps.
+        if (moveSeek.getProgress() != step) moveSeek.setProgress(step);
+        moveLabel.setText("第 " + step + " / " + game.moves.size() + " 手");
         shownPosition = GoSgf.position(game, step);
         board.setVariationPreview(null, null, null, null);
         board.setRecommendations(null, null);
         board.setBoard(shownPosition);
         Move last = step > 0 ? game.moves.get(step - 1) : null;
         board.setLastMove(last instanceof Move.Stone ? ((Move.Stone) last).point : null);
-        boardMeta.setText(game.size + "×" + game.size + " · 贴目 " + game.komi + "\n第 " + step
+        boardMeta.setText(game.size + "×" + game.size + " · 贴目 " + game.komi + "\\n第 " + step
                 + "/" + game.moves.size() + " 手");
         captures.setText("黑提子 " + shownPosition.getCapturedWhite()
                 + "  白提子 " + shownPosition.getCapturedBlack());
@@ -260,10 +295,19 @@ public final class AiAnalysisActivity extends Activity {
             blackWin.setText("--");
             lead.setText("待分析");
             winProgress.setProgress(0);
-            showPlaceholder("本手尚未分析");
-            requestQuickAnalysis();
+            showPlaceholder("第 " + step + " 手 · 等待分析");
+            if (runAnalysis) analyzeSelectedStep();
+            else status.setText("第 " + step + " 手 · 松开滑条或暂停播放后分析");
         } else showAnalysis(saved);
-        if (variationTab) status.setText("变化图：点击下方推荐着法预览 PV");
+    }
+
+    private void analyzeSelectedStep() {
+        if (game == null || analyzed[step] != null) return;
+        if (globalRunning) {
+            status.setText("逐手分析运行中 · 可继续查看任意手");
+            return;
+        }
+        requestQuickAnalysis();
     }
 
     /** Display only one compact detail panel so analysis fits in one screen. */
@@ -281,18 +325,15 @@ public final class AiAnalysisActivity extends Activity {
 
     private void selectTab(boolean variation) {
         variationTab = variation;
-        if (variation) selectDetailTab(false);
-        quickTabButton.setAlpha(variation ? .55f : 1f);
-        variationTabButton.setAlpha(variation ? 1f : .55f);
-        quickTabButton.setBackgroundResource(variation ? R.drawable.jade_dark_card
-                : R.drawable.jade_dark_action);
-        variationTabButton.setBackgroundResource(variation ? R.drawable.jade_dark_action
-                : R.drawable.jade_dark_card);
-        if (!variation) {
+        if (variation) {
+            selectDetailTab(false);
+            status.setText("变化预览 · 点击「返回本手」恢复原始棋盘");
+        } else {
             board.setVariationPreview(null, null, null, null);
             StepAnalysis saved = game == null ? null : analyzed[step];
             if (saved != null) showAnalysis(saved);
-        } else status.setText("变化图：点击下方推荐着法预览 AI 变化");
+            else if (game != null) analyzeSelectedStep();
+        }
     }
 
     private void showPlaceholder(String text) {
@@ -347,10 +388,10 @@ public final class AiAnalysisActivity extends Activity {
             TextView rank = makeText(ranking == 1 ? "①" : ranking == 2 ? "②" : "③",
                     19, ranking == 1 ? 0xFFFFD681 : 0xFFD4D6D1, true);
             rank.setGravity(Gravity.CENTER);
-            row.addView(rank, new LinearLayout.LayoutParams(dp(27), dp(31)));
+            row.addView(rank, new LinearLayout.LayoutParams(dp(23), dp(24)));
             ImageView icon = new ImageView(this);
             icon.setImageResource(R.drawable.ic_board_size);
-            row.addView(icon, new LinearLayout.LayoutParams(dp(24), dp(24)));
+            row.addView(icon, new LinearLayout.LayoutParams(dp(20), dp(20)));
             LinearLayout texts = new LinearLayout(this);
             texts.setPadding(dp(5), 0, dp(2), 0);
             texts.setOrientation(LinearLayout.VERTICAL);
@@ -377,7 +418,7 @@ public final class AiAnalysisActivity extends Activity {
             row.addView(numeric, new LinearLayout.LayoutParams(dp(73), -2));
             row.setOnClickListener(v -> previewVariation(candidate, player));
             row.setContentDescription("推荐着法 " + candidate.move + "，查看变化图");
-            candidates.addView(row, new LinearLayout.LayoutParams(-1, dp(34)));
+            candidates.addView(row, new LinearLayout.LayoutParams(-1, dp(26)));
             if (count >= 3) break;
             View divider = new View(this);
             divider.setBackgroundColor(0x58758A6C);
