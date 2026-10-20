@@ -136,11 +136,10 @@ public final class SgfLibraryActivity extends Activity {
 
     private void returnFile(File file) {
         if (getIntent().getBooleanExtra(EXTRA_OPEN_ANALYSIS_ON_SELECT, false)) {
+            // Keep the archive chooser in the back stack: AI review -> My SGFs -> Records.
             Intent analysis = new Intent(this, AiAnalysisActivity.class);
             analysis.putExtra(AiAnalysisActivity.EXTRA_SELECTED_SGF_FILE, file.getName());
             startActivity(analysis);
-            overridePendingTransition(0, 0);
-            finish();
             overridePendingTransition(0, 0);
             return;
         }
