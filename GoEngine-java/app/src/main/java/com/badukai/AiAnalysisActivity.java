@@ -125,11 +125,14 @@ public final class AiAnalysisActivity extends Activity {
         findViewById(R.id.analysisBack).setOnClickListener(v -> finish());
         findViewById(R.id.analysisPrevious).setOnClickListener(v -> {
             stopAutoplay();
-            showStep(step - 1);
+            if (game == null) return;
+            showStep(step < game.moves.size() ? step + 1 : 0);
         });
         findViewById(R.id.analysisCurrent).setOnClickListener(v -> {
             stopAutoplay();
-            if (game != null) showStep(game.moves.size());
+            if (game == null) return;
+            selectTab(false);
+            showStep(step);
         });
         playButton.setOnClickListener(v -> {
             if (game == null) return;
@@ -137,7 +140,7 @@ public final class AiAnalysisActivity extends Activity {
             else {
                 if (step >= game.moves.size()) showStep(0);
                 autoplay = true;
-                playButton.setText("Ⅱ 暂停");
+                playButton.setText("Ⅱ 暂停播放");
                 ui.postDelayed(autoplayTick, 500);
             }
         });
@@ -214,7 +217,7 @@ public final class AiAnalysisActivity extends Activity {
     private void stopAutoplay() {
         autoplay = false;
         ui.removeCallbacks(autoplayTick);
-        if (playButton != null) playButton.setText("▶ 播放");
+        if (playButton != null) playButton.setText("▶▶ 自动播放");
     }
 
     private StoneColor nextPlayer(int index) {
@@ -459,6 +462,7 @@ public final class AiAnalysisActivity extends Activity {
     /** Analyze every SGF position with REAL raw 10b NN outputs, not fabricated chart points. */
     private void startFullAnalysis() {
         if (game == null || globalRunning) return;
+        stopAutoplay();
         final int serial = generation.incrementAndGet();
         globalRunning = true;
         fullButton.setText("停止分析");
