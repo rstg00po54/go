@@ -255,8 +255,8 @@ public final class AiAnalysisActivity extends Activity {
         board.setLastMove(last instanceof Move.Stone ? ((Move.Stone) last).point : null);
         boardMeta.setText(game.size + "×" + game.size + " · 贴目 " + game.komi + "\n第 " + step
                 + "/" + game.moves.size() + " 手");
-        captures.setText("黑棋提子 " + shownPosition.getCapturedWhite()
-                + " · 白棋提子 " + shownPosition.getCapturedBlack());
+        captures.setText("黑提子 " + shownPosition.getCapturedWhite()
+                + "  白提子 " + shownPosition.getCapturedBlack());
         chart.selectStep(step);
         StepAnalysis saved = analyzed[step];
         if (saved == null) {
@@ -326,9 +326,9 @@ public final class AiAnalysisActivity extends Activity {
                     }
                 }
             }
-            captures.setText("黑方估空 " + blackEmpty + " · 白方估空 " + whiteEmpty
-                    + "\n黑棋提子 " + shownPosition.getCapturedWhite()
-                    + " · 白棋提子 " + shownPosition.getCapturedBlack());
+            captures.setText("黑估空 " + blackEmpty + "  白估空 " + whiteEmpty
+                    + "\n黑提子 " + shownPosition.getCapturedWhite()
+                    + "  白提子 " + shownPosition.getCapturedBlack());
         } else {
             blackWin.setText("--");
             lead.setText("未取得评估");
