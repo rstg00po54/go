@@ -230,22 +230,23 @@ public final class SettingsActivity extends Activity {
 
     private void records() {
         LinearLayout group = group("棋谱管理", R.drawable.ic_book_ivory);
-        action(group, "历史棋谱", "先选择棋谱，再进入复盘棋盘",
+        action(group, "历史棋谱", "先选棋谱，再进入 AI 分析",
                 R.drawable.ic_book_ivory, () -> {
                     Intent intent = new Intent(this, SgfLibraryActivity.class);
-                    intent.putExtra(SgfLibraryActivity.EXTRA_OPEN_REPLAY_ON_SELECT, true);
+                    intent.putExtra(SgfLibraryActivity.EXTRA_OPEN_ANALYSIS_ON_SELECT, true);
                     startActivity(intent);
                     overridePendingTransition(0, 0);
                 });
-        action(group, "复盘最近一局", "查看上次保存的对局",
+        action(group, "复盘最近一局", "在 AI 分析中逐手复盘",
                 R.drawable.ic_records, () -> {
-                    startActivity(new Intent(this, ReplayActivity.class));
+                    startActivity(new Intent(this, AiAnalysisActivity.class));
                     overridePendingTransition(0, 0);
                 });
         action(group, "导入 SGF", "从手机文件中选择棋谱",
                 R.drawable.ic_import_sgf, () -> {
-                    Intent intent = new Intent(this, ReplayActivity.class);
-                    intent.putExtra("replay_entry_action", "import");
+                    Intent intent = new Intent(this, SgfLibraryActivity.class);
+                    intent.putExtra(SgfLibraryActivity.EXTRA_OPEN_ANALYSIS_ON_SELECT, true);
+                    intent.putExtra(SgfLibraryActivity.EXTRA_IMPORT_ON_START, true);
                     startActivity(intent);
                     overridePendingTransition(0, 0);
                 });
