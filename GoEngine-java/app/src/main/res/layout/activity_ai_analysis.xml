@@ -104,9 +104,9 @@
                             android:text="黑方估空 -- · 白方估空 --\n黑棋提子 -- · 白棋提子 --"
                             android:textColor="#D4E0D2" android:textSize="11sp"/>
                         <View android:layout_width="1dp" android:layout_height="25dp"
-                            android:layout_marginStart="8dp" android:layout_marginEnd="10dp"
+                            android:layout_marginStart="12dp" android:layout_marginEnd="12dp"
                             android:background="#587B6955"/>
-                        <LinearLayout android:layout_width="0dp" android:layout_weight="1.2"
+                        <LinearLayout android:layout_width="0dp" android:layout_weight="1"
                             android:layout_height="wrap_content" android:gravity="center_vertical"
                             android:orientation="horizontal">
                             <TextView android:id="@+id/analysisBoardMeta"
