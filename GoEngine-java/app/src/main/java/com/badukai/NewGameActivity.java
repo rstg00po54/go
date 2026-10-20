@@ -75,8 +75,10 @@ public final class NewGameActivity extends AppCompatActivity {
         final Intent initial = getIntent();
         final int boardSize = normalizeSize(initial.getIntExtra(
                 EXTRA_SIZE, prefs.getInt("board_size", 9)));
-        final int aiKyu = Math.max(1, Math.min(18, initial.getIntExtra(EXTRA_RANK, 12)));
-        final int gameCondition = Math.max(0, Math.min(9, initial.getIntExtra(EXTRA_CONDITION, 0)));
+        final int aiKyu = Math.max(1, Math.min(18, initial.getIntExtra(
+                EXTRA_RANK, prefs.getInt("ai_kyu", 12))));
+        final int gameCondition = Math.max(0, Math.min(9, initial.getIntExtra(
+                EXTRA_CONDITION, prefs.getInt("game_condition", 0))));
         final String backend = initial.getStringExtra(EXTRA_BACKEND) == null
                 ? prefs.getString("backend", "CPU") : initial.getStringExtra(EXTRA_BACKEND);
         final boolean forceLegacy = initial.getBooleanExtra(EXTRA_FORCE_LEGACY, false);
@@ -163,7 +165,9 @@ public final class NewGameActivity extends AppCompatActivity {
             @Override public void onStopTrackingTouch(SeekBar bar) {}
         });
 
-        colorGroup.check("WHITE".equals(initial.getStringExtra(EXTRA_COLOR))
+        colorGroup.check("WHITE".equals(initial.getStringExtra(EXTRA_COLOR) == null
+                ? prefs.getString("player_color", "BLACK")
+                : initial.getStringExtra(EXTRA_COLOR))
                 ? R.id.whiteRadio : R.id.blackRadio);
         modeGroup.check(R.id.modeAiButton);
         findViewById(R.id.modeLocalButton).setEnabled(false);
