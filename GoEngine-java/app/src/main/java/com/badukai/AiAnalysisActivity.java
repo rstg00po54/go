@@ -389,6 +389,8 @@ public final class AiAnalysisActivity extends Activity {
         moveLabel.setText("第 " + step + " / " + game.moves.size() + " 手");
         shownPosition = GoSgf.position(game, step);
         board.setVariationPreview(null, null, null, null);
+        status.setOnClickListener(null);
+        status.setContentDescription(null);
         board.setRecommendations(null, null);
         visibleRecommendations.clear();
         board.setBoard(shownPosition);
@@ -470,6 +472,8 @@ public final class AiAnalysisActivity extends Activity {
             status.setText("变化预览 · 点击「返回本手」恢复原始棋盘");
         } else {
             board.setVariationPreview(null, null, null, null);
+            status.setOnClickListener(null);
+            status.setContentDescription(null);
             StepAnalysis saved = game == null ? null : analyzed[step];
             if (saved != null) showAnalysis(saved);
             else if (game != null) analyzeSelectedStep();
