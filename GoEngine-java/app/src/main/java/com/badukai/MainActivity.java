@@ -79,6 +79,8 @@ public class MainActivity extends AppCompatActivity {
     private boolean winRateSynchronized;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private boolean openNewGameOnResume;
+    private boolean resumeAfterEngineStartup;
+    private boolean restoringUnfinishedGame;
 
     private KataGoEngine engine;
     private KataGoEngine winRateEngine;
@@ -224,19 +226,19 @@ public class MainActivity extends AppCompatActivity {
         gameNav.setSelectedTab(com.badukai.ui.JadeBottomNavView.PLAY);
         homeNav.setOnTabClickListener(tab -> {
             if (tab == com.badukai.ui.JadeBottomNavView.HOME) showMainPage();
-            else if (tab == com.badukai.ui.JadeBottomNavView.PLAY) showNewGameDialog();
+            else if (tab == com.badukai.ui.JadeBottomNavView.PLAY) openPlayOrResume();
             else if (tab == com.badukai.ui.JadeBottomNavView.RECORDS) openReplay();
             else if (tab == com.badukai.ui.JadeBottomNavView.TRAINING) openTsumego();
             else com.badukai.ui.JadeNavigation.open(this, tab);
         });
         gameNav.setOnTabClickListener(tab -> {
             if (tab == com.badukai.ui.JadeBottomNavView.HOME) showMainPage();
-            else if (tab == com.badukai.ui.JadeBottomNavView.PLAY) showNewGameDialog();
+            else if (tab == com.badukai.ui.JadeBottomNavView.PLAY) openPlayOrResume();
             else if (tab == com.badukai.ui.JadeBottomNavView.RECORDS) openReplay();
             else if (tab == com.badukai.ui.JadeBottomNavView.TRAINING) openTsumego();
             else com.badukai.ui.JadeNavigation.open(this, tab);
         });
-        findViewById(R.id.homeGameTabButton).setOnClickListener(v -> showNewGameDialog());
+        findViewById(R.id.homeGameTabButton).setOnClickListener(v -> openPlayOrResume());
         findViewById(R.id.homeTabButton).setOnClickListener(v -> showMainPage());
         for (int id : new int[]{R.id.homeSettingsButton, R.id.homeSettingsTabButton}) {
             findViewById(id).setOnClickListener(v -> com.badukai.ui.JadeNavigation.open(
@@ -281,7 +283,7 @@ public class MainActivity extends AppCompatActivity {
         aiWinRateText.setOnClickListener(v -> showWinRateChart());
         playerWinRateText.setOnClickListener(v -> showWinRateChart());
         winRateProgress.setOnClickListener(v -> showWinRateChart());
-        aiBattleButton.setOnClickListener(v -> showNewGameDialog());
+        aiBattleButton.setOnClickListener(v -> openPlayOrResume());
         newGameButton.setOnClickListener(v -> showNewGameDialog());
         backButton.setOnClickListener(v -> showMainPage());
         undoButton.setOnClickListener(v -> undo());
@@ -305,8 +307,10 @@ public class MainActivity extends AppCompatActivity {
         if (getIntent() != null) {
             if (getIntent().getBooleanExtra(NewGameActivity.EXTRA_START, false)) {
                 mainHandler.post(() -> startSelectedGame(getIntent()));
-            } else if (getIntent().getBooleanExtra("navigate_new_game", false)
-                    || getIntent().getBooleanExtra("navigate_play", false)) {
+            } else if (getIntent().getBooleanExtra("navigate_play", false)
+                    || getIntent().getBooleanExtra("navigate_resume_game", false)) {
+                resumeAfterEngineStartup = true;
+            } else if (getIntent().getBooleanExtra("navigate_new_game", false)) {
                 openNewGameOnResume = true;
             }
         }
@@ -852,6 +856,10 @@ public class MainActivity extends AppCompatActivity {
                         && !engine.getBackendName().startsWith(selectedBackend.name()))
                     Toast.makeText(this, selectedBackend.name() + " 初始化失败，已使用 " + engine.getBackendName(), Toast.LENGTH_LONG).show();
                 render(ready ? "准备好了" : "AI 启动失败，可重试新局");
+                if (resumeAfterEngineStartup) {
+                    resumeAfterEngineStartup = false;
+                    openPlayOrResume();
+                }
             });
         });
     }
@@ -1889,6 +1897,12 @@ public class MainActivity extends AppCompatActivity {
                     playerColor, result, estimate);
             java.nio.file.Files.write(new File(getFilesDir(), "last_game.sgf").toPath(),
                     sgf.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            if (board.isGameOver()) {
+                UnfinishedGameStore.clear(this);
+            } else {
+                UnfinishedGameStore.save(this, sgf, boardSize, board.getMoveCount(),
+                        playerColor, aiKyu, gameCondition, selectedBackend.name());
+            }
             if (archive) SgfArchive.save(this, sgf);
             Log.i(TAG, "SGF_SAVED moves=" + board.getMoveCount() + " board=" + boardSize);
         } catch (Exception ex) {
@@ -1906,9 +1920,11 @@ public class MainActivity extends AppCompatActivity {
         } else if (intent != null && intent.getBooleanExtra("navigate_home", false)) {
             openNewGameOnResume = false;
             showMainPage();
-        } else if (intent != null
-                && (intent.getBooleanExtra("navigate_play", false)
-                    || intent.getBooleanExtra("navigate_new_game", false))) {
+        } else if (intent != null && (intent.getBooleanExtra("navigate_play", false)
+                || intent.getBooleanExtra("navigate_resume_game", false))) {
+            openNewGameOnResume = false;
+            openPlayOrResume();
+        } else if (intent != null && intent.getBooleanExtra("navigate_new_game", false)) {
             openNewGameOnResume = true;
         }
     }
@@ -2004,6 +2020,8 @@ public class MainActivity extends AppCompatActivity {
         blackWinHistory.clear();
         whiteWinHistory.clear();
         board = new GoBoard(boardSize);
+        // A newly created empty match must not revive an older checkpoint.
+        UnfinishedGameStore.clear(this);
         final int handicapCount = gameCondition >= 2 ? gameCondition : 0;
         final List<Point> handicapPoints = handicapCount > 0
                 ? GoBoard.standardHandicapPoints(boardSize, handicapCount) : new ArrayList<>();
