@@ -36,6 +36,9 @@ public class ReplayActivity extends Activity {
     @Override public void onCreate(Bundle saved) {
         super.onCreate(saved);
         setContentView(R.layout.activity_replay);
+        com.badukai.ui.BoardViewportFitter.attach(
+                findViewById(R.id.replayContentScroll),
+                findViewById(R.id.replayBoardFrame));
 
         boardView = findViewById(R.id.replayBoard);
         boardView.setInputEnabled(false); // Replay never edits the live game.
