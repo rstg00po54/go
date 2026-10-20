@@ -132,6 +132,8 @@ public final class SgfLibraryActivity extends Activity {
                 if (game.result == null && game.estimatedResult == null && cached == null) {
                     outcome.setTextColor(Color.rgb(165, 189, 176));
                     if (!game.moves.isEmpty() && pending.size() < 12) {
+                        outcome.setText((doublePass(game) ? "终局估分" : "中局结束")
+                                + "\n估分中…");
                         pending.add(new SgfMidgameEstimator.Item(file, game));
                         pendingLabels.put(file.getName(), outcome);
                         pendingGames.put(file.getName(), game);
