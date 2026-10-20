@@ -21,6 +21,7 @@ import java.nio.file.Files;
 
 /** Read-only SGF playback; never attaches to the playing engine. */
 public class ReplayActivity extends Activity {
+    public static final String EXTRA_SELECTED_SGF_FILE = "selected_sgf_file";
     private static final int PICK_SGF=101;
     private static final int EXPORT_SGF=102;
     private String currentSgf;
@@ -76,20 +77,36 @@ public class ReplayActivity extends Activity {
 
 
         updateNavigationButtons();
-        String source = getIntent().getStringExtra("sgf");
-        if (source == null) {
+        String selectedFile = getIntent().getStringExtra(EXTRA_SELECTED_SGF_FILE);
+        String source = null;
+        if (selectedFile != null) {
             try {
-                source = new String(Files.readAllBytes(
-                        new File(getFilesDir(), "last_game.sgf").toPath()),
-                        StandardCharsets.UTF_8);
+                // Accept only archive-generated names; never arbitrary file paths.
+                if (!selectedFile.matches("[0-9a-f]{24}\\\\.sgf"))
+                    throw new IllegalArgumentException("无效棋谱名");
+                File file = new File(SgfArchive.directory(this), selectedFile);
+                if (!file.isFile() || file.length() > 2_000_000)
+                    throw new IllegalArgumentException("棋谱不存在或过大");
+                source = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
             } catch (Exception ex) {
-                Toast.makeText(this, "还没有保存的棋谱，可导入 SGF 或选择历史棋谱",
-                        Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "打开棋谱失败：" + ex.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        } else {
+            source = getIntent().getStringExtra("sgf");
+            if (source == null) {
+                try {
+                    source = new String(Files.readAllBytes(
+                            new File(getFilesDir(), "last_game.sgf").toPath()),
+                            StandardCharsets.UTF_8);
+                } catch (Exception ex) {
+                    Toast.makeText(this, "还没有保存的棋谱，可导入 SGF 或选择历史棋谱",
+                            Toast.LENGTH_LONG).show();
+                }
             }
         }
         if (source != null) load(source);
-        // A chosen action opens only after the replay UI has been laid out.
-        // The caller never has to show Home before selecting a SGF source.
+        // Older callers may still use these entry actions. Open the chooser
+        // directly instead of drawing an intermediate replay board.
         String entry = getIntent().getStringExtra("replay_entry_action");
         if ("history".equals(entry)) {
             getWindow().getDecorView().post(this::chooseHistory);
