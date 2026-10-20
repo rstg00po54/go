@@ -71,10 +71,18 @@ public final class JadeSectionActivity extends Activity {
         addCard("复盘最近一局", "查看刚刚结束或保存的对局",
                 R.drawable.ic_records, () -> openReplay(null), false);
         addCard("历史棋谱", "从本地保存的对局中选择一盘",
-                R.drawable.ic_book_ivory, () -> openReplay("history"), false);
+                R.drawable.ic_book_ivory, this::openHistory, false);
         addCard("导入 SGF", "从设备文件中读取外部棋谱",
                 R.drawable.ic_import_sgf, () -> openReplay("import"), false);
         addNote("棋谱分析与回放沿用现有功能；进入前不会中断当前对弈。");
+    }
+
+    private void openHistory() {
+        // Choose a saved SGF first; never reveal the replay board underneath.
+        Intent library = new Intent(this, SgfLibraryActivity.class);
+        library.putExtra(SgfLibraryActivity.EXTRA_OPEN_REPLAY_ON_SELECT, true);
+        startActivity(library);
+        overridePendingTransition(0, 0);
     }
 
     private void openReplay(String action) {
