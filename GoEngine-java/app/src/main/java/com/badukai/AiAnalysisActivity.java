@@ -54,6 +54,7 @@ public final class AiAnalysisActivity extends Activity {
     public static final String EXTRA_SELECTED_SGF_FILE = "selected_sgf_file";
     public static final String EXTRA_START_STEP = "ai_analysis_start_step";
     private static final int MAX_SGF_BYTES = 2_000_000;
+    private static final int EXPORT_SGF_REQUEST = 503;
 
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final ExecutorService analysisExecutor = Executors.newSingleThreadExecutor();
@@ -67,6 +68,7 @@ public final class AiAnalysisActivity extends Activity {
     private float[] rates = new float[0];
     private StepAnalysis[] analyzed = new StepAnalysis[0];
     private GoSgf.Game game;
+    private String currentSgf;
     // Null means the SGF does not identify which side belongs to the user.
     private StoneColor humanSide;
     private KataGoEngine engine;
@@ -157,6 +159,8 @@ public final class AiAnalysisActivity extends Activity {
         nav.setSelectedTab(JadeBottomNavView.RECORDS);
         nav.setOnTabClickListener(tab -> JadeNavigation.open(this, tab));
         findViewById(R.id.analysisBack).setOnClickListener(v -> finish());
+        findViewById(R.id.analysisExport).setOnClickListener(v -> exportSgf());
+        findViewById(R.id.analysisShare).setOnClickListener(v -> shareSgf());
         findViewById(R.id.analysisPrevious).setOnClickListener(v -> {
             stopAutoplay();
             showStep(step - 1);
@@ -218,6 +222,7 @@ public final class AiAnalysisActivity extends Activity {
             updateHumanSideUI();
             // Validate every move before running the native engine.
             GoSgf.position(game, game.moves.size());
+            currentSgf = sgf;
             rates = new float[game.moves.size() + 1];
             Arrays.fill(rates, Float.NaN);
             analyzed = new StepAnalysis[rates.length];
@@ -231,6 +236,45 @@ public final class AiAnalysisActivity extends Activity {
             showPlaceholder("暂无棋谱，请从棋谱中心选择棋局");
             fullButton.setEnabled(false);
             moveSeek.setEnabled(false);
+        }
+    }
+
+    private void exportSgf() {
+        if (currentSgf == null || game == null) {
+            Toast.makeText(this, "请先打开有效棋谱", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Intent save = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        save.addCategory(Intent.CATEGORY_OPENABLE);
+        save.setType("application/x-go-sgf");
+        save.putExtra(Intent.EXTRA_TITLE,
+                "badukai_" + game.size + "x" + game.size + ".sgf");
+        startActivityForResult(save, EXPORT_SGF_REQUEST);
+    }
+
+    private void shareSgf() {
+        if (currentSgf == null) {
+            Toast.makeText(this, "请先打开有效棋谱", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.setType("text/plain");
+        send.putExtra(Intent.EXTRA_SUBJECT, "围棋棋谱 SGF");
+        send.putExtra(Intent.EXTRA_TEXT, currentSgf);
+        startActivity(Intent.createChooser(send, "分享棋谱"));
+    }
+
+    @Override protected void onActivityResult(int request, int result, Intent data) {
+        super.onActivityResult(request, result, data);
+        if (request != EXPORT_SGF_REQUEST || result != RESULT_OK
+                || data == null || data.getData() == null || currentSgf == null) return;
+        try (java.io.OutputStream output =
+                     getContentResolver().openOutputStream(data.getData())) {
+            if (output == null) throw new java.io.IOException("无法写入目标文件");
+            output.write(currentSgf.getBytes(StandardCharsets.UTF_8));
+            Toast.makeText(this, "SGF 已导出", Toast.LENGTH_SHORT).show();
+        } catch (Exception error) {
+            Toast.makeText(this, "导出失败：" + error.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
