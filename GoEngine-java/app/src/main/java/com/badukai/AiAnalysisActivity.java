@@ -66,6 +66,8 @@ public final class AiAnalysisActivity extends Activity {
     private float[] rates = new float[0];
     private StepAnalysis[] analyzed = new StepAnalysis[0];
     private GoSgf.Game game;
+    // Null means the SGF does not identify which side belongs to the user.
+    private StoneColor humanSide;
     private KataGoEngine engine;
     private boolean engineReady;
     private GoBoard shownPosition;
@@ -76,6 +78,7 @@ public final class AiAnalysisActivity extends Activity {
     private JadeAnalysisChartView chart;
     private LinearLayout candidates;
     private TextView blackWin, lead, captures, boardMeta, status, moveLabel;
+    private TextView winTitle, sideLabel;
     private ProgressBar winProgress;
     private SeekBar moveSeek;
     private Button fullButton, playButton;
@@ -123,6 +126,9 @@ public final class AiAnalysisActivity extends Activity {
         chart = findViewById(R.id.analysisChart);
         candidates = findViewById(R.id.analysisCandidateList);
         blackWin = findViewById(R.id.analysisBlackWin);
+        winTitle = findViewById(R.id.analysisWinTitle);
+        sideLabel = findViewById(R.id.analysisHumanSide);
+        sideLabel.setOnClickListener(v -> selectHumanSide());
         lead = findViewById(R.id.analysisLead);
         captures = findViewById(R.id.analysisCaptures);
         boardMeta = findViewById(R.id.analysisBoardMeta);
@@ -207,6 +213,8 @@ public final class AiAnalysisActivity extends Activity {
         try {
             String sgf = loadSource(getIntent());
             game = GoSgf.decode(sgf);
+            humanSide = game.humanColor;
+            updateHumanSideUI();
             // Validate every move before running the native engine.
             GoSgf.position(game, game.moves.size());
             rates = new float[game.moves.size() + 1];
@@ -266,6 +274,53 @@ public final class AiAnalysisActivity extends Activity {
         autoplay = false;
         ui.removeCallbacks(autoplayTick);
         if (playButton != null) playButton.setText("▶ 自动播放");
+    }
+
+    private void selectHumanSide() {
+        if (game == null) return;
+        // Imported and older SGFs cannot reliably identify the user.
+        // Choosing here only changes the analysis presentation of this game.
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("这盘棋你执哪一方？")
+                .setItems(new String[]{"我执黑（对手执白）", "我执白（对手执黑）",
+                        "执子未知（显示黑方胜率）"}, (dialog, which) -> {
+                    humanSide = which == 0 ? StoneColor.BLACK
+                            : which == 1 ? StoneColor.WHITE : null;
+                    updateHumanSideUI();
+                })
+                .show();
+    }
+
+    /** The engine and stored chart samples remain black-oriented. */
+    private float toDisplayedRate(float blackRate) {
+        return humanSide == StoneColor.WHITE ? 1f - blackRate : blackRate;
+    }
+
+    private void refreshChart() {
+        float[] visible = new float[rates.length];
+        for (int i = 0; i < rates.length; i++) {
+            visible[i] = Float.isFinite(rates[i]) ? toDisplayedRate(rates[i]) : Float.NaN;
+        }
+        chart.setData(visible, step);
+    }
+
+    private void updateHumanSideUI() {
+        if (humanSide == null) {
+            sideLabel.setText("执子?");
+            winTitle.setText("黑方胜率");
+            trendTabButton.setText("黑方胜率");
+        } else if (humanSide == StoneColor.BLACK) {
+            sideLabel.setText("我执黑");
+            winTitle.setText("我的胜率（黑）");
+            trendTabButton.setText("我的胜率");
+        } else {
+            sideLabel.setText("我执白");
+            winTitle.setText("我的胜率（白）");
+            trendTabButton.setText("我的胜率");
+        }
+        refreshChart();
+        if (game != null && step < analyzed.length && analyzed[step] != null)
+            showAnalysis(analyzed[step]);
     }
 
     private StoneColor nextPlayer(int index) {
@@ -387,8 +442,9 @@ public final class AiAnalysisActivity extends Activity {
     private void showAnalysis(StepAnalysis result) {
         KataGoEngine.PositionEvaluation estimate = result.evaluation;
         if (estimate != null) {
-            blackWin.setText(String.format(Locale.CHINA, "%.1f%%", estimate.blackWin * 100));
-            winProgress.setProgress((int) Math.round(estimate.blackWin * 1000));
+            float visibleWin = toDisplayedRate(estimate.blackWin);
+            blackWin.setText(String.format(Locale.CHINA, "%.1f%%", visibleWin * 100));
+            winProgress.setProgress((int) Math.round(visibleWin * 1000));
             lead.setText(leadText(-estimate.whiteLead));
             // Count only confidently owned EMPTY points. This is an NN
             // territory estimate, not an official final-score calculation.
@@ -428,6 +484,8 @@ public final class AiAnalysisActivity extends Activity {
             markerScores.add((float) candidate.winrate);
             double blackCandidateWin = player == StoneColor.BLACK
                     ? candidate.winrate : 1.0 - candidate.winrate;
+            double visibleCandidateWin = humanSide == StoneColor.WHITE
+                    ? 1.0 - blackCandidateWin : blackCandidateWin;
             double blackCandidateLead = player == StoneColor.BLACK
                     ? candidate.scoreLead : -candidate.scoreLead;
 
@@ -450,7 +508,7 @@ public final class AiAnalysisActivity extends Activity {
             row.addView(visitText, new LinearLayout.LayoutParams(0, -1, 1f));
 
             TextView winText = makeText(String.format(Locale.CHINA, "%.1f%%",
-                    blackCandidateWin * 100), 12, 0xFFF7D681, true);
+                    visibleCandidateWin * 100), 12, 0xFFF7D681, true);
             winText.setGravity(Gravity.CENTER_VERTICAL | Gravity.RIGHT);
             row.addView(winText, new LinearLayout.LayoutParams(dp(63), -1));
 
@@ -566,7 +624,7 @@ public final class AiAnalysisActivity extends Activity {
                     analyzed[targetStep] = result;
                     if (estimate != null) {
                         rates[targetStep] = (float) estimate.blackWin;
-                        chart.setData(rates, step);
+                        refreshChart();
                     }
                     showAnalysis(result);
                 });
@@ -636,7 +694,7 @@ public final class AiAnalysisActivity extends Activity {
                     ui.post(() -> {
                         if (!alive || serial != generation.get()) return;
                         rates[index] = rate;
-                        if (index % 3 == 0 || index == game.moves.size()) chart.setData(rates, step);
+                        if (index % 3 == 0 || index == game.moves.size()) refreshChart();
                         status.setText("逐手胜率分析：" + index + " / " + game.moves.size() + " 手");
                     });
                 }
@@ -644,7 +702,7 @@ public final class AiAnalysisActivity extends Activity {
                     if (!alive || serial != generation.get()) return;
                     globalRunning = false;
                     fullButton.setText("重新分析");
-                    chart.setData(rates, step);
+                    refreshChart();
                     status.setText("逐手分析完成 · 点击曲线查看对应棋局");
                     requestQuickAnalysis();
                 });
