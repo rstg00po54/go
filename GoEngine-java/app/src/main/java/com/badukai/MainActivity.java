@@ -1251,6 +1251,8 @@ public class MainActivity extends AppCompatActivity {
                         new KataGoEngine.WinRate((float)result.blackWin,(float)result.whiteWin));
                 Log.i(TAG,String.format(Locale.US,"ENDGAME_NN_RESULT moves=%d lead=%.3f elapsedMs=%d",
                         moves,result.whiteLead,nnMs));
+                // Archive a finished game with an explicitly provisional NN score.
+                saveReplaySnapshot(true);
                 render(finalScoreText);
                 new AlertDialog.Builder(this)
                         .setTitle("终局 · 快速 NN 估分")
@@ -1418,6 +1420,8 @@ public class MainActivity extends AppCompatActivity {
         StoneColor winner = outcome.startsWith("AI") ? playerColor : playerColor.opposite();
         float black = winner == StoneColor.BLACK ? 1f : 0f;
         recordWinRate(board, board.getMoveCount(), winRateEpoch, new KataGoEngine.WinRate(black, 1f - black));
+        // Save resignation outcome immediately, before asynchronous territory preview.
+        saveReplaySnapshot(true);
         finishEndgameTerritory();
     }
 
@@ -1763,9 +1767,25 @@ public class MainActivity extends AppCompatActivity {
     private void saveReplaySnapshot(boolean archive) {
         if (board == null || board.getMoveCount() == 0) return;
         try {
+            String result = null;
+            String estimate = null;
+            if (board.isGameOver()) {
+                Move terminal = board.getLastMove();
+                if (terminal instanceof Move.Resign) {
+                    // RE[B+R]/RE[W+R] describes the winner, not the resigning side.
+                    result = (terminal.color == StoneColor.BLACK ? "W" : "B") + "+R";
+                } else if (endgameEvaluation != null
+                        && Double.isFinite(endgameEvaluation.whiteLead)) {
+                    // Fast NN ownership is a provisional score. Do NOT write RE.
+                    double lead = endgameEvaluation.whiteLead;
+                    estimate = Math.abs(lead) < 0.05 ? "0"
+                            : String.format(Locale.US, "%s+%.1f",
+                                    lead > 0 ? "W" : "B", Math.abs(lead));
+                }
+            }
             String sgf = GoSgf.encode(boardSize, komiFor(boardSize),
                     board.getInitialHandicapSnapshot(), board.getMoveHistorySnapshot(),
-                    playerColor);
+                    playerColor, result, estimate);
             java.nio.file.Files.write(new File(getFilesDir(), "last_game.sgf").toPath(),
                     sgf.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             if (archive) SgfArchive.save(this, sgf);
