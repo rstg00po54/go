@@ -4,6 +4,76 @@ set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$PROJECT_DIR"
 
+usage() {
+    cat <<'USAGE'
+Usage:
+  bash build.sh --vivo [--with-native] [Gradle -P...]
+  bash build.sh --rk3588 [--with-native] [Gradle -P...]
+  bash build.sh [--apk-only | --with-native] [Gradle -P...]
+
+Modes:
+  --vivo       Fast APK with MediaTek JNI + Vivo LiteRT models; no RKNN.
+  --rk3588     Fast APK with RKNN (requires prepared RKNN libraries/models); no MediaTek.
+  --apk-only   Reuse cached CPU/GPU JNI binaries; rebuild the KataGo PIE only if needed.
+  --with-native  Rebuild CPU + GPU JNI before APK (does not build platform NPU JNI).
+  --help       Print this help.
+
+Without a platform mode, the existing build behavior is unchanged.
+Explicit Gradle -P flags are forwarded last, overriding mode defaults.
+USAGE
+}
+
+# Parse script-specific switches in any order; leave -P and other Gradle
+# options alone. The original command remains backwards compatible.
+PROFILE=""
+BUILD_CHOICE=""
+FORWARD_ARGS=()
+while (( $# > 0 )); do
+    case "$1" in
+        --vivo|--rk3588)
+            requested_profile="${1#--}"
+            if [[ -n "$PROFILE" && "$PROFILE" != "$requested_profile" ]]; then
+                echo "ERROR: --vivo and --rk3588 cannot be used together" >&2
+                exit 2
+            fi
+            PROFILE="$requested_profile"
+            ;;
+        --apk-only)
+            if [[ -n "$BUILD_CHOICE" && "$BUILD_CHOICE" != apk-only ]]; then
+                echo "ERROR: --apk-only conflicts with --with-native" >&2
+                exit 2
+            fi
+            BUILD_CHOICE=apk-only
+            ;;
+        --with-native|with-native)
+            if [[ -n "$BUILD_CHOICE" && "$BUILD_CHOICE" != with-native ]]; then
+                echo "ERROR: --with-native conflicts with --apk-only" >&2
+                exit 2
+            fi
+            BUILD_CHOICE=with-native
+            ;;
+        --help|-h)
+            usage
+            exit 0
+            ;;
+        --)
+            shift
+            FORWARD_ARGS+=("$@")
+            break
+            ;;
+        *)
+            FORWARD_ARGS+=("$1")
+            ;;
+    esac
+    shift
+done
+
+# Profiles default to a quick UI/APK rebuild. The old no-profile command
+# still builds native CPU/GPU JNI, just as it did before these switches.
+if [[ -n "$PROFILE" && -z "$BUILD_CHOICE" ]]; then
+    BUILD_CHOICE=apk-only
+fi
+
 # Build GPU JNI before Gradle, so the normal build.sh command produces a GPU-capable APK.
 GRADLE_ARGS=()
 if [[ "${REQUIRE_RKNN_FIVE_SIZES:-0}" == 1 ]]; then
@@ -21,12 +91,29 @@ if [[ "${ALLOW_4K_RKNN_RUNTIME:-0}" == 1 ]]; then
     GRADLE_ARGS+=("-Pallow4kRknnRuntime=true")
     echo "WARNING: building RK3588 4 KB-page test APK; NOT compatible with 16 KB page-size devices"
 fi
-if [[ "${1:-}" == "--apk-only" ]]; then
+
+case "$PROFILE" in
+    vivo)
+        GRADLE_ARGS+=(
+            "-PenableKataGoNpuJni=false"
+            "-PenableKataGoMtkJni=true"
+            "-PbundleVivoLiteRtModels=true"
+        )
+        echo "Build profile: Vivo / MediaTek (CPU/GPU cached, MediaTek JNI + LiteRT models)"
+        ;;
+    rk3588)
+        GRADLE_ARGS+=(
+            "-PenableKataGoNpuJni=true"
+            "-PenableKataGoMtkJni=false"
+            "-PbundleVivoLiteRtModels=false"
+        )
+        echo "Build profile: RK3588 (CPU/GPU cached, RKNN enabled)"
+        ;;
+esac
+
+if [[ "$BUILD_CHOICE" == apk-only ]]; then
     GRADLE_ARGS+=("-PskipKataGoNative=true")
     BUILD_GPU_JNI=false
-    shift
-elif [[ "${1:-}" == "--with-native" || "${1:-}" == "with-native" ]]; then
-    shift
 fi
 
 if [[ "$BUILD_GPU_JNI" == true ]]; then
@@ -81,7 +168,7 @@ if [[ "$aligned_pie" == false ]]; then
     KATAGO_JOBS="${KATAGO_JOBS:-8}" bash "$PROJECT_DIR/tools/build_katago_from_source.sh" eigen
 fi
 
-./gradlew assembleDebug "${GRADLE_ARGS[@]}" "$@"
+./gradlew assembleDebug "${GRADLE_ARGS[@]}" "${FORWARD_ARGS[@]}"
 
 APK="$PROJECT_DIR/app/build/outputs/apk/debug/app-debug.apk"
 if [[ ! -s "$APK" ]]; then
