@@ -78,8 +78,6 @@ public class MainActivity extends AppCompatActivity {
     // Accessed only on winRateExecutor, whose GTP process is independent of the playing engine.
     private boolean winRateSynchronized;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    // Keep the full-screen new-game chooser covering Home until the next page is visible.
-    private AlertDialog pendingSectionNavigationDialog;
     private boolean openNewGameOnResume;
 
     private KataGoEngine engine;
@@ -294,10 +292,13 @@ public class MainActivity extends AppCompatActivity {
         });
         render("正在启动 AI...");
         showMainPage();
-        if (getIntent() != null
-                && (getIntent().getBooleanExtra("navigate_new_game", false)
-                    || getIntent().getBooleanExtra("navigate_play", false))) {
-            openNewGameOnResume = true;
+        if (getIntent() != null) {
+            if (getIntent().getBooleanExtra(NewGameActivity.EXTRA_START, false)) {
+                mainHandler.post(() -> startSelectedGame(getIntent()));
+            } else if (getIntent().getBooleanExtra("navigate_new_game", false)
+                    || getIntent().getBooleanExtra("navigate_play", false)) {
+                openNewGameOnResume = true;
+            }
         }
         if (isRefereeSmokeIntent()) {
             startDebugRefereeSmoke();
@@ -1666,236 +1667,68 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Full-screen jade new game page. These are real board/backend/rank selectors,
-     * not transparent hotspots on a screenshot. Keep all game and NPU rules in
-     * MainActivity so RKNN and MediaTek use exactly the existing startup path.
-     */
+    /** The game setup is a proper Activity. Keep the KataGo engine in this Activity. */
     private void showNewGameDialog() {
-        DebugLog.enter(TAG, "showNewGameDialog in, boardSize=" + boardSize
-                + ", backend=" + selectedBackend);
-        View content = LayoutInflater.from(this).inflate(R.layout.dialog_new_game, null, false);
-        // PNGs ship at 512px; bind realistic dp bounds before showing the dialog.
-        com.badukai.ui.JadeIconBinder.bindNewGame(content);
-        Log.i(TAG, "JADE_NEW_GAME_ICONS_V5 pngAssets=22");
-        final android.widget.ScrollView settingsScroll =
-                content.findViewById(R.id.newGameSettingsScroll);
-        final View backendSection = content.findViewById(R.id.aiBackendSection);
-        final android.widget.RadioGroup modeGroup = content.findViewById(R.id.modeGroup);
-        final RadioGroup colorGroup = content.findViewById(R.id.colorGroup);
-        final RadioGroup backendGroup = content.findViewById(R.id.backendGroup);
-        final android.widget.RadioButton cpuChoice = content.findViewById(R.id.backendCpuButton);
-        final android.widget.RadioButton gpuChoice = content.findViewById(R.id.backendGpuButton);
-        final android.widget.RadioButton npuChoice = content.findViewById(R.id.backendNpuButton);
-        final android.widget.SeekBar rankSeek = content.findViewById(R.id.rankSeekBar);
-        final TextView rankValue = content.findViewById(R.id.aiRankValueText);
-        final Spinner conditionSpinner = content.findViewById(R.id.conditionSpinner);
-        final TextView deviceText = content.findViewById(R.id.deviceModelText);
-        final TextView hardwareText = content.findViewById(R.id.hardwareInfoText);
-        final View startButton = content.findViewById(R.id.startGameButton);
-        final View closeButton = content.findViewById(R.id.closeDialogButton);
+        android.content.Intent intent = new android.content.Intent(this, NewGameActivity.class);
+        intent.putExtra(NewGameActivity.EXTRA_SIZE, boardSize);
+        intent.putExtra(NewGameActivity.EXTRA_RANK, aiKyu);
+        intent.putExtra(NewGameActivity.EXTRA_COLOR, playerColor.name());
+        intent.putExtra(NewGameActivity.EXTRA_CONDITION, gameCondition);
+        intent.putExtra(NewGameActivity.EXTRA_BACKEND, selectedBackend.name());
+        intent.putExtra(NewGameActivity.EXTRA_FORCE_LEGACY, forceLegacyBackend);
+        startActivity(intent);
+        overridePendingTransition(0, 0);
+    }
 
-        // The project's existing illustrated bamboo-room asset serves as a
-        // backdrop, darkened by the native emerald gradient. Keep UI controls
-        // separate for touch, accessibility and screen-size adaptation.
-        try (InputStream in = getAssets().open("home/background.png")) {
-            ((ImageView) content.findViewById(R.id.newGameBackdrop))
-                    .setImageBitmap(BitmapFactory.decodeStream(in));
-        } catch (Exception ex) {
-            Log.w(TAG, "Jade background unavailable; using emerald gradient", ex);
+    /** Apply the result returned by the standalone new-game Activity. */
+    private void startSelectedGame(android.content.Intent intent) {
+        int requestedSize = intent.getIntExtra(NewGameActivity.EXTRA_SIZE, boardSize);
+        int requestedRank = intent.getIntExtra(NewGameActivity.EXTRA_RANK, aiKyu);
+        int requestedCondition = intent.getIntExtra(NewGameActivity.EXTRA_CONDITION, gameCondition);
+        String requestedColorName = intent.getStringExtra(NewGameActivity.EXTRA_COLOR);
+        String requestedBackendName = intent.getStringExtra(NewGameActivity.EXTRA_BACKEND);
+        if (!isSupportedBoardSize(requestedSize)
+                || requestedRank < 1 || requestedRank > 18
+                || requestedCondition < 0 || requestedCondition > 9) {
+            Toast.makeText(this, "对局参数无效，请重新选择", Toast.LENGTH_LONG).show();
+            showNewGameDialog();
+            return;
         }
-
-        final int[] sizes = BOARD_SIZES;
-        final int[] selectedSize = {boardSize};
-        final Spinner boardSizeSpinner = content.findViewById(R.id.boardSizeSpinner);
-        final String[] boardLabels = new String[sizes.length];
-        int initialBoardIndex = 0;
-        for (int i = 0; i < sizes.length; i++) {
-            boardLabels[i] = sizes[i] + " × " + sizes[i];
-            if (sizes[i] == boardSize) initialBoardIndex = i;
+        final StoneColor requestedColor = "WHITE".equals(requestedColorName)
+                ? StoneColor.WHITE : StoneColor.BLACK;
+        final KataGoEngine.BackendPreference requestedBackend =
+                "NPU".equals(requestedBackendName) ? KataGoEngine.BackendPreference.NPU
+                : "GPU".equals(requestedBackendName) ? KataGoEngine.BackendPreference.GPU
+                : KataGoEngine.BackendPreference.CPU;
+        if (requestedBackend == KataGoEngine.BackendPreference.NPU
+                && (forceLegacyBackend || !hasBundledNpuModel(requestedSize))) {
+            Toast.makeText(this, requestedSize + "路 NPU 模型不可用，请换路数或后端",
+                    Toast.LENGTH_LONG).show();
+            showNewGameDialog();
+            return;
         }
-        ArrayAdapter<String> boardAdapter = new ArrayAdapter<>(this,
-                R.layout.item_jade_dark_spinner, boardLabels);
-        boardAdapter.setDropDownViewResource(R.layout.item_jade_dark_dropdown);
-        boardSizeSpinner.setAdapter(boardAdapter);
-        boardSizeSpinner.setSelection(initialBoardIndex);
-        final boolean gpuBundled = new File(getApplicationInfo().nativeLibraryDir,
-                "libkatago_gpu.so").isFile();
-        final boolean mtkBundled = KataGoEngine.supportsMediaTekGame(this, 9)
-                && KataGoEngine.supportsMediaTekGame(this, 13)
-                && KataGoEngine.supportsMediaTekGame(this, 19);
-        final boolean npuBundled = mtkBundled
-                || (KataGoEngine.supportsRknnHardware()
-                    && new File(getApplicationInfo().nativeLibraryDir,
-                            "libkatago_npu.so").isFile()
-                    && new File(getApplicationInfo().nativeLibraryDir,
-                            "librknnrt.so").isFile());
-        cpuChoice.setEnabled(true);
-        gpuChoice.setEnabled(gpuBundled && !forceLegacyBackend);
-        gpuChoice.setAlpha(gpuChoice.isEnabled() ? 1f : .42f);
-
-        backendGroup.check(selectedBackend == KataGoEngine.BackendPreference.NPU
-                ? R.id.backendNpuButton
-                : selectedBackend == KataGoEngine.BackendPreference.GPU
-                ? R.id.backendGpuButton : R.id.backendCpuButton);
-        if (forceLegacyBackend) backendGroup.check(R.id.backendCpuButton);
-        boardSizeSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(android.widget.AdapterView<?> parent,
-                    View view, int position, long id) {
-                selectedSize[0] = sizes[position];
-                boolean npuSupported = npuBundled && !forceLegacyBackend
-                        && hasBundledNpuModel(selectedSize[0]);
-                npuChoice.setEnabled(npuSupported);
-                npuChoice.setAlpha(npuSupported ? 1f : .42f);
-                if (!npuSupported && backendGroup.getCheckedRadioButtonId()
-                        == R.id.backendNpuButton) {
-                    backendGroup.check(R.id.backendCpuButton);
-                    Toast.makeText(MainActivity.this, selectedSize[0] + "路暂未提供对应 NPU 模型，已选 CPU",
-                            Toast.LENGTH_SHORT).show();
-                }
-                Log.i(TAG, "JADE_BOARD_SELECTED size=" + selectedSize[0]
-                        + " npuAvailable=" + npuSupported);
-            }
-            @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
-        });
-        boolean initialNpu = npuBundled && !forceLegacyBackend && hasBundledNpuModel(boardSize);
-        npuChoice.setEnabled(initialNpu);
-        npuChoice.setAlpha(initialNpu ? 1f : .42f);
-        if (!initialNpu && backendGroup.getCheckedRadioButtonId() == R.id.backendNpuButton)
-            backendGroup.check(R.id.backendCpuButton);
-        if (!gpuChoice.isEnabled() && backendGroup.getCheckedRadioButtonId() == R.id.backendGpuButton)
-            backendGroup.check(R.id.backendCpuButton);
-
-        final int[] chosenRank = {aiKyu};
-        rankSeek.setMax(17);
-        rankSeek.setProgress(aiKyu - 1);
-        rankValue.setText(aiKyu + "级");
-        rankSeek.setOnSeekBarChangeListener(new android.widget.SeekBar.OnSeekBarChangeListener() {
-            @Override public void onProgressChanged(android.widget.SeekBar bar, int progress, boolean fromUser) {
-                chosenRank[0] = progress + 1;
-                rankValue.setText(chosenRank[0] + "级");
-            }
-            @Override public void onStartTrackingTouch(android.widget.SeekBar bar) {}
-            @Override public void onStopTrackingTouch(android.widget.SeekBar bar) {}
-        });
-
-        colorGroup.check(playerColor == StoneColor.WHITE ? R.id.whiteRadio : R.id.blackRadio);
-        modeGroup.check(R.id.modeAiButton);
-        ArrayAdapter<String> conditionAdapter = new ArrayAdapter<>(this,
-                R.layout.item_jade_dark_spinner, new String[]{
-                    "分先", "让先", "让2子", "让3子", "让4子", "让5子",
-                    "让6子", "让7子", "让8子", "让9子"});
-        conditionAdapter.setDropDownViewResource(R.layout.item_jade_dark_dropdown);
-        conditionSpinner.setAdapter(conditionAdapter);
-        conditionSpinner.setSelection(gameCondition);
-
-        final String cpuName = DeviceHardwareInfo.cpuName();
-        final String npuInfo = DeviceHardwareInfo.npuDescription(npuBundled);
-        deviceText.setText("设备：" + DeviceHardwareInfo.deviceName()
-                + " · " + DeviceHardwareInfo.socName());
-        hardwareText.setText("CPU：" + cpuName + " · GPU：识别中…\n" + npuInfo);
-
-        final AlertDialog dialog = new AlertDialog.Builder(this).setView(content).create();
-        closeButton.setOnClickListener(v -> dialog.dismiss());
-        com.badukai.ui.JadeBottomNavView dialogNav =
-                content.findViewById(R.id.newGameSharedNav);
-        dialogNav.setSelectedTab(com.badukai.ui.JadeBottomNavView.PLAY);
-        View.OnClickListener gotoBackend = v ->
-                settingsScroll.smoothScrollTo(0, backendSection.getTop());
-        content.findViewById(R.id.dialogSettingsButton).setOnClickListener(gotoBackend);
-        dialogNav.setOnTabClickListener(tab -> {
-            if (tab == com.badukai.ui.JadeBottomNavView.PLAY) {
-                settingsScroll.smoothScrollTo(0, 0);
-                return;
-            }
-            if (tab == com.badukai.ui.JadeBottomNavView.HOME) {
-                dialog.dismiss();
-                showMainPage();
-                return;
-            }
-            // Dismissing before startActivity exposed Home for one frame.
-            // The dialog stays until MainActivity.onStop(), after the destination
-            // Activity is fully in front.
-            pendingSectionNavigationDialog = dialog;
-            if (tab == com.badukai.ui.JadeBottomNavView.RECORDS) openReplay();
-            else if (tab == com.badukai.ui.JadeBottomNavView.TRAINING) openTsumego();
-            else com.badukai.ui.JadeNavigation.open(this, tab);
-        });
-        content.findViewById(R.id.modeLocalButton).setEnabled(false);
-        // Offline Human-vs-Human mode is not implemented; its tile is visibly
-        // disabled rather than silently running a Human SL AI match.
-        content.findViewById(R.id.modeReplayButton).setOnClickListener(v -> {
-            pendingSectionNavigationDialog = dialog;
-            openReplay();
-        });
-        startButton.setOnClickListener(v -> {
-            if (modeGroup.getCheckedRadioButtonId() != R.id.modeAiButton) {
-                Toast.makeText(this, "请选择人机对弈模式", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            final int requestedSize = selectedSize[0];
-            final int requestedRank = chosenRank[0];
-            final int requestedCondition = conditionSpinner.getSelectedItemPosition();
-            final int colorId = colorGroup.getCheckedRadioButtonId();
-            final StoneColor requestedColor = colorId == R.id.whiteRadio ? StoneColor.WHITE
-                    : colorId == R.id.randomRadio
-                    ? ((System.nanoTime() & 1L) == 0L ? StoneColor.BLACK : StoneColor.WHITE)
-                    : StoneColor.BLACK;
-            final int backendId = backendGroup.getCheckedRadioButtonId();
-            final KataGoEngine.BackendPreference requestedBackend =
-                    backendId == R.id.backendNpuButton ? KataGoEngine.BackendPreference.NPU
-                    : backendId == R.id.backendGpuButton ? KataGoEngine.BackendPreference.GPU
-                    : KataGoEngine.BackendPreference.CPU;
-            if (requestedBackend == KataGoEngine.BackendPreference.NPU
-                    && (!npuChoice.isEnabled() || !hasBundledNpuModel(requestedSize))) {
-                Toast.makeText(this, requestedSize + "路 NPU 模型不可用，请换路数或后端",
-                        Toast.LENGTH_LONG).show();
-                return;
-            }
-            Runnable beginGame = () -> {
-                boardSize = requestedSize;
-                aiKyu = requestedRank;
-                gameCondition = requestedCondition;
-                playerColor = requestedColor;
-                selectedBackend = requestedBackend;
-                getSharedPreferences("katago_settings", MODE_PRIVATE).edit()
-                        .putInt("board_size", boardSize)
-                        .putString("backend", requestedBackend.name()).apply();
-                Log.i(TAG, "JADE_NEW_GAME_START size=" + boardSize + " kyu=" + aiKyu
-                        + " color=" + playerColor + " backend=" + selectedBackend
-                        + " condition=" + gameCondition);
-                showGamePage();
-                startNewGame();
-                dialog.dismiss();
-            };
-            if (engine.hasHumanModel()) beginGame.run();
-            else new AlertDialog.Builder(this)
-                    .setTitle("首次准备棋力模型")
-                    .setMessage("18级～1级需要 KataGo Human SL 模型，约 99 MB。首次需联网下载，下载后可离线对弈。现在下载吗？")
-                    .setPositiveButton("下载并开始", (confirm, which) -> beginGame.run())
-                    .setNegativeButton("取消", null)
-                    .show();
-        });
-
-        dialog.setOnShowListener(ignored -> {
-            android.view.Window window = dialog.getWindow();
-            if (window == null) return;
-            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT);
-            Log.i(TAG, "JADE_NEW_GAME_DIALOG_V3 fullScreen=true board="
-                    + selectedSize[0] + " backend=" + selectedBackend);
-        });
-        dialog.show();
-
-        // Keep the heavy GPU driver query off the UI thread.
-        new Thread(() -> {
-            String gpuName = DeviceHardwareInfo.queryGpuRenderer();
-            runOnUiThread(() -> {
-                if (dialog.isShowing()) hardwareText.setText("CPU：" + cpuName
-                        + " · GPU：" + gpuName + "\n" + npuInfo);
-            });
-        }, "Jade-Game-GPU-Info").start();
+        Runnable beginGame = () -> {
+            boardSize = requestedSize;
+            aiKyu = requestedRank;
+            gameCondition = requestedCondition;
+            playerColor = requestedColor;
+            selectedBackend = requestedBackend;
+            getSharedPreferences("katago_settings", MODE_PRIVATE).edit()
+                    .putInt("board_size", boardSize)
+                    .putString("backend", requestedBackend.name()).apply();
+            Log.i(TAG, "JADE_NEW_GAME_START size=" + boardSize + " kyu=" + aiKyu
+                    + " color=" + playerColor + " backend=" + selectedBackend
+                    + " condition=" + gameCondition);
+            showGamePage();
+            startNewGame();
+        };
+        if (engine.hasHumanModel()) beginGame.run();
+        else new AlertDialog.Builder(this)
+                .setTitle("首次准备棋力模型")
+                .setMessage("18级～1级需要 KataGo Human SL 模型，约 99 MB。首次需联网下载，下载后可离线对弈。现在下载吗？")
+                .setPositiveButton("下载并开始", (confirm, which) -> beginGame.run())
+                .setNegativeButton("取消", (confirm, which) -> showNewGameDialog())
+                .show();
     }
 
     private void saveReplaySnapshot(boolean archive) {
@@ -1916,14 +1749,15 @@ public class MainActivity extends AppCompatActivity {
     @Override protected void onNewIntent(android.content.Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
-        if (intent != null && intent.getBooleanExtra("navigate_home", false)) {
+        if (intent != null && intent.getBooleanExtra(NewGameActivity.EXTRA_START, false)) {
+            openNewGameOnResume = false;
+            startSelectedGame(intent);
+        } else if (intent != null && intent.getBooleanExtra("navigate_home", false)) {
             openNewGameOnResume = false;
             showMainPage();
         } else if (intent != null
                 && (intent.getBooleanExtra("navigate_play", false)
                     || intent.getBooleanExtra("navigate_new_game", false))) {
-            // Wait for MainActivity to resume: never expose the old game board
-            // or Home as an intermediate destination.
             openNewGameOnResume = true;
         }
     }
@@ -2308,17 +2142,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         saveReplaySnapshot(false);
         super.onPause();
-    }
-
-    @Override
-    protected void onStop() {
-        // onStop happens after the next full-screen Activity covers this one.
-        // Only now remove the chooser so the underlying Home cannot flash.
-        if (pendingSectionNavigationDialog != null) {
-            pendingSectionNavigationDialog.dismiss();
-            pendingSectionNavigationDialog = null;
-        }
-        super.onStop();
     }
 
     @Override
