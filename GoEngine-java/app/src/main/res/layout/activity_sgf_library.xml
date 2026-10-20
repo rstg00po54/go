@@ -27,19 +27,19 @@
                 android:background="@drawable/jade_dark_card"
                 android:contentDescription="导入 SGF"/>
         </LinearLayout>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="57dp"
-            android:layout_marginTop="8dp" android:layout_marginBottom="7dp"
+        <LinearLayout android:layout_width="match_parent" android:layout_height="48dp"
+            android:layout_marginTop="5dp" android:layout_marginBottom="4dp"
             android:background="@drawable/jade_dark_card"
             android:orientation="horizontal" android:gravity="center_vertical"
             android:paddingStart="12dp" android:paddingEnd="12dp">
-            <ImageView android:layout_width="29dp" android:layout_height="29dp"
+            <ImageView android:layout_width="25dp" android:layout_height="25dp"
                 android:src="@drawable/ic_book_ivory"
                 android:importantForAccessibility="no" android:contentDescription="@null"/>
             <TextView android:id="@+id/libraryCount"
                 android:layout_width="0dp" android:layout_weight="1"
                 android:layout_height="match_parent" android:gravity="center_vertical"
-                android:layout_marginStart="10dp" android:text="本地棋谱 0 局"
-                android:textColor="#F5DF9E" android:textSize="16sp" android:textStyle="bold"/>
+                android:layout_marginStart="8dp" android:text="本地棋谱 0 局"
+                android:textColor="#F5DF9E" android:textSize="15sp" android:textStyle="bold"/>
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="点击查看棋局" android:textColor="#BBD0BF"
                 android:textSize="11sp"/>
@@ -48,7 +48,7 @@
             android:layout_weight="1" android:scrollbars="none">
             <LinearLayout android:id="@+id/libraryList"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="vertical" android:paddingBottom="10dp">
+                android:orientation="vertical" android:paddingBottom="6dp">
                 <TextView android:id="@+id/libraryEmpty"
                     android:layout_width="match_parent" android:layout_height="100dp"
                     android:gravity="center" android:text="还没有棋谱\n对弈后会自动保存，也可以导入 SGF"
