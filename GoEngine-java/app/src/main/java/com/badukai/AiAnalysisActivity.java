@@ -69,6 +69,8 @@ public final class AiAnalysisActivity extends Activity {
     private KataGoEngine engine;
     private boolean engineReady;
     private GoBoard shownPosition;
+    private final List<KataGoEngine.SearchRecommendation> visibleRecommendations =
+            new ArrayList<>();
 
     private GoBoardView board;
     private JadeAnalysisChartView chart;
@@ -114,6 +116,10 @@ public final class AiAnalysisActivity extends Activity {
                 findViewById(R.id.analysisBoardFrame));
         board = findViewById(R.id.analysisBoard);
         board.setInputEnabled(false);
+        board.setOnRecommendationClickListener(rank -> {
+            if (game == null || rank < 1 || rank > visibleRecommendations.size()) return;
+            previewVariation(visibleRecommendations.get(rank - 1), nextPlayer(step));
+        });
         chart = findViewById(R.id.analysisChart);
         candidates = findViewById(R.id.analysisCandidateList);
         blackWin = findViewById(R.id.analysisBlackWin);
@@ -284,7 +290,12 @@ public final class AiAnalysisActivity extends Activity {
         shownPosition = GoSgf.position(game, step);
         board.setVariationPreview(null, null, null, null);
         board.setRecommendations(null, null);
+        visibleRecommendations.clear();
         board.setBoard(shownPosition);
+        board.setAnalysisMoveNumbers(buildMoveNumbers(step));
+        Move nextReal = step < game.moves.size() ? game.moves.get(step) : null;
+        board.setActualNextMove(nextReal instanceof Move.Stone
+                ? ((Move.Stone) nextReal).point : null);
         Move last = step > 0 ? game.moves.get(step - 1) : null;
         board.setLastMove(last instanceof Move.Stone ? ((Move.Stone) last).point : null);
         boardMeta.setText(game.size + "×" + game.size + " · 贴目 " + game.komi + "\n第 " + step
@@ -301,6 +312,33 @@ public final class AiAnalysisActivity extends Activity {
             if (runAnalysis) analyzeSelectedStep();
             else status.setText("第 " + step + " 手 · 松开滑条或暂停播放后分析");
         } else showAnalysis(saved);
+    }
+
+    /**
+     * Assign each surviving stone the SGF move that placed it. Captures,
+     * recaptures and reused intersections overwrite old numbers correctly.
+     * Handicap stones remain unnumbered because SGF represents them as setup.
+     */
+    private int[] buildMoveNumbers(int count) {
+        int size = game.size;
+        int[] moveNumbers = new int[size * size];
+        StoneColor[] colors = new StoneColor[moveNumbers.length];
+        for (int i = 0; i < count; i++) {
+            Move move = game.moves.get(i);
+            if (!(move instanceof Move.Stone)) continue;
+            Point at = ((Move.Stone) move).point;
+            int index = at.y * size + at.x;
+            moveNumbers[index] = i + 1;
+            colors[index] = move.color;
+        }
+        for (int i = 0; i < moveNumbers.length; i++) {
+            if (moveNumbers[i] == 0) continue;
+            Intersection expected = colors[i] == StoneColor.BLACK
+                    ? Intersection.BLACK : Intersection.WHITE;
+            if (shownPosition.get(i % size, i / size) != expected)
+                moveNumbers[i] = 0;
+        }
+        return moveNumbers;
     }
 
     private void analyzeSelectedStep() {
@@ -375,6 +413,7 @@ public final class AiAnalysisActivity extends Activity {
             winProgress.setProgress(0);
         }
         candidates.removeAllViews();
+        visibleRecommendations.clear();
         int count = 0;
         List<Point> markerPoints = new ArrayList<>();
         List<Float> markerScores = new ArrayList<>();
@@ -384,47 +423,53 @@ public final class AiAnalysisActivity extends Activity {
             if (point == null || !shownPosition.isLegalMove(point, player)
                     || candidate.visits <= 0) continue;
             final int ranking = ++count;
-            LinearLayout row = new LinearLayout(this);
-            row.setGravity(Gravity.CENTER_VERTICAL);
-            row.setPadding(dp(3), dp(1), dp(3), dp(1));
-            TextView rank = makeText(ranking == 1 ? "①" : ranking == 2 ? "②" : "③",
-                    19, ranking == 1 ? 0xFFFFD681 : 0xFFD4D6D1, true);
-            rank.setGravity(Gravity.CENTER);
-            row.addView(rank, new LinearLayout.LayoutParams(dp(23), dp(24)));
-            ImageView icon = new ImageView(this);
-            icon.setImageResource(R.drawable.ic_board_size);
-            row.addView(icon, new LinearLayout.LayoutParams(dp(20), dp(20)));
-            LinearLayout texts = new LinearLayout(this);
-            texts.setPadding(dp(5), 0, dp(2), 0);
-            texts.setOrientation(LinearLayout.VERTICAL);
-            texts.addView(makeText(candidate.move, 13, 0xFFF9E9BE, true));
-            texts.addView(makeText("搜索 " + candidate.visits + " 次 · 点击查看变化",
-                    9, 0xFFB7D3C0, false));
-            row.addView(texts, new LinearLayout.LayoutParams(0, -2, 1f));
+            visibleRecommendations.add(candidate);
+            markerPoints.add(point);
+            markerScores.add((float) candidate.winrate);
             double blackCandidateWin = player == StoneColor.BLACK
                     ? candidate.winrate : 1.0 - candidate.winrate;
             double blackCandidateLead = player == StoneColor.BLACK
                     ? candidate.scoreLead : -candidate.scoreLead;
-            markerPoints.add(point);
-            markerScores.add((float) candidate.winrate);
-            LinearLayout numeric = new LinearLayout(this);
-            numeric.setOrientation(LinearLayout.VERTICAL);
-            numeric.setGravity(Gravity.END);
-            TextView win = makeText(String.format(Locale.CHINA, "%.1f%%", blackCandidateWin * 100),
-                    12, 0xFFF7D681, true);
-            win.setGravity(Gravity.END);
-            numeric.addView(win);
-            TextView score = makeText(leadText(blackCandidateLead), 10, 0xFFC7D7C9, false);
-            score.setGravity(Gravity.END);
-            numeric.addView(score);
-            row.addView(numeric, new LinearLayout.LayoutParams(dp(73), -2));
+
+            // All fields in a SINGLE line: rank, GTP, visits, win rate, lead, arrow.
+            LinearLayout row = new LinearLayout(this);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(dp(3), 0, dp(3), 0);
+            TextView rank = makeText(ranking == 1 ? "①" : ranking == 2 ? "②" : "③",
+                    18, ranking == 1 ? 0xFFFFD681 : 0xFFD4D6D1, true);
+            rank.setGravity(Gravity.CENTER);
+            row.addView(rank, new LinearLayout.LayoutParams(dp(25), -1));
+
+            TextView moveText = makeText(candidate.move, 14, 0xFFF9E9BE, true);
+            moveText.setGravity(Gravity.CENTER_VERTICAL);
+            row.addView(moveText, new LinearLayout.LayoutParams(dp(46), -1));
+
+            TextView visitText = makeText("搜索" + candidate.visits + "次",
+                    10, 0xFFB7D3C0, false);
+            visitText.setGravity(Gravity.CENTER_VERTICAL);
+            row.addView(visitText, new LinearLayout.LayoutParams(0, -1, 1f));
+
+            TextView winText = makeText(String.format(Locale.CHINA, "%.1f%%",
+                    blackCandidateWin * 100), 12, 0xFFF7D681, true);
+            winText.setGravity(Gravity.CENTER_VERTICAL | Gravity.RIGHT);
+            row.addView(winText, new LinearLayout.LayoutParams(dp(63), -1));
+
+            TextView scoreText = makeText(leadText(blackCandidateLead),
+                    10, 0xFFC7D7C9, false);
+            scoreText.setGravity(Gravity.CENTER_VERTICAL | Gravity.RIGHT);
+            row.addView(scoreText, new LinearLayout.LayoutParams(dp(63), -1));
+
+            TextView arrow = makeText("›", 17, 0xFFFFDA9E, false);
+            arrow.setGravity(Gravity.CENTER);
+            row.addView(arrow, new LinearLayout.LayoutParams(dp(15), -1));
             row.setOnClickListener(v -> previewVariation(candidate, player));
-            row.setContentDescription("推荐着法 " + candidate.move + "，查看变化图");
+            row.setContentDescription("推荐" + ranking + "，" + candidate.move
+                    + "，点击查看变化");
             candidates.addView(row, new LinearLayout.LayoutParams(-1, dp(26)));
             if (count >= 3) break;
-            View divider = new View(this);
-            divider.setBackgroundColor(0x58758A6C);
-            candidates.addView(divider, new LinearLayout.LayoutParams(-1, dp(1)));
+            View separator = new View(this);
+            separator.setBackgroundColor(0x58758A6C);
+            candidates.addView(separator, new LinearLayout.LayoutParams(-1, dp(1)));
         }
         if (count == 0) {
             board.setRecommendations(null, null);
@@ -435,8 +480,11 @@ public final class AiAnalysisActivity extends Activity {
             for (int i = 0; i < values.length; i++) values[i] = markerScores.get(i);
             board.setRecommendations(points, values);
         }
-        status.setText("第 " + step + " 手 · 10b 实际评估 · "
-                + (count > 0 ? count + " 条搜索候选" : "暂无搜索候选"));
+        Move nextMove = step < game.moves.size() ? game.moves.get(step) : null;
+        String actual = nextMove instanceof Move.Stone
+                ? " · 金「实」=实战第" + (step + 1) + "手"
+                : nextMove instanceof Move.Pass ? " · 实战下一手停一手" : "";
+        status.setText("绿①②③=AI推荐（点数字看变化）" + actual);
     }
 
     private String leadText(double blackLead) {
