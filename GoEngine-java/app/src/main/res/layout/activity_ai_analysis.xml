@@ -45,17 +45,23 @@
                         android:gravity="center_vertical">
                         <LinearLayout android:layout_width="0dp" android:layout_weight="1"
                             android:layout_height="match_parent" android:orientation="vertical">
-                            <LinearLayout android:layout_width="match_parent"
+                            <TextView android:id="@+id/analysisWinTitle"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
+                                android:singleLine="true" android:ellipsize="end"
+                                android:text="黑方胜率" android:textColor="#DDE5D4"
+                                android:textSize="11sp"/>
+                            <LinearLayout android:layout_width="match_parent"
+                                android:layout_height="24dp"
                                 android:orientation="horizontal" android:gravity="center_vertical">
-                                <TextView android:id="@+id/analysisWinTitle"
+                                <TextView android:id="@+id/analysisBlackWin"
                                     android:layout_width="0dp" android:layout_weight="1"
-                                    android:layout_height="wrap_content"
-                                    android:singleLine="true" android:ellipsize="end"
-                                    android:text="黑方胜率" android:textColor="#DDE5D4"
-                                    android:textSize="11sp"/>
+                                    android:layout_height="24dp"
+                                    android:gravity="center_vertical" android:text="--"
+                                    android:textColor="#F3D88C" android:textSize="20sp"
+                                    android:textStyle="bold"/>
                                 <TextView android:id="@+id/analysisHumanSide"
-                                    android:layout_width="43dp" android:layout_height="23dp"
+                                    android:layout_width="43dp" android:layout_height="22dp"
                                     android:layout_marginStart="3dp"
                                     android:background="@drawable/jade_dark_action"
                                     android:gravity="center" android:text="执子?"
@@ -63,11 +69,6 @@
                                     android:textStyle="bold"
                                     android:contentDescription="选择本局自己执黑还是执白"/>
                             </LinearLayout>
-                            <TextView android:id="@+id/analysisBlackWin"
-                                android:layout_width="match_parent" android:layout_height="26dp"
-                                android:gravity="center_vertical" android:text="--"
-                                android:textColor="#F3D88C" android:textSize="20sp"
-                                android:textStyle="bold"/>
                             <ProgressBar android:id="@+id/analysisWinProgress"
                                 style="?android:attr/progressBarStyleHorizontal"
                                 android:layout_width="match_parent" android:layout_height="5dp"
