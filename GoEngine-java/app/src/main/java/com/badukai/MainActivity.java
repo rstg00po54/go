@@ -1481,12 +1481,6 @@ public class MainActivity extends AppCompatActivity {
             mainHandler.post(() -> {
                 evaluating = false;
                 if (board != snapshot || boardSize != size || board.getMoveCount() != moves) return;
-                String message = "后端：" + backend + "\n总耗时：" + elapsed + " ms"
-                        + "\nfinal_score：" + (finalScore == null ? "未返回（可能不支持）" : finalScore)
-                        + "\n疑似死子：" + (finalDead == null ? "未返回（可能不支持）"
-                                : finalDead.isEmpty() ? "无" : finalDead)
-                        + (finalFailure == null ? "" : "\n错误：" + finalFailure)
-                        + "\n注意：后端名称不等于每一步都已确认在 NPU 上执行。";
                 showJadeEndgameDialog(
                         "慢速 AI 复核",
                         "耗时 " + elapsed + " ms",
@@ -1498,7 +1492,7 @@ public class MainActivity extends AppCompatActivity {
                                 + "\n疑似死子：" + (finalDead == null
                                         ? "未返回（可能不支持）" : finalDead.isEmpty() ? "无" : finalDead)
                                 + (finalFailure == null ? "" : "\n错误：" + finalFailure)
-                                + "\n部分后端可能不支持旧版终局接口。",
+                                + "\n部分后端可能不支持旧版终局接口；后端名称不代表每一步都在 NPU 上执行。",
                         null, null);
                 render(finalScoreText == null ? "旧版终局判断已完成" : finalScoreText);
             });
