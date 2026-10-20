@@ -114,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
     private int variationRank = -1;
     private String recommendationSummary;
     private boolean liveAnalysisShowing;
+    private String liveAnalysisHeadline;
     private final List<Float> blackWinHistory = new ArrayList<>();
     private final List<Float> whiteWinHistory = new ArrayList<>();
     private long winRateEpoch;
@@ -1015,6 +1016,7 @@ public class MainActivity extends AppCompatActivity {
         if (liveAnalysisShowing && nnAreaScoreBoard == board
                 && nnAreaScoreMoves == board.getMoveCount()) {
             liveAnalysisShowing = false;
+            liveAnalysisHeadline = null;
             clearRecommendations();
             nnAreaScoreBoard = null;
             nnAreaScoreMoves = -1;
@@ -1106,9 +1108,12 @@ public class MainActivity extends AppCompatActivity {
                 nnAreaScoreBoard = snapshot;
                 nnAreaScoreMoves = moves;
                 nnAreaScoreMessage = summary.toString();
+                // The entire analysis now lives in the upper status row.
+                // Keep it compact while preserving win rate, lead and suggestions.
+                liveAnalysisHeadline = nnAreaScoreMessage.replace("我方胜率", "胜")
+                        .replace("领先约", "+").replace(" · ", " ");
                 liveAnalysisShowing = true;
-                // The analysis details are already shown in the line below; keep the top status clear.
-                render("");
+                render(liveAnalysisHeadline);
             });
         });
     }
@@ -2191,15 +2196,17 @@ public class MainActivity extends AppCompatActivity {
 
     private void render(String message) {
         DebugLog.enter(TAG, "render in, message=" + message + ", engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer);
-        statusText.setText(message);
         if (nnAreaScoreBoard != board || nnAreaScoreMoves != board.getMoveCount()) {
             nnAreaScoreBoard = null;
             nnAreaScoreMessage = null;
             liveAnalysisShowing = false;
+            liveAnalysisHeadline = null;
         }
-        nnAreaScoreText.setVisibility(nnAreaScoreMessage == null
-                || (!liveAnalysisShowing && !getSharedPreferences("katago_settings", MODE_PRIVATE)
-                    .getBoolean("show_score_estimate", true))
+        statusText.setText(liveAnalysisShowing && liveAnalysisHeadline != null
+                ? liveAnalysisHeadline : message);
+        nnAreaScoreText.setVisibility(liveAnalysisShowing || nnAreaScoreMessage == null
+                || !getSharedPreferences("katago_settings", MODE_PRIVATE)
+                    .getBoolean("show_score_estimate", true)
                 ? View.GONE : View.VISIBLE);
         if (nnAreaScoreMessage != null) nnAreaScoreText.setText(nnAreaScoreMessage);
         aiMoveTimeText.setText(thinking ? "AI 思考中…" : lastAiMoveTimeMs < 0
@@ -2287,7 +2294,7 @@ public class MainActivity extends AppCompatActivity {
         playerWinRateText.setVisibility(visibility);
         aiWinRateText.setVisibility(visibility);
         winRateProgress.setVisibility(visibility);
-        if (!liveAnalysisShowing && !getSharedPreferences("katago_settings", MODE_PRIVATE)
+        if (liveAnalysisShowing || !getSharedPreferences("katago_settings", MODE_PRIVATE)
                 .getBoolean("show_score_estimate", true))
             nnAreaScoreText.setVisibility(View.GONE);
     }
@@ -2297,7 +2304,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         if (playerWinRateText != null && nnAreaScoreText != null) {
             applyGameDisplaySettings();
-            if (getSharedPreferences("katago_settings", MODE_PRIVATE)
+            if (!liveAnalysisShowing && getSharedPreferences("katago_settings", MODE_PRIVATE)
                     .getBoolean("show_score_estimate", true)
                     && nnAreaScoreMessage != null) nnAreaScoreText.setVisibility(View.VISIBLE);
         }
