@@ -10,7 +10,7 @@
         android:background="@drawable/jade_forest_scrim" android:importantForAccessibility="no"/>
     <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
         android:orientation="vertical">
-        <LinearLayout android:layout_width="match_parent" android:layout_height="62dp"
+        <LinearLayout android:layout_width="match_parent" android:layout_height="53dp"
             android:paddingStart="9dp" android:paddingEnd="9dp"
             android:orientation="horizontal" android:gravity="center_vertical">
             <ImageButton android:id="@+id/analysisBack"
@@ -18,29 +18,12 @@
                 android:background="@drawable/btn_round_back"
                 android:contentDescription="返回棋谱"/>
             <TextView android:layout_width="0dp" android:layout_weight="1"
-                android:layout_height="53dp" android:layout_marginStart="10dp"
+                android:layout_height="46dp" android:layout_marginStart="10dp"
                 android:layout_marginEnd="54dp" android:gravity="center"
                 android:background="@drawable/jade_button_bg"
-                android:text="AI 分 析" android:textSize="24sp"
+                android:text="AI 分 析" android:textSize="22sp"
                 android:textColor="#123B2C" android:textStyle="bold"
                 android:fontFamily="serif"/>
-        </LinearLayout>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="45dp"
-            android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
-            android:layout_marginBottom="5dp" android:padding="3dp"
-            android:background="@drawable/jade_dark_card" android:orientation="horizontal">
-            <Button android:id="@+id/analysisQuickTab"
-                android:layout_width="0dp" android:layout_weight="1"
-                android:layout_height="match_parent" android:minWidth="0dp" android:minHeight="0dp"
-                android:background="@drawable/jade_dark_action"
-                android:text="快速分析" android:textColor="#F5E5BC"
-                android:textSize="15sp" android:textAllCaps="false"/>
-            <Button android:id="@+id/analysisVariationTab"
-                android:layout_width="0dp" android:layout_weight="1"
-                android:layout_height="match_parent" android:minWidth="0dp" android:minHeight="0dp"
-                android:background="@drawable/jade_dark_card"
-                android:text="变化图" android:textColor="#D3D5C2"
-                android:textSize="15sp" android:textAllCaps="false"/>
         </LinearLayout>
         <ScrollView android:id="@+id/analysisContentScroll"
             android:layout_width="match_parent" android:layout_height="0dp"
@@ -53,9 +36,9 @@
                     android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
                     android:background="@drawable/jade_dark_card"
                     android:paddingStart="10dp" android:paddingEnd="10dp"
-                    android:paddingTop="5dp" android:paddingBottom="5dp">
+                    android:paddingTop="3dp" android:paddingBottom="3dp">
                     <LinearLayout android:layout_width="match_parent"
-                        android:layout_height="49dp" android:orientation="horizontal"
+                        android:layout_height="45dp" android:orientation="horizontal"
                         android:gravity="center_vertical">
                         <LinearLayout android:layout_width="0dp" android:layout_weight="1"
                             android:layout_height="match_parent" android:orientation="vertical">
@@ -75,7 +58,7 @@
                                 android:progressTint="#24D6A0"
                                 android:progressBackgroundTint="#456C60"/>
                         </LinearLayout>
-                        <View android:layout_width="1dp" android:layout_height="40dp"
+                        <View android:layout_width="1dp" android:layout_height="35dp"
                             android:layout_marginStart="12dp" android:layout_marginEnd="12dp"
                             android:background="#607B6955"/>
                         <LinearLayout android:layout_width="0dp" android:layout_weight="1"
@@ -102,36 +85,36 @@
                             android:layout_height="wrap_content" android:lineSpacingExtra="1dp"
                             android:text="黑方估空 -- · 白方估空 --\n黑棋提子 -- · 白棋提子 --"
                             android:textColor="#D4E0D2" android:textSize="11sp"/>
-                        <View android:layout_width="1dp" android:layout_height="32dp"
+                        <View android:layout_width="1dp" android:layout_height="25dp"
                             android:layout_marginStart="8dp" android:layout_marginEnd="10dp"
                             android:background="#587B6955"/>
                         <TextView android:id="@+id/analysisBoardMeta"
                             android:layout_width="0dp" android:layout_weight="1"
                             android:layout_height="wrap_content"
-                            android:gravity="center_vertical" android:lineSpacingExtra="5dp"
+                            android:gravity="center_vertical" android:lineSpacingExtra="1dp"
                             android:text="-- 路" android:textColor="#F0D68D"
                             android:textSize="12sp"/>
                     </LinearLayout>
                 </LinearLayout>
                 <com.badukai.ui.JadeSquareBoardFrame android:id="@+id/analysisBoardFrame"
                     android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp" android:padding="5dp"
+                    android:layout_marginTop="3dp" android:padding="4dp"
                     android:background="@drawable/jade_game_wood_panel">
                     <com.badukai.ui.GoBoardView android:id="@+id/analysisBoard"
                         android:layout_width="match_parent" android:layout_height="match_parent"
                         android:contentDescription="分析当前棋盘与候选落点"/>
                 </com.badukai.ui.JadeSquareBoardFrame>
                 <TextView android:id="@+id/analysisStatus"
-                    android:layout_width="match_parent" android:layout_height="20dp"
-                    android:layout_marginTop="2dp" android:layout_marginBottom="2dp"
+                    android:layout_width="match_parent" android:layout_height="18dp"
+                    android:layout_marginTop="1dp" android:layout_marginBottom="1dp"
                     android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
                     android:singleLine="true" android:ellipsize="end"
                     android:text="选择棋谱后开始分析" android:textColor="#D3E3CE"
                     android:textSize="12sp" android:gravity="center"/>
                 <!-- Single compact switcher: chart and moves never stack vertically. -->
-                <LinearLayout android:layout_width="match_parent" android:layout_height="35dp"
+                <LinearLayout android:layout_width="match_parent" android:layout_height="31dp"
                     android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
-                    android:layout_marginTop="2dp" android:layout_marginBottom="3dp"
+                    android:layout_marginTop="1dp" android:layout_marginBottom="2dp"
                     android:padding="2dp" android:orientation="horizontal"
                     android:background="@drawable/jade_dark_card">
                     <Button android:id="@+id/analysisTrendTab"
@@ -148,7 +131,7 @@
                         android:textColor="#F5E5BC" android:background="@drawable/jade_dark_action"/>
                 </LinearLayout>
                 <FrameLayout android:layout_width="match_parent"
-                    android:layout_height="112dp"
+                    android:layout_height="87dp"
                     android:layout_marginStart="10dp" android:layout_marginEnd="10dp">
                     <LinearLayout android:id="@+id/analysisTrendPanel"
                         android:layout_width="match_parent" android:layout_height="match_parent"
@@ -171,7 +154,7 @@
                                 android:background="@drawable/jade_dark_action"/>
                         </LinearLayout>
                         <com.badukai.ui.JadeAnalysisChartView android:id="@+id/analysisChart"
-                            android:layout_width="match_parent" android:layout_height="77dp"/>
+                            android:layout_width="match_parent" android:layout_height="52dp"/>
                     </LinearLayout>
                     <LinearLayout android:id="@+id/analysisMovesPanel"
                         android:layout_width="match_parent" android:layout_height="match_parent"
@@ -184,25 +167,50 @@
                 </FrameLayout>
             </LinearLayout>
         </ScrollView>
-        <LinearLayout android:layout_width="match_parent" android:layout_height="46dp"
-            android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
-            android:orientation="horizontal" android:gravity="center_vertical">
-            <Button android:id="@+id/analysisPrevious"
-                android:layout_width="0dp" android:layout_weight="1" android:layout_height="39dp"
-                android:layout_marginEnd="3dp" android:minWidth="0dp" android:minHeight="0dp"
-                android:background="@drawable/jade_game_white_button" android:text="▶ 播放"
-                android:textAllCaps="false" android:textSize="12sp" android:textColor="#184A39"/>
-            <Button android:id="@+id/analysisPlay"
-                android:layout_width="0dp" android:layout_weight="1" android:layout_height="39dp"
-                android:layout_marginStart="3dp" android:layout_marginEnd="3dp"
-                android:minWidth="0dp" android:minHeight="0dp"
-                android:background="@drawable/jade_game_white_button" android:text="▶▶ 自动播放"
-                android:textAllCaps="false" android:textSize="11sp" android:textColor="#184A39"/>
-            <Button android:id="@+id/analysisCurrent"
-                android:layout_width="0dp" android:layout_weight="1" android:layout_height="39dp"
-                android:layout_marginStart="3dp" android:minWidth="0dp" android:minHeight="0dp"
-                android:background="@drawable/jade_game_white_button" android:text="↶ 切换到本手"
-                android:textAllCaps="false" android:textSize="12sp" android:textColor="#184A39"/>
+        <!-- In-page move navigation: no need to return to ReplayActivity. -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="64dp"
+            android:orientation="vertical" android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp" android:paddingBottom="1dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="32dp"
+                android:orientation="horizontal" android:gravity="center_vertical">
+                <Button android:id="@+id/analysisPrevious"
+                    android:layout_width="65dp" android:layout_height="30dp"
+                    android:minWidth="0dp" android:minHeight="0dp"
+                    android:background="@drawable/jade_game_white_button"
+                    android:text="◀ 上一手" android:textSize="11sp" android:textAllCaps="false"
+                    android:textColor="#184A39"/>
+                <SeekBar android:id="@+id/analysisMoveSeek"
+                    android:layout_width="0dp" android:layout_weight="1"
+                    android:layout_height="30dp" android:max="0" android:progress="0"
+                    android:progressTint="#29D7AC" android:thumbTint="#F5D58A"/>
+                <Button android:id="@+id/analysisNext"
+                    android:layout_width="65dp" android:layout_height="30dp"
+                    android:minWidth="0dp" android:minHeight="0dp"
+                    android:background="@drawable/jade_game_white_button"
+                    android:text="下一手 ▶" android:textSize="11sp" android:textAllCaps="false"
+                    android:textColor="#184A39"/>
+            </LinearLayout>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="31dp"
+                android:orientation="horizontal" android:gravity="center_vertical">
+                <TextView android:id="@+id/analysisMoveLabel"
+                    android:layout_width="0dp" android:layout_weight="1"
+                    android:layout_height="match_parent" android:gravity="center_vertical"
+                    android:text="第 0/0 手" android:textColor="#F1D58D"
+                    android:textSize="12sp"/>
+                <Button android:id="@+id/analysisPlay"
+                    android:layout_width="97dp" android:layout_height="29dp"
+                    android:minWidth="0dp" android:minHeight="0dp"
+                    android:background="@drawable/jade_game_white_button"
+                    android:text="▶ 自动播放" android:textSize="11sp" android:textAllCaps="false"
+                    android:textColor="#184A39"/>
+                <Button android:id="@+id/analysisCurrent"
+                    android:layout_width="75dp" android:layout_height="29dp"
+                    android:layout_marginStart="5dp"
+                    android:minWidth="0dp" android:minHeight="0dp"
+                    android:background="@drawable/jade_game_white_button"
+                    android:text="返回本手" android:textSize="11sp" android:textAllCaps="false"
+                    android:textColor="#184A39"/>
+            </LinearLayout>
         </LinearLayout>
         <com.badukai.ui.JadeBottomNavView android:id="@+id/analysisSharedNav"
             android:layout_width="match_parent" android:layout_height="96dp"
