@@ -75,7 +75,7 @@ public final class GoSgf {
         float komi=km.find()?Float.parseFloat(km.group(1)):0;
         // Check only the SGF root node, never a later move comment.
         String root=sgf.substring(2,sgf.indexOf(';', 2)>=0 ? sgf.indexOf(';', 2) : sgf.length());
-        Matcher role=Pattern.compile("XUC\\\\[([BW])\\\\]").matcher(root);
+        Matcher role=Pattern.compile("XUC\\[([BW])\\]").matcher(root);
         StoneColor humanColor=role.find()
                 ? ("B".equals(role.group(1)) ? StoneColor.BLACK : StoneColor.WHITE)
                 : null;
