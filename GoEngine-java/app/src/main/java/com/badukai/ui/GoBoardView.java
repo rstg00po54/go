@@ -1,6 +1,7 @@
 package com.badukai.ui;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -58,6 +59,21 @@ public class GoBoardView extends View {
     private int[] previewNumbers;
     private OnIntersectionClickListener listener;
     private boolean inputEnabled = true;
+    private SharedPreferences visualPreferences;
+    private final SharedPreferences.OnSharedPreferenceChangeListener visualPreferenceListener =
+            (shared, key) -> {
+                if (key == null || key.equals("show_coordinates") || key.equals("show_last_move")
+                        || key.equals("last_move_style") || key.equals("hint_style")
+                        || key.equals("high_contrast") || key.equals("jade_theme")) {
+                    applyVisualPreferences();
+                }
+            };
+    private boolean showCoordinates = true;
+    private boolean showLastMove = true;
+    private boolean highContrast;
+    private int lastMoveStyle;
+    private int hintStyle;
+    private int boardTheme;
 
     private float padding;
     private float cellSize;
@@ -71,6 +87,32 @@ public class GoBoardView extends View {
         DebugLog.enter(TAG, "init in");
         setBackgroundColor(Color.rgb(222, 184, 135));
         setFocusable(true);
+        visualPreferences = getContext().getSharedPreferences("katago_settings", Context.MODE_PRIVATE);
+        applyVisualPreferences();
+    }
+
+    @Override protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        visualPreferences.registerOnSharedPreferenceChangeListener(visualPreferenceListener);
+        applyVisualPreferences();
+    }
+
+    @Override protected void onDetachedFromWindow() {
+        visualPreferences.unregisterOnSharedPreferenceChangeListener(visualPreferenceListener);
+        super.onDetachedFromWindow();
+    }
+
+    private void applyVisualPreferences() {
+        if (visualPreferences == null) return;
+        showCoordinates = visualPreferences.getBoolean("show_coordinates", true);
+        showLastMove = visualPreferences.getBoolean("show_last_move", true);
+        highContrast = visualPreferences.getBoolean("high_contrast", false);
+        lastMoveStyle = visualPreferences.getInt("last_move_style", 0);
+        hintStyle = visualPreferences.getInt("hint_style", 0);
+        boardTheme = visualPreferences.getInt("jade_theme", 0);
+        setBackgroundColor(boardTheme == 1 ? 0xFFAE9880
+                : boardTheme == 2 ? 0xFFF2E9D6 : Color.rgb(222, 184, 135));
+        invalidate();
     }
 
     public void setBoard(GoBoard board) {
@@ -193,9 +235,9 @@ public class GoBoardView extends View {
         boardPixels = (n - 1f) * cellSize;
         drawGrid(canvas, n);
         drawStarPoints(canvas, n);
-        drawCoordinates(canvas, n);
+        if (showCoordinates) drawCoordinates(canvas, n);
         if (previewBoard == null) drawOwnership(canvas, n);
-        drawStones(canvas, n, shown, previewBoard == null ? lastMove : null);
+        drawStones(canvas, n, shown, previewBoard == null && showLastMove ? lastMove : null);
         if (previewBoard == null) {
             drawDeadStoneMarks(canvas, n);
             drawTrainingTarget(canvas);
@@ -205,8 +247,8 @@ public class GoBoardView extends View {
 
     private void drawGrid(Canvas canvas, int n) {
         DebugLog.v(TAG, "drawGrid in, canvas=" + canvas + ", n=" + n);
-        paint.setColor(Color.rgb(45, 45, 45));
-        paint.setStrokeWidth(dp(1));
+        paint.setColor(highContrast ? Color.rgb(10, 10, 10) : Color.rgb(45, 45, 45));
+        paint.setStrokeWidth(dp(highContrast ? 1.25f : 1f));
         paint.setStyle(Paint.Style.STROKE);
         for (int i = 0; i < n; i++) {
             float p = padding + i * cellSize;
@@ -243,7 +285,7 @@ public class GoBoardView extends View {
     private void drawCoordinates(Canvas canvas, int n) {
         if (n < 2 || cellSize <= 0f) return;
         paint.setShader(null);
-        paint.setColor(Color.rgb(74, 51, 28));
+        paint.setColor(highContrast ? Color.BLACK : Color.rgb(74, 51, 28));
         paint.setStyle(Paint.Style.FILL);
         paint.setTypeface(Typeface.SERIF);
         paint.setTextAlign(Paint.Align.CENTER);
@@ -385,7 +427,13 @@ public class GoBoardView extends View {
                     // Highlight the most recent stone like the jade/gold mockup.
                     paint.setStrokeWidth(Math.max(dp(1.5f), radius * 0.10f));
                     paint.setColor(0xFFFFD878);
-                    canvas.drawCircle(cx, cy, radius * 1.04f, paint);
+                    if (lastMoveStyle == 1) {
+                        float marker = radius * 0.83f;
+                        canvas.drawRoundRect(cx - marker, cy - marker,
+                                cx + marker, cy + marker, dp(1.8f), dp(1.8f), paint);
+                    } else {
+                        canvas.drawCircle(cx, cy, radius * 1.04f, paint);
+                    }
                     paint.setStyle(Paint.Style.FILL);
                 }
             }
@@ -458,15 +506,18 @@ public class GoBoardView extends View {
             float cx = padding + p.x * cellSize;
             float cy = padding + p.y * cellSize;
             marker.setStyle(Paint.Style.FILL);
-            marker.setColor(i == 0 ? Color.rgb(245, 194, 87) : Color.rgb(44, 93, 66));
+            marker.setColor(i == 0 && hintStyle == 1
+                    ? Color.rgb(245, 194, 87) : Color.rgb(28, 193, 98));
             canvas.drawCircle(cx, cy, radius, marker);
             marker.setStyle(Paint.Style.STROKE);
             marker.setStrokeWidth(Math.max(dp(1), cellSize * 0.055f));
-            marker.setColor(i == 0 ? Color.rgb(93, 58, 22) : Color.rgb(231, 240, 217));
+            marker.setColor(i == 0 && hintStyle == 1
+                    ? Color.rgb(93, 58, 22) : Color.rgb(231, 240, 217));
             canvas.drawCircle(cx, cy, radius, marker);
             marker.setStyle(Paint.Style.FILL);
             marker.setTextSize(Math.min(cellSize * 0.48f, dp(17f)));
-            marker.setColor(i == 0 ? Color.rgb(39, 32, 22) : Color.WHITE);
+            marker.setColor(i == 0 && hintStyle == 1
+                    ? Color.rgb(39, 32, 22) : Color.WHITE);
             Paint.FontMetrics fm = marker.getFontMetrics();
             canvas.drawText(Integer.toString(i + 1), cx, cy - (fm.ascent + fm.descent) * 0.5f, marker);
         }
