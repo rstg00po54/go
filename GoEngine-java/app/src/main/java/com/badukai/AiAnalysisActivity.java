@@ -607,6 +607,13 @@ public final class AiAnalysisActivity extends Activity {
         return view;
     }
 
+    private static String circledNumber(int number) {
+        // The variation preview currently draws at most 8 moves.
+        return number >= 1 && number <= 8
+                ? Character.toString((char) ('①' + number - 1))
+                : Integer.toString(number);
+    }
+
     private void previewVariation(KataGoEngine.SearchRecommendation candidate, StoneColor next) {
         if (shownPosition == null) return;
         GoBoard copy = shownPosition.copyForPreview();
@@ -615,10 +622,12 @@ public final class AiAnalysisActivity extends Activity {
         List<Integer> numbers = new ArrayList<>();
         StoneColor turn = next;
         int sequence = 0;
+        List<Integer> passNumbers = new ArrayList<>();
         for (String move : candidate.pvMoves) {
             if (sequence >= 8 || copy.isGameOver()) break;
             sequence++;
             if ("pass".equalsIgnoreCase(move)) {
+                passNumbers.add(sequence);
                 copy.playMove(new Move.Pass(turn));
             } else {
                 Point point = Point.fromGtp(move, game.size);
@@ -639,7 +648,41 @@ public final class AiAnalysisActivity extends Activity {
         board.setVariationPreview(copy, points.toArray(new Point[0]),
                 colors.toArray(new StoneColor[0]), indices);
         selectTab(true);
-        status.setText("变化图：" + candidate.move + " · AI 推演 " + sequence + " 手（预览，不落子）");
+
+        // Some numbered moves vanish from the final preview board because they
+        // were captured later. Passes have no board coordinate in the first place.
+        // Explain omitted numbers rather than pretending the moves were skipped.
+        String[] vanished = new String[sequence + 1];
+        for (Integer passNumber : passNumbers) {
+            vanished[passNumber] = circledNumber(passNumber) + "停";
+        }
+        for (int i = 0; i < points.size(); i++) {
+            Point point = points.get(i);
+            StoneColor color = colors.get(i);
+            Intersection expected = color == StoneColor.BLACK
+                    ? Intersection.BLACK : Intersection.WHITE;
+            boolean replaced = false;
+            for (int j = i + 1; j < points.size(); j++) {
+                if (point.equals(points.get(j))) { replaced = true; break; }
+            }
+            if (replaced || copy.get(point) != expected)
+                vanished[numbers.get(i)] = circledNumber(numbers.get(i)) + "已提";
+        }
+        StringBuilder hiddenMoves = new StringBuilder();
+        for (int i = 1; i <= sequence; i++) {
+            if (vanished[i] != null) {
+                if (hiddenMoves.length() != 0) hiddenMoves.append(' ');
+                hiddenMoves.append(vanished[i]);
+            }
+        }
+        String explanation = hiddenMoves.length() == 0 ? "全手可见"
+                : hiddenMoves.toString();
+        status.setText("变化：" + candidate.move + " · " + sequence
+                + "手 · " + explanation);
+        status.setContentDescription("AI变化图，" + candidate.move + "，共" + sequence
+                + "手，" + explanation);
+        status.setOnClickListener(v -> Toast.makeText(this,
+                "变化手数说明：" + explanation, Toast.LENGTH_LONG).show());
         ((android.widget.ScrollView) findViewById(R.id.analysisContentScroll))
                 .smoothScrollTo(0, 0);
     }
