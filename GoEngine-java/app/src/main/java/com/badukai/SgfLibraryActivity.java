@@ -147,7 +147,13 @@ public final class SgfLibraryActivity extends Activity {
             if ("0".equals(result) || "DRAW".equals(result) || "JIGO".equals(result))
                 return "和棋\n0目";
             if (result.length() >= 3 && (result.startsWith("B+") || result.startsWith("W+"))) {
-                String side = result.charAt(0) == 'B' ? "黑胜" : "白胜";
+                boolean winnerBlack = result.charAt(0) == 'B';
+                String side = winnerBlack ? "黑胜" : "白胜";
+                if (game.humanColor != null) {
+                    boolean humanBlack = game.humanColor == com.badukai.game.StoneColor.BLACK;
+                    side = (humanBlack == winnerBlack ? "胜" : "负")
+                            + (humanBlack ? "（执黑）" : "（执白）");
+                }
                 String margin = result.substring(2);
                 if (margin.startsWith("R")) return side + "\n对方认输";
                 if (margin.startsWith("T")) return side + "\n对方超时";
@@ -163,9 +169,15 @@ public final class SgfLibraryActivity extends Activity {
         if (game.estimatedResult != null && !game.estimatedResult.isEmpty()) {
             String score = game.estimatedResult;
             if ("0".equals(score)) return "AI预估\n接近平局";
-            if (score.startsWith("B+") || score.startsWith("W+"))
-                return (score.charAt(0) == 'B' ? "估黑优" : "估白优")
-                        + "\n约" + score.substring(2) + "目";
+            if (score.startsWith("B+") || score.startsWith("W+")) {
+                boolean blackAhead = score.charAt(0) == 'B';
+                String label = blackAhead ? "估黑优" : "估白优";
+                if (game.humanColor != null) {
+                    boolean humanBlack = game.humanColor == com.badukai.game.StoneColor.BLACK;
+                    label = humanBlack == blackAhead ? "估我方优" : "估我方劣";
+                }
+                return label + "\n约" + score.substring(2) + "目";
+            }
         }
         int count = game.moves.size();
         if (count >= 2 && game.moves.get(count - 1) instanceof Move.Pass
