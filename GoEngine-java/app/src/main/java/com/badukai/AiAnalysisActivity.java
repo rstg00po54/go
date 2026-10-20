@@ -305,6 +305,8 @@ public final class AiAnalysisActivity extends Activity {
         }
         candidates.removeAllViews();
         int count = 0;
+        List<Point> markerPoints = new ArrayList<>();
+        List<Float> markerScores = new ArrayList<>();
         final StoneColor player = nextPlayer(step);
         for (KataGoEngine.SearchRecommendation candidate : result.recommendations) {
             Point point = Point.fromGtp(candidate.move, game.size);
@@ -332,6 +334,8 @@ public final class AiAnalysisActivity extends Activity {
                     ? candidate.winrate : 1.0 - candidate.winrate;
             double blackCandidateLead = player == StoneColor.BLACK
                     ? candidate.scoreLead : -candidate.scoreLead;
+            markerPoints.add(point);
+            markerScores.add((float) candidate.winrate);
             LinearLayout numeric = new LinearLayout(this);
             numeric.setOrientation(LinearLayout.VERTICAL);
             numeric.setGravity(Gravity.END);
@@ -351,7 +355,15 @@ public final class AiAnalysisActivity extends Activity {
             divider.setBackgroundColor(0x58758A6C);
             candidates.addView(divider, new LinearLayout.LayoutParams(-1, dp(1)));
         }
-        if (count == 0) showPlaceholder("当前局面没有有效推荐着法");
+        if (count == 0) {
+            board.setRecommendations(null, null);
+            showPlaceholder("当前局面没有有效推荐着法");
+        } else {
+            Point[] points = markerPoints.toArray(new Point[0]);
+            float[] values = new float[markerScores.size()];
+            for (int i = 0; i < values.length; i++) values[i] = markerScores.get(i);
+            board.setRecommendations(points, values);
+        }
         status.setText("第 " + step + " 手 · 10b 实际评估 · "
                 + (count > 0 ? count + " 条搜索候选" : "暂无搜索候选"));
     }
