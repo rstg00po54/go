@@ -398,8 +398,8 @@ public final class AiAnalysisActivity extends Activity {
                 ? ((Move.Stone) nextReal).point : null);
         Move last = step > 0 ? game.moves.get(step - 1) : null;
         board.setLastMove(last instanceof Move.Stone ? ((Move.Stone) last).point : null);
-        boardMeta.setText(game.size + "×" + game.size + " · 贴目 " + game.komi + "\n第 " + step
-                + "/" + game.moves.size() + " 手");
+        boardMeta.setText(game.size + "×" + game.size + "·贴" + game.komi + "\n"
+                + step + "/" + game.moves.size() + "手");
         captures.setText("黑提子 " + shownPosition.getCapturedWhite()
                 + "  白提子 " + shownPosition.getCapturedBlack());
         chart.selectStep(step);
