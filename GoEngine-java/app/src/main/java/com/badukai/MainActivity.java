@@ -1715,6 +1715,9 @@ public class MainActivity extends AppCompatActivity {
             selectedBackend = requestedBackend;
             getSharedPreferences("katago_settings", MODE_PRIVATE).edit()
                     .putInt("board_size", boardSize)
+                    .putInt("ai_kyu", aiKyu)
+                    .putInt("game_condition", gameCondition)
+                    .putString("player_color", playerColor.name())
                     .putString("backend", requestedBackend.name()).apply();
             Log.i(TAG, "JADE_NEW_GAME_START size=" + boardSize + " kyu=" + aiKyu
                     + " color=" + playerColor + " backend=" + selectedBackend
