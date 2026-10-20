@@ -26,6 +26,7 @@ import java.util.Locale;
 
 /** Offline archive chooser; returns a validated SGF to ReplayActivity. */
 public final class SgfLibraryActivity extends Activity {
+    public static final String EXTRA_OPEN_REPLAY_ON_SELECT = "open_replay_on_select";
     private static final int PICK_SGF = 302;
     private LinearLayout list;
     private TextView count;
@@ -128,6 +129,18 @@ public final class SgfLibraryActivity extends Activity {
     }
 
     private void returnFile(File file) {
+        if (getIntent().getBooleanExtra(EXTRA_OPEN_REPLAY_ON_SELECT, false)) {
+            // Entered from the Records center: show the board only after selection.
+            Intent replay = new Intent(this, ReplayActivity.class);
+            replay.putExtra(ReplayActivity.EXTRA_SELECTED_SGF_FILE, file.getName());
+            startActivity(replay);
+            overridePendingTransition(0, 0);
+            finish();
+            overridePendingTransition(0, 0);
+            return;
+        }
+        // Entered from an already-open replay board: keep the existing
+        // result contract and update that replay in place.
         Intent result = new Intent();
         result.putExtra("selected_sgf_file", file.getName());
         setResult(RESULT_OK, result);
