@@ -1374,14 +1374,84 @@ public class MainActivity extends AppCompatActivity {
                 // Archive a finished game with an explicitly provisional NN score.
                 saveReplaySnapshot(true);
                 render(finalScoreText);
-                new AlertDialog.Builder(this)
-                        .setTitle("终局 · 快速 NN 估分")
-                        .setMessage(finalScoreText + "\n快速估分耗时：" + nnMs + " ms"
-                                + "\n可选：运行旧版慢速 AI 终局判断，比较实际耗时。")
-                        .setPositiveButton("慢速 AI 复核", (dialog, which) -> runSlowEndgameComparison())
-                        .setNegativeButton("关闭", null).show();
+                String winner = Math.abs(result.whiteLead) < 0.05
+                        ? "双方接近平局"
+                        : String.format(Locale.CHINA, "%s领先约 %.1f 目",
+                                result.whiteLead > 0 ? "白" : "黑",
+                                Math.abs(result.whiteLead));
+                showJadeEndgameDialog(
+                        "终局 · 快速 NN 估分",
+                        winner,
+                        "NN 预估 · 非正式终局计分",
+                        "快速估分耗时 " + nnMs + " ms",
+                        "需要对比算法结果与耗时时，可选择慢速 AI 复核。",
+                        "慢速 AI 复核",
+                        this::runSlowEndgameComparison);
             });
         });
+    }
+
+    /** A compact endgame overlay that matches the app's jade/gold UI. */
+    private void showJadeEndgameDialog(String title, String headline, String subtitle,
+            String timing, String details, String secondaryLabel, Runnable onSecondary) {
+        final android.app.Dialog dialog = new android.app.Dialog(this);
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_jade_endgame);
+        ((TextView) dialog.findViewById(R.id.endgameDialogTitle)).setText(title);
+        ((TextView) dialog.findViewById(R.id.endgameDialogResult)).setText(headline);
+        ((TextView) dialog.findViewById(R.id.endgameDialogSubtitle)).setText(subtitle);
+
+        TextView timingView = dialog.findViewById(R.id.endgameDialogTiming);
+        timingView.setVisibility(timing == null ? View.GONE : View.VISIBLE);
+        if (timing != null) timingView.setText(timing);
+
+        TextView detailView = dialog.findViewById(R.id.endgameDialogDetails);
+        android.widget.ScrollView detailScroll = dialog.findViewById(
+                R.id.endgameDialogDetailsScroll);
+        boolean hasDetails = details != null && !details.isEmpty();
+        detailScroll.setVisibility(hasDetails ? View.VISIBLE : View.GONE);
+        if (hasDetails) {
+            detailView.setText(details);
+            // Prevent a long native diagnostic from pushing the buttons offscreen.
+            if (details.length() > 140) {
+                ViewGroup.LayoutParams params = detailScroll.getLayoutParams();
+                params.height = Math.round(134f * getResources().getDisplayMetrics().density);
+                detailScroll.setLayoutParams(params);
+            }
+        }
+
+        dialog.findViewById(R.id.endgameDialogClose).setOnClickListener(v -> dialog.dismiss());
+        Button secondary = dialog.findViewById(R.id.endgameDialogSecondary);
+        if (onSecondary == null) {
+            secondary.setVisibility(View.GONE);
+            View close = dialog.findViewById(R.id.endgameDialogClose);
+            android.widget.LinearLayout.LayoutParams params =
+                    (android.widget.LinearLayout.LayoutParams) close.getLayoutParams();
+            params.weight = 1f;
+            params.rightMargin = 0;
+            close.setLayoutParams(params);
+        } else {
+            secondary.setText(secondaryLabel);
+            secondary.setOnClickListener(v -> {
+                dialog.dismiss();
+                onSecondary.run();
+            });
+        }
+
+        dialog.show();
+        android.view.Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+            android.view.WindowManager.LayoutParams params = window.getAttributes();
+            params.dimAmount = 0.68f;
+            window.setAttributes(params);
+            int densityWidth = Math.round(420f * getResources().getDisplayMetrics().density);
+            int availableWidth = getResources().getDisplayMetrics().widthPixels
+                    - Math.round(32f * getResources().getDisplayMetrics().density);
+            window.setLayout(Math.min(densityWidth, availableWidth),
+                    android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        }
     }
 
     /** Optional legacy GTP final_score / final_status_list benchmark. Never alters the board. */
@@ -1417,8 +1487,19 @@ public class MainActivity extends AppCompatActivity {
                                 : finalDead.isEmpty() ? "无" : finalDead)
                         + (finalFailure == null ? "" : "\n错误：" + finalFailure)
                         + "\n注意：后端名称不等于每一步都已确认在 NPU 上执行。";
-                new AlertDialog.Builder(this).setTitle("旧版 AI 终局判断 · 耗时对照")
-                        .setMessage(message).setPositiveButton("确定", null).show();
+                showJadeEndgameDialog(
+                        "慢速 AI 复核",
+                        "耗时 " + elapsed + " ms",
+                        "旧版终局判断 · 对照结果",
+                        null,
+                        "后端：" + backend
+                                + "\nfinal_score：" + (finalScore == null
+                                        ? "未返回（可能不支持）" : finalScore)
+                                + "\n疑似死子：" + (finalDead == null
+                                        ? "未返回（可能不支持）" : finalDead.isEmpty() ? "无" : finalDead)
+                                + (finalFailure == null ? "" : "\n错误：" + finalFailure)
+                                + "\n部分后端可能不支持旧版终局接口。",
+                        null, null);
                 render(finalScoreText == null ? "旧版终局判断已完成" : finalScoreText);
             });
         });
