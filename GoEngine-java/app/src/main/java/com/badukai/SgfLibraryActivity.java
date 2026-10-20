@@ -12,6 +12,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.badukai.game.GoSgf;
+import com.badukai.game.Move;
 import com.badukai.game.SgfArchive;
 
 import java.io.ByteArrayOutputStream;
@@ -89,9 +90,19 @@ public final class SgfLibraryActivity extends Activity {
             TextView heading = new TextView(this);
             heading.setTextColor(Color.rgb(247, 226, 164));
             heading.setTextSize(14);
+            heading.setSingleLine(true);
+            heading.setEllipsize(android.text.TextUtils.TruncateAt.END);
             TextView sub = new TextView(this);
             sub.setTextColor(Color.rgb(197, 218, 204));
             sub.setTextSize(11);
+            sub.setSingleLine(true);
+            sub.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            TextView outcome = new TextView(this);
+            outcome.setTextSize(11);
+            outcome.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+            outcome.setMaxLines(2);
+            outcome.setLineSpacing(0f, 1.0f);
+            outcome.setTextColor(Color.rgb(241, 211, 141));
             try {
                 String data = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
                 GoSgf.Game game = GoSgf.decode(data);
@@ -99,14 +110,22 @@ public final class SgfLibraryActivity extends Activity {
                         + " · " + game.moves.size() + " 手");
                 sub.setText(format.format(new Date(file.lastModified()))
                         + "  ·  贴目 " + game.komi);
+                outcome.setText(describeResult(game));
+                if (game.result == null && game.estimatedResult == null)
+                    outcome.setTextColor(Color.rgb(165, 189, 176));
             } catch (Exception ex) {
                 heading.setText((i + 1) + ".  棋谱文件");
                 sub.setText(file.getName() + " · 无法预览");
+                outcome.setText("结果未知");
+                outcome.setTextColor(Color.rgb(165, 189, 176));
             }
             details.addView(heading);
             details.addView(sub);
             item.addView(details, new LinearLayout.LayoutParams(0,
                     LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+            LinearLayout.LayoutParams resultParams = new LinearLayout.LayoutParams(dp(72), dp(43));
+            resultParams.rightMargin = dp(4);
+            item.addView(outcome, resultParams);
 
             TextView arrow = new TextView(this);
             arrow.setText("›");
@@ -119,6 +138,40 @@ public final class SgfLibraryActivity extends Activity {
             params.bottomMargin = dp(4);
             list.addView(item, params);
         }
+    }
+
+    /** The SGF header decides the result; an unscored snapshot is never guessed. */
+    private static String describeResult(GoSgf.Game game) {
+        if (game.result != null && !game.result.trim().isEmpty()) {
+            String result = game.result.trim().toUpperCase(Locale.US);
+            if ("0".equals(result) || "DRAW".equals(result) || "JIGO".equals(result))
+                return "和棋\n0目";
+            if (result.length() >= 3 && (result.startsWith("B+") || result.startsWith("W+"))) {
+                String side = result.charAt(0) == 'B' ? "黑胜" : "白胜";
+                String margin = result.substring(2);
+                if (margin.startsWith("R")) return side + "\n对方认输";
+                if (margin.startsWith("T")) return side + "\n对方超时";
+                if (margin.startsWith("F")) return side + "\n违规判负";
+                try {
+                    double points = Double.parseDouble(margin);
+                    if (Double.isFinite(points) && points >= 0)
+                        return side + "\n" + margin + "目";
+                } catch (NumberFormatException ignored) {}
+            }
+            return "已有结果\n请查看棋谱";
+        }
+        if (game.estimatedResult != null && !game.estimatedResult.isEmpty()) {
+            String score = game.estimatedResult;
+            if ("0".equals(score)) return "AI预估\n接近平局";
+            if (score.startsWith("B+") || score.startsWith("W+"))
+                return (score.charAt(0) == 'B' ? "估黑优" : "估白优")
+                        + "\n约" + score.substring(2) + "目";
+        }
+        int count = game.moves.size();
+        if (count >= 2 && game.moves.get(count - 1) instanceof Move.Pass
+                && game.moves.get(count - 2) instanceof Move.Pass)
+            return "已停双手\n未记录计分";
+        return "进行中\n未计分";
     }
 
     private void selectFile(File file) {
