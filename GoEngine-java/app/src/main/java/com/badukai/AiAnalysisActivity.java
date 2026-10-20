@@ -537,7 +537,7 @@ public final class AiAnalysisActivity extends Activity {
                 ui.post(() -> {
                     if (!alive || serial != generation.get()) return;
                     globalRunning = false;
-                    fullButton.setText("继续分析");
+                    fullButton.setText("重新分析");
                     status.setText("逐手分析中断：" + ex.getMessage());
                 });
             }
