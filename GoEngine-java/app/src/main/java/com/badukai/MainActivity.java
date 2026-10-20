@@ -1745,7 +1745,7 @@ public class MainActivity extends AppCompatActivity {
                 if (!npuSupported && backendGroup.getCheckedRadioButtonId()
                         == R.id.backendNpuButton) {
                     backendGroup.check(R.id.backendCpuButton);
-                    Toast.makeText(this, selectedSize[0] + "路暂未提供对应 NPU 模型，已选 CPU",
+                    Toast.makeText(MainActivity.this, selectedSize[0] + "路暂未提供对应 NPU 模型，已选 CPU",
                             Toast.LENGTH_SHORT).show();
                 }
                 Log.i(TAG, "JADE_BOARD_SELECTED size=" + selectedSize[0]
