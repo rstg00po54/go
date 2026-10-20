@@ -113,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
     private GoBoard variationBoard;
     private int variationRank = -1;
     private String recommendationSummary;
+    private boolean liveAnalysisShowing;
     private final List<Float> blackWinHistory = new ArrayList<>();
     private final List<Float> whiteWinHistory = new ArrayList<>();
     private long winRateEpoch;
@@ -290,7 +291,7 @@ public class MainActivity extends AppCompatActivity {
         aiSuggestionButton.setOnClickListener(v -> showAiSuggestions());
         countTerritoryButton.setOnClickListener(v -> showEndgameScoringOptions());
         variationButton.setOnClickListener(v -> showVariations());
-        findViewById(R.id.gameAnalysisButton).setOnClickListener(v -> openAiAnalysis());
+        findViewById(R.id.gameAnalysisButton).setOnClickListener(v -> showLiveAiAnalysis());
         findViewById(R.id.gameMoreButton).setOnClickListener(this::showGameMoreMenu);
         android.widget.ScrollView gameScroll = findViewById(R.id.gameContentScroll);
         gameScroll.addOnLayoutChangeListener((view, left, top, right, bottom,
@@ -999,22 +1000,116 @@ public class MainActivity extends AppCompatActivity {
                 ? String.format(Locale.CHINA, "%s胜率 %.1f%%", myName, myRate * 100f) : myName + "胜率 --%");
     }
 
-    /** Open the standalone read-only 10b analyser for the current game snapshot. */
-    private void openAiAnalysis() {
-        if (board == null || board.getMoveCount() == 0) {
-            Toast.makeText(this, "先下几手棋，再进行 AI 分析", Toast.LENGTH_SHORT).show();
+    /**
+     * Analyze the live board directly, using the current playing engine.
+     * SGF review remains a separate activity accessed from the Records center.
+     */
+    private void showLiveAiAnalysis() {
+        if (!engineReady || !gameReady || engineStarting || thinking || evaluating
+                || variationBoard != null || board == null
+                || (board.isGameOver() && board.getLastMove() instanceof Move.Resign)
+                || (!board.isGameOver() && currentPlayer != playerColor)) {
+            Toast.makeText(this, "请在轮到你时分析当前局面", Toast.LENGTH_SHORT).show();
             return;
         }
-        saveReplaySnapshot(false);
-        java.io.File sgf = new java.io.File(getFilesDir(), "last_game.sgf");
-        if (!sgf.isFile() || sgf.length() == 0) {
-            Toast.makeText(this, "当前棋谱保存失败，无法分析", Toast.LENGTH_LONG).show();
+        if (liveAnalysisShowing && nnAreaScoreBoard == board
+                && nnAreaScoreMoves == board.getMoveCount()) {
+            liveAnalysisShowing = false;
+            clearRecommendations();
+            nnAreaScoreBoard = null;
+            nnAreaScoreMoves = -1;
+            nnAreaScoreMessage = null;
+            render("已关闭本局 AI 分析");
             return;
         }
-        android.content.Intent intent = new android.content.Intent(this, AiAnalysisActivity.class);
-        intent.putExtra(AiAnalysisActivity.EXTRA_START_STEP, board.getMoveCount());
-        startActivity(intent);
-        overridePendingTransition(0, 0);
+
+        evaluating = true;
+        final GoBoard snapshot = board;
+        final int moves = board.getMoveCount(), size = boardSize;
+        final StoneColor next = currentPlayer;
+        final long epoch = winRateEpoch;
+        render("正在分析当前局面…");
+        engineExecutor.execute(() -> {
+            KataGoEngine.PositionEvaluation estimate = null;
+            List<KataGoEngine.SearchRecommendation> candidates = new ArrayList<>();
+            try {
+                estimate = engine.evaluatePosition(size);
+            } catch (RuntimeException error) {
+                Log.w(TAG, "Live analysis NN evaluation failed", error);
+            }
+            if (!snapshot.isGameOver()) {
+                try {
+                    candidates = engine.searchRecommendations(next.toGtp(), 96, 8.0);
+                } catch (RuntimeException error) {
+                    Log.w(TAG, "Live analysis search failed", error);
+                }
+            }
+            final KataGoEngine.PositionEvaluation result = estimate;
+            final List<KataGoEngine.SearchRecommendation> choices = candidates;
+            mainHandler.post(() -> {
+                evaluating = false;
+                if (board != snapshot || boardSize != size || board.getMoveCount() != moves
+                        || winRateEpoch != epoch || (!snapshot.isGameOver() && currentPlayer != next)) {
+                    render("棋局已变化，请重新分析");
+                    return;
+                }
+                if (result == null && choices.isEmpty()) {
+                    render("当前局面分析失败，可重试");
+                    return;
+                }
+                clearRecommendations();
+                Point[] points = new Point[3];
+                float[] rates = new float[3];
+                StringBuilder locations = new StringBuilder();
+                String[] ranks = {"①", "②", "③"};
+                int count = 0;
+                for (KataGoEngine.SearchRecommendation choice : choices) {
+                    Point point = Point.fromGtp(choice.move, size);
+                    if (point == null || !board.isLegalMove(point, next)
+                            || choice.visits <= 0) continue;
+                    points[count] = point;
+                    rates[count] = (float) choice.winrate;
+                    recommendationChoices.add(choice);
+                    if (count > 0) locations.append(' ');
+                    locations.append(ranks[count]).append(choice.move);
+                    if (++count == 3) break;
+                }
+                if (count > 0) {
+                    Point[] visiblePoints = new Point[count];
+                    float[] visibleRates = new float[count];
+                    System.arraycopy(points, 0, visiblePoints, 0, count);
+                    System.arraycopy(rates, 0, visibleRates, 0, count);
+                    boardView.setRecommendations(visiblePoints, visibleRates);
+                    recommendationPoints = visiblePoints;
+                    recommendationSummary = locations.toString();
+                }
+                StringBuilder summary = new StringBuilder();
+                if (result != null && Double.isFinite(result.whiteLead)
+                        && Double.isFinite(result.blackWin) && Double.isFinite(result.whiteWin)) {
+                    double myWin = playerColor == StoneColor.BLACK
+                            ? result.blackWin : result.whiteWin;
+                    summary.append(String.format(Locale.CHINA, "我方胜率%.1f%% · ",
+                            myWin * 100.0));
+                    if (Math.abs(result.whiteLead) < 0.05) {
+                        summary.append("目数接近");
+                    } else {
+                        summary.append(String.format(Locale.CHINA, "%s领先约%.1f目",
+                                result.whiteLead > 0 ? "白" : "黑",
+                                Math.abs(result.whiteLead)));
+                    }
+                    recordWinRate(snapshot, moves, epoch, new KataGoEngine.WinRate(
+                            (float) result.blackWin, (float) result.whiteWin));
+                } else {
+                    summary.append("当前暂无胜率与目数数据");
+                }
+                if (count > 0) summary.append(" · ").append(locations);
+                nnAreaScoreBoard = snapshot;
+                nnAreaScoreMoves = moves;
+                nnAreaScoreMessage = summary.toString();
+                liveAnalysisShowing = true;
+                render(count > 0 ? "AI分析完成，绿色编号为推荐落点" : "已显示当前局面估分");
+            });
+        });
     }
 
     private void showWinRateChart() {
@@ -2099,10 +2194,11 @@ public class MainActivity extends AppCompatActivity {
         if (nnAreaScoreBoard != board || nnAreaScoreMoves != board.getMoveCount()) {
             nnAreaScoreBoard = null;
             nnAreaScoreMessage = null;
+            liveAnalysisShowing = false;
         }
         nnAreaScoreText.setVisibility(nnAreaScoreMessage == null
-                || !getSharedPreferences("katago_settings", MODE_PRIVATE)
-                    .getBoolean("show_score_estimate", true)
+                || (!liveAnalysisShowing && !getSharedPreferences("katago_settings", MODE_PRIVATE)
+                    .getBoolean("show_score_estimate", true))
                 ? View.GONE : View.VISIBLE);
         if (nnAreaScoreMessage != null) nnAreaScoreText.setText(nnAreaScoreMessage);
         aiMoveTimeText.setText(thinking ? "AI 思考中…" : lastAiMoveTimeMs < 0
@@ -2190,7 +2286,7 @@ public class MainActivity extends AppCompatActivity {
         playerWinRateText.setVisibility(visibility);
         aiWinRateText.setVisibility(visibility);
         winRateProgress.setVisibility(visibility);
-        if (!getSharedPreferences("katago_settings", MODE_PRIVATE)
+        if (!liveAnalysisShowing && !getSharedPreferences("katago_settings", MODE_PRIVATE)
                 .getBoolean("show_score_estimate", true))
             nnAreaScoreText.setVisibility(View.GONE);
     }
