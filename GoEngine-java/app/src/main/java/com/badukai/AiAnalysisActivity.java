@@ -56,7 +56,7 @@ public final class AiAnalysisActivity extends Activity {
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final ExecutorService analysisExecutor = Executors.newSingleThreadExecutor();
     private final AtomicInteger generation = new AtomicInteger();
-    private boolean alive = true;
+    private volatile boolean alive = true;
     private boolean globalRunning;
     private boolean autoplay;
     private boolean variationTab;
