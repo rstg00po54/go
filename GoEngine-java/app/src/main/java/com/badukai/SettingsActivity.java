@@ -90,14 +90,14 @@ public final class SettingsActivity extends Activity {
             ImageView picture = new ImageView(this);
             picture.setImageResource(ICONS[i]);
             picture.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            item.addView(picture, new LinearLayout.LayoutParams(dp(23), dp(23)));
+            item.addView(picture, new LinearLayout.LayoutParams(dp(21), dp(21)));
             TextView label = text(CATEGORIES[i], 12, IVORY, true);
             label.setSingleLine(true);
             label.setGravity(Gravity.CENTER_VERTICAL);
             label.setPadding(dp(5), 0, 0, 0);
             item.addView(label, new LinearLayout.LayoutParams(0, -1, 1f));
-            LinearLayout.LayoutParams margin = new LinearLayout.LayoutParams(-1, dp(52));
-            margin.bottomMargin = dp(3);
+            LinearLayout.LayoutParams margin = new LinearLayout.LayoutParams(-1, dp(48));
+            margin.bottomMargin = dp(2);
             sidebar.addView(item, margin);
             item.setOnClickListener(v -> selectCategory(target));
             item.setContentDescription(CATEGORIES[i]);
@@ -392,10 +392,11 @@ public final class SettingsActivity extends Activity {
             Runnable callback) {
         LinearLayout row = new LinearLayout(this);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setPadding(dp(2), dp(8), 0, dp(8));
+        row.setPadding(dp(2), dp(5), 0, dp(5));
+        row.setMinimumHeight(dp(48));
         ImageView icon = new ImageView(this);
         icon.setImageResource(drawable);
-        row.addView(icon, new LinearLayout.LayoutParams(dp(24), dp(24)));
+        row.addView(icon, new LinearLayout.LayoutParams(dp(22), dp(22)));
         LinearLayout words = new LinearLayout(this);
         words.setOrientation(LinearLayout.VERTICAL);
         words.setPadding(dp(8), 0, dp(3), 0);
