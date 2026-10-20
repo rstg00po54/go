@@ -149,6 +149,9 @@ public final class AiAnalysisActivity extends Activity {
             stopAutoplay();
             showStep(selected);
         });
+        ((android.widget.Switch) findViewById(R.id.analysisFromStep))
+                .setOnCheckedChangeListener((button, enabled) ->
+                        chart.setFromSelectedStep(enabled));
         quickTabButton.setOnClickListener(v -> selectTab(false));
         variationTabButton.setOnClickListener(v -> selectTab(true));
         fullButton.setOnClickListener(v -> {
