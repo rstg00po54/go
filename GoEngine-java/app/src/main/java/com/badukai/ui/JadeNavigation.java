@@ -6,6 +6,7 @@ import android.content.Intent;
 import com.badukai.JadeSectionActivity;
 import com.badukai.MainActivity;
 import com.badukai.NewGameActivity;
+import com.badukai.SettingsActivity;
 
 /** Cross-page navigation; Records, Training and Settings are proper pages. */
 public final class JadeNavigation {
@@ -19,14 +20,23 @@ public final class JadeNavigation {
             case JadeBottomNavView.PLAY:
                 if (activity instanceof NewGameActivity) return;
                 launchWithoutFlash(activity, new Intent(activity, NewGameActivity.class));
-                if (activity instanceof JadeSectionActivity) {
+                if (activity instanceof JadeSectionActivity
+                        || activity instanceof SettingsActivity) {
+                    activity.finish();
+                    activity.overridePendingTransition(0, 0);
+                }
+                return;
+            case JadeBottomNavView.SETTINGS:
+                if (activity instanceof SettingsActivity) return;
+                launchWithoutFlash(activity, new Intent(activity, SettingsActivity.class));
+                if (activity instanceof JadeSectionActivity
+                        || activity instanceof NewGameActivity) {
                     activity.finish();
                     activity.overridePendingTransition(0, 0);
                 }
                 return;
             case JadeBottomNavView.RECORDS:
             case JadeBottomNavView.TRAINING:
-            case JadeBottomNavView.SETTINGS:
                 if (activity instanceof JadeSectionActivity) {
                     ((JadeSectionActivity) activity).showSection(tab);
                     return;
@@ -34,7 +44,8 @@ public final class JadeNavigation {
                 Intent section = new Intent(activity, JadeSectionActivity.class);
                 section.putExtra(JadeSectionActivity.EXTRA_SECTION, tab);
                 launchWithoutFlash(activity, section);
-                if (activity instanceof NewGameActivity) {
+                if (activity instanceof NewGameActivity
+                        || activity instanceof SettingsActivity) {
                     activity.finish();
                     activity.overridePendingTransition(0, 0);
                 }
