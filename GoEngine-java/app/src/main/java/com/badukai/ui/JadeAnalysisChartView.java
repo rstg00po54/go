@@ -17,6 +17,7 @@ public final class JadeAnalysisChartView extends View {
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private float[] blackWins = new float[0];
     private int selectedStep;
+    private boolean fromSelectedStep;
     private OnStepSelected listener;
 
     public JadeAnalysisChartView(Context context) { super(context); }
@@ -30,6 +31,10 @@ public final class JadeAnalysisChartView extends View {
         invalidate();
     }
     public void selectStep(int step) { selectedStep = step; invalidate(); }
+    public void setFromSelectedStep(boolean enabled) { fromSelectedStep = enabled; invalidate(); }
+    private int firstStep() {
+        return fromSelectedStep ? Math.max(0, Math.min(selectedStep, blackWins.length - 1)) : 0;
+    }
     private float dp(float value) { return value * getResources().getDisplayMetrics().density; }
     private float left() { return dp(36); }
     private float right() { return Math.max(left() + 1f, getWidth() - dp(7)); }
@@ -59,10 +64,11 @@ public final class JadeAnalysisChartView extends View {
             canvas.drawText("暂无分析数据", x0 + dp(6), y0 + (y1 - y0) / 2f, paint);
             return;
         }
-        int count = Math.max(1, blackWins.length - 1);
+        int first = firstStep();
+        int count = Math.max(1, blackWins.length - 1 - first);
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(0xFFC8DAC8);
-        canvas.drawText("0", x0, getHeight() - dp(5), paint);
+        canvas.drawText(String.valueOf(first), x0, getHeight() - dp(5), paint);
         paint.setTextAlign(Paint.Align.RIGHT);
         canvas.drawText(String.valueOf(count), x1, getHeight() - dp(5), paint);
         paint.setTextAlign(Paint.Align.LEFT);
@@ -70,10 +76,10 @@ public final class JadeAnalysisChartView extends View {
         Path curve = new Path();
         boolean active = false;
         int valid = 0;
-        for (int i = 0; i < blackWins.length; i++) {
+        for (int i = first; i < blackWins.length; i++) {
             float rate = blackWins[i];
             if (!Float.isFinite(rate)) { active = false; continue; }
-            float x = x0 + (x1 - x0) * i / count;
+            float x = x0 + (x1 - x0) * (i - first) / count;
             float y = y1 - (y1 - y0) * Math.max(0f, Math.min(1f, rate));
             if (active) curve.lineTo(x, y);
             else curve.moveTo(x, y);
@@ -88,9 +94,9 @@ public final class JadeAnalysisChartView extends View {
         // A quick single-step analysis must be visible as a real sample,
         // without falsely drawing a line across unanalysed positions.
         paint.setStyle(Paint.Style.FILL);
-        for (int i = 0; i < blackWins.length; i++) {
+        for (int i = first; i < blackWins.length; i++) {
             if (!Float.isFinite(blackWins[i])) continue;
-            float x = x0 + (x1 - x0) * i / count;
+            float x = x0 + (x1 - x0) * (i - first) / count;
             float y = y1 - (y1 - y0) * blackWins[i];
             canvas.drawCircle(x, y, dp(2.5f), paint);
         }
@@ -101,7 +107,7 @@ public final class JadeAnalysisChartView extends View {
             return;
         }
         if (selectedStep >= 0 && selectedStep < blackWins.length) {
-            float x = x0 + (x1 - x0) * selectedStep / count;
+            float x = x0 + (x1 - x0) * (selectedStep - first) / count;
             paint.setStyle(Paint.Style.STROKE);
             paint.setColor(0x99FCE6A5);
             paint.setStrokeWidth(dp(1));
@@ -119,7 +125,9 @@ public final class JadeAnalysisChartView extends View {
         if (event.getActionMasked() == MotionEvent.ACTION_DOWN) return true;
         if (event.getActionMasked() == MotionEvent.ACTION_UP) {
             float fraction = (event.getX() - left()) / (right() - left());
-            int step = Math.round(Math.max(0f, Math.min(1f, fraction)) * (blackWins.length - 1));
+            int first = firstStep();
+            int step = first + Math.round(Math.max(0f, Math.min(1f, fraction))
+                    * (blackWins.length - 1 - first));
             listener.onStepSelected(step);
             performClick();
             return true;
