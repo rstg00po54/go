@@ -282,7 +282,7 @@ public final class AiAnalysisActivity extends Activity {
         // Choosing here only changes the analysis presentation of this game.
         new android.app.AlertDialog.Builder(this)
                 .setTitle("这盘棋你执哪一方？")
-                .setItems(new String[]{"我执黑（对手执白）", "我执白（对手执黑）",
+                .setItems(new String[]{"执黑（对手执白）", "执白（对手执黑）",
                         "执子未知（显示黑方胜率）"}, (dialog, which) -> {
                     humanSide = which == 0 ? StoneColor.BLACK
                             : which == 1 ? StoneColor.WHITE : null;
@@ -292,14 +292,14 @@ public final class AiAnalysisActivity extends Activity {
     }
 
     /** The engine and stored chart samples remain black-oriented. */
-    private float toDisplayedRate(float blackRate) {
-        return humanSide == StoneColor.WHITE ? 1f - blackRate : blackRate;
+    private double toDisplayedRate(double blackRate) {
+        return humanSide == StoneColor.WHITE ? 1.0 - blackRate : blackRate;
     }
 
     private void refreshChart() {
         float[] visible = new float[rates.length];
         for (int i = 0; i < rates.length; i++) {
-            visible[i] = Float.isFinite(rates[i]) ? toDisplayedRate(rates[i]) : Float.NaN;
+            visible[i] = Float.isFinite(rates[i]) ? (float) toDisplayedRate(rates[i]) : Float.NaN;
         }
         chart.setData(visible, step);
     }
@@ -310,11 +310,11 @@ public final class AiAnalysisActivity extends Activity {
             winTitle.setText("黑方胜率");
             trendTabButton.setText("黑方胜率");
         } else if (humanSide == StoneColor.BLACK) {
-            sideLabel.setText("我执黑");
+            sideLabel.setText("执黑");
             winTitle.setText("我的胜率（黑）");
             trendTabButton.setText("我的胜率");
         } else {
-            sideLabel.setText("我执白");
+            sideLabel.setText("执白");
             winTitle.setText("我的胜率（白）");
             trendTabButton.setText("我的胜率");
         }
@@ -442,7 +442,7 @@ public final class AiAnalysisActivity extends Activity {
     private void showAnalysis(StepAnalysis result) {
         KataGoEngine.PositionEvaluation estimate = result.evaluation;
         if (estimate != null) {
-            float visibleWin = toDisplayedRate(estimate.blackWin);
+            double visibleWin = toDisplayedRate(estimate.blackWin);
             blackWin.setText(String.format(Locale.CHINA, "%.1f%%", visibleWin * 100));
             winProgress.setProgress((int) Math.round(visibleWin * 1000));
             lead.setText(leadText(-estimate.whiteLead));
