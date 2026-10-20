@@ -20,6 +20,7 @@ import android.widget.Toast;
 import com.badukai.engine.KataGoEngine;
 import com.badukai.game.GoBoard;
 import com.badukai.game.GoSgf;
+import com.badukai.game.Intersection;
 import com.badukai.game.Move;
 import com.badukai.game.Point;
 import com.badukai.game.SgfArchive;
@@ -202,7 +203,7 @@ public final class AiAnalysisActivity extends Activity {
         if (sgf == null || sgf.isEmpty() || sgf.getBytes(StandardCharsets.UTF_8).length > MAX_SGF_BYTES)
             throw new IllegalArgumentException("请先打开有效棋谱");
         // Source was already decoded by ReplayActivity; keep it private.
-        String filename = "analysis_" + System.nanoTime() + ".sgf";
+        String filename = "analysis_" + Long.toUnsignedString(System.nanoTime()) + ".sgf";
         Files.write(new File(activity.getCacheDir(), filename).toPath(),
                 sgf.getBytes(StandardCharsets.UTF_8));
         return new Intent(activity, AiAnalysisActivity.class)
@@ -280,6 +281,23 @@ public final class AiAnalysisActivity extends Activity {
             blackWin.setText(String.format(Locale.CHINA, "%.1f%%", estimate.blackWin * 100));
             winProgress.setProgress((int) Math.round(estimate.blackWin * 1000));
             lead.setText(leadText(-estimate.whiteLead));
+            // Count only confidently owned EMPTY points. This is an NN
+            // territory estimate, not an official final-score calculation.
+            int blackEmpty = 0, whiteEmpty = 0;
+            float[] ownership = estimate.whiteOwnership;
+            if (ownership != null && ownership.length == game.size * game.size) {
+                for (int y = 0; y < game.size; y++) {
+                    for (int x = 0; x < game.size; x++) {
+                        if (shownPosition.get(x, y) != Intersection.EMPTY) continue;
+                        float white = ownership[y * game.size + x];
+                        if (white <= -0.55f) blackEmpty++;
+                        else if (white >= 0.55f) whiteEmpty++;
+                    }
+                }
+            }
+            captures.setText("黑方估空 " + blackEmpty + " 目\\n白方估空 " + whiteEmpty
+                    + " 目\\n黑棋提子 " + shownPosition.getCapturedWhite()
+                    + "\\n白棋提子 " + shownPosition.getCapturedBlack());
         } else {
             blackWin.setText("--");
             lead.setText("未取得评估");
