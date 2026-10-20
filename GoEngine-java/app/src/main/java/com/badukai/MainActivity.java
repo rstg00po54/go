@@ -290,7 +290,7 @@ public class MainActivity extends AppCompatActivity {
         aiSuggestionButton.setOnClickListener(v -> showAiSuggestions());
         countTerritoryButton.setOnClickListener(v -> showEndgameScoringOptions());
         variationButton.setOnClickListener(v -> showVariations());
-        findViewById(R.id.gameAnalysisButton).setOnClickListener(v -> showWinRateChart());
+        findViewById(R.id.gameAnalysisButton).setOnClickListener(v -> openAiAnalysis());
         findViewById(R.id.gameMoreButton).setOnClickListener(this::showGameMoreMenu);
         android.widget.ScrollView gameScroll = findViewById(R.id.gameContentScroll);
         gameScroll.addOnLayoutChangeListener((view, left, top, right, bottom,
@@ -997,6 +997,24 @@ public class MainActivity extends AppCompatActivity {
                 ? String.format(Locale.CHINA, "%s胜率 %.1f%%", aiName, aiRate * 100f) : aiName + "胜率 --%");
         playerWinRateText.setText(Float.isFinite(myRate)
                 ? String.format(Locale.CHINA, "%s胜率 %.1f%%", myName, myRate * 100f) : myName + "胜率 --%");
+    }
+
+    /** Open the standalone read-only 10b analyser for the current game snapshot. */
+    private void openAiAnalysis() {
+        if (board == null || board.getMoveCount() == 0) {
+            Toast.makeText(this, "先下几手棋，再进行 AI 分析", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        saveReplaySnapshot(false);
+        java.io.File sgf = new java.io.File(getFilesDir(), "last_game.sgf");
+        if (!sgf.isFile() || sgf.length() == 0) {
+            Toast.makeText(this, "当前棋谱保存失败，无法分析", Toast.LENGTH_LONG).show();
+            return;
+        }
+        android.content.Intent intent = new android.content.Intent(this, AiAnalysisActivity.class);
+        intent.putExtra(AiAnalysisActivity.EXTRA_START_STEP, board.getMoveCount());
+        startActivity(intent);
+        overridePendingTransition(0, 0);
     }
 
     private void showWinRateChart() {
