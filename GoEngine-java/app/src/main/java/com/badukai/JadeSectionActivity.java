@@ -2,7 +2,6 @@ package com.badukai;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -52,7 +51,11 @@ public final class JadeSectionActivity extends Activity {
     }
 
     public void showSection(int tab) {
-        if (tab < JadeBottomNavView.RECORDS || tab > JadeBottomNavView.SETTINGS) {
+        if (tab == JadeBottomNavView.SETTINGS) {
+            JadeNavigation.open(this, JadeBottomNavView.SETTINGS);
+            return;
+        }
+        if (tab < JadeBottomNavView.RECORDS || tab > JadeBottomNavView.TRAINING) {
             return;
         }
         choosingPuzzle = false;
@@ -60,8 +63,7 @@ public final class JadeSectionActivity extends Activity {
         footer.setSelectedTab(tab);
         cards.removeAllViews();
         if (tab == JadeBottomNavView.RECORDS) renderRecords();
-        else if (tab == JadeBottomNavView.TRAINING) renderTraining();
-        else renderSettings();
+        else renderTraining();
     }
 
     private void renderRecords() {
@@ -129,42 +131,6 @@ public final class JadeSectionActivity extends Activity {
         if (index >= 0) intent.putExtra("puzzle_index", index);
         startActivity(intent);
         overridePendingTransition(0, 0);
-    }
-
-    private void renderSettings() {
-        heading.setText("设 置");
-        subtitle.setText("棋局偏好 · 本地模型 · 应用信息");
-        SharedPreferences prefs = getSharedPreferences("katago_settings", MODE_PRIVATE);
-        int size = prefs.getInt("board_size", 9);
-        String backend = prefs.getString("backend", "CPU");
-
-        addHeading("对局设置");
-        addCard("新局参数", "调整棋力等级、后端、棋色和规则",
-                R.drawable.ic_settings_ivory, () -> JadeNavigation.openNewGameSettings(this), false);
-        addNote("上次使用的计算后端：" + backend
-                + "。实际可用的 CPU / GPU / NPU 在新局设置中确认。");
-
-        addHeading("默认棋盘大小");
-        addNote("以下设置会在下次重新启动应用时作为默认棋盘，不修改正在进行的对局。");
-        addCard("9 × 9", "入门和快速对弈",
-                R.drawable.ic_board_size, () -> saveBoardSize(9), size == 9);
-        addCard("13 × 13", "中盘与全局练习",
-                R.drawable.ic_board_size, () -> saveBoardSize(13), size == 13);
-        addCard("19 × 19", "标准围棋棋盘",
-                R.drawable.ic_board_size, () -> saveBoardSize(19), size == 19);
-
-        addHeading("更多");
-        addCard("棋谱管理", "查看历史棋谱及导入 SGF",
-                R.drawable.ic_book_ivory, () -> showSection(JadeBottomNavView.RECORDS), false);
-        addCard("死活训练", "选择题目或查看练习进度",
-                R.drawable.ic_training_ivory, () -> showSection(JadeBottomNavView.TRAINING), false);
-        addNote("本地围棋 · KataGo AI。对局及模型运行均在设备端完成。");
-    }
-
-    private void saveBoardSize(int boardSize) {
-        getSharedPreferences("katago_settings", MODE_PRIVATE)
-                .edit().putInt("board_size", boardSize).apply();
-        renderSettings();
     }
 
     private void addHeading(String text) {
