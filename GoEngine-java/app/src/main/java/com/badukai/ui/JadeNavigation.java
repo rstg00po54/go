@@ -19,7 +19,14 @@ public final class JadeNavigation {
                 return;
             case JadeBottomNavView.PLAY:
                 if (activity instanceof NewGameActivity) return;
-                launchWithoutFlash(activity, new Intent(activity, NewGameActivity.class));
+                if (activity instanceof MainActivity) {
+                    ((MainActivity) activity).openPlayTab();
+                    return;
+                }
+                Intent play = new Intent(activity, MainActivity.class);
+                play.putExtra("navigate_resume_game", true);
+                play.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                launchWithoutFlash(activity, play);
                 if (activity instanceof JadeSectionActivity
                         || activity instanceof SettingsActivity) {
                     activity.finish();
