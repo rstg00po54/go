@@ -78,6 +78,9 @@ public class MainActivity extends AppCompatActivity {
     // Accessed only on winRateExecutor, whose GTP process is independent of the playing engine.
     private boolean winRateSynchronized;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    // Keep the full-screen new-game chooser covering Home until the next page is visible.
+    private AlertDialog pendingSectionNavigationDialog;
+    private boolean openNewGameOnResume;
 
     private KataGoEngine engine;
     private KataGoEngine winRateEngine;
@@ -228,7 +231,7 @@ public class MainActivity extends AppCompatActivity {
         });
         gameNav.setOnTabClickListener(tab -> {
             if (tab == com.badukai.ui.JadeBottomNavView.HOME) showMainPage();
-            else if (tab == com.badukai.ui.JadeBottomNavView.PLAY) showGamePage();
+            else if (tab == com.badukai.ui.JadeBottomNavView.PLAY) showNewGameDialog();
             else if (tab == com.badukai.ui.JadeBottomNavView.RECORDS) openReplay();
             else if (tab == com.badukai.ui.JadeBottomNavView.TRAINING) openTsumego();
             else com.badukai.ui.JadeNavigation.open(this, tab);
@@ -291,8 +294,10 @@ public class MainActivity extends AppCompatActivity {
         });
         render("正在启动 AI...");
         showMainPage();
-        if (getIntent() != null && getIntent().getBooleanExtra("navigate_new_game", false)) {
-            mainHandler.post(this::showNewGameDialog);
+        if (getIntent() != null
+                && (getIntent().getBooleanExtra("navigate_new_game", false)
+                    || getIntent().getBooleanExtra("navigate_play", false))) {
+            openNewGameOnResume = true;
         }
         if (isRefereeSmokeIntent()) {
             startDebugRefereeSmoke();
@@ -1803,15 +1808,16 @@ public class MainActivity extends AppCompatActivity {
                 settingsScroll.smoothScrollTo(0, 0);
                 return;
             }
-            if (tab == com.badukai.ui.JadeBottomNavView.SETTINGS) {
+            if (tab == com.badukai.ui.JadeBottomNavView.HOME) {
                 dialog.dismiss();
-                com.badukai.ui.JadeNavigation.open(this,
-                        com.badukai.ui.JadeBottomNavView.SETTINGS);
+                showMainPage();
                 return;
             }
-            dialog.dismiss();
-            if (tab == com.badukai.ui.JadeBottomNavView.HOME) showMainPage();
-            else if (tab == com.badukai.ui.JadeBottomNavView.RECORDS) openReplay();
+            // Dismissing before startActivity exposed Home for one frame.
+            // The dialog stays until MainActivity.onStop(), after the destination
+            // Activity is fully in front.
+            pendingSectionNavigationDialog = dialog;
+            if (tab == com.badukai.ui.JadeBottomNavView.RECORDS) openReplay();
             else if (tab == com.badukai.ui.JadeBottomNavView.TRAINING) openTsumego();
             else com.badukai.ui.JadeNavigation.open(this, tab);
         });
@@ -1819,7 +1825,7 @@ public class MainActivity extends AppCompatActivity {
         // Offline Human-vs-Human mode is not implemented; its tile is visibly
         // disabled rather than silently running a Human SL AI match.
         content.findViewById(R.id.modeReplayButton).setOnClickListener(v -> {
-            dialog.dismiss();
+            pendingSectionNavigationDialog = dialog;
             openReplay();
         });
         startButton.setOnClickListener(v -> {
@@ -1911,11 +1917,14 @@ public class MainActivity extends AppCompatActivity {
         super.onNewIntent(intent);
         setIntent(intent);
         if (intent != null && intent.getBooleanExtra("navigate_home", false)) {
+            openNewGameOnResume = false;
             showMainPage();
-        } else if (intent != null && intent.getBooleanExtra("navigate_play", false)) {
-            showGamePage();
-        } else if (intent != null && intent.getBooleanExtra("navigate_new_game", false)) {
-            showNewGameDialog();
+        } else if (intent != null
+                && (intent.getBooleanExtra("navigate_play", false)
+                    || intent.getBooleanExtra("navigate_new_game", false))) {
+            // Wait for MainActivity to resume: never expose the old game board
+            // or Home as an intermediate destination.
+            openNewGameOnResume = true;
         }
     }
 
@@ -2287,9 +2296,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (openNewGameOnResume) {
+            openNewGameOnResume = false;
+            showNewGameDialog();
+        }
+    }
+
+    @Override
     protected void onPause() {
         saveReplaySnapshot(false);
         super.onPause();
+    }
+
+    @Override
+    protected void onStop() {
+        // onStop happens after the next full-screen Activity covers this one.
+        // Only now remove the chooser so the underlying Home cannot flash.
+        if (pendingSectionNavigationDialog != null) {
+            pendingSectionNavigationDialog.dismiss();
+            pendingSectionNavigationDialog = null;
+        }
+        super.onStop();
     }
 
     @Override
