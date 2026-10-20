@@ -1806,6 +1806,11 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /** Public entry used by the shared navigation component. */
+    public void openPlayTab() {
+        openPlayOrResume();
+    }
+
     /** PLAY resumes an unfinished game directly; explicit "new game" still opens setup. */
     private void openPlayOrResume() {
         if (restoringUnfinishedGame) return;
