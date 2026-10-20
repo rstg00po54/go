@@ -155,7 +155,7 @@ public final class SgfLibraryActivity extends Activity {
                             + (humanBlack ? "（执黑）" : "（执白）");
                 }
                 String margin = result.substring(2);
-                if (margin.startsWith("R")) return side + "\n对方认输";
+                if (margin.startsWith("R")) return side + "\n认输结束";
                 if (margin.startsWith("T")) return side + "\n对方超时";
                 if (margin.startsWith("F")) return side + "\n违规判负";
                 try {
