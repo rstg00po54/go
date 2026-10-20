@@ -24,6 +24,20 @@
                 android:text="AI 分 析" android:textSize="22sp"
                 android:textColor="#123B2C" android:textStyle="bold"
                 android:fontFamily="serif"/>
+            <TextView android:id="@+id/analysisExport"
+                android:layout_width="38dp" android:layout_height="36dp"
+                android:layout_marginEnd="3dp"
+                android:background="@drawable/jade_dark_action"
+                android:gravity="center" android:text="导出"
+                android:textColor="#F4D991" android:textSize="11sp"
+                android:contentDescription="导出当前棋谱为 SGF"/>
+            <TextView android:id="@+id/analysisShare"
+                android:layout_width="38dp" android:layout_height="36dp"
+                android:layout_marginEnd="3dp"
+                android:background="@drawable/jade_dark_action"
+                android:gravity="center" android:text="分享"
+                android:textColor="#F4D991" android:textSize="11sp"
+                android:contentDescription="分享当前棋谱"/>
             <TextView android:id="@+id/analysisHumanSide"
                 android:layout_width="52dp" android:layout_height="36dp"
                 android:background="@drawable/jade_dark_action"
