@@ -42,6 +42,9 @@ public final class TsumegoActivity extends Activity {
         index = getIntent().getIntExtra("puzzle_index", prefs.getInt("last_index", 0));
         if (index < 0 || index >= puzzles.size()) index = 0;
         setContentView(R.layout.activity_tsumego);
+        com.badukai.ui.BoardViewportFitter.attach(
+                findViewById(R.id.tsumegoContentScroll),
+                findViewById(R.id.tsumegoBoardFrame));
 
         title = findViewById(R.id.tsumegoQuestion);
         progress = findViewById(R.id.tsumegoProgress);
