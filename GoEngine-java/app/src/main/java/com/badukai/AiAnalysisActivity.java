@@ -51,6 +51,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class AiAnalysisActivity extends Activity {
     private static final String TAG = "AiAnalysis";
     public static final String EXTRA_CACHE_SGF = "ai_analysis_cache_file";
+    public static final String EXTRA_SELECTED_SGF_FILE = "selected_sgf_file";
     public static final String EXTRA_START_STEP = "ai_analysis_start_step";
     private static final int MAX_SGF_BYTES = 2_000_000;
 
@@ -241,7 +242,7 @@ public final class AiAnalysisActivity extends Activity {
                 throw new IllegalArgumentException("无效的临时棋谱名");
             selected = new File(getCacheDir(), cacheName);
         } else {
-            String archiveName = sourceIntent.getStringExtra(ReplayActivity.EXTRA_SELECTED_SGF_FILE);
+            String archiveName = sourceIntent.getStringExtra(EXTRA_SELECTED_SGF_FILE);
             if (archiveName != null) {
                 if (!archiveName.matches("[0-9a-f]{24}\\.sgf"))
                     throw new IllegalArgumentException("无效的棋谱编号");
