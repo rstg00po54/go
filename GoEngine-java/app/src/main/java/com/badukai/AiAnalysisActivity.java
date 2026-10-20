@@ -102,9 +102,6 @@ public final class AiAnalysisActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         setContentView(R.layout.activity_ai_analysis);
-        com.badukai.ui.BoardViewportFitter.attach(
-                findViewById(R.id.analysisContentScroll),
-                findViewById(R.id.analysisBoardFrame));
         board = findViewById(R.id.analysisBoard);
         board.setInputEnabled(false);
         chart = findViewById(R.id.analysisChart);
