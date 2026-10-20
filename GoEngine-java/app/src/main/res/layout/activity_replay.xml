@@ -98,11 +98,11 @@
                         android:progressTint="#35C79A"
                         android:thumbTint="#F7D985" android:progressBackgroundTint="#6C9883"
                         android:contentDescription="逐手复盘进度"/>
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="43dp"
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="38dp"
                         android:orientation="horizontal" android:gravity="center_vertical">
                         <Button android:id="@+id/replayFirst"
                             android:layout_width="0dp" android:layout_weight="1"
-                            android:layout_height="41dp" android:layout_marginEnd="3dp"
+                            android:layout_height="36dp" android:layout_marginEnd="3dp"
                             android:background="@drawable/jade_game_white_button"
                             android:gravity="center" android:minWidth="0dp" android:minHeight="0dp"
                             android:text="|◀" android:textAllCaps="false"
@@ -110,21 +110,21 @@
                             android:contentDescription="返回开局"/>
                         <Button android:id="@+id/replayPrev"
                             android:layout_width="0dp" android:layout_weight="1"
-                            android:layout_height="41dp" android:layout_marginEnd="3dp"
+                            android:layout_height="36dp" android:layout_marginEnd="3dp"
                             android:background="@drawable/jade_game_white_button"
                             android:gravity="center" android:minWidth="0dp" android:minHeight="0dp"
                             android:text="◀ 上一手" android:textAllCaps="false"
                             android:textColor="#19543E" android:textSize="12sp"/>
                         <Button android:id="@+id/replayNext"
                             android:layout_width="0dp" android:layout_weight="1"
-                            android:layout_height="41dp" android:layout_marginEnd="3dp"
+                            android:layout_height="36dp" android:layout_marginEnd="3dp"
                             android:background="@drawable/jade_game_white_button"
                             android:gravity="center" android:minWidth="0dp" android:minHeight="0dp"
                             android:text="下一手 ▶" android:textAllCaps="false"
                             android:textColor="#19543E" android:textSize="12sp"/>
                         <Button android:id="@+id/replayLast"
                             android:layout_width="0dp" android:layout_weight="1"
-                            android:layout_height="41dp"
+                            android:layout_height="36dp"
                             android:background="@drawable/jade_game_white_button"
                             android:gravity="center" android:minWidth="0dp" android:minHeight="0dp"
                             android:text="▶|" android:textAllCaps="false"
@@ -133,41 +133,45 @@
                     </LinearLayout>
                 </LinearLayout>
 
-                <!-- Existing SAF/SGF actions; no placeholder controls. -->
-                <LinearLayout android:layout_width="match_parent" android:layout_height="44dp"
+                <!-- Compact single-row SGF actions. -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="38dp"
                     android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal" android:gravity="center_vertical">
                     <Button android:id="@+id/replayChooseHistory"
                         android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="41dp" android:layout_marginEnd="4dp"
+                        android:layout_height="36dp" android:layout_marginEnd="3dp"
                         android:background="@drawable/jade_game_white_button"
                         android:text="历史棋谱" android:textAllCaps="false"
-                        android:textColor="#18503D" android:textSize="13sp" android:textStyle="bold"
+                        android:textColor="#18503D" android:textSize="11sp" android:textStyle="bold"
+                        android:singleLine="true" android:ellipsize="end"
+                        android:paddingStart="0dp" android:paddingEnd="0dp"
                         android:minWidth="0dp" android:minHeight="0dp"/>
                     <Button android:id="@+id/replayImport"
                         android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="41dp" android:layout_marginStart="4dp"
+                        android:layout_height="36dp" android:layout_marginStart="3dp" android:layout_marginEnd="3dp"
                         android:background="@drawable/jade_game_white_button"
                         android:text="导入 SGF" android:textAllCaps="false"
-                        android:textColor="#18503D" android:textSize="13sp" android:textStyle="bold"
+                        android:textColor="#18503D" android:textSize="11sp" android:textStyle="bold"
+                        android:singleLine="true" android:ellipsize="end"
+                        android:paddingStart="0dp" android:paddingEnd="0dp"
                         android:minWidth="0dp" android:minHeight="0dp"/>
-                </LinearLayout>
-                <LinearLayout android:layout_width="match_parent" android:layout_height="44dp"
-                    android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
-                    android:orientation="horizontal">
                     <Button android:id="@+id/replayExport"
                         android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="41dp" android:layout_marginEnd="4dp"
+                        android:layout_height="36dp" android:layout_marginStart="3dp" android:layout_marginEnd="3dp"
                         android:background="@drawable/jade_game_white_button"
                         android:text="导出 SGF" android:textAllCaps="false"
-                        android:textColor="#18503D" android:textSize="13sp" android:textStyle="bold"
+                        android:textColor="#18503D" android:textSize="11sp" android:textStyle="bold"
+                        android:singleLine="true" android:ellipsize="end"
+                        android:paddingStart="0dp" android:paddingEnd="0dp"
                         android:minWidth="0dp" android:minHeight="0dp"/>
                     <Button android:id="@+id/replayShare"
                         android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="41dp" android:layout_marginStart="4dp"
+                        android:layout_height="36dp" android:layout_marginStart="3dp"
                         android:background="@drawable/jade_game_white_button"
                         android:text="分享棋谱" android:textAllCaps="false"
-                        android:textColor="#18503D" android:textSize="13sp" android:textStyle="bold"
+                        android:textColor="#18503D" android:textSize="11sp" android:textStyle="bold"
+                        android:singleLine="true" android:ellipsize="end"
+                        android:paddingStart="0dp" android:paddingEnd="0dp"
                         android:minWidth="0dp" android:minHeight="0dp"/>
                 </LinearLayout>
             </LinearLayout>
