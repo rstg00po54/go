@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Independent jade settings page, adapted from the supplied portrait design. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/settingsPage"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="#061F19">
+    <ImageView android:id="@+id/settingsBackdrop"
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:scaleType="centerCrop" android:contentDescription="@null"
+        android:importantForAccessibility="no"/>
+    <View android:layout_width="match_parent" android:layout_height="match_parent"
+        android:background="@drawable/jade_forest_scrim"
+        android:importantForAccessibility="no"/>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+        android:orientation="vertical">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="72dp"
+            android:gravity="center_vertical" android:orientation="horizontal"
+            android:paddingStart="10dp" android:paddingEnd="10dp">
+            <ImageButton android:id="@+id/settingsBack"
+                android:layout_width="43dp" android:layout_height="43dp"
+                android:background="@drawable/btn_round_back"
+                android:contentDescription="返回上一页"/>
+            <TextView android:id="@+id/settingsTitle"
+                android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="58dp" android:layout_marginStart="10dp"
+                android:layout_marginEnd="53dp"
+                android:background="@drawable/jade_button_bg"
+                android:gravity="center" android:text="设 置" android:fontFamily="serif"
+                android:textColor="#123B2C" android:textSize="26sp"
+                android:textStyle="bold"/>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="0dp"
+            android:layout_weight="1" android:orientation="horizontal"
+            android:paddingStart="6dp" android:paddingEnd="6dp">
+            <ScrollView android:layout_width="112dp" android:layout_height="match_parent"
+                android:fillViewport="false" android:scrollbars="none">
+                <LinearLayout android:id="@+id/settingsSidebar"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:paddingBottom="8dp"/>
+            </ScrollView>
+            <ScrollView android:id="@+id/settingsScroll"
+                android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:scrollbars="none" android:fillViewport="false">
+                <LinearLayout android:id="@+id/settingsContent"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:paddingStart="5dp"
+                    android:paddingEnd="2dp" android:paddingBottom="8dp"/>
+            </ScrollView>
+        </LinearLayout>
+        <com.badukai.ui.JadeBottomNavView android:id="@+id/settingsSharedNav"
+            android:layout_width="match_parent" android:layout_height="88dp"
+            android:layout_marginStart="9dp" android:layout_marginEnd="9dp"
+            android:layout_marginBottom="0dp"/>
+    </LinearLayout>
+</FrameLayout>
