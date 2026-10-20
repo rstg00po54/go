@@ -48,50 +48,79 @@
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="vertical" android:paddingStart="10dp"
                 android:paddingEnd="10dp" android:paddingBottom="7dp">
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="horizontal" android:gravity="top">
-                    <com.badukai.ui.JadeSquareBoardFrame android:id="@+id/analysisBoardFrame"
-                        android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="wrap_content" android:padding="5dp"
-                        android:background="@drawable/jade_game_wood_panel">
-                        <com.badukai.ui.GoBoardView android:id="@+id/analysisBoard"
-                            android:layout_width="match_parent" android:layout_height="match_parent"
-                            android:contentDescription="分析当前棋盘与候选落点"/>
-                    </com.badukai.ui.JadeSquareBoardFrame>
-                    <LinearLayout android:layout_width="106dp" android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp" android:orientation="vertical"
-                        android:padding="7dp" android:background="@drawable/jade_dark_card">
-                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                            android:text="黑方胜率" android:textColor="#DDE5D4" android:textSize="12sp"/>
-                        <TextView android:id="@+id/analysisBlackWin"
-                            android:layout_width="match_parent" android:layout_height="40dp"
-                            android:gravity="center_vertical" android:text="--"
-                            android:textColor="#F3D88C" android:textSize="24sp" android:textStyle="bold"/>
-                        <ProgressBar android:id="@+id/analysisWinProgress"
-                            style="?android:attr/progressBarStyleHorizontal"
-                            android:layout_width="match_parent" android:layout_height="5dp"
-                            android:max="1000" android:progress="0"
-                            android:progressTint="#24D6A0" android:progressBackgroundTint="#456C60"/>
-                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                            android:layout_marginTop="11dp"
-                            android:text="预计目数差" android:textColor="#DDE5D4" android:textSize="12sp"/>
-                        <TextView android:id="@+id/analysisLead"
-                            android:layout_width="match_parent" android:layout_height="39dp"
-                            android:gravity="center_vertical" android:text="待分析"
-                            android:textColor="#F3D88C" android:textSize="18sp" android:textStyle="bold"/>
-                        <View android:layout_width="match_parent" android:layout_height="1dp"
-                            android:background="#587B6955"/>
+                <!-- Full-width analysis summary above the square Go board. -->
+                <LinearLayout android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:orientation="vertical"
+                    android:background="@drawable/jade_dark_card"
+                    android:paddingStart="10dp" android:paddingEnd="10dp"
+                    android:paddingTop="7dp" android:paddingBottom="7dp">
+                    <LinearLayout android:layout_width="match_parent"
+                        android:layout_height="61dp" android:orientation="horizontal"
+                        android:gravity="center_vertical">
+                        <LinearLayout android:layout_width="0dp" android:layout_weight="1"
+                            android:layout_height="match_parent" android:orientation="vertical">
+                            <TextView android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="黑方胜率" android:textColor="#DDE5D4"
+                                android:textSize="12sp"/>
+                            <TextView android:id="@+id/analysisBlackWin"
+                                android:layout_width="match_parent" android:layout_height="32dp"
+                                android:gravity="center_vertical" android:text="--"
+                                android:textColor="#F3D88C" android:textSize="23sp"
+                                android:textStyle="bold"/>
+                            <ProgressBar android:id="@+id/analysisWinProgress"
+                                style="?android:attr/progressBarStyleHorizontal"
+                                android:layout_width="match_parent" android:layout_height="5dp"
+                                android:max="1000" android:progress="0"
+                                android:progressTint="#24D6A0"
+                                android:progressBackgroundTint="#456C60"/>
+                        </LinearLayout>
+                        <View android:layout_width="1dp" android:layout_height="51dp"
+                            android:layout_marginStart="12dp" android:layout_marginEnd="12dp"
+                            android:background="#607B6955"/>
+                        <LinearLayout android:layout_width="0dp" android:layout_weight="1"
+                            android:layout_height="match_parent" android:orientation="vertical">
+                            <TextView android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="预计目数差" android:textColor="#DDE5D4"
+                                android:textSize="12sp"/>
+                            <TextView android:id="@+id/analysisLead"
+                                android:layout_width="match_parent" android:layout_height="39dp"
+                                android:gravity="center_vertical" android:text="待分析"
+                                android:textColor="#F3D88C" android:textSize="21sp"
+                                android:textStyle="bold"/>
+                        </LinearLayout>
+                    </LinearLayout>
+                    <View android:layout_width="match_parent" android:layout_height="1dp"
+                        android:layout_marginTop="5dp" android:layout_marginBottom="5dp"
+                        android:background="#587B6955"/>
+                    <LinearLayout android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:orientation="horizontal"
+                        android:gravity="center_vertical">
                         <TextView android:id="@+id/analysisCaptures"
-                            android:layout_width="match_parent" android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp" android:lineSpacingExtra="4dp"
-                            android:text="黑棋提子 --\n白棋提子 --"
+                            android:layout_width="0dp" android:layout_weight="1"
+                            android:layout_height="wrap_content" android:lineSpacingExtra="1dp"
+                            android:text="黑方估空 --\n白方估空 --\n黑棋提子 --\n白棋提子 --"
                             android:textColor="#D4E0D2" android:textSize="11sp"/>
+                        <View android:layout_width="1dp" android:layout_height="42dp"
+                            android:layout_marginStart="8dp" android:layout_marginEnd="10dp"
+                            android:background="#587B6955"/>
                         <TextView android:id="@+id/analysisBoardMeta"
-                            android:layout_width="match_parent" android:layout_height="wrap_content"
-                            android:layout_marginTop="11dp" android:text="-- 路"
-                            android:textColor="#F0D68D" android:textSize="11sp"/>
+                            android:layout_width="0dp" android:layout_weight="1"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical" android:lineSpacingExtra="5dp"
+                            android:text="-- 路" android:textColor="#F0D68D"
+                            android:textSize="13sp"/>
                     </LinearLayout>
                 </LinearLayout>
+                <com.badukai.ui.JadeSquareBoardFrame android:id="@+id/analysisBoardFrame"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp" android:padding="5dp"
+                    android:background="@drawable/jade_game_wood_panel">
+                    <com.badukai.ui.GoBoardView android:id="@+id/analysisBoard"
+                        android:layout_width="match_parent" android:layout_height="match_parent"
+                        android:contentDescription="分析当前棋盘与候选落点"/>
+                </com.badukai.ui.JadeSquareBoardFrame>
                 <TextView android:id="@+id/analysisStatus"
                     android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:layout_marginTop="5dp" android:layout_marginBottom="5dp"
