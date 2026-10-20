@@ -418,6 +418,8 @@ public final class AiAnalysisActivity extends Activity {
                 colors.toArray(new StoneColor[0]), indices);
         selectTab(true);
         status.setText("变化图：" + candidate.move + " · AI 推演 " + sequence + " 手（预览，不落子）");
+        ((android.widget.ScrollView) findViewById(R.id.analysisContentScroll))
+                .smoothScrollTo(0, 0);
     }
 
     private void requestQuickAnalysis() {
