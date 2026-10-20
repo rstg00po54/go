@@ -60,7 +60,7 @@ public final class SgfLibraryActivity extends Activity {
         count.setText("本地棋谱 " + files.size() + " 局");
         if (files.isEmpty()) {
             list.addView(empty, new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, dp(110)));
+                    LinearLayout.LayoutParams.MATCH_PARENT, dp(84)));
             return;
         }
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
@@ -69,20 +69,20 @@ public final class SgfLibraryActivity extends Activity {
             LinearLayout item = new LinearLayout(this);
             item.setGravity(Gravity.CENTER_VERTICAL);
             item.setOrientation(LinearLayout.HORIZONTAL);
-            item.setPadding(dp(11), dp(7), dp(11), dp(7));
+            item.setPadding(dp(9), dp(3), dp(9), dp(3));
             item.setBackgroundResource(R.drawable.jade_dark_card);
 
             ImageView icon = new ImageView(this);
             icon.setImageResource(R.drawable.ic_book_ivory);
             icon.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            item.addView(icon, new LinearLayout.LayoutParams(dp(38), dp(38)));
+            item.addView(icon, new LinearLayout.LayoutParams(dp(29), dp(29)));
 
             LinearLayout details = new LinearLayout(this);
-            details.setPadding(dp(10), 0, dp(3), 0);
+            details.setPadding(dp(8), 0, dp(3), 0);
             details.setOrientation(LinearLayout.VERTICAL);
             TextView heading = new TextView(this);
             heading.setTextColor(Color.rgb(247, 226, 164));
-            heading.setTextSize(15);
+            heading.setTextSize(14);
             TextView sub = new TextView(this);
             sub.setTextColor(Color.rgb(197, 218, 204));
             sub.setTextSize(11);
@@ -105,12 +105,12 @@ public final class SgfLibraryActivity extends Activity {
             TextView arrow = new TextView(this);
             arrow.setText("›");
             arrow.setTextColor(Color.rgb(247, 226, 164));
-            arrow.setTextSize(29);
+            arrow.setTextSize(23);
             item.addView(arrow);
             item.setOnClickListener(v -> selectFile(file));
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, dp(70));
-            params.bottomMargin = dp(8);
+                    LinearLayout.LayoutParams.MATCH_PARENT, dp(52));
+            params.bottomMargin = dp(4);
             list.addView(item, params);
         }
     }
