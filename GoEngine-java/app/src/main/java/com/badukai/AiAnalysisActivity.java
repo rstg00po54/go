@@ -60,6 +60,7 @@ public final class AiAnalysisActivity extends Activity {
     private boolean globalRunning;
     private boolean autoplay;
     private boolean variationTab;
+    private boolean trendsVisible;
     private int step;
     private float[] rates = new float[0];
     private StepAnalysis[] analyzed = new StepAnalysis[0];
@@ -74,6 +75,8 @@ public final class AiAnalysisActivity extends Activity {
     private TextView blackWin, lead, captures, boardMeta, status;
     private ProgressBar winProgress;
     private Button fullButton, playButton, quickTabButton, variationTabButton;
+    private Button trendTabButton, movesTabButton;
+    private View trendPanel, movesPanel;
     private final Runnable autoplayTick = new Runnable() {
         @Override public void run() {
             if (!alive || !autoplay || game == null) return;
@@ -99,6 +102,9 @@ public final class AiAnalysisActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         setContentView(R.layout.activity_ai_analysis);
+        com.badukai.ui.BoardViewportFitter.attach(
+                findViewById(R.id.analysisContentScroll),
+                findViewById(R.id.analysisBoardFrame));
         board = findViewById(R.id.analysisBoard);
         board.setInputEnabled(false);
         chart = findViewById(R.id.analysisChart);
@@ -113,6 +119,13 @@ public final class AiAnalysisActivity extends Activity {
         playButton = findViewById(R.id.analysisPlay);
         quickTabButton = findViewById(R.id.analysisQuickTab);
         variationTabButton = findViewById(R.id.analysisVariationTab);
+        trendTabButton = findViewById(R.id.analysisTrendTab);
+        movesTabButton = findViewById(R.id.analysisMovesTab);
+        trendPanel = findViewById(R.id.analysisTrendPanel);
+        movesPanel = findViewById(R.id.analysisMovesPanel);
+        trendTabButton.setOnClickListener(v -> selectDetailTab(true));
+        movesTabButton.setOnClickListener(v -> selectDetailTab(false));
+        selectDetailTab(false);
         board.setBoard(new GoBoard(9));
 
         try (InputStream stream = getAssets().open("home/background.png")) {
@@ -243,7 +256,7 @@ public final class AiAnalysisActivity extends Activity {
         boardMeta.setText(game.size + "×" + game.size + " · 贴目 " + game.komi + "\n第 " + step
                 + "/" + game.moves.size() + " 手");
         captures.setText("黑棋提子 " + shownPosition.getCapturedWhite()
-                + "\n白棋提子 " + shownPosition.getCapturedBlack());
+                + " · 白棋提子 " + shownPosition.getCapturedBlack());
         chart.selectStep(step);
         StepAnalysis saved = analyzed[step];
         if (saved == null) {
@@ -256,8 +269,22 @@ public final class AiAnalysisActivity extends Activity {
         if (variationTab) status.setText("变化图：点击下方推荐着法预览 PV");
     }
 
+    /** Display only one compact detail panel so analysis fits in one screen. */
+    private void selectDetailTab(boolean showTrends) {
+        trendsVisible = showTrends;
+        trendPanel.setVisibility(showTrends ? View.VISIBLE : View.GONE);
+        movesPanel.setVisibility(showTrends ? View.GONE : View.VISIBLE);
+        trendTabButton.setBackgroundResource(showTrends ? R.drawable.jade_dark_action
+                : R.drawable.jade_dark_card);
+        movesTabButton.setBackgroundResource(showTrends ? R.drawable.jade_dark_card
+                : R.drawable.jade_dark_action);
+        trendTabButton.setAlpha(showTrends ? 1f : .75f);
+        movesTabButton.setAlpha(showTrends ? .75f : 1f);
+    }
+
     private void selectTab(boolean variation) {
         variationTab = variation;
+        if (variation) selectDetailTab(false);
         quickTabButton.setAlpha(variation ? .55f : 1f);
         variationTabButton.setAlpha(variation ? 1f : .55f);
         quickTabButton.setBackgroundResource(variation ? R.drawable.jade_dark_card
@@ -274,7 +301,8 @@ public final class AiAnalysisActivity extends Activity {
     private void showPlaceholder(String text) {
         candidates.removeAllViews();
         TextView message = makeText(text, 12, 0xFFD4DBC7, false);
-        message.setPadding(dp(8), dp(16), dp(8), dp(18));
+        message.setGravity(Gravity.CENTER_VERTICAL);
+        message.setPadding(dp(8), dp(8), dp(8), dp(8));
         candidates.addView(message);
     }
 
@@ -298,9 +326,9 @@ public final class AiAnalysisActivity extends Activity {
                     }
                 }
             }
-            captures.setText("黑方估空 " + blackEmpty + " 目\n白方估空 " + whiteEmpty
-                    + " 目\n黑棋提子 " + shownPosition.getCapturedWhite()
-                    + "\n白棋提子 " + shownPosition.getCapturedBlack());
+            captures.setText("黑方估空 " + blackEmpty + " · 白方估空 " + whiteEmpty
+                    + "\n黑棋提子 " + shownPosition.getCapturedWhite()
+                    + " · 白棋提子 " + shownPosition.getCapturedBlack());
         } else {
             blackWin.setText("--");
             lead.setText("未取得评估");
@@ -318,20 +346,20 @@ public final class AiAnalysisActivity extends Activity {
             final int ranking = ++count;
             LinearLayout row = new LinearLayout(this);
             row.setGravity(Gravity.CENTER_VERTICAL);
-            row.setPadding(dp(5), dp(4), dp(3), dp(4));
+            row.setPadding(dp(3), dp(1), dp(3), dp(1));
             TextView rank = makeText(ranking == 1 ? "①" : ranking == 2 ? "②" : "③",
-                    23, ranking == 1 ? 0xFFFFD681 : 0xFFD4D6D1, true);
+                    19, ranking == 1 ? 0xFFFFD681 : 0xFFD4D6D1, true);
             rank.setGravity(Gravity.CENTER);
-            row.addView(rank, new LinearLayout.LayoutParams(dp(33), dp(42)));
+            row.addView(rank, new LinearLayout.LayoutParams(dp(27), dp(31)));
             ImageView icon = new ImageView(this);
             icon.setImageResource(R.drawable.ic_board_size);
-            row.addView(icon, new LinearLayout.LayoutParams(dp(33), dp(33)));
+            row.addView(icon, new LinearLayout.LayoutParams(dp(24), dp(24)));
             LinearLayout texts = new LinearLayout(this);
-            texts.setPadding(dp(7), 0, dp(2), 0);
+            texts.setPadding(dp(5), 0, dp(2), 0);
             texts.setOrientation(LinearLayout.VERTICAL);
-            texts.addView(makeText(candidate.move, 16, 0xFFF9E9BE, true));
+            texts.addView(makeText(candidate.move, 13, 0xFFF9E9BE, true));
             texts.addView(makeText("搜索 " + candidate.visits + " 次 · 点击查看变化",
-                    10, 0xFFB7D3C0, false));
+                    9, 0xFFB7D3C0, false));
             row.addView(texts, new LinearLayout.LayoutParams(0, -2, 1f));
             double blackCandidateWin = player == StoneColor.BLACK
                     ? candidate.winrate : 1.0 - candidate.winrate;
@@ -343,16 +371,16 @@ public final class AiAnalysisActivity extends Activity {
             numeric.setOrientation(LinearLayout.VERTICAL);
             numeric.setGravity(Gravity.END);
             TextView win = makeText(String.format(Locale.CHINA, "%.1f%%", blackCandidateWin * 100),
-                    13, 0xFFF7D681, true);
+                    12, 0xFFF7D681, true);
             win.setGravity(Gravity.END);
             numeric.addView(win);
-            TextView score = makeText(leadText(blackCandidateLead), 11, 0xFFC7D7C9, false);
+            TextView score = makeText(leadText(blackCandidateLead), 10, 0xFFC7D7C9, false);
             score.setGravity(Gravity.END);
             numeric.addView(score);
-            row.addView(numeric, new LinearLayout.LayoutParams(dp(84), -2));
+            row.addView(numeric, new LinearLayout.LayoutParams(dp(73), -2));
             row.setOnClickListener(v -> previewVariation(candidate, player));
             row.setContentDescription("推荐着法 " + candidate.move + "，查看变化图");
-            candidates.addView(row, new LinearLayout.LayoutParams(-1, dp(54)));
+            candidates.addView(row, new LinearLayout.LayoutParams(-1, dp(34)));
             if (count >= 3) break;
             View divider = new View(this);
             divider.setBackgroundColor(0x58758A6C);
