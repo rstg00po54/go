@@ -1825,7 +1825,7 @@ public class MainActivity extends AppCompatActivity {
     /** PLAY resumes an unfinished game directly; explicit "new game" still opens setup. */
     private void openPlayOrResume() {
         if (restoringUnfinishedGame) return;
-        if (gameReady && board != null && board.getMoveCount() > 0 && !board.isGameOver()) {
+        if (gameReady && board != null && !board.isGameOver()) {
             showGamePage();
             render(currentPlayer == playerColor ? "轮到你了" : "AI 思考中…");
             return;
