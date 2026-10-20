@@ -74,6 +74,11 @@ public final class JadeSectionActivity extends Activity {
                 R.drawable.ic_records, () -> openReplay(null), false);
         addCard("历史棋谱", "从本地保存的对局中选择一盘",
                 R.drawable.ic_book_ivory, this::openHistory, false);
+        addCard("AI 分析最近一局", "胜率趋势、目数与推荐着法",
+                R.drawable.ic_ai_level, () -> {
+                    startActivity(new Intent(this, AiAnalysisActivity.class));
+                    overridePendingTransition(0, 0);
+                }, false);
         addCard("导入 SGF", "从设备文件中读取外部棋谱",
                 R.drawable.ic_import_sgf, () -> openReplay("import"), false);
         addNote("棋谱分析与回放沿用现有功能；进入前不会中断当前对弈。");
