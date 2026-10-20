@@ -35,15 +35,15 @@
                 android:scaleType="fitCenter" android:contentDescription="历史棋谱"/>
         </LinearLayout>
 
-        <ScrollView android:layout_width="match_parent" android:layout_height="0dp"
+        <ScrollView android:id="@+id/replayContentScroll" android:layout_width="match_parent" android:layout_height="0dp"
             android:layout_weight="1" android:fillViewport="false"
             android:scrollbars="none" android:clipToPadding="false">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="vertical" android:paddingBottom="8dp">
+                android:orientation="vertical" android:paddingBottom="4dp">
                 <!-- Read-only replay details, updated after each SGF load. -->
-                <LinearLayout android:layout_width="match_parent" android:layout_height="54dp"
+                <LinearLayout android:layout_width="match_parent" android:layout_height="48dp"
                     android:layout_marginStart="11dp" android:layout_marginEnd="11dp"
-                    android:layout_marginTop="4dp" android:layout_marginBottom="7dp"
+                    android:layout_marginTop="3dp" android:layout_marginBottom="4dp"
                     android:background="@drawable/jade_dark_card"
                     android:paddingStart="8dp" android:paddingEnd="8dp"
                     android:gravity="center_vertical" android:orientation="horizontal">
@@ -71,7 +71,7 @@
                 <com.badukai.ui.JadeSquareBoardFrame android:id="@+id/replayBoardFrame"
                     android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
-                    android:layout_marginBottom="8dp" android:padding="7dp"
+                    android:layout_marginBottom="5dp" android:padding="7dp"
                     android:background="@drawable/jade_game_wood_panel">
                     <com.badukai.ui.GoBoardView android:id="@+id/replayBoard"
                         android:layout_width="match_parent" android:layout_height="match_parent"
@@ -80,10 +80,10 @@
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:layout_marginStart="11dp" android:layout_marginEnd="11dp"
-                    android:layout_marginBottom="9dp" android:orientation="vertical"
-                    android:background="@drawable/jade_dark_card" android:padding="10dp">
+                    android:layout_marginBottom="5dp" android:orientation="vertical"
+                    android:background="@drawable/jade_dark_card" android:padding="7dp">
                     <TextView android:id="@+id/replayCounter"
-                        android:layout_width="match_parent" android:layout_height="28dp"
+                        android:layout_width="match_parent" android:layout_height="25dp"
                         android:gravity="center" android:text="暂无棋谱"
                         android:textColor="#F7D985" android:textSize="18sp"
                         android:textStyle="bold"/>
@@ -93,12 +93,12 @@
                         android:textColor="#C9DBCB" android:textSize="11sp"
                         android:singleLine="true" android:ellipsize="end"/>
                     <SeekBar android:id="@+id/replaySeek"
-                        android:layout_width="match_parent" android:layout_height="38dp"
+                        android:layout_width="match_parent" android:layout_height="34dp"
                         android:max="0" android:progress="0"
                         android:progressTint="#35C79A"
                         android:thumbTint="#F7D985" android:progressBackgroundTint="#6C9883"
                         android:contentDescription="逐手复盘进度"/>
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="45dp"
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="43dp"
                         android:orientation="horizontal" android:gravity="center_vertical">
                         <Button android:id="@+id/replayFirst"
                             android:layout_width="0dp" android:layout_weight="1"
@@ -134,37 +134,37 @@
                 </LinearLayout>
 
                 <!-- Existing SAF/SGF actions; no placeholder controls. -->
-                <LinearLayout android:layout_width="match_parent" android:layout_height="49dp"
+                <LinearLayout android:layout_width="match_parent" android:layout_height="44dp"
                     android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
                     android:orientation="horizontal">
                     <Button android:id="@+id/replayChooseHistory"
                         android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="45dp" android:layout_marginEnd="4dp"
+                        android:layout_height="41dp" android:layout_marginEnd="4dp"
                         android:background="@drawable/jade_game_white_button"
                         android:text="历史棋谱" android:textAllCaps="false"
                         android:textColor="#18503D" android:textSize="13sp" android:textStyle="bold"
                         android:minWidth="0dp" android:minHeight="0dp"/>
                     <Button android:id="@+id/replayImport"
                         android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="45dp" android:layout_marginStart="4dp"
+                        android:layout_height="41dp" android:layout_marginStart="4dp"
                         android:background="@drawable/jade_game_white_button"
                         android:text="导入 SGF" android:textAllCaps="false"
                         android:textColor="#18503D" android:textSize="13sp" android:textStyle="bold"
                         android:minWidth="0dp" android:minHeight="0dp"/>
                 </LinearLayout>
-                <LinearLayout android:layout_width="match_parent" android:layout_height="49dp"
+                <LinearLayout android:layout_width="match_parent" android:layout_height="44dp"
                     android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
                     android:orientation="horizontal">
                     <Button android:id="@+id/replayExport"
                         android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="45dp" android:layout_marginEnd="4dp"
+                        android:layout_height="41dp" android:layout_marginEnd="4dp"
                         android:background="@drawable/jade_game_white_button"
                         android:text="导出 SGF" android:textAllCaps="false"
                         android:textColor="#18503D" android:textSize="13sp" android:textStyle="bold"
                         android:minWidth="0dp" android:minHeight="0dp"/>
                     <Button android:id="@+id/replayShare"
                         android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="45dp" android:layout_marginStart="4dp"
+                        android:layout_height="41dp" android:layout_marginStart="4dp"
                         android:background="@drawable/jade_game_white_button"
                         android:text="分享棋谱" android:textAllCaps="false"
                         android:textColor="#18503D" android:textSize="13sp" android:textStyle="bold"
