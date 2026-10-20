@@ -38,16 +38,19 @@ public final class JadeAnalysisChartView extends View {
     private float dp(float value) { return value * getResources().getDisplayMetrics().density; }
     private float left() { return dp(36); }
     private float right() { return Math.max(left() + 1f, getWidth() - dp(7)); }
-    private float top() { return dp(9); }
-    private float bottom() { return Math.max(top() + 1f, getHeight() - dp(24)); }
+    private float top() { return dp(getHeight() < dp(80) ? 4 : 9); }
+    private float bottom() {
+        return Math.max(top() + 1f, getHeight() - dp(getHeight() < dp(80) ? 14 : 24));
+    }
     @Override protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         float x0 = left(), x1 = right(), y0 = top(), y1 = bottom();
         paint.setShader(null);
-        paint.setTextSize(dp(10));
+        boolean compact = getHeight() < dp(80);
+        paint.setTextSize(dp(compact ? 8 : 10));
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(dp(.7f));
-        for (int v = 0; v <= 100; v += 25) {
+        for (int v = 0; v <= 100; v += compact ? 50 : 25) {
             float y = y1 - (y1 - y0) * v / 100f;
             paint.setColor(v == 50 ? 0xAA81A68A : 0x5576A68A);
             canvas.drawLine(x0, y, x1, y, paint);
@@ -68,9 +71,11 @@ public final class JadeAnalysisChartView extends View {
         int count = Math.max(1, blackWins.length - 1 - first);
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(0xFFC8DAC8);
-        canvas.drawText(String.valueOf(first), x0, getHeight() - dp(5), paint);
+        canvas.drawText(String.valueOf(first), x0,
+                getHeight() - dp(compact ? 2 : 5), paint);
         paint.setTextAlign(Paint.Align.RIGHT);
-        canvas.drawText(String.valueOf(blackWins.length - 1), x1, getHeight() - dp(5), paint);
+        canvas.drawText(String.valueOf(blackWins.length - 1), x1,
+                getHeight() - dp(compact ? 2 : 5), paint);
         paint.setTextAlign(Paint.Align.LEFT);
 
         Path curve = new Path();
