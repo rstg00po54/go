@@ -38,6 +38,8 @@
         <activity android:name=".NewGameActivity" android:exported="false"
             android:theme="@style/Theme.Badukai" />
         <activity android:name=".ReplayActivity" android:exported="false" />
+        <activity android:name=".AiAnalysisActivity" android:exported="false"
+            android:theme="@style/Theme.Badukai" />
         <activity android:name=".SgfLibraryActivity" android:exported="false" />
         <activity android:name=".TsumegoExplanationActivity" android:exported="false" />
         <activity android:name=".TsumegoResultsActivity" android:exported="false" />
