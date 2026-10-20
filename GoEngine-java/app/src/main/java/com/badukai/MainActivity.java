@@ -1702,12 +1702,18 @@ public class MainActivity extends AppCompatActivity {
 
         final int[] sizes = BOARD_SIZES;
         final int[] selectedSize = {boardSize};
-        final com.badukai.ui.JadeBoardSizeView[] boardTiles = new com.badukai.ui.JadeBoardSizeView[]{
-                content.findViewById(R.id.boardTile9),
-                content.findViewById(R.id.boardTile11),
-                content.findViewById(R.id.boardTile13),
-                content.findViewById(R.id.boardTile15),
-                content.findViewById(R.id.boardTile19)};
+        final Spinner boardSizeSpinner = content.findViewById(R.id.boardSizeSpinner);
+        final String[] boardLabels = new String[sizes.length];
+        int initialBoardIndex = 0;
+        for (int i = 0; i < sizes.length; i++) {
+            boardLabels[i] = sizes[i] + " × " + sizes[i];
+            if (sizes[i] == boardSize) initialBoardIndex = i;
+        }
+        ArrayAdapter<String> boardAdapter = new ArrayAdapter<>(this,
+                R.layout.item_jade_dark_spinner, boardLabels);
+        boardAdapter.setDropDownViewResource(R.layout.item_jade_dark_dropdown);
+        boardSizeSpinner.setAdapter(boardAdapter);
+        boardSizeSpinner.setSelection(initialBoardIndex);
         final boolean gpuBundled = new File(getApplicationInfo().nativeLibraryDir,
                 "libkatago_gpu.so").isFile();
         final boolean mtkBundled = KataGoEngine.supportsMediaTekGame(this, 9)
@@ -1728,14 +1734,10 @@ public class MainActivity extends AppCompatActivity {
                 : selectedBackend == KataGoEngine.BackendPreference.GPU
                 ? R.id.backendGpuButton : R.id.backendCpuButton);
         if (forceLegacyBackend) backendGroup.check(R.id.backendCpuButton);
-        for (int i = 0; i < sizes.length; i++) {
-            final int index = i;
-            boardTiles[i].setBoardSize(sizes[i]);
-            boardTiles[i].setSelected(sizes[i] == selectedSize[0]);
-            boardTiles[i].setOnClickListener(v -> {
-                selectedSize[0] = sizes[index];
-                for (int j = 0; j < boardTiles.length; j++)
-                    boardTiles[j].setSelected(j == index);
+        boardSizeSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(android.widget.AdapterView<?> parent,
+                    View view, int position, long id) {
+                selectedSize[0] = sizes[position];
                 boolean npuSupported = npuBundled && !forceLegacyBackend
                         && hasBundledNpuModel(selectedSize[0]);
                 npuChoice.setEnabled(npuSupported);
@@ -1748,8 +1750,9 @@ public class MainActivity extends AppCompatActivity {
                 }
                 Log.i(TAG, "JADE_BOARD_SELECTED size=" + selectedSize[0]
                         + " npuAvailable=" + npuSupported);
-            });
-        }
+            }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
         boolean initialNpu = npuBundled && !forceLegacyBackend && hasBundledNpuModel(boardSize);
         npuChoice.setEnabled(initialNpu);
         npuChoice.setAlpha(initialNpu ? 1f : .42f);
