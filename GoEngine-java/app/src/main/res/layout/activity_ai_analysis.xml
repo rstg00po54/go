@@ -19,11 +19,18 @@
                 android:contentDescription="返回棋谱"/>
             <TextView android:layout_width="0dp" android:layout_weight="1"
                 android:layout_height="46dp" android:layout_marginStart="10dp"
-                android:layout_marginEnd="54dp" android:gravity="center"
+                android:layout_marginEnd="5dp" android:gravity="center"
                 android:background="@drawable/jade_button_bg"
                 android:text="AI 分 析" android:textSize="22sp"
                 android:textColor="#123B2C" android:textStyle="bold"
                 android:fontFamily="serif"/>
+            <TextView android:id="@+id/analysisHumanSide"
+                android:layout_width="52dp" android:layout_height="36dp"
+                android:background="@drawable/jade_dark_action"
+                android:gravity="center" android:text="执子?"
+                android:textColor="#F4D991" android:textSize="11sp"
+                android:textStyle="bold"
+                android:contentDescription="选择本局自己执黑还是执白"/>
         </LinearLayout>
         <ScrollView android:id="@+id/analysisContentScroll"
             android:layout_width="match_parent" android:layout_height="0dp"
@@ -42,7 +49,8 @@
                         android:gravity="center_vertical">
                         <LinearLayout android:layout_width="0dp" android:layout_weight="1"
                             android:layout_height="match_parent" android:orientation="vertical">
-                            <TextView android:layout_width="match_parent"
+                            <TextView android:id="@+id/analysisWinTitle"
+                                android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:text="黑方胜率" android:textColor="#DDE5D4"
                                 android:textSize="12sp"/>
