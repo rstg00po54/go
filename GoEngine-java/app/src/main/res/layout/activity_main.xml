@@ -362,17 +362,17 @@
                 <LinearLayout android:layout_width="match_parent" android:layout_height="23dp"
                     android:orientation="horizontal" android:gravity="center_vertical">
                     <TextView android:id="@+id/gameMoveCountText"
-                        android:layout_width="0dp" android:layout_weight="0.65"
+                        android:layout_width="0dp" android:layout_weight="0.55"
                         android:layout_height="wrap_content" android:gravity="center"
                         android:text="第 0 手" android:textColor="#F6D47A"
                         android:textStyle="bold" android:textSize="11sp" android:singleLine="true"/>
                     <TextView android:id="@+id/statusText"
-                        android:layout_width="0dp" android:layout_weight="1.35"
+                        android:layout_width="0dp" android:layout_weight="2.35"
                         android:layout_height="wrap_content" android:gravity="center"
                         android:text="轮到你了" android:maxLines="1" android:ellipsize="end"
                         android:textColor="#D3E8D4" android:textSize="10sp"/>
                     <TextView android:id="@+id/aiMoveTimeText"
-                        android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_width="0dp" android:layout_weight="0.85"
                         android:layout_height="wrap_content" android:gravity="center"
                         android:text="本手用时 --" android:singleLine="true"
                         android:textSize="9sp" android:textColor="#CFDBCB"/>
