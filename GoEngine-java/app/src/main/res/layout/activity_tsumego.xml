@@ -25,13 +25,13 @@
                 android:padding="9dp" android:background="@drawable/jade_dark_card"
                 android:src="@drawable/ic_difficulty_gold" android:contentDescription="查看训练成果"/>
         </LinearLayout>
-        <ScrollView android:layout_width="match_parent" android:layout_height="0dp"
+        <ScrollView android:id="@+id/tsumegoContentScroll" android:layout_width="match_parent" android:layout_height="0dp"
             android:layout_weight="1" android:scrollbars="none" android:fillViewport="false">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="vertical">
-                <LinearLayout android:layout_width="match_parent" android:layout_height="53dp"
+                <LinearLayout android:layout_width="match_parent" android:layout_height="47dp"
                     android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
-                    android:layout_marginTop="5dp" android:layout_marginBottom="7dp"
+                    android:layout_marginTop="4dp" android:layout_marginBottom="4dp"
                     android:background="@drawable/jade_dark_card" android:gravity="center_vertical"
                     android:paddingStart="9dp" android:paddingEnd="9dp">
                     <ImageView android:layout_width="25dp" android:layout_height="25dp"
@@ -45,16 +45,16 @@
                 </LinearLayout>
                 <TextView android:id="@+id/tsumegoQuestion"
                     android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:minHeight="60dp" android:layout_marginStart="10dp"
-                    android:layout_marginEnd="10dp" android:layout_marginBottom="6dp"
-                    android:gravity="center" android:padding="8dp"
+                    android:minHeight="50dp" android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp" android:layout_marginBottom="4dp"
+                    android:gravity="center" android:padding="6dp"
                     android:background="@drawable/jade_dark_card"
                     android:text="黑先，寻找正确的一手" android:textColor="#F8E7C0"
                     android:textSize="14sp" android:textStyle="bold"/>
                 <com.badukai.ui.JadeSquareBoardFrame android:id="@+id/tsumegoBoardFrame"
                     android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
-                    android:layout_marginBottom="7dp" android:padding="7dp"
+                    android:layout_marginBottom="5dp" android:padding="7dp"
                     android:background="@drawable/jade_game_wood_panel">
                     <com.badukai.ui.GoBoardView android:id="@+id/tsumegoBoard"
                         android:layout_width="match_parent" android:layout_height="match_parent"
@@ -62,57 +62,57 @@
                 </com.badukai.ui.JadeSquareBoardFrame>
                 <TextView android:id="@+id/tsumegoMessage"
                     android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:minHeight="56dp" android:layout_marginStart="10dp"
-                    android:layout_marginEnd="10dp" android:layout_marginBottom="6dp"
-                    android:padding="8dp" android:background="@drawable/jade_dark_card"
+                    android:minHeight="50dp" android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp" android:layout_marginBottom="4dp"
+                    android:padding="6dp" android:background="@drawable/jade_dark_card"
                     android:gravity="center" android:text="点击棋盘落子"
                     android:textColor="#DEE5CF" android:textSize="12sp"/>
-                <LinearLayout android:layout_width="match_parent" android:layout_height="48dp"
+                <LinearLayout android:layout_width="match_parent" android:layout_height="44dp"
                     android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
                     android:orientation="horizontal">
                     <Button android:id="@+id/tsumegoHint"
                         android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="43dp" android:layout_marginEnd="3dp"
+                        android:layout_height="40dp" android:layout_marginEnd="3dp"
                         android:background="@drawable/jade_game_white_button"
                         android:text="提示" android:textAllCaps="false"
                         android:textSize="13sp" android:textColor="#194F3B"
                         android:minWidth="0dp" android:minHeight="0dp"/>
                     <Button android:id="@+id/tsumegoReset"
                         android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="43dp" android:layout_marginStart="3dp"
+                        android:layout_height="40dp" android:layout_marginStart="3dp"
                         android:layout_marginEnd="3dp" android:background="@drawable/jade_game_white_button"
                         android:text="重做" android:textAllCaps="false"
                         android:textSize="13sp" android:textColor="#194F3B"
                         android:minWidth="0dp" android:minHeight="0dp"/>
                     <Button android:id="@+id/tsumegoExplain"
                         android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="43dp" android:layout_marginStart="3dp"
+                        android:layout_height="40dp" android:layout_marginStart="3dp"
                         android:background="@drawable/jade_game_white_button"
                         android:text="答案解析" android:textAllCaps="false"
                         android:textSize="13sp" android:textColor="#194F3B"
                         android:minWidth="0dp" android:minHeight="0dp"
                         android:enabled="false"/>
                 </LinearLayout>
-                <LinearLayout android:layout_width="match_parent" android:layout_height="48dp"
+                <LinearLayout android:layout_width="match_parent" android:layout_height="44dp"
                     android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
                     android:orientation="horizontal">
                     <Button android:id="@+id/tsumegoPrev"
                         android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="43dp" android:layout_marginEnd="3dp"
+                        android:layout_height="40dp" android:layout_marginEnd="3dp"
                         android:background="@drawable/jade_game_white_button"
                         android:text="上一题" android:textAllCaps="false"
                         android:textSize="13sp" android:textColor="#194F3B"
                         android:minWidth="0dp" android:minHeight="0dp"/>
                     <Button android:id="@+id/tsumegoNext"
                         android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="43dp" android:layout_marginStart="3dp"
+                        android:layout_height="40dp" android:layout_marginStart="3dp"
                         android:layout_marginEnd="3dp" android:background="@drawable/jade_game_white_button"
                         android:text="下一题" android:textAllCaps="false"
                         android:textSize="13sp" android:textColor="#194F3B"
                         android:minWidth="0dp" android:minHeight="0dp"/>
                     <Button android:id="@+id/tsumegoResults"
                         android:layout_width="0dp" android:layout_weight="1"
-                        android:layout_height="43dp" android:layout_marginStart="3dp"
+                        android:layout_height="40dp" android:layout_marginStart="3dp"
                         android:background="@drawable/jade_game_white_button"
                         android:text="训练结果" android:textAllCaps="false"
                         android:textSize="13sp" android:textColor="#194F3B"
