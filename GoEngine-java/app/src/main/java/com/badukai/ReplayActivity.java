@@ -65,6 +65,16 @@ public class ReplayActivity extends Activity {
 
         findViewById(R.id.replayBackButton).setOnClickListener(v -> finish());
         findViewById(R.id.replayHistoryButton).setOnClickListener(v -> chooseHistory());
+        findViewById(R.id.replayAnalyzeButton).setOnClickListener(v -> {
+            try {
+                if (currentSgf == null) throw new IllegalArgumentException("请先打开棋谱");
+                Intent intent = AiAnalysisActivity.fromReplay(this, currentSgf, seek.getProgress());
+                startActivity(intent);
+                overridePendingTransition(0, 0);
+            } catch (Exception e) {
+                Toast.makeText(this, "无法开始 AI 分析：" + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
         findViewById(R.id.replayChooseHistory).setOnClickListener(v -> chooseHistory());
         findViewById(R.id.replayFirst).setOnClickListener(v -> showStep(0));
         findViewById(R.id.replayPrev).setOnClickListener(v ->
