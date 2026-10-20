@@ -1806,6 +1806,194 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /** PLAY resumes an unfinished game directly; explicit "new game" still opens setup. */
+    private void openPlayOrResume() {
+        if (restoringUnfinishedGame) return;
+        if (gameReady && board != null && board.getMoveCount() > 0 && !board.isGameOver()) {
+            showGamePage();
+            render(currentPlayer == playerColor ? "轮到你了" : "AI 思考中…");
+            return;
+        }
+        if (engineStarting) {
+            resumeAfterEngineStartup = true;
+            return;
+        }
+        UnfinishedGameStore.Pending pending = UnfinishedGameStore.load(this);
+        if (pending == null) {
+            showNewGameDialog();
+            return;
+        }
+        resumeUnfinishedGame(pending);
+    }
+
+    /**
+     * Restore BOTH GoBoard and the actual playing GTP engine. No input is
+     * enabled until the full SGF has been replayed and the rank restored.
+     */
+    private void resumeUnfinishedGame(UnfinishedGameStore.Pending pending) {
+        if (restoringUnfinishedGame || thinking || evaluating) return;
+        if (!engine.hasHumanModel()) {
+            Toast.makeText(this, "继续上局需要 Human SL 模型，请先准备模型",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+        int size = pending.sgf.size;
+        KataGoEngine.BackendPreference backend = "GPU".equals(pending.backend)
+                ? KataGoEngine.BackendPreference.GPU
+                : "NPU".equals(pending.backend) && !forceLegacyBackend && hasBundledNpuModel(size)
+                ? KataGoEngine.BackendPreference.NPU
+                : KataGoEngine.BackendPreference.CPU;
+        if (forceLegacyBackend) backend = KataGoEngine.BackendPreference.CPU;
+
+        restoringUnfinishedGame = true;
+        engineStarting = true;
+        gameReady = false;
+        engineReady = false;
+        thinking = false;
+        evaluating = false;
+        board = pending.position;
+        boardSize = size;
+        playerColor = pending.humanSide;
+        aiKyu = pending.rank;
+        gameCondition = pending.condition;
+        selectedBackend = backend;
+        currentPlayer = pending.sgf.moves.get(pending.sgf.moves.size() - 1).color.opposite();
+        Move last = pending.sgf.moves.get(pending.sgf.moves.size() - 1);
+        lastMove = last instanceof Move.Stone ? ((Move.Stone) last).point : null;
+        gameResultText = null;
+        finalScoreText = null;
+        endgameEvaluation = null;
+        lastAiMoveTimeMs = -1;
+        nnAreaScoreBoard = null;
+        nnAreaScoreMessage = null;
+        liveAnalysisShowing = false;
+        liveAnalysisHeadline = null;
+        boardView.setOwnership(null);
+        clearRecommendations();
+        winRateSession++;
+        winRateEpoch++;
+        blackWinHistory.clear();
+        whiteWinHistory.clear();
+        showGamePage();
+        render("正在恢复第 " + board.getMoveCount() + " 手…");
+
+        final long restoreEpoch = winRateEpoch;
+        final int moves = board.getMoveCount();
+        final StoneColor next = currentPlayer;
+        final KataGoEngine.BackendPreference requestedBackend = backend;
+        final float savedKomi = pending.sgf.komi;
+        final GoBoard snapshot = board;
+        final java.util.List<Move> history = new ArrayList<>(pending.sgf.moves);
+        final java.util.List<Point> setup = new ArrayList<>(pending.sgf.handicap);
+        final int rank = aiKyu;
+        final int visits = searchVisits;
+        final double seconds = searchTime;
+
+        if (!engine.canReuseHumanSession(requestedBackend, size))
+            showGpuStartupScreen(size, requestedBackend);
+        engineExecutor.execute(() -> {
+            String failure = null;
+            try {
+                engine.setStartupBoardSize(size);
+                engine.setBackendPreference(requestedBackend);
+                boolean reuse = engine.canReuseHumanSession(requestedBackend, size);
+                if (!reuse) {
+                    engine.prepareHumanModel(null);
+                    engine.stop();
+                    if (!engine.start(KataGoEngine.Model.HUMAN, true))
+                        throw new IllegalStateException("Human SL 引擎启动失败");
+                }
+                if (!engine.setBoardSize(size) || !engine.clearBoard()
+                        || !engine.setChineseRules() || !engine.setKomi(savedKomi))
+                    throw new IllegalStateException("棋盘与规则恢复失败");
+                if (!setup.isEmpty() && !engine.setHandicapStones(setup, size))
+                    throw new IllegalStateException("让子恢复失败");
+                for (int i = 0; i < history.size(); i++) {
+                    Move move = history.get(i);
+                    String vertex = move instanceof Move.Stone
+                            ? ((Move.Stone) move).point.toGtp(size) : "pass";
+                    if (!engine.playMove(move.color.toGtp(), vertex))
+                        throw new IllegalStateException("恢复第" + (i + 1) + "手失败");
+                }
+                if (!engine.setSearchLimits(visits, seconds) || !engine.setHumanRank(rank))
+                    throw new IllegalStateException("棋力设置恢复失败");
+            } catch (Exception error) {
+                failure = error.getMessage() == null ? error.toString() : error.getMessage();
+                Log.e(TAG, "RESUME_GAME restore failed", error);
+            }
+            final boolean ready = failure == null && engine.isReady();
+            final String message = failure;
+            mainHandler.post(() -> {
+                if (board != snapshot || winRateEpoch != restoreEpoch) return;
+                restoringUnfinishedGame = false;
+                engineStarting = false;
+                engineReady = engine.isReady();
+                gameReady = ready;
+                dismissGpuTuning(ready);
+                if (!ready) {
+                    render("续局失败：" + message);
+                    Toast.makeText(this, "旧棋谱保留，可重新点对弈重试", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                getSharedPreferences("katago_settings", MODE_PRIVATE).edit()
+                        .putInt("board_size", size)
+                        .putInt("ai_kyu", rank)
+                        .putInt("game_condition", gameCondition)
+                        .putString("player_color", playerColor.name())
+                        .putString("backend", requestedBackend.name()).apply();
+                // Persist old-version last_game.sgf as the new dedicated checkpoint.
+                saveReplaySnapshot(false);
+                initializeResumedWinRateAnalysis(snapshot, size, savedKomi,
+                        setup, history, next, moves, restoreEpoch);
+                Log.i(TAG, "RESUME_GAME_OK board=" + size + " moves=" + moves
+                        + " backend=" + engine.getBackendName() + " next=" + next);
+                if (next == playerColor) render("已恢复上局 · 轮到你了");
+                else {
+                    render("已恢复上局 · AI 接着下…");
+                    requestAiMove();
+                }
+            });
+        });
+    }
+
+    /** Keep the independent win-rate GTP position synchronized with the resumed board. */
+    private void initializeResumedWinRateAnalysis(GoBoard snapshot, int size, float komi,
+            java.util.List<Point> setup, java.util.List<Move> history,
+            StoneColor next, int moves, long epoch) {
+        final long session = winRateSession;
+        if (engine.usesNpuBackend()) {
+            winRateExecutor.execute(() -> {
+                winRateSynchronized = false;
+                winRateEngine.stop();
+            });
+            queueNpuWinRateEvaluation(snapshot, moves, session, epoch);
+            return;
+        }
+        winRateExecutor.execute(() -> {
+            if (session != winRateSession || epoch != winRateEpoch) return;
+            winRateEngine.setStartupBoardSize(size);
+            boolean ok = winRateEngine.start(KataGoEngine.Model.HUMAN);
+            if (ok) ok = winRateEngine.setBoardSize(size);
+            if (ok) ok = winRateEngine.clearBoard();
+            if (ok) ok = winRateEngine.setChineseRules();
+            if (ok) ok = winRateEngine.setKomi(komi);
+            if (ok && !setup.isEmpty()) ok = winRateEngine.setHandicapStones(setup, size);
+            for (Move move : history) {
+                if (!ok) break;
+                String vertex = move instanceof Move.Stone
+                        ? ((Move.Stone) move).point.toGtp(size) : "pass";
+                ok = winRateEngine.playMove(move.color.toGtp(), vertex);
+            }
+            winRateSynchronized = ok;
+            if (!ok) {
+                Log.w(TAG, "Independent win-rate engine could not replay the saved SGF");
+                return;
+            }
+            KataGoEngine.WinRate rate = winRateEngine.evaluateWinRate(next.toGtp());
+            mainHandler.post(() -> recordWinRate(snapshot, moves, epoch, rate));
+        });
+    }
+
     /** The game setup is a proper Activity. Keep the KataGo engine in this Activity. */
     private void showNewGameDialog() {
         android.content.Intent intent = new android.content.Intent(this, NewGameActivity.class);
