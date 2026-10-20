@@ -16,12 +16,21 @@ public final class GoSgf {
         public final List<Move> moves;
         /** The human's side, or null for imported/legacy SGF with no reliable role metadata. */
         public final StoneColor humanColor;
+        /** SGF RE result, such as B+3.5 or W+R, if formally recorded. */
+        public final String result;
+        /** App-specific provisional NN score, NEVER a formal SGF RE result. */
+        public final String estimatedResult;
         Game(int s, float k, List<Point> h, List<Move> m) {
-            this(s, k, h, m, null);
+            this(s, k, h, m, null, null, null);
         }
         Game(int s, float k, List<Point> h, List<Move> m, StoneColor human) {
+            this(s, k, h, m, human, null, null);
+        }
+        Game(int s, float k, List<Point> h, List<Move> m, StoneColor human,
+                String result, String estimate) {
             size=s; komi=k; handicap=Collections.unmodifiableList(h);
             moves=Collections.unmodifiableList(m); humanColor=human;
+            this.result=result; estimatedResult=estimate;
         }
     }
     private static String vertex(Point p,int size) {
@@ -40,6 +49,11 @@ public final class GoSgf {
     /** Only locally played human-vs-AI games receive reliable human side metadata. */
     public static String encode(int size,float komi,List<Point> handicap,List<Move> moves,
             StoneColor humanColor) {
+        return encode(size, komi, handicap, moves, humanColor, null, null);
+    }
+    /** SGF RE is authoritative; XES is a provisional KataGo estimate. */
+    public static String encode(int size,float komi,List<Point> handicap,List<Move> moves,
+            StoneColor humanColor, String result, String estimatedResult) {
         if(size!=9&&size!=11&&size!=13&&size!=15&&size!=19)throw new IllegalArgumentException("Board");
         StringBuilder out=new StringBuilder("(;FF[4]GM[1]CA[UTF-8]SZ[");
         out.append(size).append("]KM[").append(komi).append("]RU[Chinese]");
@@ -50,6 +64,16 @@ public final class GoSgf {
             out.append("PB[").append(humanColor == StoneColor.BLACK ? "玩家" : "KataGo")
                     .append("]PW[").append(humanColor == StoneColor.WHITE ? "玩家" : "KataGo")
                     .append(']');
+        }
+        if (result != null) {
+            if (!result.matches("(?:[BW]\\+[RTF]|[BW]\\+[0-9]+(?:\\.[0-9]+)?|0)"))
+                throw new IllegalArgumentException("Unsupported SGF result");
+            out.append("RE[").append(result).append(']');
+        }
+        if (estimatedResult != null) {
+            if (!estimatedResult.matches("(?:[BW]\\+[0-9]+(?:\\.[0-9]+)?|0)"))
+                throw new IllegalArgumentException("Invalid NN estimate");
+            out.append("XES[").append(estimatedResult).append(']');
         }
         if(handicap!=null&&!handicap.isEmpty()){
             out.append("HA[").append(handicap.size()).append("]");
@@ -79,6 +103,10 @@ public final class GoSgf {
         StoneColor humanColor=role.find()
                 ? ("B".equals(role.group(1)) ? StoneColor.BLACK : StoneColor.WHITE)
                 : null;
+        Matcher resultMatcher = Pattern.compile("RE\\[([^\\]]{1,40})\\]").matcher(root);
+        String result = resultMatcher.find() ? resultMatcher.group(1).trim() : null;
+        Matcher estimateMatcher = Pattern.compile("XES\\[([^\\]]{1,40})\\]").matcher(root);
+        String estimatedResult = estimateMatcher.find() ? estimateMatcher.group(1).trim() : null;
         List<Point> handicap=new ArrayList<>();
         List<Move> moves=new ArrayList<>();
         String[] nodes=sgf.substring(2).split(";");
@@ -95,7 +123,7 @@ public final class GoSgf {
                         :new Move.Stone(point(m.group(2),size),color));
             }
         }
-        return new Game(size,komi,handicap,moves,humanColor);
+        return new Game(size,komi,handicap,moves,humanColor,result,estimatedResult);
     }
     public static GoBoard position(Game game,int count) {
         if(count<0||count>game.moves.size())throw new IllegalArgumentException("Step");
