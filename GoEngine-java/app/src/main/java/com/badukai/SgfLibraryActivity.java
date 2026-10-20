@@ -22,6 +22,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.Locale;
 
@@ -34,6 +37,7 @@ public final class SgfLibraryActivity extends Activity {
     private LinearLayout list;
     private TextView count;
     private TextView empty;
+    private SgfMidgameEstimator estimator;
 
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,11 +45,11 @@ public final class SgfLibraryActivity extends Activity {
         list = findViewById(R.id.libraryList);
         count = findViewById(R.id.libraryCount);
         empty = findViewById(R.id.libraryEmpty);
+        estimator = new SgfMidgameEstimator(this);
         findViewById(R.id.libraryBack).setOnClickListener(v -> finish());
         findViewById(R.id.libraryReturn).setOnClickListener(v -> finish());
         findViewById(R.id.libraryImport).setOnClickListener(v -> importSgf());
         findViewById(R.id.libraryImportButton).setOnClickListener(v -> importSgf());
-        populate();
         if (getIntent().getBooleanExtra(EXTRA_IMPORT_ON_START, false)) {
             // Open Android's document picker directly, without first showing a replay board.
             importSgf();
@@ -57,12 +61,25 @@ public final class SgfLibraryActivity extends Activity {
         if (list != null) populate();
     }
 
+    @Override protected void onStop() {
+        estimator.cancel();
+        super.onStop();
+    }
+
+    @Override protected void onDestroy() {
+        estimator.close();
+        super.onDestroy();
+    }
+
     private int dp(float value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
     private void populate() {
         List<File> files = SgfArchive.list(this);
+        List<SgfMidgameEstimator.Item> pending = new ArrayList<>();
+        Map<String, TextView> pendingLabels = new HashMap<>();
+        Map<String, GoSgf.Game> pendingGames = new HashMap<>();
         list.removeAllViews();
         count.setText("本地棋谱 " + files.size() + " 局");
         if (files.isEmpty()) {
@@ -98,7 +115,7 @@ public final class SgfLibraryActivity extends Activity {
             sub.setSingleLine(true);
             sub.setEllipsize(android.text.TextUtils.TruncateAt.END);
             TextView outcome = new TextView(this);
-            outcome.setTextSize(11);
+            outcome.setTextSize(10);
             outcome.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
             outcome.setMaxLines(2);
             outcome.setLineSpacing(0f, 1.0f);
@@ -110,9 +127,16 @@ public final class SgfLibraryActivity extends Activity {
                         + " · " + game.moves.size() + " 手");
                 sub.setText(format.format(new Date(file.lastModified()))
                         + "  ·  贴目 " + game.komi);
-                outcome.setText(describeResult(game));
-                if (game.result == null && game.estimatedResult == null)
+                String cached = estimator.cached(file);
+                outcome.setText(describeResult(game, cached));
+                if (game.result == null && game.estimatedResult == null && cached == null) {
                     outcome.setTextColor(Color.rgb(165, 189, 176));
+                    if (!game.moves.isEmpty() && pending.size() < 12) {
+                        pending.add(new SgfMidgameEstimator.Item(file, game));
+                        pendingLabels.put(file.getName(), outcome);
+                        pendingGames.put(file.getName(), game);
+                    }
+                }
             } catch (Exception ex) {
                 heading.setText((i + 1) + ".  棋谱文件");
                 sub.setText(file.getName() + " · 无法预览");
@@ -123,7 +147,7 @@ public final class SgfLibraryActivity extends Activity {
             details.addView(sub);
             item.addView(details, new LinearLayout.LayoutParams(0,
                     LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-            LinearLayout.LayoutParams resultParams = new LinearLayout.LayoutParams(dp(72), dp(43));
+            LinearLayout.LayoutParams resultParams = new LinearLayout.LayoutParams(dp(83), dp(43));
             resultParams.rightMargin = dp(4);
             item.addView(outcome, resultParams);
 
@@ -138,10 +162,38 @@ public final class SgfLibraryActivity extends Activity {
             params.bottomMargin = dp(4);
             list.addView(item, params);
         }
+        if (!pending.isEmpty()) {
+            estimator.request(pending, (file, score) -> {
+                String key = file.getName();
+                TextView label = pendingLabels.get(key);
+                GoSgf.Game game = pendingGames.get(key);
+                if (label == null || game == null) return;
+                label.setText(score == null ? previewLabel(game, null)
+                        : previewLabel(game, score));
+                label.setTextColor(score == null ? Color.rgb(165, 189, 176)
+                        : Color.rgb(241, 211, 141));
+            });
+        }
     }
 
     /** The SGF header decides the result; an unscored snapshot is never guessed. */
-    private static String describeResult(GoSgf.Game game) {
+    private static boolean doublePass(GoSgf.Game game) {
+        int n = game.moves.size();
+        return n >= 2 && game.moves.get(n - 1) instanceof Move.Pass
+                && game.moves.get(n - 2) instanceof Move.Pass;
+    }
+
+    private static String previewLabel(GoSgf.Game game, String score) {
+        String title = doublePass(game) ? "终局估分" : "中局结束";
+        if ("0".equals(score)) return title + "\n接近平局";
+        if (score != null && score.matches("[BW]\\+[0-9]+(?:\\.[0-9]+)?")) {
+            return title + "\n" + (score.charAt(0) == 'B' ? "黑优约" : "白优约")
+                    + score.substring(2) + "目";
+        }
+        return title + "\n" + (score == null ? "暂无估分" : "估分失败");
+    }
+
+    private static String describeResult(GoSgf.Game game, String cachedScore) {
         if (game.result != null && !game.result.trim().isEmpty()) {
             String result = game.result.trim().toUpperCase(Locale.US);
             if ("0".equals(result) || "DRAW".equals(result) || "JIGO".equals(result))
@@ -166,24 +218,11 @@ public final class SgfLibraryActivity extends Activity {
             }
             return "已有结果\n请查看棋谱";
         }
-        if (game.estimatedResult != null && !game.estimatedResult.isEmpty()) {
-            String score = game.estimatedResult;
-            if ("0".equals(score)) return "AI预估\n接近平局";
-            if (score.startsWith("B+") || score.startsWith("W+")) {
-                boolean blackAhead = score.charAt(0) == 'B';
-                String label = blackAhead ? "估黑优" : "估白优";
-                if (game.humanColor != null) {
-                    boolean humanBlack = game.humanColor == com.badukai.game.StoneColor.BLACK;
-                    label = humanBlack == blackAhead ? "估我方优" : "估我方劣";
-                }
-                return label + "\n约" + score.substring(2) + "目";
-            }
-        }
-        int count = game.moves.size();
-        if (count >= 2 && game.moves.get(count - 1) instanceof Move.Pass
-                && game.moves.get(count - 2) instanceof Move.Pass)
-            return "已停双手\n未记录计分";
-        return "进行中\n未计分";
+        if (game.estimatedResult != null && !game.estimatedResult.isEmpty())
+            return previewLabel(game, game.estimatedResult);
+        if (cachedScore != null) return previewLabel(game, cachedScore);
+        if (game.moves.isEmpty()) return "无落子\n暂无估分";
+        return (doublePass(game) ? "终局估分" : "中局结束") + "\n待估分";
     }
 
     private void selectFile(File file) {
