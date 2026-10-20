@@ -253,6 +253,14 @@ public class MainActivity extends AppCompatActivity {
                 R.id.homeSettingsTabButton}) {
             View button = findViewById(id);
             button.setOnTouchListener((view, event) -> {
+                if (!getSharedPreferences("katago_settings", MODE_PRIVATE)
+                        .getBoolean("ui_animations", true)) {
+                    view.animate().cancel();
+                    view.setScaleX(1f);
+                    view.setScaleY(1f);
+                    view.setAlpha(1f);
+                    return false;
+                }
                 if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
                     view.animate().cancel();
                     view.animate().scaleX(0.95f).scaleY(0.95f)
@@ -2053,11 +2061,15 @@ public class MainActivity extends AppCompatActivity {
             nnAreaScoreBoard = null;
             nnAreaScoreMessage = null;
         }
-        nnAreaScoreText.setVisibility(nnAreaScoreMessage == null ? View.GONE : View.VISIBLE);
+        nnAreaScoreText.setVisibility(nnAreaScoreMessage == null
+                || !getSharedPreferences("katago_settings", MODE_PRIVATE)
+                    .getBoolean("show_score_estimate", true)
+                ? View.GONE : View.VISIBLE);
         if (nnAreaScoreMessage != null) nnAreaScoreText.setText(nnAreaScoreMessage);
         aiMoveTimeText.setText(thinking ? "AI 思考中…" : lastAiMoveTimeMs < 0
                 ? "本手用时 --" : String.format(Locale.CHINA,"本手用时 %.2f 秒",lastAiMoveTimeMs/1000.0));
         updateWinRateLabels();
+        applyGameDisplaySettings();
         aiDifficultyText.setText(getDifficultyName() + " · Human SL · "
                 + (engineReady ? engine.getBackendName() : selectedBackend == KataGoEngine.BackendPreference.NPU ? "NPU 准备中" : selectedBackend == KataGoEngine.BackendPreference.GPU ? "GPU 准备中" : "CPU 准备中"));
         boardView.setBoard(board);
@@ -2132,9 +2144,27 @@ public class MainActivity extends AppCompatActivity {
         else super.onBackPressed();
     }
 
+    private void applyGameDisplaySettings() {
+        boolean showWinrate = getSharedPreferences("katago_settings", MODE_PRIVATE)
+                .getBoolean("show_winrate", true);
+        int visibility = showWinrate ? View.VISIBLE : View.GONE;
+        playerWinRateText.setVisibility(visibility);
+        aiWinRateText.setVisibility(visibility);
+        winRateProgress.setVisibility(visibility);
+        if (!getSharedPreferences("katago_settings", MODE_PRIVATE)
+                .getBoolean("show_score_estimate", true))
+            nnAreaScoreText.setVisibility(View.GONE);
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
+        if (playerWinRateText != null && nnAreaScoreText != null) {
+            applyGameDisplaySettings();
+            if (getSharedPreferences("katago_settings", MODE_PRIVATE)
+                    .getBoolean("show_score_estimate", true)
+                    && nnAreaScoreMessage != null) nnAreaScoreText.setVisibility(View.VISIBLE);
+        }
         if (openNewGameOnResume) {
             openNewGameOnResume = false;
             showNewGameDialog();
