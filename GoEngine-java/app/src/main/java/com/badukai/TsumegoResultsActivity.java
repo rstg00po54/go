@@ -69,15 +69,15 @@ public final class TsumegoResultsActivity extends Activity {
             LinearLayout row = new LinearLayout(this);
             row.setGravity(Gravity.CENTER_VERTICAL);
             row.setOrientation(LinearLayout.HORIZONTAL);
-            row.setPadding(dp(13), dp(4), dp(13), dp(4));
+            row.setPadding(dp(10), dp(2), dp(10), dp(2));
             row.setBackgroundResource(R.drawable.jade_dark_card);
 
             TextView mark = new TextView(this);
             mark.setGravity(Gravity.CENTER);
             mark.setText(done ? "✓" : Integer.toString(i + 1));
             mark.setTextColor(done ? 0xFF4DE1AC : 0xFFF2D285);
-            mark.setTextSize(20);
-            row.addView(mark, new LinearLayout.LayoutParams(dp(35), dp(42)));
+            mark.setTextSize(18);
+            row.addView(mark, new LinearLayout.LayoutParams(dp(30), dp(36)));
 
             TextView label = new TextView(this);
             label.setText(puzzles.get(i).title);
@@ -85,19 +85,19 @@ public final class TsumegoResultsActivity extends Activity {
             label.setTextSize(13);
             label.setSingleLine(true);
             label.setEllipsize(android.text.TextUtils.TruncateAt.END);
-            row.addView(label, new LinearLayout.LayoutParams(0, dp(42), 1f));
+            row.addView(label, new LinearLayout.LayoutParams(0, dp(36), 1f));
 
             TextView state = new TextView(this);
             state.setText(done ? "已完成" : "待挑战");
             state.setTextColor(done ? 0xFF79E3B7 : 0xFFEAC783);
             state.setGravity(Gravity.CENTER);
             state.setTextSize(11);
-            row.addView(state, new LinearLayout.LayoutParams(dp(57), dp(42)));
+            row.addView(state, new LinearLayout.LayoutParams(dp(55), dp(36)));
 
             row.setOnClickListener(v -> choose(index));
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, dp(57));
-            params.bottomMargin = dp(7);
+                    LinearLayout.LayoutParams.MATCH_PARENT, dp(48));
+            params.bottomMargin = dp(4);
             list.addView(row, params);
         }
     }
