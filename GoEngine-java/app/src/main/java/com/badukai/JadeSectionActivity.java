@@ -139,7 +139,7 @@ public final class JadeSectionActivity extends Activity {
         title.setTextColor(0xFFF3D48B);
         title.setTextSize(17);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
-        title.setPadding(dp(4), dp(18), dp(4), dp(12));
+        title.setPadding(dp(4), dp(12), dp(4), dp(8));
         cards.addView(title);
     }
 
@@ -149,7 +149,7 @@ public final class JadeSectionActivity extends Activity {
         note.setTextColor(0xFFD7E3D5);
         note.setTextSize(12);
         note.setLineSpacing(dp(2), 1f);
-        note.setPadding(dp(9), dp(10), dp(9), dp(14));
+        note.setPadding(dp(9), dp(6), dp(9), dp(9));
         cards.addView(note);
     }
 
@@ -158,45 +158,46 @@ public final class JadeSectionActivity extends Activity {
         LinearLayout line = new LinearLayout(this);
         line.setOrientation(LinearLayout.HORIZONTAL);
         line.setGravity(Gravity.CENTER_VERTICAL);
-        line.setPadding(dp(14), dp(15), dp(12), dp(15));
+        line.setPadding(dp(10), dp(6), dp(8), dp(6));
+        line.setMinimumHeight(dp(54));
         line.setBackgroundResource(R.drawable.jade_dark_card);
         line.setClipChildren(false);
 
         ImageView picture = new ImageView(this);
         picture.setImageResource(icon);
         picture.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(dp(38), dp(38));
-        imageParams.rightMargin = dp(13);
+        LinearLayout.LayoutParams imageParams = new LinearLayout.LayoutParams(dp(30), dp(30));
+        imageParams.rightMargin = dp(9);
         line.addView(picture, imageParams);
 
         LinearLayout words = new LinearLayout(this);
         words.setOrientation(LinearLayout.VERTICAL);
         TextView name = new TextView(this);
         name.setText(title);
-        name.setTextSize(17);
+        name.setTextSize(15);
         name.setTypeface(null, android.graphics.Typeface.BOLD);
         name.setTextColor(0xFFF5E9C8);
         words.addView(name);
         TextView desc = new TextView(this);
         desc.setText(description);
-        desc.setTextSize(12);
+        desc.setTextSize(11);
         desc.setTextColor(0xFFAFCEB7);
-        desc.setPadding(0, dp(4), 0, 0);
+        desc.setPadding(0, dp(2), 0, 0);
         words.addView(desc);
         line.addView(words, new LinearLayout.LayoutParams(0, -2, 1f));
 
         TextView marker = new TextView(this);
         marker.setText(selected ? "✓" : "›");
-        marker.setTextSize(selected ? 24 : 30);
+        marker.setTextSize(selected ? 20 : 24);
         marker.setGravity(Gravity.CENTER);
         marker.setTextColor(0xFFFFD783);
-        line.addView(marker, new LinearLayout.LayoutParams(dp(28), dp(40)));
+        line.addView(marker, new LinearLayout.LayoutParams(dp(22), dp(32)));
         line.setClickable(true);
         line.setFocusable(true);
         line.setContentDescription(title);
         line.setOnClickListener(v -> action.run());
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
-        lp.bottomMargin = dp(10);
+        lp.bottomMargin = dp(5);
         cards.addView(line, lp);
     }
 
