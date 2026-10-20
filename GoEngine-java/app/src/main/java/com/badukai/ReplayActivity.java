@@ -82,7 +82,7 @@ public class ReplayActivity extends Activity {
         if (selectedFile != null) {
             try {
                 // Accept only archive-generated names; never arbitrary file paths.
-                if (!selectedFile.matches("[0-9a-f]{24}\\\\.sgf"))
+                if (!selectedFile.matches("[0-9a-f]{24}\\.sgf"))
                     throw new IllegalArgumentException("无效棋谱名");
                 File file = new File(SgfArchive.directory(this), selectedFile);
                 if (!file.isFile() || file.length() > 2_000_000)
