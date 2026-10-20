@@ -28,6 +28,12 @@
                 android:gravity="center" android:text="棋 谱 复 盘"
                 android:textSize="20sp" android:fontFamily="serif"
                 android:textStyle="bold" android:textColor="#174534"/>
+            <TextView android:id="@+id/replayAnalyzeButton"
+                android:layout_width="38dp" android:layout_height="40dp"
+                android:layout_marginEnd="4dp" android:background="@drawable/jade_dark_action"
+                android:gravity="center" android:text="AI"
+                android:textStyle="bold" android:textSize="15sp"
+                android:textColor="#F4D58E" android:contentDescription="AI 分析本局"/>
             <ImageButton android:id="@+id/replayHistoryButton"
                 android:layout_width="42dp" android:layout_height="42dp"
                 android:padding="9dp" android:src="@drawable/ic_book_ivory"
