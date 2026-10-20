@@ -1598,7 +1598,7 @@ public class MainActivity extends AppCompatActivity {
         int suspectedDead = displayEndgameOwnership(result);
         Log.i(TAG,String.format(Locale.US,"NN empty territory B=%d W=%d uncertain=%d suspectedDead=%d",
                 blackTerritory,whiteTerritory,uncertainEmpty,suspectedDead));
-        return String.format(Locale.CHINA,"黑估空%d目\n白估空%d目",blackTerritory,whiteTerritory);
+        return String.format(Locale.CHINA,"黑估空%d目 · 白估空%d目",blackTerritory,whiteTerritory);
     }
 
     private void clearRecommendations() {
