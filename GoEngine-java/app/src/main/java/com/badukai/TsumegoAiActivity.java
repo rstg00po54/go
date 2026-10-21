@@ -149,7 +149,8 @@ public final class TsumegoAiActivity extends Activity {
             hint.setEnabled(ready);
             message.setText("目标：让" + (trackedColor() == StoneColor.BLACK ? "黑" : "白")
                     + "棋目标棋块" + (killing ? "被提掉。" : "活下来。")
-                    + " 点棋子可重新指定目标，点空点落子。"
+                    + " 这是可切换的练习目标，并非原题标注。"
+                    + " 点棋子可指定目标，点空点落子。"
                     + (ready ? " AI已准备好。" : " 正在启动KataGo…"));
             message.setTextColor(0xFFE4EADC);
             board.setInputEnabled(ready);
@@ -166,7 +167,7 @@ public final class TsumegoAiActivity extends Activity {
     private void renderHeading() {
         String color = player() == StoneColor.BLACK ? "黑" : "白";
         title.setText("Go Game Guru · 第 " + selectedPuzzleId + " 题\n"
-                + color + "先 · AI陪练 · " + (killing ? "杀棋" : "做活") + "目标");
+                + color + "先 · AI陪练 · " + (killing ? "杀棋" : "做活") + "（可切换）");
         progress.setText("AI局部对练 " + (index + 1) + "/" + IDS.length
                 + " · 你" + ownMoves + "手 AI" + aiMoves + "手");
     }
@@ -308,6 +309,32 @@ public final class TsumegoAiActivity extends Activity {
         return true;
     }
 
+    /** Current liberties of the surviving marked string, not a life/death proof. */
+    private int trackedLiberties() {
+        if (position == null) return -1;
+        Point surviving = null;
+        for (Point p : watchedStones)
+            if (sameColorStone(p, trackedColor())) { surviving = p; break; }
+        if (surviving == null) return 0;
+        Set<Point> seen = new HashSet<>(), liberties = new HashSet<>();
+        ArrayDeque<Point> queue = new ArrayDeque<>();
+        queue.add(surviving);
+        while (!queue.isEmpty()) {
+            Point p = queue.removeFirst();
+            if (!position.isInside(p.x, p.y) || !seen.add(p)
+                    || !sameColorStone(p, trackedColor())) continue;
+            Point[] around = {new Point(p.x - 1, p.y), new Point(p.x + 1, p.y),
+                    new Point(p.x, p.y - 1), new Point(p.x, p.y + 1)};
+            for (Point other : around) {
+                if (!position.isInside(other.x, other.y)) continue;
+                if (position.get(other) == Intersection.EMPTY) liberties.add(other);
+                else if (sameColorStone(other, trackedColor()) && !seen.contains(other))
+                    queue.add(other);
+            }
+        }
+        return liberties.size();
+    }
+
     private void scheduleAiReply() {
         if (!ready || puzzle == null) return;
         thinking = true;
@@ -364,8 +391,11 @@ public final class TsumegoAiActivity extends Activity {
                 board.setInputEnabled(true);
                 hint.setEnabled(true);
                 message.setTextColor(0xFFE4EADC);
-                message.setText("AI在 " + move.toGtp(19) + " 应手。继续寻找"
-                        + (killing ? "杀棋" : "做活") + "变化；尚不能确认死活。");
+                int liberties = trackedLiberties();
+                message.setText("AI在 " + move.toGtp(19) + " 应手。目标棋块当前约有 "
+                        + liberties + " 口气"
+                        + (liberties == 1 ? "，已被打吃！" : "。")
+                        + " 继续试下；气数并不能直接证明死活。");
             });
         });
     }
