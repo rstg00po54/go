@@ -84,6 +84,15 @@ def verify_apk(apk, generated):
             row[0] += item.compress_size
             row[1] += item.file_size
             row[2] += 1
+    payload = sum(row[0] for row in rows.values())
+    physical = apk.stat().st_size
+    overhead = physical - payload
+    print("APK_PHYSICAL_SIZE actual=%.1f MiB compressed_entries=%.1f MiB overhead=%.1f MiB"
+          % (physical / 1048576, payload / 1048576, overhead / 1048576))
+    if overhead > 32 * 1048576:
+        print("COMPACT_APK_WARNING unusually large non-entry bytes: %.1f MiB; "
+              "check stale/unused ZIP data, signing blocks or alignment padding."
+              % (overhead / 1048576), file=sys.stderr)
     print("COMPACT_APK_PASS verified_assets=%d" % len(required))
     print("APK_SIZE_BREAKDOWN  compressed MiB | extracted MiB | entries")
     for section, (compressed, extracted, count) in sorted(rows.items(),
