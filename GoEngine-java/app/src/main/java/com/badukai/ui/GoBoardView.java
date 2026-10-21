@@ -498,18 +498,28 @@ public class GoBoardView extends View {
 
                 if (markedMove != null && markedMove.x == x && markedMove.y == y) {
                     paint.setShader(null);
-                    paint.setStyle(Paint.Style.STROKE);
-                    // Highlight the most recent stone like the jade/gold mockup.
-                    paint.setStrokeWidth(Math.max(dp(1.5f), radius * 0.10f));
-                    paint.setColor(0xFFFFD878);
-                    if (lastMoveStyle == 1) {
-                        float marker = radius * 0.83f;
-                        canvas.drawRoundRect(cx - marker, cy - marker,
-                                cx + marker, cy + marker, dp(1.8f), dp(1.8f), paint);
+                    if (trainingViewportX >= 0) {
+                        // Tsumego reserves the thick golden OUTLINE for the
+                        // observed group. Use a small contrasting CENTER dot
+                        // for the last move, or two stones appear to be targets.
+                        paint.setStyle(Paint.Style.FILL);
+                        paint.setColor(intersection == Intersection.BLACK
+                                ? 0xFFF8F1D8 : 0xFF255543);
+                        canvas.drawCircle(cx, cy, radius * 0.16f, paint);
                     } else {
-                        canvas.drawCircle(cx, cy, radius * 1.04f, paint);
+                        paint.setStyle(Paint.Style.STROKE);
+                        // Keep the original jade last-move ring for normal games.
+                        paint.setStrokeWidth(Math.max(dp(1.5f), radius * 0.10f));
+                        paint.setColor(0xFFFFD878);
+                        if (lastMoveStyle == 1) {
+                            float marker = radius * 0.83f;
+                            canvas.drawRoundRect(cx - marker, cy - marker,
+                                    cx + marker, cy + marker, dp(1.8f), dp(1.8f), paint);
+                        } else {
+                            canvas.drawCircle(cx, cy, radius * 1.04f, paint);
+                        }
+                        paint.setStyle(Paint.Style.FILL);
                     }
-                    paint.setStyle(Paint.Style.FILL);
                 }
             }
         }
