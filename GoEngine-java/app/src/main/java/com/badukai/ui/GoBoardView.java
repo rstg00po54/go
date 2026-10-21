@@ -88,6 +88,9 @@ public class GoBoardView extends View {
     private float padding;
     private float cellSize;
     private float boardPixels;
+    // Optional viewport for local 19x19 tsumego. Rules still run on the full board.
+    private int trainingViewportX = -1, trainingViewportY = -1, trainingViewportSize;
+    private float viewportScale = 1f, viewportTranslateX, viewportTranslateY;
 
     public GoBoardView(Context context) { super(context); DebugLog.enter(TAG, "GoBoardView in, context=" + context); init(); }
     public GoBoardView(Context context, AttributeSet attrs) { super(context, attrs); DebugLog.enter(TAG, "GoBoardView in, context=" + context + ", attrs=" + attrs); init(); }
@@ -128,6 +131,26 @@ public class GoBoardView extends View {
     public void setBoard(GoBoard board) {
         DebugLog.enter(TAG, "setBoard in, board=" + board);
         this.board = board == null ? new GoBoard(19) : board;
+        invalidate();
+    }
+
+    /**
+     * Display an enlarged square REGION of a full training board, preserving
+     * the original SGF coordinates and full-board liberty/capture rules.
+     * Outside this optional training mode, all board screens are unchanged.
+     */
+    public void setTrainingViewport(int x, int y, int visibleSize) {
+        int n = board == null ? 0 : board.getSize();
+        if (x < 0 || y < 0 || visibleSize < 2 || x + visibleSize > n
+                || y + visibleSize > n) {
+            trainingViewportX = -1;
+            trainingViewportY = -1;
+            trainingViewportSize = 0;
+        } else {
+            trainingViewportX = x;
+            trainingViewportY = y;
+            trainingViewportSize = visibleSize;
+        }
         invalidate();
     }
 
@@ -263,6 +286,25 @@ public class GoBoardView extends View {
         cellSize = n > 1 ? (size - 2f * outerInset) / (n - 1f + 2f * edgeCells) : size;
         padding = outerInset + edgeCells * cellSize;
         boardPixels = (n - 1f) * cellSize;
+        int saveViewport = canvas.save();
+        viewportScale = 1f;
+        viewportTranslateX = 0f;
+        viewportTranslateY = 0f;
+        if (trainingViewportX >= 0 && trainingViewportSize < n
+                && trainingViewportY + trainingViewportSize <= n
+                && trainingViewportX + trainingViewportSize <= n) {
+            float visibleCell = (size - 2f * outerInset)
+                    / (trainingViewportSize - 1f + 2f * edgeCells);
+            viewportScale = visibleCell / cellSize;
+            float visiblePadding = outerInset + edgeCells * visibleCell;
+            viewportTranslateX = visiblePadding / viewportScale
+                    - padding - trainingViewportX * cellSize;
+            viewportTranslateY = visiblePadding / viewportScale
+                    - padding - trainingViewportY * cellSize;
+            canvas.clipRect(0, 0, getWidth(), getHeight());
+            canvas.scale(viewportScale, viewportScale);
+            canvas.translate(viewportTranslateX, viewportTranslateY);
+        }
         drawGrid(canvas, n);
         drawStarPoints(canvas, n);
         if (showCoordinates) drawCoordinates(canvas, n);
@@ -275,6 +317,7 @@ public class GoBoardView extends View {
             drawRecommendations(canvas);
             drawActualNextMove(canvas, n);
         } else drawPreviewMoveNumbers(canvas);
+        canvas.restoreToCount(saveViewport);
     }
 
     private void drawGrid(Canvas canvas, int n) {
@@ -669,17 +712,20 @@ public class GoBoardView extends View {
         if (action != MotionEvent.ACTION_UP || cellSize <= 0) return true;
         float dxSwipe = event.getX() - touchDownX;
         float dySwipe = event.getY() - touchDownY;
-        if (dxSwipe * dxSwipe + dySwipe * dySwipe > cellSize * cellSize * 0.35f)
+        float physicalCell = cellSize * viewportScale;
+        if (dxSwipe * dxSwipe + dySwipe * dySwipe > physicalCell * physicalCell * 0.35f)
             return true;
         int n = board.getSize();
-        int x = Math.round((event.getX() - padding) / cellSize);
-        int y = Math.round((event.getY() - padding) / cellSize);
+        int x = Math.round((event.getX() / viewportScale - viewportTranslateX
+                - padding) / cellSize);
+        int y = Math.round((event.getY() / viewportScale - viewportTranslateY
+                - padding) / cellSize);
         if (x < 0 || x >= n || y < 0 || y >= n) return true;
-        float cx = padding + x * cellSize;
-        float cy = padding + y * cellSize;
+        float cx = (padding + x * cellSize + viewportTranslateX) * viewportScale;
+        float cy = (padding + y * cellSize + viewportTranslateY) * viewportScale;
         float dx = event.getX() - cx;
         float dy = event.getY() - cy;
-        if (dx * dx + dy * dy > cellSize * cellSize * 0.28f) return true;
+        if (dx * dx + dy * dy > physicalCell * physicalCell * 0.28f) return true;
 
         if (previewBoard == null && recommendationListener != null
                 && recommendedPoints != null) {
