@@ -42,6 +42,9 @@ val vivoProbeApk = providers.gradleProperty("vivoProbeApk")
 val bundleVivoLiteRtModels = providers.gradleProperty("bundleVivoLiteRtModels")
     .map { it.equals("true", ignoreCase = true) }.getOrElse(false)
 val prepareVivoModels = vivoProbeApk || bundleVivoLiteRtModels
+val compactKataGoModels = providers.gradleProperty("compactKataGoModels")
+    .map { it.equals("true", ignoreCase = true) }.getOrElse(true)
+// Pass -PcompactKataGoModels=false to return to the original full-model APK.
 val allow4kRknnRuntime = providers.gradleProperty("allow4kRknnRuntime")
     .map { it.equals("true", ignoreCase = true) }
     .getOrElse(System.getenv("ALLOW_4K_RKNN_RUNTIME") == "1")
@@ -94,9 +97,17 @@ android {
 
     // Package the checked-in green home artwork from docs automatically.
     sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/homeAssets"))
-    // RK3588 NPU builds contain the validated original Human b18 9x9 model.
-    // The model comes from a pinned Release, never from git or a test flag.
-    sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/rk3588HumanAssets"))
+    // Compact APKs use a verified staging directory instead of directly
+    // packaging each full-size duplicate from src/main/assets and generated
+    // RKNN assets. Existing manifests, original BIN models and other assets
+    // remain present. Full-model packaging can be restored with
+    // -PcompactKataGoModels=false.
+    if (compactKataGoModels) {
+        sourceSets.getByName("main").assets.setSrcDirs(
+            listOf(layout.buildDirectory.dir("generated/katagoCompactAssets").get().asFile))
+    } else {
+        sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/rk3588HumanAssets"))
+    }
 
     // Android 10+ does not allow executing binaries extracted under writable filesDir.
     // Package katago as libkatago_exec.so and extract native libs to nativeLibraryDir.
@@ -381,6 +392,29 @@ val prepareVivoLiteRtModels = tasks.register<Exec>("prepareVivoLiteRtModels") {
     onlyIf { prepareVivoModels }
     workingDir(rootProject.projectDir)
     commandLine("bash", "tools/prepare_vivo_litert.sh")
+}
+
+// Build small, byte-exact delta assets from all staged source models.
+// The packer reconstructs each candidate and byte-compares the result BEFORE
+// removing its full-sized copy. Only compact model assets enter mergeAssets.
+val stageCompactKataGoModels = tasks.register<Exec>("stageCompactKataGoModels") {
+    group = "build"
+    description = "Create byte-verified shared Human/10b model assets"
+    dependsOn(stageRk3588HumanRknn, stageRk3588Extra10b, prepareVivoLiteRtModels)
+    workingDir(rootProject.projectDir)
+    val original = file("src/main/assets")
+    val generated = layout.buildDirectory.dir("generated/rk3588HumanAssets").get().asFile
+    val staged = layout.buildDirectory.dir("generated/katagoCompactAssets").get().asFile
+    inputs.dir(original)
+    if (generated.exists()) inputs.dir(generated)
+    inputs.file(rootProject.file("tools/pack_katago_models.py"))
+    outputs.dir(staged)
+    commandLine("python3", "tools/pack_katago_models.py", "--assets", original.absolutePath,
+        "--generated", generated.absolutePath, "--out", staged.absolutePath)
+}
+tasks.configureEach {
+    if (compactKataGoModels && name.startsWith("merge") && name.endsWith("Assets"))
+        dependsOn(stageCompactKataGoModels)
 }
 
 val verifyVivoLiteRtApk = tasks.register<Exec>("verifyVivoLiteRtApk") {
