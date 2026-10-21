@@ -90,9 +90,11 @@ def verify_apk(apk, generated):
     print("APK_PHYSICAL_SIZE actual=%.1f MiB compressed_entries=%.1f MiB overhead=%.1f MiB"
           % (physical / 1048576, payload / 1048576, overhead / 1048576))
     if overhead > 32 * 1048576:
-        print("COMPACT_APK_WARNING unusually large non-entry bytes: %.1f MiB; "
-              "check stale/unused ZIP data, signing blocks or alignment padding."
-              % (overhead / 1048576), file=sys.stderr)
+        raise ValueError("Final APK has %.1f MiB of non-entry bytes (maximum 32 MiB). "
+                         "Old incremental APK may contain unreachable model data. "
+                         "Use bash build.sh --vivo --apk-only or --rk3588 --apk-only "
+                         "to repackage and sign the APK, without Gradle clean."
+                         % (overhead / 1048576))
     print("COMPACT_APK_PASS verified_assets=%d" % len(required))
     print("APK_SIZE_BREAKDOWN  compressed MiB | extracted MiB | entries")
     for section, (compressed, extracted, count) in sorted(rows.items(),
