@@ -101,7 +101,13 @@ public final class JadeSectionActivity extends Activity {
     private void renderTraining() {
         heading.setText("死 活 训 练");
         subtitle.setText("循序练习 · 提升棋形与计算能力");
-        addHeading("选择训练内容");
+        addHeading("真实死活题 · 原始SGF");
+        addCard("开始真实死活题", "Go Game Guru 初级6题 · 正解与应手变化",
+                R.drawable.ic_training_ivory, () -> openSgfPuzzle(-1), false);
+        addCard("选择真实死活题", "浏览原题编号，选择一道练习",
+                R.drawable.ic_book_ivory, this::renderSgfPuzzleChoices, false);
+        addNote("来自 Go Game Guru · CC BY-NC-SA 4.0 · 仅供个人非商业练习。");
+        addHeading("基础吃子练习 · 原有8题");
         addCard("继续上次练习", "从上次停留的题目继续",
                 R.drawable.ic_training_ivory, () -> openPuzzle(-1), false);
         addCard("从第一题开始", "重温基础死活与手筋",
@@ -113,6 +119,30 @@ public final class JadeSectionActivity extends Activity {
                     startActivity(new Intent(this, TsumegoResultsActivity.class));
                     overridePendingTransition(0, 0);
                 }, false);
+    }
+
+    private void renderSgfPuzzleChoices() {
+        choosingPuzzle = true;
+        heading.setText("选 择 真 实 死 活 题");
+        subtitle.setText("Go Game Guru 原题 · 含完整 SGF 正解变化");
+        cards.removeAllViews();
+        addHeading("初级题 · 右下角局部练习");
+        int[] numbers = {101, 103, 104, 105, 110, 115};
+        for (int i = 0; i < numbers.length; i++) {
+            final int selected = i;
+            addCard("Go Game Guru · 第 " + numbers[i] + " 题",
+                    "19路原题 · 放大右下角 · 逐手应对",
+                    R.drawable.ic_board_size, () -> openSgfPuzzle(selected), false);
+        }
+        addNote("原始棋形与正解分支来自 gogameguru/go-problems。"
+                + "仅供个人非商业练习，遵守 CC BY-NC-SA 4.0。");
+    }
+
+    private void openSgfPuzzle(int selectedIndex) {
+        Intent intent = new Intent(this, SgfTsumegoActivity.class);
+        if (selectedIndex >= 0) intent.putExtra("sgf_puzzle_index", selectedIndex);
+        startActivity(intent);
+        overridePendingTransition(0, 0);
     }
 
     private void renderPuzzleChoices() {
