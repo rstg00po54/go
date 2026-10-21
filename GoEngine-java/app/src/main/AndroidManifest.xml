@@ -44,7 +44,10 @@
         <activity android:name=".TsumegoExplanationActivity" android:exported="false" />
         <activity android:name=".TsumegoResultsActivity" android:exported="false" />
         <activity android:name=".TsumegoActivity" android:exported="false" />
-        <activity android:name=".SgfTsumegoActivity" android:exported="false" />
+        <!-- Run RKNN training GTP in its own process: gameplay JNI remains isolated. -->
+        <activity android:name=".SgfTsumegoActivity"
+            android:exported="false"
+            android:process=":tsumego" />
 
         <activity
             android:name=".MainActivity"
