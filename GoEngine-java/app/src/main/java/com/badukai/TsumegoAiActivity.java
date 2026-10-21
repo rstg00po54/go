@@ -340,6 +340,9 @@ public final class TsumegoAiActivity extends Activity {
     }
 
     private void finishSession(String detail, boolean successful) {
+        // Invalidate an in-flight CPU search if the user ends a session while
+        // KataGo is thinking. A late callback must never resume play.
+        generation.incrementAndGet();
         ended = true;
         thinking = false;
         board.setInputEnabled(false);
