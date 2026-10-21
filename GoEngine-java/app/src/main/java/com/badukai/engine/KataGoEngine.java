@@ -1319,22 +1319,23 @@ public class KataGoEngine {
     }
 
     /**
-     * MCTS only among moves in the puzzle's original SGF corner viewport.
-     * The board and neural evaluation remain a genuine full 19x19 position.
-     * Restriction is used for both sides in the first four search plies.
+     * Search only the rectangular fight area derived from the actual SGF
+     * solution, NOT the entire displayed 9x9 training viewport.
+     * [left,right) x [top,bottom) are full-board 19x19 SGF coordinates.
+     * KataGo still evaluates the complete position under full-board rules.
      */
     public List<SearchRecommendation> searchLocalRecommendations(String player, int visits,
-            double seconds, GoBoard board, int left, int top, int width) {
-        if (board == null || left < 0 || top < 0 || width < 2
-                || left + width > board.getSize() || top + width > board.getSize())
+            double seconds, GoBoard board, int left, int top, int right, int bottom) {
+        if (board == null || left < 0 || top < 0 || right <= left || bottom <= top
+                || right > board.getSize() || bottom > board.getSize())
             return Collections.emptyList();
         boolean black = "black".equals(player), white = "white".equals(player);
         if (!black && !white) return Collections.emptyList();
         StringBuilder vertices = new StringBuilder();
         com.badukai.game.StoneColor side = black
                 ? com.badukai.game.StoneColor.BLACK : com.badukai.game.StoneColor.WHITE;
-        for (int y = top; y < top + width; y++) {
-            for (int x = left; x < left + width; x++) {
+        for (int y = top; y < bottom; y++) {
+            for (int x = left; x < right; x++) {
                 com.badukai.game.Point at = new com.badukai.game.Point(x, y);
                 if (!board.isLegalMove(at, side)) continue;
                 if (vertices.length() > 0) vertices.append(',');
@@ -1342,8 +1343,25 @@ public class KataGoEngine {
             }
         }
         if (vertices.length() == 0) return Collections.emptyList();
+        // KataGo GTP's documented allow PLAYER VERTICES DEPTH restriction.
         String options = " allow " + (black ? "B" : "W") + " " + vertices + " 4";
-        return searchRecommendationsRestricted(player, visits, seconds, options);
+        List<SearchRecommendation> raw = searchRecommendationsRestricted(
+                player, visits, seconds, options);
+        List<SearchRecommendation> allowed = new ArrayList<>();
+        for (SearchRecommendation candidate : raw) {
+            com.badukai.game.Point p = com.badukai.game.Point.fromGtp(
+                    candidate.move, board.getSize());
+            if (p == null || candidate.visits <= 0
+                    || p.x < left || p.x >= right || p.y < top || p.y >= bottom
+                    || !board.isLegalMove(p, side)) {
+                Log.w(TAG, "TSUMEGO_REJECT_SEARCH_MOVE move=" + candidate.move
+                        + " visits=" + candidate.visits
+                        + " bounds=" + left + "," + top + ".." + right + "," + bottom);
+                continue;
+            }
+            allowed.add(candidate);
+        }
+        return allowed;
     }
 
     private List<SearchRecommendation> searchRecommendationsRestricted(
