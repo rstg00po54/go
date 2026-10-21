@@ -680,7 +680,16 @@ public final class AiAnalysisActivity extends Activity {
         String actual = nextMove instanceof Move.Stone
                 ? " · 金「实」=实战第" + (step + 1) + "手"
                 : nextMove instanceof Move.Pass ? " · 实战下一手停一手" : "";
-        status.setText("绿①②③=AI推荐（点数字看变化）" + actual);
+        if (moveQuality != null && step > 0
+                && step < moveQuality.severity.length
+                && moveQuality.severity[step] != GoMoveQuality.NONE) {
+            status.setText(String.format(Locale.CHINA,
+                    "第%d手 · %s · 胜率损失%.1f个百分点（NN初筛）", step,
+                    GoMoveQuality.label(moveQuality.severity[step]),
+                    moveQuality.losses[step]));
+        } else {
+            status.setText("绿①②③=AI推荐（点数字看变化）" + actual);
+        }
     }
 
     private String leadText(double blackLead) {
@@ -786,7 +795,7 @@ public final class AiAnalysisActivity extends Activity {
         final int serial = generation.incrementAndGet();
         if (globalRunning) {
             globalRunning = false;
-            fullButton.setText("分析全局");
+            setFullControlText("分析全局");
         }
         status.setText("第 " + targetStep + " 手 · KataGo 正在分析…");
         analysisExecutor.execute(() -> {
@@ -850,13 +859,22 @@ public final class AiAnalysisActivity extends Activity {
     }
 
     /** Analyze every SGF position with REAL raw 10b NN outputs, not fabricated chart points. */
+    private boolean allRatesValid() {
+        for (float rate : rates)
+            if (!Float.isFinite(rate) || rate < 0f || rate > 1f) return false;
+        return rates.length != 0;
+    }
+
     private void startFullAnalysis() {
         if (game == null || globalRunning) return;
         stopAutoplay();
         final int serial = generation.incrementAndGet();
         globalRunning = true;
-        fullButton.setText("停止分析");
-        status.setText("逐手计算真实胜率，可能需要一些时间…");
+        fullAnalysisCompleted = false;
+        Arrays.fill(rates, Float.NaN);
+        refreshChart();
+        setFullControlText("停止分析");
+        status.setText("逐手计算真实胜率与问题手，可能需要一些时间…");
         analysisExecutor.execute(() -> {
             try {
                 preparePosition(0);
@@ -882,9 +900,14 @@ public final class AiAnalysisActivity extends Activity {
                 ui.post(() -> {
                     if (!alive || serial != generation.get()) return;
                     globalRunning = false;
-                    fullButton.setText("重新分析");
+                    fullAnalysisCompleted = allRatesValid();
+                    setFullControlText("重新分析");
                     refreshChart();
-                    status.setText("逐手分析完成 · 点击曲线查看对应棋局");
+                    if (fullAnalysisCompleted)
+                        GoReviewCache.write(this, currentSgf, rates);
+                    status.setText(fullAnalysisCompleted
+                            ? "逐手分析完成 · 问题手为单次NN初筛，点击列表跳转"
+                            : "逐手分析完成，但有评估缺失，未保存缓存");
                     requestQuickAnalysis();
                 });
             } catch (Exception ex) {
@@ -892,7 +915,8 @@ public final class AiAnalysisActivity extends Activity {
                 ui.post(() -> {
                     if (!alive || serial != generation.get()) return;
                     globalRunning = false;
-                    fullButton.setText("重新分析");
+                    setFullControlText("重新分析");
+                    refreshChart();
                     status.setText("逐手分析中断：" + ex.getMessage());
                 });
             }
