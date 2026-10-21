@@ -443,6 +443,12 @@ public final class AiAnalysisActivity extends Activity {
             winProgress.setProgress(0);
             showPlaceholder("第 " + step + " 手 · 等待分析");
             if (runAnalysis) analyzeSelectedStep();
+            else if (moveQuality != null && step > 0
+                    && step < moveQuality.severity.length
+                    && moveQuality.severity[step] != GoMoveQuality.NONE)
+                status.setText(String.format(Locale.CHINA, "第%d手 %s · 损失%.1f点",
+                        step, GoMoveQuality.label(moveQuality.severity[step]),
+                        moveQuality.losses[step]));
             else status.setText("第 " + step + " 手 · 松开滑条或暂停播放后分析");
         } else showAnalysis(saved);
     }
@@ -684,7 +690,7 @@ public final class AiAnalysisActivity extends Activity {
                 && step < moveQuality.severity.length
                 && moveQuality.severity[step] != GoMoveQuality.NONE) {
             status.setText(String.format(Locale.CHINA,
-                    "第%d手 · %s · 胜率损失%.1f个百分点（NN初筛）", step,
+                    "第%d手 %s · 损失%.1f点（NN初筛）", step,
                     GoMoveQuality.label(moveQuality.severity[step]),
                     moveQuality.losses[step]));
         } else {
