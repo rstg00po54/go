@@ -44,6 +44,26 @@ public final class TsumegoSgf {
             return GoBoard.forTrainingPosition(size, black, white);
         }
 
+        /**
+         * Match any author-recorded SGF branch, including wrong answers.
+         * Not being present in the SGF is NOT proof a move is bad.
+         */
+        public Node recordedMove(Node position, Point at, StoneColor player) {
+            if (position == null || at == null) return null;
+            for (Node child : position.children)
+                if (child.color == player && at.equals(child.point)) return child;
+            return null;
+        }
+
+        /** First legal author-recorded continuation for an attempted move. */
+        public Node recordedReply(Node position, StoneColor player, GoBoard board) {
+            if (position == null) return null;
+            for (Node child : position.children)
+                if (child.color == player && child.point != null
+                        && board.isLegalMove(child.point, player)) return child;
+            return null;
+        }
+
         public Node correctMove(Node position, Point at, StoneColor player) {
             for (Node child : position.children)
                 if (child.leadsToCorrect && child.color == player
