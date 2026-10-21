@@ -16,6 +16,8 @@ public final class JadeAnalysisChartView extends View {
     public interface OnStepSelected { void onStepSelected(int step); }
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private float[] blackWins = new float[0];
+    // Per-step warning levels supplied by the completed/partial review.
+    private int[] problemSeverity = new int[0];
     private int selectedStep;
     private boolean fromSelectedStep;
     private OnStepSelected listener;
@@ -31,6 +33,10 @@ public final class JadeAnalysisChartView extends View {
         invalidate();
     }
     public void selectStep(int step) { selectedStep = step; invalidate(); }
+    public void setProblemSeverity(int[] levels) {
+        problemSeverity = levels == null ? new int[0] : Arrays.copyOf(levels, levels.length);
+        invalidate();
+    }
     public void setFromSelectedStep(boolean enabled) { fromSelectedStep = enabled; invalidate(); }
     private int firstStep() {
         return fromSelectedStep ? Math.max(0, Math.min(selectedStep, blackWins.length - 1)) : 0;
@@ -104,6 +110,18 @@ public final class JadeAnalysisChartView extends View {
             float x = x0 + (x1 - x0) * (i - first) / count;
             float y = y1 - (y1 - y0) * blackWins[i];
             canvas.drawCircle(x, y, dp(2.5f), paint);
+        }
+        // Small jade/gold markers indicate potentially poor moves without
+        // painting permanent labels over the chart or shrinking the board.
+        for (int i = Math.max(1, first); i < blackWins.length
+                && i < problemSeverity.length; i++) {
+            int level = problemSeverity[i];
+            if (level <= 0 || !Float.isFinite(blackWins[i])) continue;
+            float x = x0 + (x1 - x0) * (i - first) / count;
+            paint.setColor(level == 3 ? 0xFFFFA966
+                    : level == 2 ? 0xFFFFCE73 : 0xFFC1DCA1);
+            paint.setStyle(Paint.Style.FILL);
+            canvas.drawCircle(x, y1 - dp(2f), dp(level == 3 ? 3f : 2f), paint);
         }
         if (valid == 0) {
             paint.setStyle(Paint.Style.FILL);
