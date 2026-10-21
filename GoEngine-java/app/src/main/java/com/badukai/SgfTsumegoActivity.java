@@ -392,6 +392,8 @@ public final class SgfTsumegoActivity extends Activity {
         wrongVariation.clear();
         wrongNotes.setLength(0);
         wrongExplanation = "";
+        board.setVariationPreview(null, null, null, null);
+        previewing = false;
         board.setBoard(position);
         board.setLastMove(null);
         board.setAnalysisMoveNumbers(null);
