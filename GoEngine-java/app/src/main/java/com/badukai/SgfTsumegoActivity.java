@@ -72,7 +72,7 @@ public final class SgfTsumegoActivity extends Activity {
         credits = findViewById(R.id.tsumegoResults);
         solution.setText("看正解");
         solution.setEnabled(true);
-        credits.setText("题目来源");
+        credits.setText("AI陪练");
         findViewById(R.id.tsumegoResultsTop).setOnClickListener(v -> showCredits());
         findViewById(R.id.tsumegoBack).setOnClickListener(v -> finish());
         hint.setOnClickListener(v -> showHint());
@@ -86,7 +86,7 @@ public final class SgfTsumegoActivity extends Activity {
         message.setMaxLines(4);
         message.setEllipsize(android.text.TextUtils.TruncateAt.END);
         solution.setOnClickListener(v -> showSolution());
-        credits.setOnClickListener(v -> showCredits());
+        credits.setOnClickListener(v -> startAiPractice());
         previous.setOnClickListener(v -> open(index - 1));
         next.setOnClickListener(v -> open(index + 1));
         JadeBottomNavView nav = findViewById(R.id.tsumegoSharedNav);
@@ -511,6 +511,14 @@ public final class SgfTsumegoActivity extends Activity {
         } catch (Exception e) {
             message.setText("原题正解回放失败：" + e.getMessage());
         }
+    }
+
+    private void startAiPractice() {
+        if (puzzle == null) return;
+        android.content.Intent intent = new android.content.Intent(this, TsumegoAiActivity.class);
+        intent.putExtra("sgf_puzzle_index", index);
+        startActivity(intent);
+        overridePendingTransition(0, 0);
     }
 
     private void showCredits() {
