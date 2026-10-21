@@ -1350,9 +1350,11 @@ public class MainActivity extends AppCompatActivity {
                 endgameEvaluation = result;
                 final int suspectedDeadStones = displayEndgameOwnership(result);
                 gameResultText = formatFastEndgameResult(result.whiteLead);
+                // This is the ONLY visible endgame status line. The optional
+                // black/white area totals are appended after they are computed.
                 finalScoreText = Math.abs(result.whiteLead) < 0.05
-                        ? "NN预估 · 接近平局"
-                        : String.format(Locale.CHINA, "NN预估 · %s领先%.1f目",
+                        ? "NN·接近平局"
+                        : String.format(Locale.CHINA, "NN·%s+%.1f目",
                                 result.whiteLead > 0 ? "白" : "黑", Math.abs(result.whiteLead));
                 try {
                     NnAreaScore area = NnAreaScore.estimate(result.whiteOwnership,size,komiFor(size),
@@ -1362,6 +1364,10 @@ public class MainActivity extends AppCompatActivity {
                     nnAreaScoreMessage = String.format(Locale.CHINA,"黑 %.1f · 白 %.1f%s",
                             area.blackPoints,area.whitePoints,
                             suspectedDeadStones == 0 ? "" : " · 疑似死子 " + suspectedDeadStones);
+                    // Keep both NN lead and estimated black/white points
+                    // without creating a second TextView row below the board header.
+                    finalScoreText += String.format(Locale.CHINA, " 黑%.1f 白%.1f",
+                            area.blackPoints, area.whitePoints);
                 } catch (IllegalArgumentException ex) {
                     nnAreaScoreBoard = null;
                     nnAreaScoreMessage = null;
@@ -2501,7 +2507,10 @@ public class MainActivity extends AppCompatActivity {
         }
         statusText.setText(liveAnalysisShowing && liveAnalysisHeadline != null
                 ? liveAnalysisHeadline : message);
-        nnAreaScoreText.setVisibility(liveAnalysisShowing || nnAreaScoreMessage == null
+        // A finished match uses a single compact result line in statusText.
+        // Never re-show the old second NN row, including after onResume().
+        nnAreaScoreText.setVisibility(board.isGameOver() || liveAnalysisShowing
+                || nnAreaScoreMessage == null
                 || !getSharedPreferences("katago_settings", MODE_PRIVATE)
                     .getBoolean("show_score_estimate", true)
                 ? View.GONE : View.VISIBLE);
@@ -2591,8 +2600,9 @@ public class MainActivity extends AppCompatActivity {
         playerWinRateText.setVisibility(visibility);
         aiWinRateText.setVisibility(visibility);
         winRateProgress.setVisibility(visibility);
-        if (liveAnalysisShowing || !getSharedPreferences("katago_settings", MODE_PRIVATE)
-                .getBoolean("show_score_estimate", true))
+        if (board.isGameOver() || liveAnalysisShowing
+                || !getSharedPreferences("katago_settings", MODE_PRIVATE)
+                    .getBoolean("show_score_estimate", true))
             nnAreaScoreText.setVisibility(View.GONE);
     }
 
@@ -2601,8 +2611,9 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         if (playerWinRateText != null && nnAreaScoreText != null) {
             applyGameDisplaySettings();
-            if (!liveAnalysisShowing && getSharedPreferences("katago_settings", MODE_PRIVATE)
-                    .getBoolean("show_score_estimate", true)
+            if (!board.isGameOver() && !liveAnalysisShowing
+                    && getSharedPreferences("katago_settings", MODE_PRIVATE)
+                            .getBoolean("show_score_estimate", true)
                     && nnAreaScoreMessage != null) nnAreaScoreText.setVisibility(View.VISIBLE);
         }
         if (openNewGameOnResume) {
