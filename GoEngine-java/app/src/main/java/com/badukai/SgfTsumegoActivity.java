@@ -3,7 +3,7 @@ package com.badukai;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.SharedPreferences;
-import android.graphics.Color;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -17,6 +17,7 @@ import com.badukai.game.Move;
 import com.badukai.game.Point;
 import com.badukai.game.StoneColor;
 import com.badukai.game.TsumegoSgf;
+import com.badukai.engine.KataGoEngine;
 import com.badukai.ui.GoBoardView;
 import com.badukai.ui.JadeBottomNavView;
 import com.badukai.ui.JadeNavigation;
@@ -26,7 +27,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 /**
  * Published Go Game Guru SGF problems with original good/bad variations.
  * Dedicated to non-commercial offline practice; never touches the game engine.
@@ -34,6 +36,13 @@ import java.util.List;
 public final class SgfTsumegoActivity extends Activity {
     private static final int[] IDS = {101, 103, 104, 105, 110, 115};
     private static final String PREFS = "tsumego_sgf_progress";
+    private static final int LOCAL_LEFT = 10, LOCAL_TOP = 10;
+    private final ExecutorService aiWorker = Executors.newSingleThreadExecutor();
+    private KataGoEngine aiEngine;
+    private volatile boolean destroyed;
+    private Rect fightArea = new Rect(10, 10, 19, 19);
+    private boolean analyzing, aiVariation;
+    private int aiSerial;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private SharedPreferences prefs;
     private int index, round, mistakes, hints, studentMoves;
@@ -72,7 +81,7 @@ public final class SgfTsumegoActivity extends Activity {
         credits = findViewById(R.id.tsumegoResults);
         solution.setText("看正解");
         solution.setEnabled(true);
-        credits.setText("AI陪练");
+        credits.setText("AI分析");
         findViewById(R.id.tsumegoResultsTop).setOnClickListener(v -> showCredits());
         findViewById(R.id.tsumegoBack).setOnClickListener(v -> finish());
         hint.setOnClickListener(v -> showHint());
@@ -86,7 +95,7 @@ public final class SgfTsumegoActivity extends Activity {
         message.setMaxLines(4);
         message.setEllipsize(android.text.TextUtils.TruncateAt.END);
         solution.setOnClickListener(v -> showSolution());
-        credits.setOnClickListener(v -> startAiPractice());
+        credits.setOnClickListener(v -> startAiInPlace());
         previous.setOnClickListener(v -> open(index - 1));
         next.setOnClickListener(v -> open(index + 1));
         JadeBottomNavView nav = findViewById(R.id.tsumegoSharedNav);
@@ -121,6 +130,8 @@ public final class SgfTsumegoActivity extends Activity {
     private void open(int requested) {
         if (requested < 0 || requested >= IDS.length) return;
         round++;
+        aiSerial++;
+        analyzing = false;
         handler.removeCallbacksAndMessages(null);
         index = requested;
         prefs.edit().putInt("last_index", index).apply();
@@ -129,7 +140,8 @@ public final class SgfTsumegoActivity extends Activity {
                     readAsset(IDS[index]));
             node = puzzle.root;
             position = puzzle.newBoard();
-            solved = responding = previewing = reviewingWrongMove = false;
+            fightArea = deriveFightArea(puzzle);
+            solved = responding = previewing = reviewingWrongMove = aiVariation = false;
             beforeWrongMove = null;
             wrongVariation.clear();
             wrongNotes.setLength(0);
@@ -145,6 +157,8 @@ public final class SgfTsumegoActivity extends Activity {
             board.setOwnership(null);
             board.setRecommendations(null, null);
             board.setInputEnabled(true);
+            credits.setText("AI分析");
+            credits.setEnabled(true);
             progress.setText("真实死活题 " + (index + 1) + "/" + IDS.length
                     + " · 已完成 " + completed() + "/" + IDS.length);
             title.setText("Go Game Guru · 第 " + IDS[index] + " 题\n"
@@ -277,6 +291,8 @@ public final class SgfTsumegoActivity extends Activity {
 
     private void startWrongVariation(Point at, StoneColor player, TsumegoSgf.Node recorded) {
         round++;
+        aiSerial++;
+        analyzing = false;
         handler.removeCallbacksAndMessages(null);
         mistakes++;
         beforeWrongMove = position.copyForPreview();
@@ -288,6 +304,7 @@ public final class SgfTsumegoActivity extends Activity {
         wrongVariation.clear();
         wrongNotes.setLength(0);
         wrongCaptured.setLength(0);
+        aiVariation = false;
         int removedNow = position.playMove(new Move.Stone(at, player)).size();
         if (removedNow > 0) appendCaptured(player, at, removedNow);
         board.setRecommendations(null, null);
@@ -297,8 +314,9 @@ public final class SgfTsumegoActivity extends Activity {
         hint.setEnabled(false);
         reset.setText("重试此手");
         if (recorded == null) {
-            finishWrongVariation("原 SGF 没有收录这个落点，也没有对应反驳变化。"
-                    + "它是合法落子，但不能据此断言是恶手；可点击「看正解」比较。");
+            message.setTextColor(0xFFF8D192);
+            message.setText("原 SGF 未收录这手。正在本页调用 KataGo 搜索局部应手…");
+            startAiWrongAnalysis(at);
             return;
         }
         node = recorded;
@@ -373,7 +391,8 @@ public final class SgfTsumegoActivity extends Activity {
         explanation.append("试下的第").append(originalWrongStep)
                 .append("手不在原 SGF 标注的正解分支中。");
         if (wrongVariation.size() > 1) {
-            explanation.append("\n原题实际收录的变化：")
+            explanation.append(aiVariation
+                    ? "\nKataGo局部搜索的参考变化：" : "\n原题实际收录的变化：")
                     .append(wrongSequence()).append("。");
         }
         if (wrongCaptured.length() > 0)
@@ -383,8 +402,11 @@ public final class SgfTsumegoActivity extends Activity {
         if (!qualifier.isEmpty())
             explanation.append("\n").append(qualifier);
         else if (wrongNotes.length() == 0)
-            explanation.append("\n原作者没有对这条变化给出明确的文字解释。"
-                    + "可以对照正解棋形，但不能只凭此变化断言必死或必活。");
+            explanation.append(aiVariation
+                    ? "\nAI提供的是局部参考应手，不代表已证明这手必败；"
+                      + "也不能用整盘胜率直接判定死活。"
+                    : "\n原作者没有对这条变化给出明确的文字解释。"
+                      + "可以对照正解棋形，但不能只凭此变化断言必死或必活。");
         TsumegoSgf.Node alternative = puzzle.nextCorrect(beforeWrongNode);
         if (alternative != null && alternative.point != null)
             explanation.append("\n同一局面原题的正解首手为：")
@@ -401,6 +423,8 @@ public final class SgfTsumegoActivity extends Activity {
             return;
         }
         round++;
+        aiSerial++;
+        analyzing = false;
         handler.removeCallbacksAndMessages(null);
         position = beforeWrongMove;
         node = beforeWrongNode;
@@ -412,6 +436,9 @@ public final class SgfTsumegoActivity extends Activity {
         wrongNotes.setLength(0);
         wrongCaptured.setLength(0);
         wrongExplanation = "";
+        aiVariation = false;
+        credits.setEnabled(true);
+        credits.setText("AI分析");
         board.setVariationPreview(null, null, null, null);
         previewing = false;
         board.setBoard(position);
@@ -463,6 +490,9 @@ public final class SgfTsumegoActivity extends Activity {
     private void finishPuzzle() {
         solved = true;
         responding = false;
+        aiSerial++;
+        analyzing = false;
+        credits.setEnabled(false);
         prefs.edit().putInt("completed_mask",
                 prefs.getInt("completed_mask", 0) | (1 << index)).apply();
         board.setInputEnabled(false);
@@ -511,21 +541,6 @@ public final class SgfTsumegoActivity extends Activity {
         } catch (Exception e) {
             message.setText("原题正解回放失败：" + e.getMessage());
         }
-    }
-
-    private void startAiPractice() {
-        if (puzzle == null) return;
-        android.content.Intent intent = new android.content.Intent(this, TsumegoAiActivity.class);
-        intent.putExtra("sgf_puzzle_index", index);
-        // Preserve a just-tried first move when switching to AI free sparring.
-        if (reviewingWrongMove && originalWrongStep == 1
-                && !wrongVariation.isEmpty() && wrongVariation.get(0).point != null) {
-            Point tried = wrongVariation.get(0).point;
-            intent.putExtra("tsumego_try_x", tried.x);
-            intent.putExtra("tsumego_try_y", tried.y);
-        }
-        startActivity(intent);
-        overridePendingTransition(0, 0);
     }
 
     private void showCredits() {
