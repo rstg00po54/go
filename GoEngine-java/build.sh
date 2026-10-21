@@ -173,9 +173,15 @@ if [[ "$aligned_pie" == false ]]; then
     KATAGO_JOBS="${KATAGO_JOBS:-8}" bash "$PROJECT_DIR/tools/build_katago_from_source.sh" eigen
 fi
 
-./gradlew assembleDebug "${GRADLE_ARGS[@]}" "${FORWARD_ARGS[@]}"
-
+# AGP's incremental APK ZIP writer can retain unreferenced bytes when huge
+# model assets are replaced by tiny delta patches. Those bytes are NOT visible
+# in unzip -l, but still inflate the physical APK. Rebuild/sign only the APK
+# output if its ZIP payload-to-file gap is abnormally large; preserve the
+# native binaries, Gradle caches, all source files and generated model assets.
 APK="$PROJECT_DIR/app/build/outputs/apk/debug/app-debug.apk"
+python3 "$PROJECT_DIR/tools/check_apk_overhead.py" "$APK" --prune-stale
+
+./gradlew assembleDebug "${GRADLE_ARGS[@]}" "${FORWARD_ARGS[@]}"
 if [[ ! -s "$APK" ]]; then
     echo "ERROR: APK not found: $APK" >&2
     exit 1
