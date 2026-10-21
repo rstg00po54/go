@@ -374,6 +374,10 @@ public final class AiAnalysisActivity extends Activity {
             visible[i] = Float.isFinite(rates[i]) ? (float) toDisplayedRate(rates[i]) : Float.NaN;
         }
         chart.setData(visible, step);
+        // The calculation uses the mover's color, not the chart's chosen viewpoint.
+        moveQuality = game == null ? null : GoMoveQuality.analyze(rates, game.moves);
+        chart.setProblemSeverity(moveQuality == null ? null : moveQuality.severity);
+        refreshProblemList();
     }
 
     private void updateHumanSideUI() {
@@ -479,17 +483,75 @@ public final class AiAnalysisActivity extends Activity {
         requestQuickAnalysis();
     }
 
-    /** Display only one compact detail panel so analysis fits in one screen. */
+    /** All three compact panels share the same 87dp space below the board. */
     private void selectDetailTab(boolean showTrends) {
-        trendsVisible = showTrends;
-        trendPanel.setVisibility(showTrends ? View.VISIBLE : View.GONE);
-        movesPanel.setVisibility(showTrends ? View.GONE : View.VISIBLE);
-        trendTabButton.setBackgroundResource(showTrends ? R.drawable.jade_dark_action
+        selectDetailTab(showTrends ? 0 : 1);
+    }
+
+    private void selectDetailTab(int selected) {
+        detailTab = selected;
+        trendsVisible = selected == 0;
+        trendPanel.setVisibility(selected == 0 ? View.VISIBLE : View.GONE);
+        movesPanel.setVisibility(selected == 1 ? View.VISIBLE : View.GONE);
+        problemsPanel.setVisibility(selected == 2 ? View.VISIBLE : View.GONE);
+        trendTabButton.setBackgroundResource(selected == 0 ? R.drawable.jade_dark_action
                 : R.drawable.jade_dark_card);
-        movesTabButton.setBackgroundResource(showTrends ? R.drawable.jade_dark_card
-                : R.drawable.jade_dark_action);
-        trendTabButton.setAlpha(showTrends ? 1f : .75f);
-        movesTabButton.setAlpha(showTrends ? .75f : 1f);
+        movesTabButton.setBackgroundResource(selected == 1 ? R.drawable.jade_dark_action
+                : R.drawable.jade_dark_card);
+        problemsTabButton.setBackgroundResource(selected == 2 ? R.drawable.jade_dark_action
+                : R.drawable.jade_dark_card);
+        trendTabButton.setAlpha(selected == 0 ? 1f : .75f);
+        movesTabButton.setAlpha(selected == 1 ? 1f : .75f);
+        problemsTabButton.setAlpha(selected == 2 ? 1f : .75f);
+    }
+
+    private void refreshProblemList() {
+        if (problemList == null || problemsSummary == null) return;
+        problemList.removeAllViews();
+        if (moveQuality == null || game == null) {
+            problemsSummary.setText("分析全局后可查看问题手");
+            return;
+        }
+        GoMoveQuality.Result result = moveQuality;
+        problemsSummary.setText("恶" + result.blunders + " 失" + result.mistakes
+                + " 疑" + result.questionable + " · NN初筛");
+        List<Integer> found = new ArrayList<>();
+        for (int move = 1; move < result.severity.length; move++) {
+            if (result.severity[move] != GoMoveQuality.NONE) found.add(move);
+        }
+        // Highlight the most consequential mistakes first. Every row links to
+        // its actual SGF board position, with a fixed-height scrollable list.
+        found.sort((a, b) -> Float.compare(result.losses[b], result.losses[a]));
+        if (found.isEmpty()) {
+            TextView none = makeText(fullAnalysisCompleted
+                    ? "未发现≥5个百分点的落子损失（仅单次NN初筛）"
+                    : "暂无已发现的问题手 · 点击「分析全局」", 11, 0xFFDBE5D2, false);
+            none.setGravity(Gravity.CENTER_VERTICAL);
+            problemList.addView(none, new LinearLayout.LayoutParams(-1, dp(23)));
+            return;
+        }
+        for (int index : found) {
+            Move move = game.moves.get(index - 1);
+            String vertex = move instanceof Move.Stone
+                    ? ((Move.Stone) move).point.toGtp(game.size) : "停";
+            String description = String.format(Locale.CHINA,
+                    "第%d手 %s%s  %s  −%.1f点  ›", index,
+                    move.color == StoneColor.BLACK ? "黑" : "白", vertex,
+                    GoMoveQuality.label(result.severity[index]), result.losses[index]);
+            int color = result.severity[index] == GoMoveQuality.BLUNDER ? 0xFFFFB77B
+                    : result.severity[index] == GoMoveQuality.MISTAKE ? 0xFFF8D58D
+                    : 0xFFC8D7BB;
+            TextView row = makeText(description, 11, color,
+                    result.severity[index] == GoMoveQuality.BLUNDER);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(dp(6), 0, dp(3), 0);
+            row.setContentDescription(description + "，点击跳转到这一手");
+            row.setOnClickListener(v -> {
+                stopAutoplay();
+                showStep(index);
+            });
+            problemList.addView(row, new LinearLayout.LayoutParams(-1, dp(24)));
+        }
     }
 
     private void selectTab(boolean variation) {
