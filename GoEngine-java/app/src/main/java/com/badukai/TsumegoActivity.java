@@ -1,10 +1,11 @@
 package com.badukai;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
@@ -32,6 +33,12 @@ public final class TsumegoActivity extends Activity {
     private GoBoard board;
     private boolean solved;
     private int wrongAttempts;
+    private int stage;
+    private int totalCaptured;
+    private int hintLevel;
+    private int roundId;
+    private boolean responding;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private GoBoardView boardView;
     private TextView title, progress, question, message;
     private Button previous, next, hint, reset, explain, results;
@@ -117,69 +124,135 @@ public final class TsumegoActivity extends Activity {
         return Integer.bitCount(solvedMask() & validMask);
     }
 
+    private void updateProgress() {
+        progress.setText("第 " + (index + 1) + " / " + puzzles.size()
+                + " 题 · 已完成 " + completedCount() + " / " + puzzles.size());
+    }
+
     private void resetPuzzle() {
+        // Invalidate a scheduled defender move if the learner resets/navigates.
+        roundId++;
         TsumegoLessons.Puzzle p = puzzles.get(index);
         board = p.newBoard();
         solved = false;
+        responding = false;
+        stage = 0;
         wrongAttempts = 0;
+        hintLevel = 0;
+        totalCaptured = 0;
         boardView.setOwnership(null);
         boardView.setRecommendations(null, null);
         boardView.setBoard(board);
         boardView.setTrainingTarget(p.target);
         boardView.setLastMove(null);
         boardView.setInputEnabled(true);
+        hint.setEnabled(true);
+        hint.setText("提示");
         explain.setEnabled(false);
-        progress.setText("第 " + (index + 1) + " / " + puzzles.size()
-                + " 题  ·  已完成 " + completedCount() + " / " + puzzles.size());
+        updateProgress();
         question.setText(p.title + "\n" + p.instruction);
-        message.setText("点击棋盘落子。答错可以继续尝试。");
-        message.setTextColor(Color.rgb(51, 99, 68));
+        message.setText(p.steps() > 1
+                ? "需要连续走对 " + p.steps() + " 手，轮到对方时会自动应手。"
+                : "点击棋盘落子。答错可以继续尝试。");
+        message.setTextColor(0xFFE4EADC);
         previous.setEnabled(index > 0);
         next.setEnabled(index + 1 < puzzles.size());
         next.setText(index == puzzles.size() - 1 ? "已到最后一题" : "下一题 →");
     }
 
     private void showHint() {
-        if (solved) return;
+        if (solved || responding) return;
         TsumegoLessons.Puzzle p = puzzles.get(index);
-        boardView.setRecommendations(new Point[]{p.answer}, new float[]{1f});
-        message.setText("提示：" + p.hint);
+        hintLevel++;
+        if (hintLevel == 1) {
+            message.setText("提示：" + p.hint);
+            hint.setText("看落点");
+        } else {
+            Point answer = p.answerAt(stage);
+            boardView.setRecommendations(new Point[]{answer}, new float[]{1f});
+            message.setText("落点提示：" + answer.toGtp(TsumegoLessons.BOARD_SIZE)
+                    + " · 想一想为什么。");
+            hint.setText("已提示");
+            hint.setEnabled(false);
+        }
+        message.setTextColor(0xFFF3D58E);
     }
 
     private void onBoardTap(int x, int y) {
-        if (solved) return;
+        if (solved || responding) return;
         TsumegoLessons.Puzzle p = puzzles.get(index);
-        Point answer = new Point(x, y);
-        if (board.get(answer) != Intersection.EMPTY || !board.isLegalMove(answer, p.toPlay)) {
+        Point played = new Point(x, y);
+        if (board.get(played) != Intersection.EMPTY || !board.isLegalMove(played, p.toPlay)) {
             Toast.makeText(this, "这里不能落子", Toast.LENGTH_SHORT).show();
             return;
         }
-        if (!p.answer.equals(answer)) {
+        if (!p.answerAt(stage).equals(played)) {
             wrongAttempts++;
-            message.setTextColor(Color.rgb(158, 83, 60));
-            message.setText("还不对，观察整块棋剩下的气。" +
-                    (wrongAttempts >= 2 ? "\n需要帮助可以点「提示」。" : ""));
-            return; // Do not change the board for a wrong attempt.
+            message.setTextColor(0xFFFFC190);
+            message.setText("这手不对，看看目标棋块剩下的气。"
+                    + (wrongAttempts >= 2 ? " 可以点「提示」。" : ""));
+            return; // Wrong attempts never alter the board.
         }
-        int removed = board.playMove(new Move.Stone(answer, p.toPlay)).size();
-        if (removed <= 0 || board.get(p.target) != Intersection.EMPTY) {
-            // Data invariant: this is unreachable for the verified built-in puzzles.
-            resetPuzzle();
-            Toast.makeText(this, "题目数据异常，已重置", Toast.LENGTH_SHORT).show();
+
+        totalCaptured += board.playMove(new Move.Stone(played, p.toPlay)).size();
+        boardView.setRecommendations(null, null);
+        boardView.setLastMove(played);
+        boardView.setBoard(board);
+
+        if (stage + 1 == p.steps()) {
+            if (board.get(p.target) != Intersection.EMPTY || totalCaptured == 0) {
+                resetPuzzle();
+                Toast.makeText(this, "题目数据异常，已重置", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            solved = true;
+            prefs.edit().putInt("completed_mask", solvedMask() | (1 << index)).apply();
+            boardView.setTrainingTarget(null);
+            boardView.setInputEnabled(false);
+            explain.setEnabled(true);
+            hint.setEnabled(false);
+            message.setTextColor(0xFF9AE6BC);
+            message.setText("✓ 答对了！共 " + p.steps() + " 手提掉 "
+                    + totalCaptured + " 子。点击「答案解析」查看完整变化。");
+            updateProgress();
+            if (completedCount() == puzzles.size())
+                Toast.makeText(this, "全部 " + puzzles.size() + " 道基础题已完成！",
+                        Toast.LENGTH_LONG).show();
             return;
         }
-        solved = true;
-        prefs.edit().putInt("completed_mask", solvedMask() | (1 << index)).apply();
-        boardView.setRecommendations(null, null);
-        boardView.setLastMove(answer);
-        boardView.setBoard(board);
+
+        responding = true;
         boardView.setInputEnabled(false);
-        explain.setEnabled(true);
-        message.setTextColor(Color.rgb(38, 105, 56));
-        message.setText("✓ 答对了！提掉 " + removed + " 子。\n" + p.explanation);
-        progress.setText("第 " + (index + 1) + " / " + puzzles.size()
-                + " 题  ·  已完成 " + completedCount() + " / " + puzzles.size());
-        if (completedCount() == puzzles.size())
-            Toast.makeText(this, "恭喜，8 道基础题已全部完成！", Toast.LENGTH_LONG).show();
+        final int expectedRound = roundId;
+        final int replyForStage = stage;
+        message.setTextColor(0xFFE4EADC);
+        message.setText("第 " + (stage + 1) + " 手正确，对方正在应手…");
+        mainHandler.postDelayed(() -> {
+            if (expectedRound != roundId || isFinishing() || solved) return;
+            Point reply = p.replyAfter(replyForStage);
+            StoneColor defender = p.toPlay.opposite();
+            if (!board.isLegalMove(reply, defender)) {
+                resetPuzzle();
+                Toast.makeText(this, "应手数据异常，已重置", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            board.playMove(new Move.Stone(reply, defender));
+            stage++;
+            responding = false;
+            hintLevel = 0;
+            hint.setText("提示");
+            hint.setEnabled(true);
+            boardView.setLastMove(reply);
+            boardView.setBoard(board);
+            boardView.setInputEnabled(true);
+            message.setText("对方下在 " + reply.toGtp(TsumegoLessons.BOARD_SIZE)
+                    + "，现在轮到你走第 " + (stage + 1) + " 手。");
+        }, 450L);
+    }
+
+    @Override protected void onDestroy() {
+        roundId++;
+        mainHandler.removeCallbacksAndMessages(null);
+        super.onDestroy();
     }
 }
