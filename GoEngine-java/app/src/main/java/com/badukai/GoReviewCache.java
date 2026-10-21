@@ -5,10 +5,10 @@ import android.util.AtomicFile;
 import android.util.Log;
 
 import java.io.DataInputStream;
+import java.io.FileOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
@@ -60,7 +60,7 @@ final class GoReviewCache {
             if (!Float.isFinite(rate) || rate < 0f || rate > 1f) return;
         try {
             AtomicFile atomic = new AtomicFile(file(context, sgf));
-            OutputStream output = null;
+            FileOutputStream output = null;
             try {
                 output = atomic.startWrite();
                 DataOutputStream out = new DataOutputStream(output);
