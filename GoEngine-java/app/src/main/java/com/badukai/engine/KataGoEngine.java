@@ -132,7 +132,11 @@ public class KataGoEngine {
         this.context = context.getApplicationContext();
         this.engineDirectoryName = engineDirectoryName;
         this.preferJni = preferJni && "engine".equals(engineDirectoryName);
-        if (!"engine".equals(engineDirectoryName) && !"engine_winrate".equals(engineDirectoryName))
+        // Independent PIE-based CPU workers: keep analysis and tsumego isolated
+        // from the live game's GTP session and from each other.
+        if (!"engine".equals(engineDirectoryName)
+                && !"engine_winrate".equals(engineDirectoryName)
+                && !"engine_tsumego_ai".equals(engineDirectoryName))
             throw new IllegalArgumentException("Unsupported engine directory: " + engineDirectoryName);
     }
 
@@ -300,8 +304,10 @@ public class KataGoEngine {
                 if (useNpu) cfg = KataGoGtpConfig.set(cfg, "nnMaxBatchSize", "1");
                 java.nio.file.Files.write(configFile.toPath(), cfg.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             }
-            if ("engine_winrate".equals(engineDirectoryName)) {
-                // Avoid 6 search threads in a second process competing with the game engine.
+            if ("engine_winrate".equals(engineDirectoryName)
+                    || "engine_tsumego_ai".equals(engineDirectoryName)) {
+                // Avoid 6 search threads in independent CPU PIE processes
+                // competing with the main game engine.
                 String config = new String(java.nio.file.Files.readAllBytes(configFile.toPath()),
                         java.nio.charset.StandardCharsets.UTF_8);
                 config = config.replace("numSearchThreads = 6", "numSearchThreads = 2");
