@@ -40,6 +40,7 @@ def verify_apk(path, expected=None):
             if expected is EXPECTED and name in ALTERNATE_SCALE_AWARE_JSON:
                 accepted.append(ALTERNATE_SCALE_AWARE_JSON[name])
             if asset in seen:
+                source_type = "full"
                 info = archive.getinfo(asset)
                 size = info.file_size
                 sha = hashlib.sha256()
@@ -48,6 +49,7 @@ def verify_apk(path, expected=None):
                         sha.update(chunk)
                 actual = sha.hexdigest()
             elif name.endswith(".tflite") and asset + ".kgdelta" in seen:
+                source_type = "delta"
                 # Compact build: independently restore the original from its
                 # base, then verify against the exact same pinned digest.
                 # The suffix-based name works for both katago_10b and human.
@@ -77,7 +79,7 @@ def verify_apk(path, expected=None):
                                  (asset, size, [item[0] for item in accepted]))
             if (size, actual) not in accepted:
                 raise ValueError("Incorrect model SHA256 in APK: " + asset)
-            print("APK_MODEL_OK %s bytes=%d" % (asset, size), flush=True)
+            print("APK_MODEL_OK %s bytes=%d source=%s" % (asset, size, source_type), flush=True)
         if any(name.endswith("/librknnrt.so") for name in seen):
             raise ValueError("Vivo APK contains Rockchip-only librknnrt.so")
     print("VIVO_LITERT_APK_PASS models=%d apk=%s" % (len(expected), path), flush=True)
