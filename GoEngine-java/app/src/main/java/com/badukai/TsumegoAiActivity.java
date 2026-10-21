@@ -49,7 +49,7 @@ public final class TsumegoAiActivity extends Activity {
     private final AtomicInteger generation = new AtomicInteger();
     private KataGoEngine engine;
     private volatile boolean ready;
-    private boolean destroyed, thinking, ended, killing;
+    private boolean destroyed, thinking, ended;
     private int index, ownMoves, aiMoves, selectedPuzzleId;
     private int pendingTryX = -1, pendingTryY = -1, pendingTryIndex = -1;
     private TsumegoSgf.Puzzle puzzle;
@@ -86,16 +86,13 @@ public final class TsumegoAiActivity extends Activity {
         reset.setText("重新挑战");
         back.setText("返回原题");
         back.setEnabled(true);
-        goal.setText("切换目标");
+        goal.setText("题目说明");
         findViewById(R.id.tsumegoBack).setOnClickListener(v -> finish());
         findViewById(R.id.tsumegoResultsTop).setOnClickListener(v -> showSource());
         hint.setOnClickListener(v -> recommend());
         reset.setOnClickListener(v -> open(index));
         back.setOnClickListener(v -> finish());
-        goal.setOnClickListener(v -> {
-            killing = !killing;
-            open(index);
-        });
+        goal.setOnClickListener(v -> showSource());
         prev.setOnClickListener(v -> open(index - 1));
         next.setOnClickListener(v -> open(index + 1));
 
@@ -105,7 +102,6 @@ public final class TsumegoAiActivity extends Activity {
 
         SharedPreferences pref = getSharedPreferences("tsumego_sgf_progress", MODE_PRIVATE);
         int requested = getIntent().getIntExtra("sgf_puzzle_index", pref.getInt("last_index", 0));
-        killing = getIntent().getBooleanExtra("tsumego_killing", false);
         pendingTryX = getIntent().getIntExtra("tsumego_try_x", -1);
         pendingTryY = getIntent().getIntExtra("tsumego_try_y", -1);
         pendingTryIndex = requested;
@@ -125,7 +121,9 @@ public final class TsumegoAiActivity extends Activity {
 
     private StoneColor player() { return puzzle.toPlay; }
     private StoneColor opponent() { return player().opposite(); }
-    private StoneColor trackedColor() { return killing ? opponent() : player(); }
+    // Track the original side-to-play group for visibility only, never an
+    // invented alternate kill/live objective not documented by the SGF.
+    private StoneColor trackedColor() { return player(); }
 
     private void open(int targetIndex) {
         if (targetIndex < 0 || targetIndex >= IDS.length) return;
@@ -151,11 +149,11 @@ public final class TsumegoAiActivity extends Activity {
             prev.setEnabled(index > 0);
             next.setEnabled(index < IDS.length - 1);
             hint.setEnabled(ready);
-            message.setText("目标：让" + (trackedColor() == StoneColor.BLACK ? "黑" : "白")
-                    + "棋目标棋块" + (killing ? "被提掉。" : "活下来。")
-                    + " 这是可切换的练习目标，并非原题标注。"
-                    + " 点棋子可指定目标，点空点落子。"
-                    + " AI只在原题攻防区域应手：" + areaLabel(fightArea) + "。"
+            message.setText("目标：执" + (player() == StoneColor.BLACK ? "黑" : "白")
+                    + "寻找原 SGF 的正确局部变化。"
+                    + " 原题未明确注明做活还是杀棋，不另造第二个目标。"
+                    + " 金圈=观察棋块，小圆点=最近落子。"
+                    + " AI应手区域：" + areaLabel(fightArea) + "。"
                     + (ready ? " AI已准备好。" : " 正在启动KataGo…"));
             message.setTextColor(0xFFE4EADC);
             board.setInputEnabled(ready);
@@ -172,7 +170,7 @@ public final class TsumegoAiActivity extends Activity {
     private void renderHeading() {
         String color = player() == StoneColor.BLACK ? "黑" : "白";
         title.setText("Go Game Guru · 第 " + selectedPuzzleId + " 题\n"
-                + color + "先 · AI陪练 · " + (killing ? "杀棋" : "做活") + "（可切换）");
+                + color + "先 · AI陪练 · 寻找正确变化");
         progress.setText("AI局部对练 " + (index + 1) + "/" + IDS.length
                 + " · 你" + ownMoves + "手 AI" + aiMoves + "手");
     }
@@ -302,8 +300,8 @@ public final class TsumegoAiActivity extends Activity {
         if (position.get(at) != Intersection.EMPTY) {
             if (sameColorStone(at, trackedColor())) {
                 setTarget(at);
-                message.setText("已选择金圈处的" + (killing ? "待杀" : "待活")
-                        + "棋块。现在试着下棋。");
+                message.setText("已选中观察棋块（金圈）；小圆点只标最近落子。"
+                        + " 原题的练习目标不变。");
             } else {
                 Toast.makeText(this, "此处有棋子，不能落子", Toast.LENGTH_SHORT).show();
             }
@@ -335,11 +333,10 @@ public final class TsumegoAiActivity extends Activity {
         ended = true;
         board.setInputEnabled(false);
         hint.setEnabled(false);
-        message.setTextColor(0xFF9AE6BC);
+        message.setTextColor(0xFFFFC18A);
         String target = trackedColor() == StoneColor.BLACK ? "黑" : "白";
-        message.setText("目标" + target + "棋块已被全部提掉。"
-                + (killing ? "杀棋挑战成功！" : "做活挑战失败。")
-                + " 这是实际提子结果，不是胜率推测。");
+        message.setText("观察的" + target + "棋块已被全部提掉，这是棋盘上的确定结果。"
+                + " 本题的正解仍以原 SGF 为准，不能据此概括其他棋块的死活。");
         return true;
     }
 
@@ -477,7 +474,7 @@ public final class TsumegoAiActivity extends Activity {
                         && limits.contains(suggestion.x, suggestion.y)) {
                     board.setRecommendations(new Point[]{suggestion}, new float[]{1f});
                     message.setText("AI建议尝试 " + suggestion.toGtp(19)
-                            + "。这是局部搜索推荐，不代表已证明能做活/杀棋。");
+                            + "。这是局部搜索推荐，不代表原 SGF 的唯一正确答案。");
                 } else {
                     message.setText("KataGo未返回可用的局部候选手。");
                 }
@@ -496,7 +493,9 @@ public final class TsumegoAiActivity extends Activity {
                         + " AI受局部搜索和访问次数限制，因此它的判断不等同于数学证明。"
                         + "\nAI落子限制在原题正解附近的局部攻防区；"
                         + "如果局部没有合适着手，会停止而非跑去别处下。"
-                        + "\n金圈标出当前追踪的目标棋块，点击同色棋子可重新选择。")
+                        + "\n原 SGF 只注明谁先行，没有把做活或杀棋写成可切换的两种目标。"
+                        + " 本模式统一探索该局面的正确变化，不切换题目目标。"
+                        + "\n金圈=观察棋块，小圆点=最近落子；点击己方棋子可更换观察棋块。")
                 .setPositiveButton("知道了", null).show();
     }
 
