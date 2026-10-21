@@ -389,6 +389,9 @@ public final class SgfTsumegoActivity extends Activity {
 
     private void finishWrongVariation(String qualifier) {
         responding = false;
+        analyzing = false;
+        credits.setEnabled(true);
+        credits.setText("AI分析");
         board.setInputEnabled(false);
         StringBuilder explanation = new StringBuilder();
         explanation.append("试下的第").append(originalWrongStep)
@@ -511,6 +514,11 @@ public final class SgfTsumegoActivity extends Activity {
 
     private void showSolution() {
         if (puzzle == null) return;
+        // An in-progress AI search must never overwrite the answer overlay.
+        aiSerial++;
+        analyzing = false;
+        credits.setText("AI分析");
+        credits.setEnabled(false);
         List<TsumegoSgf.Node> solutionMoves = puzzle.principalSolution();
         GoBoard outcome = puzzle.newBoard();
         List<Point> moves = new ArrayList<>();
@@ -804,8 +812,14 @@ public final class SgfTsumegoActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        destroyed = true;
         round++;
+        aiSerial++;
         handler.removeCallbacksAndMessages(null);
+        aiWorker.execute(() -> {
+            if (aiEngine != null) aiEngine.stop();
+        });
+        aiWorker.shutdown();
         super.onDestroy();
     }
 }
