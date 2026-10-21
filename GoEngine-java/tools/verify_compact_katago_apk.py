@@ -69,6 +69,16 @@ def verify_apk(apk, generated):
                 raise ValueError("Compact model missing from final APK: " + path)
             if members[path].file_size != size:
                 raise ValueError("Compact model incorrect length in APK: " + path)
+        # setSrcDirs() in the compact APK build replaces main assets roots.
+        # Verify the *final APK*, not Gradle staging, so missing Jade imagery
+        # cannot silently ship again as a flat green home screen.
+        jade_art = ("background.png", "play.png", "record.png",
+                    "training.png", "settings.png")
+        for name in jade_art:
+            asset = "assets/home/" + name
+            if asset not in members or members[asset].file_size < 128:
+                raise ValueError("Jade home artwork missing/empty in APK: " + asset)
+        print("JADE_HOME_ARTWORK_PASS images=%d" % len(jade_art), flush=True)
         for path in members:
             for model in ("human", "10b"):
                 for ext in GRAPH_EXTS:
