@@ -369,16 +369,17 @@ public final class TsumegoAiActivity extends Activity {
             if (sameColorStone(start, trackedColor())) { live = start; break; }
         if (live == null) return group;
         ArrayDeque<Point> queue = new ArrayDeque<>();
+        Set<Point> visited = new HashSet<>();
         queue.add(live);
         while (!queue.isEmpty()) {
             Point p = queue.removeFirst();
-            if (!position.isInside(p.x, p.y) || !group.add(p)
-                    || !sameColorStone(p, trackedColor())) {
-                group.remove(p);
-                continue;
-            }
+            if (!position.isInside(p.x, p.y) || !visited.add(p)
+                    || !sameColorStone(p, trackedColor())) continue;
+            group.add(p);
             for (Point near : neighbors(p))
-                if (!group.contains(near) && sameColorStone(near, trackedColor()))
+                if (position.isInside(near.x, near.y)
+                        && !visited.contains(near)
+                        && sameColorStone(near, trackedColor()))
                     queue.addLast(near);
         }
         return group;
