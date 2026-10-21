@@ -37,7 +37,13 @@ public final class SgfTsumegoActivity extends Activity {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private SharedPreferences prefs;
     private int index, round, mistakes, hints, studentMoves;
-    private boolean solved, responding, previewing;
+    private boolean solved, responding, previewing, reviewingWrongMove;
+    private GoBoard beforeWrongMove;
+    private TsumegoSgf.Node beforeWrongNode;
+    private int beforeWrongStudentMoves, originalWrongStep;
+    private final List<TsumegoSgf.Node> wrongVariation = new ArrayList<>();
+    private final StringBuilder wrongNotes = new StringBuilder();
+    private String wrongExplanation = "";
     private TsumegoSgf.Puzzle puzzle;
     private TsumegoSgf.Node node;
     private GoBoard position;
@@ -69,7 +75,15 @@ public final class SgfTsumegoActivity extends Activity {
         findViewById(R.id.tsumegoResultsTop).setOnClickListener(v -> showCredits());
         findViewById(R.id.tsumegoBack).setOnClickListener(v -> finish());
         hint.setOnClickListener(v -> showHint());
-        reset.setOnClickListener(v -> open(index));
+        reset.setOnClickListener(v -> retryOrRestart());
+        message.setOnClickListener(v -> {
+            if (reviewingWrongMove && !wrongExplanation.isEmpty())
+                new AlertDialog.Builder(this).setTitle("这手为什么不合适？")
+                        .setMessage(wrongExplanation)
+                        .setPositiveButton("返回棋盘", null).show();
+        });
+        message.setMaxLines(4);
+        message.setEllipsize(android.text.TextUtils.TruncateAt.END);
         solution.setOnClickListener(v -> showSolution());
         credits.setOnClickListener(v -> showCredits());
         previous.setOnClickListener(v -> open(index - 1));
@@ -114,12 +128,17 @@ public final class SgfTsumegoActivity extends Activity {
                     readAsset(IDS[index]));
             node = puzzle.root;
             position = puzzle.newBoard();
-            solved = responding = previewing = false;
+            solved = responding = previewing = reviewingWrongMove = false;
+            beforeWrongMove = null;
+            wrongVariation.clear();
+            wrongNotes.setLength(0);
+            wrongExplanation = "";
             mistakes = hints = studentMoves = 0;
             board.setTrainingViewport(10, 10, 9);
             board.setVariationPreview(null, null, null, null);
             board.setBoard(position);
             board.setLastMove(null);
+            board.setAnalysisMoveNumbers(null);
             board.setTrainingTarget(null);
             board.setOwnership(null);
             board.setRecommendations(null, null);
@@ -128,8 +147,9 @@ public final class SgfTsumegoActivity extends Activity {
                     + " · 已完成 " + completed() + "/" + IDS.length);
             title.setText("Go Game Guru · 第 " + IDS[index] + " 题\n"
                     + (puzzle.toPlay == StoneColor.BLACK ? "黑先" : "白先")
-                    + " · 19路原题，放大右下角");
-            message.setText("从棋形中寻找正解。对方会按原 SGF 变化应手。");
+                    + " · 研究做活/杀棋的正确变化");
+            message.setText("目标：找出能达成死活目的的着法。原题只注明先手方，"
+                    + "未具体标注做活或杀棋；可对照原 SGF 正解。");
             message.setTextColor(0xFFE4EADC);
             hint.setEnabled(true);
             hint.setText("提示");
@@ -167,24 +187,34 @@ public final class SgfTsumegoActivity extends Activity {
         }
     }
 
+    /**
+     * A legal but non-solution move must still be visible on the board.
+     * Explain it from the author's real refutation branch where available.
+     */
     private void play(int x, int y) {
-        if (puzzle == null || solved || responding || previewing) return;
+        if (puzzle == null || solved || responding || previewing || reviewingWrongMove) return;
         Point at = new Point(x, y);
         StoneColor player = puzzle.toPlay;
-        if (position.get(at) != Intersection.EMPTY || !position.isLegalMove(at, player)) {
-            Toast.makeText(this, "这里不能落子", Toast.LENGTH_SHORT).show();
+        if (position.get(at) != Intersection.EMPTY) {
+            showRuleError("此处已经有棋子，不能重复落子。");
             return;
         }
-        TsumegoSgf.Node selected = puzzle.correctMove(node, at, player);
-        if (selected == null) {
-            mistakes++;
-            message.setTextColor(0xFFFFC18A);
-            message.setText("这手不在原 SGF 正解变化里，请重新计算。"
-                    + (mistakes >= 2 ? " 可点「提示」。" : ""));
+        if (!position.isLegalMove(at, player)) {
+            if (at.equals(position.getSimpleKoPoint()))
+                showRuleError("这里是劫争的立即回提点，须先在别处走一手。");
+            else
+                showRuleError("这手违反当前棋盘规则（例如无气自杀），因此不能落子。");
             return;
         }
+
+        TsumegoSgf.Node original = puzzle.recordedMove(node, at, player);
+        if (original == null || !original.leadsToCorrect) {
+            startWrongVariation(at, player, original);
+            return;
+        }
+
         position.playMove(new Move.Stone(at, player));
-        node = selected;
+        node = original;
         studentMoves++;
         board.setRecommendations(null, null);
         board.setLastMove(at);
@@ -196,9 +226,183 @@ public final class SgfTsumegoActivity extends Activity {
         responding = true;
         board.setInputEnabled(false);
         message.setTextColor(0xFFDCE9D9);
-        message.setText("第 " + studentMoves + " 手正确，正在展示原题应手…");
+        message.setText("第 " + studentMoves + " 手走在正解变化里，正在展示对方应手…");
         final int expectedRound = round;
         handler.postDelayed(() -> reply(expectedRound), 470L);
+    }
+
+    private void showRuleError(String reason) {
+        message.setTextColor(0xFFFFC18A);
+        message.setText(reason);
+    }
+
+    private static String moveLabel(TsumegoSgf.Node item) {
+        if (item == null || item.point == null) return "";
+        return (item.color == StoneColor.BLACK ? "黑" : "白") + vertex(item.point);
+    }
+
+    /** Translate recurring published comments without inventing an analysis. */
+    private static String publishedComment(String raw) {
+        if (raw == null || raw.trim().isEmpty()) return "";
+        String content = raw.trim();
+        String lower = content.toLowerCase(java.util.Locale.ROOT);
+        if (lower.startsWith("correct")) return "原题标注：正确变化。";
+        if (lower.contains("shortage of liberties"))
+            return "原作者：这手造成黑棋气紧，容易被对方利用。";
+        if (lower.contains("double ko"))
+            return "原作者：这里会形成双劫，黑棋反而被吃。";
+        if (lower.contains("bent four in the corner"))
+            return "原作者：这会形成盘角曲四，不能按普通两眼活棋处理。";
+        if (lower.contains("it's a ko") || lower.contains("it's ko"))
+            return "原作者：此变化会形成劫争，但黑棋还有更好的下法。";
+        if (lower.contains("seki"))
+            return "原作者：这条变化可形成双活，但不是本题的最佳下法。";
+        if (lower.contains("better move") || lower.contains("better way"))
+            return "原作者：这条变化可能成立，但有更好的走法。";
+        if (lower.contains("snapback"))
+            return "原作者：这里存在倒扑，要注意被反提的手筋。";
+        // Preserve original author text for cases without a reliable translation.
+        return "原作者英文注释：" + content.replace('\n', ' ').replace('\r', ' ');
+    }
+
+    private void addWrongNote(String raw) {
+        String detail = publishedComment(raw);
+        if (detail.isEmpty()) return;
+        if (wrongNotes.indexOf(detail) >= 0) return;
+        if (wrongNotes.length() > 0) wrongNotes.append("\n");
+        wrongNotes.append(detail);
+    }
+
+    private void startWrongVariation(Point at, StoneColor player, TsumegoSgf.Node recorded) {
+        round++;
+        handler.removeCallbacksAndMessages(null);
+        mistakes++;
+        beforeWrongMove = position.copyForPreview();
+        beforeWrongNode = node;
+        beforeWrongStudentMoves = studentMoves;
+        originalWrongStep = studentMoves + 1;
+        reviewingWrongMove = true;
+        responding = true;
+        wrongVariation.clear();
+        wrongNotes.setLength(0);
+        position.playMove(new Move.Stone(at, player));
+        board.setRecommendations(null, null);
+        board.setLastMove(at);
+        board.setBoard(position);
+        board.setInputEnabled(false);
+        hint.setEnabled(false);
+        reset.setText("重试此手");
+        if (recorded == null) {
+            finishWrongVariation("原 SGF 没有收录这个落点，也没有对应反驳变化。"
+                    + "它是合法落子，但不能据此断言是恶手；可点击「看正解」比较。");
+            return;
+        }
+        node = recorded;
+        wrongVariation.add(recorded);
+        addWrongNote(recorded.comment);
+        renderWrongNumbers();
+        message.setTextColor(0xFFFFC18A);
+        message.setText("已试下 " + moveLabel(recorded)
+                + "，正在演示原 SGF 收录的后续变化…");
+        final int expected = round;
+        handler.postDelayed(() -> advanceWrongVariation(expected, 0), 550L);
+    }
+
+    /** Auto-play ONLY the original SGF's recorded continuation, not fake AI moves. */
+    private void advanceWrongVariation(int expectedRound, int depth) {
+        if (expectedRound != round || isFinishing() || !reviewingWrongMove) return;
+        if (depth >= 16) {
+            finishWrongVariation("原题变化较长，已演示前 17 手。");
+            return;
+        }
+        StoneColor nextPlayer = node.color == StoneColor.BLACK
+                ? StoneColor.WHITE : StoneColor.BLACK;
+        TsumegoSgf.Node next = puzzle.recordedReply(node, nextPlayer, position);
+        if (next == null) {
+            finishWrongVariation("");
+            return;
+        }
+        position.playMove(new Move.Stone(next.point, nextPlayer));
+        node = next;
+        wrongVariation.add(next);
+        addWrongNote(next.comment);
+        board.setLastMove(next.point);
+        board.setBoard(position);
+        renderWrongNumbers();
+        String msg = "原题反驳手顺：" + wrongSequence() + "…";
+        message.setTextColor(0xFFFFC18A);
+        message.setText(msg);
+        handler.postDelayed(() -> advanceWrongVariation(expectedRound, depth + 1), 600L);
+    }
+
+    private String wrongSequence() {
+        StringBuilder seq = new StringBuilder();
+        for (TsumegoSgf.Node item : wrongVariation) {
+            if (seq.length() > 0) seq.append(" → ");
+            seq.append(moveLabel(item));
+        }
+        return seq.toString();
+    }
+
+    private void renderWrongNumbers() {
+        int[] numbers = new int[19 * 19];
+        for (int i = 0; i < wrongVariation.size(); i++) {
+            Point at = wrongVariation.get(i).point;
+            if (at != null) numbers[at.y * 19 + at.x] = i + 1;
+        }
+        board.setAnalysisMoveNumbers(numbers);
+    }
+
+    private void finishWrongVariation(String qualifier) {
+        responding = false;
+        board.setInputEnabled(false);
+        StringBuilder explanation = new StringBuilder();
+        explanation.append("试下的第").append(originalWrongStep)
+                .append("手不在原 SGF 标注的正解分支中。");
+        if (wrongVariation.size() > 1) {
+            explanation.append("\n原题实际收录的变化：")
+                    .append(wrongSequence()).append("。");
+        }
+        if (wrongNotes.length() > 0)
+            explanation.append("\n").append(wrongNotes);
+        if (!qualifier.isEmpty())
+            explanation.append("\n").append(qualifier);
+        else if (wrongNotes.length() == 0)
+            explanation.append("\n原作者没有对这条变化给出明确的文字解释。"
+                    + "可以对照正解棋形，但不能只凭此变化断言必死或必活。");
+        explanation.append("\n点击「重试此手」恢复刚才的局面。");
+        wrongExplanation = explanation.toString();
+        message.setTextColor(0xFFFFC18A);
+        message.setText(wrongExplanation);
+    }
+
+    private void retryOrRestart() {
+        if (!reviewingWrongMove || beforeWrongMove == null) {
+            open(index);
+            return;
+        }
+        round++;
+        handler.removeCallbacksAndMessages(null);
+        position = beforeWrongMove;
+        node = beforeWrongNode;
+        studentMoves = beforeWrongStudentMoves;
+        beforeWrongMove = null;
+        reviewingWrongMove = false;
+        responding = false;
+        wrongVariation.clear();
+        wrongNotes.setLength(0);
+        wrongExplanation = "";
+        board.setBoard(position);
+        board.setLastMove(null);
+        board.setAnalysisMoveNumbers(null);
+        board.setRecommendations(null, null);
+        board.setInputEnabled(true);
+        reset.setText("重做");
+        hint.setEnabled(true);
+        hint.setText("提示");
+        hints = 0;
+        message.setTextColor(0xFFE4EADC);
+        message.setText("已回到第 " + originalWrongStep + " 手之前。换个落点再试。");
     }
 
     private void reply(int expectedRound) {
@@ -241,6 +445,7 @@ public final class SgfTsumegoActivity extends Activity {
                 prefs.getInt("completed_mask", 0) | (1 << index)).apply();
         board.setInputEnabled(false);
         hint.setEnabled(false);
+        reset.setText("重做");
         progress.setText("真实死活题 " + (index + 1) + "/" + IDS.length
                 + " · 已完成 " + completed() + "/" + IDS.length);
         message.setTextColor(0xFF9AE6BC);
