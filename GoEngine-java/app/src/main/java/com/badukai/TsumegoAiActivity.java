@@ -44,6 +44,9 @@ public final class TsumegoAiActivity extends Activity {
     private static final int[] IDS = {101, 103, 104, 105, 110, 115};
     private static final int CORNER_START = 10;
     private static final int CORNER_SIZE = 9;
+    // AI is only a local practice partner, not a complete life/death solver.
+    // Stop an unresolved session instead of letting two bots fill the board.
+    private static final int MAX_LOCAL_PLIES = 24;
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     private final AtomicInteger generation = new AtomicInteger();
@@ -53,6 +56,8 @@ public final class TsumegoAiActivity extends Activity {
     private int index, ownMoves, aiMoves, selectedPuzzleId;
     private int pendingTryX = -1, pendingTryY = -1, pendingTryIndex = -1;
     private TsumegoSgf.Puzzle puzzle;
+    /** Strict original SGF path; null after either player deviates. */
+    private TsumegoSgf.Node sgfPath;
     private GoBoard position;
     /** Full-board coordinates, exclusive right/bottom. Display remains 9x9. */
     private Rect fightArea = new Rect(CORNER_START, CORNER_START, 19, 19);
@@ -86,13 +91,13 @@ public final class TsumegoAiActivity extends Activity {
         reset.setText("重新挑战");
         back.setText("返回原题");
         back.setEnabled(true);
-        goal.setText("题目说明");
+        goal.setText("结束试下");
         findViewById(R.id.tsumegoBack).setOnClickListener(v -> finish());
         findViewById(R.id.tsumegoResultsTop).setOnClickListener(v -> showSource());
         hint.setOnClickListener(v -> recommend());
         reset.setOnClickListener(v -> open(index));
         back.setOnClickListener(v -> finish());
-        goal.setOnClickListener(v -> showSource());
+        goal.setOnClickListener(v -> finishUnresolved("你已主动结束本轮局部试下。"));
         prev.setOnClickListener(v -> open(index - 1));
         next.setOnClickListener(v -> open(index + 1));
 
@@ -132,6 +137,8 @@ public final class TsumegoAiActivity extends Activity {
         selectedPuzzleId = IDS[index];
         ownMoves = aiMoves = 0;
         thinking = ended = false;
+        goal.setEnabled(true);
+        goal.setText("结束试下");
         board.setInputEnabled(false);
         board.setRecommendations(null, null);
         board.setAnalysisMoveNumbers(null);
@@ -139,6 +146,7 @@ public final class TsumegoAiActivity extends Activity {
         try {
             puzzle = TsumegoSgf.parse("ggg-easy-" + selectedPuzzleId,
                     readSgf(selectedPuzzleId));
+            sgfPath = puzzle.root;
             position = puzzle.newBoard();
             fightArea = deriveFightArea(puzzle);
             board.setBoard(position);
@@ -159,6 +167,7 @@ public final class TsumegoAiActivity extends Activity {
             board.setInputEnabled(ready);
         } catch (Exception e) {
             puzzle = null;
+            sgfPath = null;
             position = null;
             ended = true;
             message.setText("无法读取真实死活题：" + e.getMessage());
@@ -313,31 +322,128 @@ public final class TsumegoAiActivity extends Activity {
             return;
         }
         position.playMove(new Move.Stone(at, player()));
+        updateSgfPath(at, player());
         ownMoves++;
         board.setLastMove(at);
         board.setBoard(position);
         renderHeading();
-        if (checkCaptured()) return;
+        if (checkRoundFinished()) return;
         scheduleAiReply();
     }
 
-    /**
-     * Proven terminal state: selected initial target group was actually
-     * captured. Two-eye life, seki and unconditional death are NOT inferred
-     * from whole-board win rate or NN ownership estimates.
-     */
-    private boolean checkCaptured() {
-        if (watchedStones.isEmpty()) return false;
-        for (Point original : watchedStones)
-            if (sameColorStone(original, trackedColor())) return false;
+    private void updateSgfPath(Point move, StoneColor side) {
+        if (sgfPath == null) return;
+        TsumegoSgf.Node next = puzzle.recordedMove(sgfPath, move, side);
+        // Original wrong variations are useful for study, but cannot count
+        // as successful standard answers.
+        sgfPath = next != null && next.leadsToCorrect ? next : null;
+    }
+
+    private void finishSession(String detail, boolean successful) {
         ended = true;
+        thinking = false;
         board.setInputEnabled(false);
         hint.setEnabled(false);
-        message.setTextColor(0xFFFFC18A);
-        String target = trackedColor() == StoneColor.BLACK ? "黑" : "白";
-        message.setText("观察的" + target + "棋块已被全部提掉，这是棋盘上的确定结果。"
-                + " 本题的正解仍以原 SGF 为准，不能据此概括其他棋块的死活。");
-        return true;
+        goal.setText("本轮已结束");
+        goal.setEnabled(false);
+        message.setTextColor(successful ? 0xFF9AE6BC : 0xFFF8D192);
+        message.setText(detail + " 点击「重新挑战」可再试一遍，"
+                + "「返回原题」可以查看原作者的正解。");
+    }
+
+    private void finishUnresolved(String reason) {
+        if (ended || puzzle == null) return;
+        finishSession(reason + " 本轮结论未定，不等于已证明做不活。", false);
+    }
+
+    /**
+     * Current connected string containing a surviving starting stone. Using
+     * the currently connected group avoids confusing separate friendly
+     * strings with liberties or eyes of the actual observed group.
+     */
+    private Set<Point> observedGroup() {
+        Set<Point> group = new HashSet<>();
+        if (position == null || watchedStones.isEmpty()) return group;
+        Point live = null;
+        for (Point start : watchedStones)
+            if (sameColorStone(start, trackedColor())) { live = start; break; }
+        if (live == null) return group;
+        ArrayDeque<Point> queue = new ArrayDeque<>();
+        queue.add(live);
+        while (!queue.isEmpty()) {
+            Point p = queue.removeFirst();
+            if (!position.isInside(p.x, p.y) || !group.add(p)
+                    || !sameColorStone(p, trackedColor())) {
+                group.remove(p);
+                continue;
+            }
+            for (Point near : neighbors(p))
+                if (!group.contains(near) && sameColorStone(near, trackedColor()))
+                    queue.addLast(near);
+        }
+        return group;
+    }
+
+    private static Point[] neighbors(Point p) {
+        return new Point[]{new Point(p.x - 1, p.y),
+                new Point(p.x + 1, p.y),
+                new Point(p.x, p.y - 1),
+                new Point(p.x, p.y + 1)};
+    }
+
+    /**
+     * Deliberately conservative two-eye check:
+     * TWO distinct empty single intersections, every on-board orthogonal
+     * and diagonal neighbor occupied by this SAME connected group. This
+     * recognizes unambiguous fully surrounded eyes, not speculative false
+     * eyes, larger eye spaces, seki, or global KataGo win-rate estimates.
+     */
+    private boolean hasTwoSecureEyes(Set<Point> group) {
+        if (group.isEmpty()) return false;
+        int secureEyes = 0;
+        for (int y = 0; y < position.getSize(); y++) {
+            for (int x = 0; x < position.getSize(); x++) {
+                if (position.get(x, y) != Intersection.EMPTY) continue;
+                boolean surrounded = true;
+                for (int dy = -1; dy <= 1 && surrounded; dy++) {
+                    for (int dx = -1; dx <= 1; dx++) {
+                        if (dx == 0 && dy == 0) continue;
+                        int xx = x + dx, yy = y + dy;
+                        if (!position.isInside(xx, yy)) continue;
+                        if (!group.contains(new Point(xx, yy))) {
+                            surrounded = false;
+                            break;
+                        }
+                    }
+                }
+                if (surrounded && ++secureEyes >= 2) return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean checkRoundFinished() {
+        if (sgfPath != null && sgfPath.correct) {
+            finishSession("完成：双方走通了原 SGF 标记的正确变化。"
+                    + " 这是题库认可的解答，不是 AI 对所有走法的证明。", true);
+            return true;
+        }
+        Set<Point> remaining = observedGroup();
+        if (!watchedStones.isEmpty() && remaining.isEmpty()) {
+            finishSession("观察棋块已经被实际提掉，本轮局部练习结束。", false);
+            return true;
+        }
+        if (hasTwoSecureEyes(remaining)) {
+            finishSession("观察棋块已经形成两只独立、完全封闭的单点真眼："
+                    + " 此棋块在当前规则下可以做活。"
+                    + " 但这不代表必然走通原题指定正解。", true);
+            return true;
+        }
+        if (ownMoves + aiMoves >= MAX_LOCAL_PLIES) {
+            finishUnresolved("局部对练已达到 " + MAX_LOCAL_PLIES + " 手上限。");
+            return true;
+        }
+        return false;
     }
 
     /** Current liberties of the surviving marked string, not a life/death proof. */
@@ -410,19 +516,17 @@ public final class TsumegoAiActivity extends Activity {
                 thinking = false;
                 if (move == null || !limits.contains(move.x, move.y)
                         || !position.isLegalMove(move, side)) {
-                    message.setTextColor(0xFFFFC18A);
-                    message.setText("AI应手暂不可用：" + failure
-                            + " 可重开题目重试。");
-                    board.setInputEnabled(false);
-                    hint.setEnabled(false);
+                    finishUnresolved("AI在当前攻防区找不到合法可靠的应手："
+                            + (failure == null ? "候选已失效" : failure));
                     return;
                 }
                 position.playMove(new Move.Stone(move, side));
+                updateSgfPath(move, side);
                 aiMoves++;
                 board.setLastMove(move);
                 board.setBoard(position);
                 renderHeading();
-                if (checkCaptured()) return;
+                if (checkRoundFinished()) return;
                 board.setInputEnabled(true);
                 hint.setEnabled(true);
                 message.setTextColor(0xFFE4EADC);
@@ -494,7 +598,8 @@ public final class TsumegoAiActivity extends Activity {
                         + "\nAI落子限制在原题正解附近的局部攻防区；"
                         + "如果局部没有合适着手，会停止而非跑去别处下。"
                         + "\n原 SGF 只注明谁先行，没有把做活或杀棋写成可切换的两种目标。"
-                        + " 本模式统一探索该局面的正确变化，不切换题目目标。"
+                        + " 本模式追踪原 SGF 正解、实际提子和两只严格的单点真眼。"
+                        + " 24 手内仍未得到明确结果，则结束本轮并提示结论未定。"
                         + "\n金圈=观察棋块，小圆点=最近落子；点击己方棋子可更换观察棋块。")
                 .setPositiveButton("知道了", null).show();
     }
