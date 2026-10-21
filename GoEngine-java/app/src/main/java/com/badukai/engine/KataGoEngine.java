@@ -1244,6 +1244,30 @@ public class KataGoEngine {
         return simpleCommand("clear_board", 5000);
     }
 
+    /**
+     * KataGo's official GTP extension for whole-board SGF setup positions.
+     * Unlike a succession of play commands, this does not invent game history
+     * or accidentally capture stones while placing the initial black/white setup.
+     */
+    public boolean setTrainingPosition(GoBoard board) {
+        if (board == null || board.getSize() != configuredBoardSize || !isReady())
+            return false;
+        StringBuilder cmd = new StringBuilder("set_position");
+        int size = board.getSize();
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                Intersection stone = board.get(x, y);
+                if (stone == Intersection.EMPTY) continue;
+                String vertex = new com.badukai.game.Point(x, y).toGtp(size);
+                if (vertex == null) return false;
+                cmd.append(stone == Intersection.BLACK ? " B " : " W ").append(vertex);
+            }
+        }
+        return simpleCommand(cmd.toString(), 10000);
+    }
+
+
+
     public boolean setKomi(float komi) {
         DebugLog.enter(TAG, "setKomi in, komi=" + komi);
         return simpleCommand("komi " + komi, 5000);
@@ -1285,6 +1309,39 @@ public class KataGoEngine {
      * Results use the requested player's perspective (scoreLead includes komi).
      */
     public List<SearchRecommendation> searchRecommendations(String player, int visits, double seconds) {
+        return searchRecommendationsRestricted(player, visits, seconds, "");
+    }
+
+    /**
+     * MCTS only among moves in the puzzle's original SGF corner viewport.
+     * The board and neural evaluation remain a genuine full 19x19 position.
+     * Restriction is used for both sides in the first four search plies.
+     */
+    public List<SearchRecommendation> searchLocalRecommendations(String player, int visits,
+            double seconds, GoBoard board, int left, int top, int width) {
+        if (board == null || left < 0 || top < 0 || width < 2
+                || left + width > board.getSize() || top + width > board.getSize())
+            return Collections.emptyList();
+        boolean black = "black".equals(player), white = "white".equals(player);
+        if (!black && !white) return Collections.emptyList();
+        StringBuilder vertices = new StringBuilder();
+        com.badukai.game.StoneColor side = black
+                ? com.badukai.game.StoneColor.BLACK : com.badukai.game.StoneColor.WHITE;
+        for (int y = top; y < top + width; y++) {
+            for (int x = left; x < left + width; x++) {
+                com.badukai.game.Point at = new com.badukai.game.Point(x, y);
+                if (!board.isLegalMove(at, side)) continue;
+                if (vertices.length() > 0) vertices.append(',');
+                vertices.append(at.toGtp(board.getSize()));
+            }
+        }
+        if (vertices.length() == 0) return Collections.emptyList();
+        String options = " allow " + (black ? "B" : "W") + " " + vertices + " 4";
+        return searchRecommendationsRestricted(player, visits, seconds, options);
+    }
+
+    private List<SearchRecommendation> searchRecommendationsRestricted(
+            String player, int visits, double seconds, String options) {
         DebugLog.enter(TAG, "searchRecommendations in, player=" + player + ", visits=" + visits + ", seconds=" + seconds);
         if (!isReady() || (!"black".equals(player) && !"white".equals(player))
                 || visits < 1 || !Double.isFinite(seconds) || seconds <= 0.0) return Collections.emptyList();
@@ -1303,7 +1360,8 @@ public class KataGoEngine {
             // Unlike genmove_analyze, kata-search_analyze does not play the chosen move.
             // It terminates automatically at the configured search limit.
             responseQueue.clear();
-            if (!sendCommandSync("kata-search_analyze " + player + " 50 minmoves 3 maxmoves 3")) return Collections.emptyList();
+            if (!sendCommandSync("kata-search_analyze " + player
+                    + " 50 minmoves 3 maxmoves 3" + options)) return Collections.emptyList();
             String response = waitForResponse(45000);
             if (!response.startsWith("=")) {
                 Log.e(TAG, "kata-search_analyze failed: " + response.trim());
