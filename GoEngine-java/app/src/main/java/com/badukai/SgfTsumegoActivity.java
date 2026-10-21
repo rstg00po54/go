@@ -667,19 +667,87 @@ public final class SgfTsumegoActivity extends Activity {
         });
     }
 
-    /** Lazily reuse one isolated CPU PIE GTP process only when AI is needed. */
-    private KataGoEngine ensureAiEngine() throws Exception {
-        if (aiEngine != null && aiEngine.isReady()) return aiEngine;
+    /**
+     * Each training Activity runs in :tsumego (a separate Android process).
+     * Only initialize this 19x19 KataGo 10b session when a real AI analysis
+     * is requested, so normal SGF training consumes no NPU memory.
+     */
+    private KataGoEngine startAiSession(KataGoEngine.BackendPreference requested)
+            throws Exception {
         if (aiEngine != null) aiEngine.stop();
-        KataGoEngine session = new KataGoEngine(getApplicationContext(), "engine_tsumego_ai");
+        aiEngine = null;
+        KataGoEngine session = new KataGoEngine(getApplicationContext(),
+                "engine_tsumego_ai", true);
         aiEngine = session;
         session.setStartupBoardSize(19);
+        session.setBackendPreference(requested);
         if (!session.start(KataGoEngine.Model.HUMAN)
                 || !session.setBoardSize(19)
                 || !session.setChineseRules()
-                || !session.setKomi(0f))
-            throw new IllegalStateException("KataGo 10b CPU 引擎启动失败");
+                || !session.setKomi(0f)) {
+            session.stop();
+            throw new IllegalStateException("KataGo 10b 19路引擎初始化失败："
+                    + requested);
+        }
+        android.util.Log.i("SgfTsumego", "TSUMEGO_AI_BACKEND requested="
+                + requested + " actual=" + session.getBackendName()
+                + " npu=" + session.usesNpuBackend()
+                + " board=" + session.getActiveNpuBoardSize());
         return session;
+    }
+
+    private KataGoEngine ensureAiEngine() throws Exception {
+        if (aiEngine != null && aiEngine.isReady()) return aiEngine;
+        if (KataGoEngine.supportsRknnHardware()) {
+            try {
+                return startAiSession(KataGoEngine.BackendPreference.NPU);
+            } catch (Exception | LinkageError failure) {
+                android.util.Log.w("SgfTsumego",
+                        "TSUMEGO_AI_NPU_START_FAILED falling back to CPU", failure);
+            }
+        }
+        return startAiSession(KataGoEngine.BackendPreference.CPU);
+    }
+
+    private String actualAiBackend() {
+        KataGoEngine session = aiEngine;
+        if (session == null || !session.isReady()) return "引擎不可用";
+        if (session.usesNpuBackend()) return "RK3588 NPU/RKNN";
+        return "CPU（" + session.getBackendName() + "）";
+    }
+
+    /**
+     * Single worker-thread entry for hint and wrong-move refutation.
+     * Retry exactly once on CPU if an active RKNN session fails to accept the
+     * position or returns no usable local candidates. Never claim NPU use if
+     * the engine auto-fell back during native initialization.
+     */
+    private List<KataGoEngine.SearchRecommendation> searchAi(
+            GoBoard snapshot, StoneColor side, int visits, double seconds, Rect area)
+            throws Exception {
+        KataGoEngine session = ensureAiEngine();
+        try {
+            if (!session.setTrainingPosition(snapshot))
+                throw new IllegalStateException("KataGo 未能同步死活题棋形");
+            List<KataGoEngine.SearchRecommendation> results =
+                    session.searchLocalRecommendations(side.toGtp(), visits, seconds,
+                            snapshot, area.left, area.top, area.right, area.bottom);
+            if (!results.isEmpty() || !session.usesNpuBackend()) return results;
+            android.util.Log.w("SgfTsumego",
+                    "TSUMEGO_AI_NPU_EMPTY_RESULTS trying CPU search once");
+        } catch (Exception | LinkageError failure) {
+            if (!session.usesNpuBackend()) {
+                if (failure instanceof Exception) throw (Exception) failure;
+                throw new IllegalStateException("CPU GTP error", failure);
+            }
+            android.util.Log.w("SgfTsumego",
+                    "TSUMEGO_AI_NPU_SEARCH_FAILED trying CPU once", failure);
+        }
+        session = startAiSession(KataGoEngine.BackendPreference.CPU);
+        if (!session.setTrainingPosition(snapshot))
+            throw new IllegalStateException("CPU 回退后仍无法同步棋形");
+        return session.searchLocalRecommendations(side.toGtp(), visits, seconds,
+                snapshot, area.left, area.top, area.right, area.bottom);
     }
 
     /**
