@@ -85,8 +85,13 @@ if [[ "${REQUIRE_HUMAN_RKNN_MULTISIZE:-0}" == 1 ]]; then
     echo "Building full RK3588 Human b18 NPU APK with 9x9/13x13/19x19 verified model assets"
 fi
 BUILD_GPU_JNI=true
-# Rockchip's packaged v2.3.2 Android runtime is 4 KB aligned. This is a
-# deliberate opt-in for 4 KB-page RK3588 Android builds only.
+# RK3588 Android boards use 4 KB pages and the bundled Rockchip v2.3.2
+# librknnrt.so is only 4 KB ELF-aligned. Automatically allow this known
+# exception for --rk3588; never enable it by default for Vivo/other builds.
+# ALLOW_4K_RKNN_RUNTIME=0 explicitly opts out of this default.
+if [[ "$PROFILE" == rk3588 && -z "${ALLOW_4K_RKNN_RUNTIME+x}" ]]; then
+    ALLOW_4K_RKNN_RUNTIME=1
+fi
 if [[ "${ALLOW_4K_RKNN_RUNTIME:-0}" == 1 ]]; then
     GRADLE_ARGS+=("-Pallow4kRknnRuntime=true")
     echo "WARNING: building RK3588 4 KB-page test APK; NOT compatible with 16 KB page-size devices"
