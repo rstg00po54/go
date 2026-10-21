@@ -807,17 +807,14 @@ public final class SgfTsumegoActivity extends Activity {
             return;
         }
         aiWorker.execute(() -> {
+            final long startedNs = System.nanoTime();
             String failure = null;
             List<Point> planned = new ArrayList<>();
             List<StoneColor> sides = new ArrayList<>();
             try {
-                KataGoEngine engine = ensureAiEngine();
                 if (destroyed || serial != aiSerial) return;
-                if (!engine.setTrainingPosition(snapshot))
-                    throw new IllegalStateException("KataGo 未能装载你的试下局面");
                 List<KataGoEngine.SearchRecommendation> options =
-                        engine.searchLocalRecommendations(defender.toGtp(), 112, 5.0,
-                                snapshot, area.left, area.top, area.right, area.bottom);
+                        searchAi(snapshot, defender, 112, 5.0, area);
                 for (KataGoEngine.SearchRecommendation option : options) {
                     GoBoard trial = snapshot.copyForPreview();
                     List<String> pv = option.pvMoves;
@@ -839,8 +836,13 @@ public final class SgfTsumegoActivity extends Activity {
                 android.util.Log.w("SgfTsumego", "Inline AI refutation failed", e);
             }
             final String result = failure;
+            final String backendInfo = actualAiBackend() + "，总耗时"
+                    + ((System.nanoTime() - startedNs) / 1000000L) + "ms";
+            android.util.Log.i("SgfTsumego", "TSUMEGO_AI_ANALYSIS type=refutation "
+                    + backendInfo + " moves=" + planned.size());
             handler.post(() -> {
                 if (destroyed || serial != aiSerial || expectedRound != round) return;
+                aiRunInfo = backendInfo;
                 if (planned.isEmpty()) {
                     finishWrongVariation(result == null ? "AI没有返回合法应手。" : result);
                 } else {
