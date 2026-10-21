@@ -15,6 +15,10 @@
             android:scaleType="centerCrop"
             android:importantForAccessibility="no"
             android:contentDescription="竹林书房与围棋雅室" />
+        <View android:id="@+id/homeTopShade"
+            android:layout_width="1dp" android:layout_height="1dp"
+            android:importantForAccessibility="no"
+            android:background="@drawable/jade_home_scrim"/>
         <TextView android:id="@+id/homeTitle"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="竹隐 · 围棋" android:textColor="#FFF4D8"
@@ -23,9 +27,15 @@
             android:shadowDx="1" android:shadowDy="2"/>
         <TextView android:id="@+id/homeSubtitle"
             android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="离线 AI · 本地对弈" android:textColor="#F5DFAD"
+            android:text="一局一境 · 棋落竹影" android:textColor="#F5DFAD"
             android:textSize="15sp" android:shadowColor="#BB000000"
             android:shadowRadius="3"/>
+        <TextView android:id="@+id/homeLocalBadge"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:background="@drawable/jade_home_badge"
+            android:gravity="center" android:paddingStart="10dp" android:paddingEnd="10dp"
+            android:singleLine="true" android:text="本地 KataGo · 离线对弈"
+            android:textColor="#254D3A" android:textSize="12sp"/>
         <Button android:id="@+id/aiBattleButton"
             android:layout_width="1dp" android:layout_height="1dp"
             android:background="@android:color/transparent"
@@ -62,10 +72,9 @@
             android:textSize="13sp"
             android:contentDescription="设置"
             android:padding="0dp" android:stateListAnimator="@null" />
-        <ImageView android:id="@+id/homeNavBarArtwork"
+        <com.badukai.ui.JadeBottomNavView android:id="@+id/homeNavBarArtwork"
             android:layout_width="1dp" android:layout_height="1dp"
-            android:scaleType="fitCenter" android:importantForAccessibility="no"
-            android:contentDescription="翡翠底部导航栏" />
+            android:contentDescription="翡翠公共底部导航栏"/>
         <Button android:id="@+id/homeTabButton"
             android:layout_width="1dp" android:layout_height="1dp"
             android:background="@android:color/transparent"
@@ -74,7 +83,7 @@
             android:textColor="#FFF0CB"
             android:textSize="13sp"
             android:contentDescription="首页"
-            android:padding="0dp" android:stateListAnimator="@null" />
+            android:padding="0dp" android:visibility="gone" android:stateListAnimator="@null" />
         <Button android:id="@+id/homeGameTabButton"
             android:layout_width="1dp" android:layout_height="1dp"
             android:background="@android:color/transparent"
@@ -83,7 +92,7 @@
             android:textColor="#FFF0CB"
             android:textSize="13sp"
             android:contentDescription="对弈"
-            android:padding="0dp" android:stateListAnimator="@null" />
+            android:padding="0dp" android:visibility="gone" android:stateListAnimator="@null" />
         <Button android:id="@+id/homeRecordTabButton"
             android:layout_width="1dp" android:layout_height="1dp"
             android:background="@android:color/transparent"
@@ -92,7 +101,7 @@
             android:textColor="#FFF0CB"
             android:textSize="13sp"
             android:contentDescription="棋谱"
-            android:padding="0dp" android:stateListAnimator="@null" />
+            android:padding="0dp" android:visibility="gone" android:stateListAnimator="@null" />
         <Button android:id="@+id/homeTrainingTabButton"
             android:layout_width="1dp" android:layout_height="1dp"
             android:background="@android:color/transparent"
@@ -101,7 +110,7 @@
             android:textColor="#FFF0CB"
             android:textSize="13sp"
             android:contentDescription="训练"
-            android:padding="0dp" android:stateListAnimator="@null" />
+            android:padding="0dp" android:visibility="gone" android:stateListAnimator="@null" />
         <Button android:id="@+id/homeSettingsTabButton"
             android:layout_width="1dp" android:layout_height="1dp"
             android:background="@android:color/transparent"
@@ -110,377 +119,438 @@
             android:textColor="#FFF0CB"
             android:textSize="13sp"
             android:contentDescription="设置"
-            android:padding="0dp" android:stateListAnimator="@null" />
+            android:padding="0dp" android:visibility="gone" android:stateListAnimator="@null" />
     </com.badukai.ui.GoHomeTouchLayout>
 
-    <LinearLayout
-        android:id="@+id/gamePageContainer"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/txwq_game_bg"
-        android:orientation="vertical"
-        android:visibility="gone">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="54dp"
-            android:background="#E6F5EF"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp">
+    <!-- Jade game screen v1: artwork supplies decoration; actual GoBoardView remains interactive. -->
+    <FrameLayout android:id="@+id/gamePageContainer"
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:background="#051E18" android:visibility="gone">
+        <ImageView android:id="@+id/gameBackdrop"
+            android:layout_width="match_parent" android:layout_height="match_parent"
+            android:scaleType="centerCrop" android:importantForAccessibility="no"/>
+        <View android:layout_width="match_parent" android:layout_height="match_parent"
+            android:background="@drawable/jade_forest_scrim"
+            android:importantForAccessibility="no"/>
 
-            <Button
-                android:id="@+id/backButton"
-                android:layout_width="52dp"
-                android:layout_height="48dp"
-                android:background="@android:color/transparent"
-                android:text="←"
-                android:textAllCaps="false"
-                android:textColor="#4B8D6B"
-                android:textSize="28sp" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+            android:orientation="vertical">
+            <!-- Scroll the game details, not the board smaller. The bottom navigation
+                 remains visible even on the shorter 1080x1920 RK3588 display. -->
+            <ScrollView android:id="@+id/gameContentScroll"
+                android:layout_width="match_parent" android:layout_height="0dp"
+                android:layout_weight="1" android:fillViewport="false"
+                android:scrollbars="none" android:clipToPadding="false">
+                <LinearLayout android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:orientation="vertical"
+                    android:paddingTop="4dp">
+            <!-- Jade title plaque -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="52dp"
+                android:gravity="center_vertical" android:paddingStart="10dp" android:paddingEnd="10dp"
+                android:orientation="horizontal">
+                <Button android:id="@+id/backButton" android:layout_width="38dp"
+                    android:layout_height="38dp" android:background="@drawable/btn_round_back"
+                    android:text="" android:contentDescription="返回首页" android:stateListAnimator="@null"/>
+                <TextView android:layout_width="0dp" android:layout_weight="1"
+                    android:layout_marginStart="13dp" android:layout_marginEnd="13dp"
+                    android:layout_height="46dp" android:gravity="center"
+                    android:background="@drawable/jade_dark_title"
+                    android:text="人 机 对 弈" android:textColor="#173C2E"
+                    android:textStyle="bold" android:fontFamily="serif" android:textSize="20sp"/>
+                <Button android:id="@+id/newGameButton" android:layout_width="38dp"
+                    android:layout_height="38dp" android:background="@drawable/btn_round_settings"
+                    android:text="" android:contentDescription="新局设置" android:stateListAnimator="@null"/>
+            </LinearLayout>
+            <!-- Compact four-fact banner: 34dp icons beside 21+16dp text columns. -->
+            <LinearLayout android:layout_width="match_parent"
+                android:layout_height="62dp" android:orientation="horizontal"
+                android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
+                android:layout_marginTop="3dp" android:layout_marginBottom="4dp"
+                android:paddingStart="5dp" android:paddingEnd="5dp"
+                android:background="@drawable/jade_dark_card">
+                <!-- The PNG and both text lines use the same fixed start;
+                     the dynamic value no longer changes the icon's x-coordinate. -->
+                <LinearLayout android:layout_width="0dp"
+                    android:layout_height="match_parent" android:layout_weight="1"
+                    android:orientation="horizontal" android:gravity="center_vertical"
+                    android:paddingStart="1dp" android:paddingEnd="0dp">
+                    <ImageView android:layout_width="34dp" android:layout_height="34dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginEnd="3dp" android:scaleType="fitCenter"
+                        android:src="@drawable/ic_board_grid_gold"
+                        android:contentDescription="棋盘大小图标"
+                        android:importantForAccessibility="no"/>
+                    <LinearLayout android:layout_width="0dp"
+                        android:layout_weight="1" android:layout_height="wrap_content"
+                        android:orientation="vertical" android:gravity="start">
+                        <TextView android:id="@+id/gameTitleText"
+                            android:layout_width="match_parent" android:layout_height="21dp"
+                            android:gravity="start|center_vertical"
+                            android:text="11×11" android:textColor="#F4E2B1"
+                            android:textSize="11sp" android:textStyle="bold"
+                            android:singleLine="true" android:ellipsize="end"/>
+                        <TextView android:layout_width="match_parent"
+                            android:layout_height="16dp" android:gravity="start|center_vertical"
+                            android:text="棋盘大小" android:textColor="#BED4C5"
+                            android:textSize="9sp" android:singleLine="true"/>
+                    </LinearLayout>
+                </LinearLayout>
+                <View android:layout_width="1dp"
+                    android:layout_height="38dp" android:layout_gravity="center_vertical"
+                    android:background="#627D6C" android:importantForAccessibility="no"/>
+                <!-- The PNG and both text lines use the same fixed start;
+                     the dynamic value no longer changes the icon's x-coordinate. -->
+                <LinearLayout android:layout_width="0dp"
+                    android:layout_height="match_parent" android:layout_weight="1"
+                    android:orientation="horizontal" android:gravity="center_vertical"
+                    android:paddingStart="1dp" android:paddingEnd="0dp">
+                    <ImageView android:layout_width="34dp" android:layout_height="34dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginEnd="3dp" android:scaleType="fitCenter"
+                        android:src="@drawable/ic_robot_ivory"
+                        android:contentDescription="对弈模式图标"
+                        android:importantForAccessibility="no"/>
+                    <LinearLayout android:layout_width="0dp"
+                        android:layout_weight="1" android:layout_height="wrap_content"
+                        android:orientation="vertical" android:gravity="start">
+                        <TextView android:id="@+id/gameModeSummaryText"
+                            android:layout_width="match_parent" android:layout_height="21dp"
+                            android:gravity="start|center_vertical"
+                            android:text="人机对弈" android:textColor="#F4E2B1"
+                            android:textSize="11sp" android:textStyle="bold"
+                            android:singleLine="true" android:ellipsize="end"/>
+                        <TextView android:layout_width="match_parent"
+                            android:layout_height="16dp" android:gravity="start|center_vertical"
+                            android:text="对弈模式" android:textColor="#BED4C5"
+                            android:textSize="9sp" android:singleLine="true"/>
+                    </LinearLayout>
+                </LinearLayout>
+                <View android:layout_width="1dp"
+                    android:layout_height="38dp" android:layout_gravity="center_vertical"
+                    android:background="#627D6C" android:importantForAccessibility="no"/>
+                <!-- The PNG and both text lines use the same fixed start;
+                     the dynamic value no longer changes the icon's x-coordinate. -->
+                <LinearLayout android:layout_width="0dp"
+                    android:layout_height="match_parent" android:layout_weight="1"
+                    android:orientation="horizontal" android:gravity="center_vertical"
+                    android:paddingStart="1dp" android:paddingEnd="0dp">
+                    <ImageView android:layout_width="34dp" android:layout_height="34dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginEnd="3dp" android:scaleType="fitCenter"
+                        android:src="@drawable/ic_difficulty_gold"
+                        android:contentDescription="AI难度图标"
+                        android:importantForAccessibility="no"/>
+                    <LinearLayout android:layout_width="0dp"
+                        android:layout_weight="1" android:layout_height="wrap_content"
+                        android:orientation="vertical" android:gravity="start">
+                        <TextView android:id="@+id/gameRankSummaryText"
+                            android:layout_width="match_parent" android:layout_height="21dp"
+                            android:gravity="start|center_vertical"
+                            android:text="12级" android:textColor="#F4E2B1"
+                            android:textSize="11sp" android:textStyle="bold"
+                            android:singleLine="true" android:ellipsize="end"/>
+                        <TextView android:layout_width="match_parent"
+                            android:layout_height="16dp" android:gravity="start|center_vertical"
+                            android:text="AI难度" android:textColor="#BED4C5"
+                            android:textSize="9sp" android:singleLine="true"/>
+                    </LinearLayout>
+                </LinearLayout>
+                <View android:layout_width="1dp"
+                    android:layout_height="38dp" android:layout_gravity="center_vertical"
+                    android:background="#627D6C" android:importantForAccessibility="no"/>
+                <!-- The PNG and both text lines use the same fixed start;
+                     the dynamic value no longer changes the icon's x-coordinate. -->
+                <LinearLayout android:layout_width="0dp"
+                    android:layout_height="match_parent" android:layout_weight="1"
+                    android:orientation="horizontal" android:gravity="center_vertical"
+                    android:paddingStart="1dp" android:paddingEnd="0dp">
+                    <ImageView android:layout_width="34dp" android:layout_height="34dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginEnd="3dp" android:scaleType="fitCenter"
+                        android:src="@drawable/ic_npu_ivory"
+                        android:contentDescription="本地推理图标"
+                        android:importantForAccessibility="no"/>
+                    <LinearLayout android:layout_width="0dp"
+                        android:layout_weight="1" android:layout_height="wrap_content"
+                        android:orientation="vertical" android:gravity="start">
+                        <TextView android:id="@+id/gameBackendSummaryText"
+                            android:layout_width="match_parent" android:layout_height="21dp"
+                            android:gravity="start|center_vertical"
+                            android:text="NPU" android:textColor="#F4E2B1"
+                            android:textSize="11sp" android:textStyle="bold"
+                            android:singleLine="true" android:ellipsize="end"/>
+                        <TextView android:layout_width="match_parent"
+                            android:layout_height="16dp" android:gravity="start|center_vertical"
+                            android:text="本地推理" android:textColor="#BED4C5"
+                            android:textSize="9sp" android:singleLine="true"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+            <!-- White/black captures flank the real NN win rate. Keep role-based
+                 stone IDs and result IDs so either human color remains correct. -->
+            <LinearLayout android:id="@+id/gameStatsPanel"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
+                android:layout_marginBottom="5dp" android:padding="4dp"
+                android:orientation="vertical" android:background="@drawable/jade_dark_card">
+                <LinearLayout android:layout_width="match_parent"
+                    android:layout_height="60dp" android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <!-- Captures for AI's stone color (black or white). -->
+                    <LinearLayout android:layout_width="0dp"
+                        android:layout_height="match_parent" android:layout_weight="1"
+                        android:gravity="center" android:orientation="vertical">
+                        <View android:id="@+id/aiStoneView"
+                            android:layout_width="25dp" android:layout_height="25dp"
+                            android:background="@drawable/txwq_white_stone"/>
+                        <TextView android:id="@+id/aiCaptureText"
+                            android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp" android:gravity="center"
+                            android:singleLine="true" android:ellipsize="end"
+                            android:text="白棋提子 0" android:textSize="10sp"
+                            android:textColor="#E7ECDD"/>
+                    </LinearLayout>
 
-            <TextView
-                android:id="@+id/gameTitleText"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="19路对局　常见问题　　第1手"
-                android:textColor="#286B48"
-                android:textSize="18sp" />
+                    <View android:layout_width="1dp" android:layout_height="43dp"
+                        android:background="#647B67"/>
+                    <!-- The actual live win rate is exactly between the stones. -->
+                    <LinearLayout android:layout_width="0dp"
+                        android:layout_height="match_parent" android:layout_weight="1.42"
+                        android:gravity="center" android:orientation="vertical"
+                        android:paddingStart="5dp" android:paddingEnd="5dp">
+                        <TextView android:id="@+id/playerWinRateText"
+                            android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:gravity="center" android:text="黑胜率 --%"
+                            android:textColor="#F6D47A" android:textSize="16sp"
+                            android:textStyle="bold" android:singleLine="true"
+                            android:ellipsize="end"/>
+                        <TextView android:id="@+id/aiWinRateText"
+                            android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:layout_marginTop="1dp" android:gravity="center"
+                            android:text="白胜率 --%" android:textColor="#D6E0D4"
+                            android:textSize="10sp" android:singleLine="true"/>
+                        <ProgressBar android:id="@+id/winRateProgress"
+                            style="?android:attr/progressBarStyleHorizontal"
+                            android:layout_width="match_parent" android:layout_height="6dp"
+                            android:layout_marginTop="4dp"
+                            android:max="1000" android:progress="500" android:clickable="true"
+                            android:contentDescription="点击查看真实胜率曲线"
+                            android:progressDrawable="@drawable/jade_winrate_progress"/>
+                    </LinearLayout>
+                    <View android:layout_width="1dp" android:layout_height="43dp"
+                        android:background="#647B67"/>
 
-            <Button
-                android:id="@+id/newGameButton"
-                android:layout_width="52dp"
-                android:layout_height="48dp"
-                android:background="@android:color/transparent"
-                android:text="⚙"
-                android:textAllCaps="false"
-                android:textColor="#4B8D6B"
-                android:textSize="24sp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="88dp"
-            android:background="#CFECE0"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="10dp"
-            android:paddingEnd="10dp">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:orientation="vertical">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <View
-                        android:layout_width="22dp"
-                        android:layout_height="22dp"
-                        android:layout_marginEnd="2dp"
-                        android:id="@+id/aiStoneView"
-                        android:background="@drawable/txwq_white_stone" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:ellipsize="end"
-                        android:maxLines="1"
-                        android:text="围棋精灵"
-                        android:textColor="#286B48"
-                        android:textSize="16sp" />
+                    <!-- Captures for the user's stone color. -->
+                    <LinearLayout android:layout_width="0dp"
+                        android:layout_height="match_parent" android:layout_weight="1"
+                        android:gravity="center" android:orientation="vertical">
+                        <View android:id="@+id/playerStoneView"
+                            android:layout_width="25dp" android:layout_height="25dp"
+                            android:background="@drawable/txwq_black_stone"/>
+                        <TextView android:id="@+id/playerCaptureText"
+                            android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp" android:gravity="center"
+                            android:singleLine="true" android:ellipsize="end"
+                            android:text="黑棋提子 0" android:textSize="10sp"
+                            android:textColor="#E7ECDD"/>
+                    </LinearLayout>
                 </LinearLayout>
 
-                <TextView
-                    android:id="@+id/aiDifficultyText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="start"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:text="简单 · 20次/0.4秒"
-                    android:textColor="#286B48"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:id="@+id/aiCaptureText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="start"
-                    android:text="白棋提子 0"
-                    android:textColor="#5B7B69"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:id="@+id/aiWinRateText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="start"
-                    android:singleLine="true"
-                    android:text="白胜率 --%"
-                    android:textColor="#276949"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:id="@+id/aiMoveTimeText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="start"
-                    android:singleLine="true"
-                    android:text="本手用时 --"
-                    android:textColor="#5B7B69"
-                    android:textSize="11sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="100dp"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/statusText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:maxLines="2"
-                    android:text="正在启动 AI..."
-                    android:textColor="#A16B50"
-                    android:textSize="13sp" />
-
-                <TextView
-                    android:id="@+id/nnAreaScoreText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:singleLine="true"
-                    android:text="黑 -- · 白 --"
-                    android:textColor="#5B7B69"
-                    android:textSize="10sp"
-                    android:visibility="gone" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center_vertical|end"
-                android:orientation="vertical">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical|end"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:ellipsize="end"
-                        android:gravity="end"
-                        android:maxLines="1"
-                        android:text="安静01006"
-                        android:textColor="#286B48"
-                        android:textSize="16sp" />
-
-                    <View
-                        android:layout_width="22dp"
-                        android:layout_height="22dp"
-                        android:layout_marginStart="2dp"
-                        android:id="@+id/playerStoneView"
-                        android:background="@drawable/txwq_black_stone" />
+                <View android:layout_width="match_parent" android:layout_height="1dp"
+                    android:background="#547B6856" android:layout_marginTop="1dp"/>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="23dp"
+                    android:orientation="horizontal" android:gravity="center_vertical">
+                    <TextView android:id="@+id/gameMoveCountText"
+                        android:layout_width="0dp" android:layout_weight="0.55"
+                        android:layout_height="wrap_content" android:gravity="center"
+                        android:text="第 0 手" android:textColor="#F6D47A"
+                        android:textStyle="bold" android:textSize="11sp" android:singleLine="true"/>
+                    <TextView android:id="@+id/statusText"
+                        android:layout_width="0dp" android:layout_weight="2.35"
+                        android:layout_height="wrap_content" android:gravity="center"
+                        android:text="轮到你了" android:maxLines="1" android:ellipsize="end"
+                        android:textColor="#D3E8D4" android:textSize="10sp"/>
+                    <TextView android:id="@+id/aiMoveTimeText"
+                        android:layout_width="0dp" android:layout_weight="0.85"
+                        android:layout_height="wrap_content" android:gravity="center"
+                        android:text="本手用时 --" android:singleLine="true"
+                        android:textSize="9sp" android:textColor="#CFDBCB"/>
                 </LinearLayout>
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:ellipsize="end"
-                    android:gravity="end"
-                    android:maxLines="1"
-                    android:text="13级"
-                    android:textColor="#286B48"
-                    android:textSize="14sp" />
-
-                <TextView
-                    android:id="@+id/playerCaptureText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="end"
-                    android:text="黑棋提子 0"
-                    android:textColor="#5B7B69"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:id="@+id/playerWinRateText"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="end"
-                    android:singleLine="true"
-                    android:text="黑胜率 --%"
-                    android:textColor="#276949"
-                    android:textSize="12sp" />
+                <TextView android:id="@+id/nnAreaScoreText"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="黑 -- · 白 --" android:textColor="#F6D47A"
+                    android:textSize="9sp" android:gravity="center" android:visibility="gone"/>
             </LinearLayout>
+
+            <!-- Adaptive square board. A lower bar never shrinks the board's touch hitboxes. -->
+            <com.badukai.ui.JadeSquareBoardFrame android:id="@+id/boardFrame"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginStart="9dp" android:layout_marginEnd="9dp"
+                android:layout_marginBottom="2dp" android:padding="7dp"
+                android:background="@drawable/jade_game_wood_panel">
+                <com.badukai.ui.GoBoardView android:id="@+id/boardView"
+                    android:layout_width="match_parent" android:layout_height="match_parent"
+                    android:layout_gravity="center"/>
+            </com.badukai.ui.JadeSquareBoardFrame>
+            <!-- Two strictly equal rows of three compact buttons. All six use
+                 matching weights, heights, margins and text alignment. -->
+            <LinearLayout android:id="@+id/gameActionPanel"
+                android:layout_width="match_parent" android:layout_height="96dp"
+                android:layout_marginStart="10dp" android:layout_marginEnd="10dp"
+                android:layout_marginBottom="0dp" android:orientation="vertical">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="48dp"
+                    android:orientation="horizontal" android:gravity="center_vertical">
+                    <FrameLayout android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="42dp" android:layout_margin="3dp">
+                        <Button android:id="@+id/passButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:minWidth="0dp" android:minHeight="0dp"
+                        android:gravity="center" android:includeFontPadding="false"
+                        android:paddingStart="2dp" android:paddingEnd="2dp"
+                        android:text="停一手" android:textAllCaps="false"
+                        android:textColor="#214E3D" android:textSize="12sp" android:textStyle="bold"
+                        android:contentDescription="停一手"
+                        android:background="@drawable/jade_game_white_button"
+                        android:stateListAnimator="@null"/>
+                        <ImageView android:layout_width="18dp" android:layout_height="18dp"
+                            android:layout_gravity="start|center_vertical"
+                            android:layout_marginStart="8dp"
+                            android:src="@drawable/ic_pass_jade"
+                            android:scaleType="fitCenter"
+                            android:clickable="false" android:focusable="false"
+                            android:importantForAccessibility="no"
+                            android:contentDescription="@null"/>
+                    </FrameLayout>
+                    <FrameLayout android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="42dp" android:layout_margin="3dp">
+                        <Button android:id="@+id/undoButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:minWidth="0dp" android:minHeight="0dp"
+                        android:gravity="center" android:includeFontPadding="false"
+                        android:paddingStart="2dp" android:paddingEnd="2dp"
+                        android:text="悔棋" android:textAllCaps="false"
+                        android:textColor="#214E3D" android:textSize="12sp" android:textStyle="bold"
+                        android:contentDescription="悔棋"
+                        android:background="@drawable/jade_game_white_button"
+                        android:stateListAnimator="@null"/>
+                        <ImageView android:layout_width="18dp" android:layout_height="18dp"
+                            android:layout_gravity="start|center_vertical"
+                            android:layout_marginStart="8dp"
+                            android:src="@drawable/ic_undo_jade"
+                            android:scaleType="fitCenter"
+                            android:clickable="false" android:focusable="false"
+                            android:importantForAccessibility="no"
+                            android:contentDescription="@null"/>
+                    </FrameLayout>
+                    <FrameLayout android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="42dp" android:layout_margin="3dp">
+                        <Button android:id="@+id/situationButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:minWidth="0dp" android:minHeight="0dp"
+                        android:gravity="center" android:includeFontPadding="false"
+                        android:paddingStart="2dp" android:paddingEnd="2dp"
+                        android:text="形势" android:textAllCaps="false"
+                        android:textColor="#214E3D" android:textSize="12sp" android:textStyle="bold"
+                        android:contentDescription="形势"
+                        android:background="@drawable/jade_game_white_button"
+                        android:stateListAnimator="@null"/>
+                        <ImageView android:layout_width="18dp" android:layout_height="18dp"
+                            android:layout_gravity="start|center_vertical"
+                            android:layout_marginStart="8dp"
+                            android:src="@drawable/ic_territory_jade"
+                            android:scaleType="fitCenter"
+                            android:clickable="false" android:focusable="false"
+                            android:importantForAccessibility="no"
+                            android:contentDescription="@null"/>
+                    </FrameLayout>
+                </LinearLayout>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="48dp"
+                    android:orientation="horizontal" android:gravity="center_vertical">
+                    <FrameLayout android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="42dp" android:layout_margin="3dp">
+                        <Button android:id="@+id/aiSuggestionButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:minWidth="0dp" android:minHeight="0dp"
+                        android:gravity="center" android:includeFontPadding="false"
+                        android:paddingStart="2dp" android:paddingEnd="2dp"
+                        android:text="落子提示" android:textAllCaps="false"
+                        android:textColor="#214E3D" android:textSize="12sp" android:textStyle="bold"
+                        android:contentDescription="落子提示"
+                        android:background="@drawable/jade_game_white_button"
+                        android:stateListAnimator="@null"/>
+                        <ImageView android:layout_width="18dp" android:layout_height="18dp"
+                            android:layout_gravity="start|center_vertical"
+                            android:layout_marginStart="8dp"
+                            android:src="@drawable/ic_hint_gold"
+                            android:scaleType="fitCenter"
+                            android:clickable="false" android:focusable="false"
+                            android:importantForAccessibility="no"
+                            android:contentDescription="@null"/>
+                    </FrameLayout>
+                    <FrameLayout android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="42dp" android:layout_margin="3dp">
+                        <Button android:id="@+id/gameAnalysisButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:minWidth="0dp" android:minHeight="0dp"
+                        android:gravity="center" android:includeFontPadding="false"
+                        android:paddingStart="2dp" android:paddingEnd="2dp"
+                        android:text="AI分析" android:textAllCaps="false"
+                        android:textColor="#214E3D" android:textSize="12sp" android:textStyle="bold"
+                        android:contentDescription="AI分析"
+                        android:background="@drawable/jade_game_white_button"
+                        android:stateListAnimator="@null"/>
+                        <ImageView android:layout_width="18dp" android:layout_height="18dp"
+                            android:layout_gravity="start|center_vertical"
+                            android:layout_marginStart="8dp"
+                            android:src="@drawable/ic_analysis_jade"
+                            android:scaleType="fitCenter"
+                            android:clickable="false" android:focusable="false"
+                            android:importantForAccessibility="no"
+                            android:contentDescription="@null"/>
+                    </FrameLayout>
+                    <FrameLayout android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="42dp" android:layout_margin="3dp">
+                        <Button android:id="@+id/gameMoreButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:minWidth="0dp" android:minHeight="0dp"
+                        android:gravity="center" android:includeFontPadding="false"
+                        android:paddingStart="2dp" android:paddingEnd="2dp"
+                        android:text="更多" android:textAllCaps="false"
+                        android:textColor="#214E3D" android:textSize="12sp" android:textStyle="bold"
+                        android:background="@drawable/jade_game_white_button"
+                        android:stateListAnimator="@null"/>
+                    </FrameLayout>
+                </LinearLayout>
+            </LinearLayout>
+                </LinearLayout>
+            </ScrollView>
+            <!-- One real component for home, game, replay and training.
+                 Its highlight is state, not baked into a screenshot. -->
+            <com.badukai.ui.JadeBottomNavView android:id="@+id/gameSharedNav"
+                android:layout_width="match_parent" android:layout_height="96dp"
+                android:layout_marginStart="9dp" android:layout_marginEnd="9dp"
+                android:layout_marginBottom="0dp"/>
         </LinearLayout>
-
-        <com.badukai.ui.GoBoardView
-            android:id="@+id/boardView"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-
-        <GridLayout
-            android:id="@+id/gameActionPanel"
-            android:layout_width="match_parent"
-            android:layout_height="100dp"
-            android:background="#E2F4EE"
-            android:alignmentMode="alignBounds"
-            android:columnCount="4"
-            android:rowCount="2"
-            android:useDefaultMargins="false"
-            android:paddingStart="6dp"
-            android:paddingEnd="6dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp">
-
-            <Button
-                android:id="@+id/resignButton"
-                android:layout_width="0dp"
-                android:layout_height="42dp"
-                android:layout_columnWeight="1"
-                android:layout_margin="2dp"
-                android:minWidth="0dp"
-                android:minHeight="0dp"
-                android:padding="0dp"
-                android:singleLine="true"
-                android:background="@drawable/txwq_green_button"
-                android:text="认输"
-                android:textAllCaps="false"
-                android:textColor="#FFF4CB"
-                android:textSize="14sp" />
-
-            <Button
-                android:id="@+id/passButton"
-                android:layout_width="0dp"
-                android:layout_height="42dp"
-                android:layout_columnWeight="1"
-                android:layout_margin="2dp"
-                android:minWidth="0dp"
-                android:minHeight="0dp"
-                android:padding="0dp"
-                android:singleLine="true"
-                android:background="@drawable/txwq_green_button"
-                android:text="停一手"
-                android:textAllCaps="false"
-                android:textColor="#FFF4CB"
-                android:textSize="14sp" />
-
-            <Button
-                android:id="@+id/undoButton"
-                android:layout_width="0dp"
-                android:layout_height="42dp"
-                android:layout_columnWeight="1"
-                android:layout_margin="2dp"
-                android:minWidth="0dp"
-                android:minHeight="0dp"
-                android:padding="0dp"
-                android:singleLine="true"
-                android:background="@drawable/txwq_green_button"
-                android:text="悔棋"
-                android:textAllCaps="false"
-                android:textColor="#FFF4CB"
-                android:textSize="14sp" />
-
-            <Button
-                android:id="@+id/newRoundButton"
-                android:layout_width="0dp"
-                android:layout_height="42dp"
-                android:layout_columnWeight="1"
-                android:layout_margin="2dp"
-                android:minWidth="0dp"
-                android:minHeight="0dp"
-                android:padding="0dp"
-                android:singleLine="true"
-                android:background="@drawable/txwq_green_button"
-                android:text="新开一局"
-                android:textAllCaps="false"
-                android:textColor="#FFF4CB"
-                android:textSize="14sp" />
-
-            <Button
-                android:id="@+id/situationButton"
-                android:layout_width="0dp"
-                android:layout_height="42dp"
-                android:layout_columnWeight="1"
-                android:layout_margin="2dp"
-                android:minWidth="0dp"
-                android:minHeight="0dp"
-                android:padding="0dp"
-                android:singleLine="true"
-                android:background="@drawable/txwq_green_button"
-                android:text="形势"
-                android:textAllCaps="false"
-                android:textColor="#FFF4CB"
-                android:textSize="14sp" />
-
-            <Button
-                android:id="@+id/aiSuggestionButton"
-                android:layout_width="0dp"
-                android:layout_height="42dp"
-                android:layout_columnWeight="1"
-                android:layout_margin="2dp"
-                android:minWidth="0dp"
-                android:minHeight="0dp"
-                android:padding="0dp"
-                android:singleLine="true"
-                android:background="@drawable/txwq_green_button"
-                android:text="AI推荐"
-                android:textAllCaps="false"
-                android:textColor="#FFF4CB"
-                android:textSize="14sp" />
-
-            <Button
-                android:id="@+id/countTerritoryButton"
-                android:layout_width="0dp"
-                android:layout_height="42dp"
-                android:layout_columnWeight="1"
-                android:layout_margin="2dp"
-                android:minWidth="0dp"
-                android:minHeight="0dp"
-                android:padding="0dp"
-                android:singleLine="true"
-                android:background="@drawable/txwq_green_button"
-                android:text="智能裁判"
-                android:textAllCaps="false"
-                android:textColor="#FFF4CB"
-                android:textSize="14sp" />
-
-            <Button
-                android:id="@+id/variationButton"
-                android:layout_width="0dp"
-                android:layout_height="42dp"
-                android:layout_columnWeight="1"
-                android:layout_margin="2dp"
-                android:minWidth="0dp"
-                android:minHeight="0dp"
-                android:padding="0dp"
-                android:singleLine="true"
-                android:background="@drawable/txwq_green_button"
-                android:text="后续变化"
-                android:textAllCaps="false"
-                android:textColor="#FFF4CB"
-                android:textSize="14sp" />
-        </GridLayout>
-    </LinearLayout>
+        <!-- Keep handlers, enabled states and legacy features reachable from More. -->
+        <LinearLayout android:layout_width="1dp" android:layout_height="1dp"
+            android:orientation="vertical" android:visibility="gone">
+            <Button android:id="@+id/resignButton" android:layout_width="1dp" android:layout_height="1dp"
+ android:text="认输" android:visibility="gone"/>
+            <Button android:id="@+id/newRoundButton" android:layout_width="1dp" android:layout_height="1dp"
+ android:text="新开一局" android:visibility="gone"/>
+            <Button android:id="@+id/countTerritoryButton" android:layout_width="1dp" android:layout_height="1dp"
+ android:text="智能裁判" android:visibility="gone"/>
+            <Button android:id="@+id/variationButton" android:layout_width="1dp" android:layout_height="1dp"
+ android:text="后续变化" android:visibility="gone"/>
+            <TextView android:id="@+id/aiDifficultyText" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Human SL" android:textColor="#E9DDAF" android:textSize="10sp" android:visibility="gone"/>
+        </LinearLayout>
+    </FrameLayout>
 
 </FrameLayout>

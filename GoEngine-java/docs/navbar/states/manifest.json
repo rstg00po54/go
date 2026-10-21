@@ -1,0 +1,114 @@
+{
+  "iconFrameCenter": [
+    512,
+    362
+  ],
+  "labelCenter": [
+    512,
+    714
+  ],
+  "underlineY": 854,
+  "rule": "The selected version composites additional gold glow behind the exact, unmoved source icon + label.",
+  "files": [
+    {
+      "file": "home_normal.png",
+      "label": "首页",
+      "state": "normal",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "contentPositionUnchanged": true
+    },
+    {
+      "file": "home_selected.png",
+      "label": "首页",
+      "state": "selected",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "contentPositionUnchanged": true
+    },
+    {
+      "file": "record_normal.png",
+      "label": "棋谱",
+      "state": "normal",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "contentPositionUnchanged": true
+    },
+    {
+      "file": "record_selected.png",
+      "label": "棋谱",
+      "state": "selected",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "contentPositionUnchanged": true
+    },
+    {
+      "file": "game_normal.png",
+      "label": "对弈",
+      "state": "normal",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "contentPositionUnchanged": true
+    },
+    {
+      "file": "game_selected.png",
+      "label": "对弈",
+      "state": "selected",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "contentPositionUnchanged": true
+    },
+    {
+      "file": "training_normal.png",
+      "label": "训练",
+      "state": "normal",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "contentPositionUnchanged": true
+    },
+    {
+      "file": "training_selected.png",
+      "label": "训练",
+      "state": "selected",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "contentPositionUnchanged": true
+    },
+    {
+      "file": "settings_normal.png",
+      "label": "设置",
+      "state": "normal",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "contentPositionUnchanged": true
+    },
+    {
+      "file": "settings_selected.png",
+      "label": "设置",
+      "state": "selected",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "contentPositionUnchanged": true
+    }
+  ]
+}

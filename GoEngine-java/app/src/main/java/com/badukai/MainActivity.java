@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.BitmapFactory;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -77,6 +78,9 @@ public class MainActivity extends AppCompatActivity {
     // Accessed only on winRateExecutor, whose GTP process is independent of the playing engine.
     private boolean winRateSynchronized;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private boolean openNewGameOnResume;
+    private boolean resumeAfterEngineStartup;
+    private boolean restoringUnfinishedGame;
 
     private KataGoEngine engine;
     private KataGoEngine winRateEngine;
@@ -111,12 +115,18 @@ public class MainActivity extends AppCompatActivity {
     private GoBoard variationBoard;
     private int variationRank = -1;
     private String recommendationSummary;
+    private boolean liveAnalysisShowing;
+    private String liveAnalysisHeadline;
     private final List<Float> blackWinHistory = new ArrayList<>();
     private final List<Float> whiteWinHistory = new ArrayList<>();
     private long winRateEpoch;
 
     private View mainPageContainer;
     private View gamePageContainer;
+    private TextView gameMoveCountText;
+    private TextView gameModeSummaryText;
+    private TextView gameRankSummaryText;
+    private TextView gameBackendSummaryText;
     private GoBoardView boardView;
     private TextView statusText;
     private TextView nnAreaScoreText;
@@ -124,6 +134,7 @@ public class MainActivity extends AppCompatActivity {
     private GpuStartupLogProgress gpuProgressTracker;
     private int gpuStartupGeneration;
     private long gpuStartupStartedMs;
+    private android.widget.ProgressBar winRateProgress;
     private TextView aiWinRateText;
     private TextView aiMoveTimeText;
     private TextView playerWinRateText;
@@ -195,6 +206,8 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, "Game engine preference=" + (forceLegacy ? "PIE forced" : "JNI if bundled")
                 + "; preload boardSize=" + boardSize + "; backend=" + selectedBackend + "; winrate engine=PIE");
         bindViews();
+        setHomeImageArt(R.id.gameBackdrop, "home/background.png");
+        Log.i(TAG, "JADE_GAME_V1 nativeBoard=true artPack=25");
         // Each home UI element is a separate PNG (not a painted button hotspot).
         try (InputStream in = getAssets().open("home/background.png")) {
             ((ImageView) findViewById(R.id.homeArtwork))
@@ -206,13 +219,30 @@ public class MainActivity extends AppCompatActivity {
         setHomeButtonArt(R.id.homeRecordButton, "home/record.png");
         setHomeButtonArt(R.id.homeTrainingButton, "home/training.png");
         setHomeButtonArt(R.id.homeSettingsButton, "home/settings.png");
-        setHomeImageArt(R.id.homeNavBarArtwork, "home/navbar/bar.png");
         ((com.badukai.ui.GoHomeTouchLayout) mainPageContainer).refreshPositions();
-        findViewById(R.id.homeGameTabButton).setOnClickListener(v -> showNewGameDialog());
+        com.badukai.ui.JadeBottomNavView homeNav = findViewById(R.id.homeNavBarArtwork);
+        com.badukai.ui.JadeBottomNavView gameNav = findViewById(R.id.gameSharedNav);
+        homeNav.setSelectedTab(com.badukai.ui.JadeBottomNavView.HOME);
+        gameNav.setSelectedTab(com.badukai.ui.JadeBottomNavView.PLAY);
+        homeNav.setOnTabClickListener(tab -> {
+            if (tab == com.badukai.ui.JadeBottomNavView.HOME) showMainPage();
+            else if (tab == com.badukai.ui.JadeBottomNavView.PLAY) openPlayOrResume();
+            else if (tab == com.badukai.ui.JadeBottomNavView.RECORDS) openReplay();
+            else if (tab == com.badukai.ui.JadeBottomNavView.TRAINING) openTsumego();
+            else com.badukai.ui.JadeNavigation.open(this, tab);
+        });
+        gameNav.setOnTabClickListener(tab -> {
+            if (tab == com.badukai.ui.JadeBottomNavView.HOME) showMainPage();
+            else if (tab == com.badukai.ui.JadeBottomNavView.PLAY) openPlayOrResume();
+            else if (tab == com.badukai.ui.JadeBottomNavView.RECORDS) openReplay();
+            else if (tab == com.badukai.ui.JadeBottomNavView.TRAINING) openTsumego();
+            else com.badukai.ui.JadeNavigation.open(this, tab);
+        });
+        findViewById(R.id.homeGameTabButton).setOnClickListener(v -> openPlayOrResume());
         findViewById(R.id.homeTabButton).setOnClickListener(v -> showMainPage());
-        View.OnClickListener upcoming = v -> Toast.makeText(this, "功能开发中", Toast.LENGTH_SHORT).show();
         for (int id : new int[]{R.id.homeSettingsButton, R.id.homeSettingsTabButton}) {
-            findViewById(id).setOnClickListener(upcoming);
+            findViewById(id).setOnClickListener(v -> com.badukai.ui.JadeNavigation.open(
+                    this, com.badukai.ui.JadeBottomNavView.SETTINGS));
         }
         // Offline training is isolated from the live KataGo engine and match.
         findViewById(R.id.homeTrainingButton).setOnClickListener(v -> openTsumego());
@@ -227,6 +257,14 @@ public class MainActivity extends AppCompatActivity {
                 R.id.homeSettingsTabButton}) {
             View button = findViewById(id);
             button.setOnTouchListener((view, event) -> {
+                if (!getSharedPreferences("katago_settings", MODE_PRIVATE)
+                        .getBoolean("ui_animations", true)) {
+                    view.animate().cancel();
+                    view.setScaleX(1f);
+                    view.setScaleY(1f);
+                    view.setAlpha(1f);
+                    return false;
+                }
                 if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
                     view.animate().cancel();
                     view.animate().scaleX(0.95f).scaleY(0.95f)
@@ -244,7 +282,8 @@ public class MainActivity extends AppCompatActivity {
         boardView.setOnIntersectionClickListener(this::onBoardTap);
         aiWinRateText.setOnClickListener(v -> showWinRateChart());
         playerWinRateText.setOnClickListener(v -> showWinRateChart());
-        aiBattleButton.setOnClickListener(v -> showNewGameDialog());
+        winRateProgress.setOnClickListener(v -> showWinRateChart());
+        aiBattleButton.setOnClickListener(v -> openPlayOrResume());
         newGameButton.setOnClickListener(v -> showNewGameDialog());
         backButton.setOnClickListener(v -> showMainPage());
         undoButton.setOnClickListener(v -> undo());
@@ -255,8 +294,26 @@ public class MainActivity extends AppCompatActivity {
         aiSuggestionButton.setOnClickListener(v -> showAiSuggestions());
         countTerritoryButton.setOnClickListener(v -> showEndgameScoringOptions());
         variationButton.setOnClickListener(v -> showVariations());
+        findViewById(R.id.gameAnalysisButton).setOnClickListener(v -> showLiveAiAnalysis());
+        findViewById(R.id.gameMoreButton).setOnClickListener(this::showGameMoreMenu);
+        android.widget.ScrollView gameScroll = findViewById(R.id.gameContentScroll);
+        gameScroll.addOnLayoutChangeListener((view, left, top, right, bottom,
+                oldLeft, oldTop, oldRight, oldBottom) -> {
+            if (right - left != oldRight - oldLeft || bottom - top != oldBottom - oldTop)
+                view.post(this::fitGameBoardToViewport);
+        });
         render("正在启动 AI...");
         showMainPage();
+        if (getIntent() != null) {
+            if (getIntent().getBooleanExtra(NewGameActivity.EXTRA_START, false)) {
+                mainHandler.post(() -> startSelectedGame(getIntent()));
+            } else if (getIntent().getBooleanExtra("navigate_play", false)
+                    || getIntent().getBooleanExtra("navigate_resume_game", false)) {
+                resumeAfterEngineStartup = true;
+            } else if (getIntent().getBooleanExtra("navigate_new_game", false)) {
+                openNewGameOnResume = true;
+            }
+        }
         if (isRefereeSmokeIntent()) {
             startDebugRefereeSmoke();
         } else if (isNpuSmokeIntent()) {
@@ -695,10 +752,15 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "bindViews in");
         mainPageContainer = findViewById(R.id.mainPageContainer);
         gamePageContainer = findViewById(R.id.gamePageContainer);
+        gameMoveCountText = findViewById(R.id.gameMoveCountText);
+        gameModeSummaryText = findViewById(R.id.gameModeSummaryText);
+        gameRankSummaryText = findViewById(R.id.gameRankSummaryText);
+        gameBackendSummaryText = findViewById(R.id.gameBackendSummaryText);
         boardView = findViewById(R.id.boardView);
         statusText = findViewById(R.id.statusText);
         nnAreaScoreText = findViewById(R.id.nnAreaScoreText);
         aiWinRateText = findViewById(R.id.aiWinRateText);
+        winRateProgress = findViewById(R.id.winRateProgress);
         aiMoveTimeText = findViewById(R.id.aiMoveTimeText);
         playerWinRateText = findViewById(R.id.playerWinRateText);
         aiCaptureText = findViewById(R.id.aiCaptureText);
@@ -794,6 +856,10 @@ public class MainActivity extends AppCompatActivity {
                         && !engine.getBackendName().startsWith(selectedBackend.name()))
                     Toast.makeText(this, selectedBackend.name() + " 初始化失败，已使用 " + engine.getBackendName(), Toast.LENGTH_LONG).show();
                 render(ready ? "准备好了" : "AI 启动失败，可重试新局");
+                if (resumeAfterEngineStartup) {
+                    resumeAfterEngineStartup = false;
+                    openPlayOrResume();
+                }
             });
         });
     }
@@ -931,6 +997,8 @@ public class MainActivity extends AppCompatActivity {
         boolean available = turn < blackWinHistory.size() && Float.isFinite(blackWinHistory.get(turn));
         float black = available ? blackWinHistory.get(turn) : Float.NaN;
         float white = available ? whiteWinHistory.get(turn) : Float.NaN;
+        // Progress is always the black side; keep the empty state neutral at 50%.
+        winRateProgress.setProgress(available ? Math.round(black * 1000f) : 500);
         float aiRate = playerColor == StoneColor.BLACK ? white : black;
         float myRate = playerColor == StoneColor.BLACK ? black : white;
         String aiName = playerColor == StoneColor.BLACK ? "白" : "黑";
@@ -939,6 +1007,123 @@ public class MainActivity extends AppCompatActivity {
                 ? String.format(Locale.CHINA, "%s胜率 %.1f%%", aiName, aiRate * 100f) : aiName + "胜率 --%");
         playerWinRateText.setText(Float.isFinite(myRate)
                 ? String.format(Locale.CHINA, "%s胜率 %.1f%%", myName, myRate * 100f) : myName + "胜率 --%");
+    }
+
+    /**
+     * Analyze the live board directly, using the current playing engine.
+     * SGF review remains a separate activity accessed from the Records center.
+     */
+    private void showLiveAiAnalysis() {
+        if (!engineReady || !gameReady || engineStarting || thinking || evaluating
+                || variationBoard != null || board == null
+                || (board.isGameOver() && board.getLastMove() instanceof Move.Resign)
+                || (!board.isGameOver() && currentPlayer != playerColor)) {
+            Toast.makeText(this, "请在轮到你时分析当前局面", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (liveAnalysisShowing && nnAreaScoreBoard == board
+                && nnAreaScoreMoves == board.getMoveCount()) {
+            liveAnalysisShowing = false;
+            liveAnalysisHeadline = null;
+            clearRecommendations();
+            nnAreaScoreBoard = null;
+            nnAreaScoreMoves = -1;
+            nnAreaScoreMessage = null;
+            render("已关闭本局 AI 分析");
+            return;
+        }
+
+        evaluating = true;
+        final GoBoard snapshot = board;
+        final int moves = board.getMoveCount(), size = boardSize;
+        final StoneColor next = currentPlayer;
+        final long epoch = winRateEpoch;
+        render("正在分析当前局面…");
+        engineExecutor.execute(() -> {
+            KataGoEngine.PositionEvaluation estimate = null;
+            List<KataGoEngine.SearchRecommendation> candidates = new ArrayList<>();
+            try {
+                estimate = engine.evaluatePosition(size);
+            } catch (RuntimeException error) {
+                Log.w(TAG, "Live analysis NN evaluation failed", error);
+            }
+            if (!snapshot.isGameOver()) {
+                try {
+                    candidates = engine.searchRecommendations(next.toGtp(), 96, 8.0);
+                } catch (RuntimeException error) {
+                    Log.w(TAG, "Live analysis search failed", error);
+                }
+            }
+            final KataGoEngine.PositionEvaluation result = estimate;
+            final List<KataGoEngine.SearchRecommendation> choices = candidates;
+            mainHandler.post(() -> {
+                evaluating = false;
+                if (board != snapshot || boardSize != size || board.getMoveCount() != moves
+                        || winRateEpoch != epoch || (!snapshot.isGameOver() && currentPlayer != next)) {
+                    render("棋局已变化，请重新分析");
+                    return;
+                }
+                if (result == null && choices.isEmpty()) {
+                    render("当前局面分析失败，可重试");
+                    return;
+                }
+                clearRecommendations();
+                Point[] points = new Point[3];
+                float[] rates = new float[3];
+                StringBuilder locations = new StringBuilder();
+                String[] ranks = {"①", "②", "③"};
+                int count = 0;
+                for (KataGoEngine.SearchRecommendation choice : choices) {
+                    Point point = Point.fromGtp(choice.move, size);
+                    if (point == null || !board.isLegalMove(point, next)
+                            || choice.visits <= 0) continue;
+                    points[count] = point;
+                    rates[count] = (float) choice.winrate;
+                    recommendationChoices.add(choice);
+                    if (count > 0) locations.append(' ');
+                    locations.append(ranks[count]).append(choice.move);
+                    if (++count == 3) break;
+                }
+                if (count > 0) {
+                    Point[] visiblePoints = new Point[count];
+                    float[] visibleRates = new float[count];
+                    System.arraycopy(points, 0, visiblePoints, 0, count);
+                    System.arraycopy(rates, 0, visibleRates, 0, count);
+                    boardView.setRecommendations(visiblePoints, visibleRates);
+                    recommendationPoints = visiblePoints;
+                    recommendationSummary = locations.toString();
+                }
+                StringBuilder summary = new StringBuilder();
+                if (result != null && Double.isFinite(result.whiteLead)
+                        && Double.isFinite(result.blackWin) && Double.isFinite(result.whiteWin)) {
+                    double myWin = playerColor == StoneColor.BLACK
+                            ? result.blackWin : result.whiteWin;
+                    summary.append(String.format(Locale.CHINA, "我方胜率%.1f%% · ",
+                            myWin * 100.0));
+                    if (Math.abs(result.whiteLead) < 0.05) {
+                        summary.append("目数接近");
+                    } else {
+                        summary.append(String.format(Locale.CHINA, "%s领先约%.1f目",
+                                result.whiteLead > 0 ? "白" : "黑",
+                                Math.abs(result.whiteLead)));
+                    }
+                    recordWinRate(snapshot, moves, epoch, new KataGoEngine.WinRate(
+                            (float) result.blackWin, (float) result.whiteWin));
+                } else {
+                    summary.append("当前暂无胜率与目数数据");
+                }
+                if (count > 0) summary.append(" · ").append(locations);
+                nnAreaScoreBoard = snapshot;
+                nnAreaScoreMoves = moves;
+                nnAreaScoreMessage = summary.toString();
+                // The entire analysis now lives in the upper status row.
+                // Keep it compact while preserving win rate, lead and suggestions.
+                liveAnalysisHeadline = nnAreaScoreMessage.replace("我方胜率", "胜")
+                        .replace("领先约", "+").replace(" · ", " ");
+                liveAnalysisShowing = true;
+                render(liveAnalysisHeadline);
+            });
+        });
     }
 
     private void showWinRateChart() {
@@ -984,6 +1169,7 @@ public class MainActivity extends AppCompatActivity {
                     render("落子同步失败，请重新开局");
                     return;
                 }
+                saveReplaySnapshot(false);
                 queueWinRateMove(color, gtp, color.opposite(), snapshot, moveCount);
                 requestAiMove();
             });
@@ -1025,8 +1211,11 @@ public class MainActivity extends AppCompatActivity {
             board.playMove(new Move.Pass(aiColor));
             currentPlayer = aiColor.opposite();
             lastMove = null;
-            if (board.isGameOver()) finishByScore(null);
-            else {
+            if (board.isGameOver()) {
+                saveReplaySnapshot(false);
+                finishByScore(null);
+            } else {
+                saveReplaySnapshot(false);
                 render("AI 停一手，你下");
                 queueWinRateMove(aiColor, "pass", currentPlayer, board, board.getMoveCount());
             }
@@ -1046,6 +1235,7 @@ public class MainActivity extends AppCompatActivity {
         board.playMove(new Move.Stone(point, aiColor));
         lastMove = point;
         currentPlayer = aiColor.opposite();
+        saveReplaySnapshot(false);
         render("轮到你了");
         queueWinRateMove(aiColor, move, currentPlayer, board, board.getMoveCount());
     }
@@ -1059,6 +1249,7 @@ public class MainActivity extends AppCompatActivity {
         board.playMove(new Move.Pass(color));
         lastMove = null;
         if (board.isGameOver()) {
+            saveReplaySnapshot(false);
             render("正在数目...");
             finishByScore(color.toGtp());
             return;
@@ -1071,6 +1262,7 @@ public class MainActivity extends AppCompatActivity {
             boolean synced = engine.playMove(color.toGtp(), "pass");
             mainHandler.post(() -> {
                 if (synced) {
+                    saveReplaySnapshot(false);
                     queueWinRateMove(color, "pass", color.opposite(), snapshot, moveCount);
                     requestAiMove();
                 } else render("停一手同步失败");
@@ -1105,6 +1297,10 @@ public class MainActivity extends AppCompatActivity {
             mainHandler.post(() -> {
                 if (snapshot != board) return;
                 evaluating = false;
+                if (second) {
+                    if (board.getMoveCount() == 0) UnfinishedGameStore.clear(this);
+                    else saveReplaySnapshot(false);
+                }
                 if (second && engine.usesNpuBackend())
                     queueNpuWinRateEvaluation(snapshot, moveCount, winRateSession, winRateEpoch);
                 render(second ? "已悔棋，轮到你了" : "引擎悔棋同步失败");
@@ -1154,10 +1350,12 @@ public class MainActivity extends AppCompatActivity {
                 endgameEvaluation = result;
                 final int suspectedDeadStones = displayEndgameOwnership(result);
                 gameResultText = formatFastEndgameResult(result.whiteLead);
-                finalScoreText = String.format(Locale.CHINA, "快速 NN 预估\n%s",
-                        Math.abs(result.whiteLead) < 0.05 ? "接近平局"
-                        : String.format(Locale.CHINA, "%s领先约%.1f目",
-                                result.whiteLead > 0 ? "白" : "黑",Math.abs(result.whiteLead)));
+                // This is the ONLY visible endgame status line. The optional
+                // black/white area totals are appended after they are computed.
+                finalScoreText = Math.abs(result.whiteLead) < 0.05
+                        ? "NN·接近平局"
+                        : String.format(Locale.CHINA, "NN·%s+%.1f目",
+                                result.whiteLead > 0 ? "白" : "黑", Math.abs(result.whiteLead));
                 try {
                     NnAreaScore area = NnAreaScore.estimate(result.whiteOwnership,size,komiFor(size),
                             gameCondition >= 2 ? gameCondition : 0);
@@ -1166,6 +1364,10 @@ public class MainActivity extends AppCompatActivity {
                     nnAreaScoreMessage = String.format(Locale.CHINA,"黑 %.1f · 白 %.1f%s",
                             area.blackPoints,area.whitePoints,
                             suspectedDeadStones == 0 ? "" : " · 疑似死子 " + suspectedDeadStones);
+                    // Keep both NN lead and estimated black/white points
+                    // without creating a second TextView row below the board header.
+                    finalScoreText += String.format(Locale.CHINA, " 黑%.1f 白%.1f",
+                            area.blackPoints, area.whitePoints);
                 } catch (IllegalArgumentException ex) {
                     nnAreaScoreBoard = null;
                     nnAreaScoreMessage = null;
@@ -1175,15 +1377,87 @@ public class MainActivity extends AppCompatActivity {
                         new KataGoEngine.WinRate((float)result.blackWin,(float)result.whiteWin));
                 Log.i(TAG,String.format(Locale.US,"ENDGAME_NN_RESULT moves=%d lead=%.3f elapsedMs=%d",
                         moves,result.whiteLead,nnMs));
+                // Archive a finished game with an explicitly provisional NN score.
+                saveReplaySnapshot(true);
                 render(finalScoreText);
-                new AlertDialog.Builder(this)
-                        .setTitle("终局 · 快速 NN 估分")
-                        .setMessage(finalScoreText + "\\n快速估分耗时：" + nnMs + " ms"
-                                + "\\n可选：运行旧版慢速 AI 终局判断，比较实际耗时。")
-                        .setPositiveButton("慢速 AI 复核", (dialog, which) -> runSlowEndgameComparison())
-                        .setNegativeButton("关闭", null).show();
+                String winner = Math.abs(result.whiteLead) < 0.05
+                        ? "双方接近平局"
+                        : String.format(Locale.CHINA, "%s领先约 %.1f 目",
+                                result.whiteLead > 0 ? "白" : "黑",
+                                Math.abs(result.whiteLead));
+                showJadeEndgameDialog(
+                        "终局 · 快速 NN 估分",
+                        winner,
+                        "NN 预估 · 非正式终局计分",
+                        "快速估分耗时 " + nnMs + " ms",
+                        "需要对比算法结果与耗时时，可选择慢速 AI 复核。",
+                        "慢速 AI 复核",
+                        this::runSlowEndgameComparison);
             });
         });
+    }
+
+    /** A compact endgame overlay that matches the app's jade/gold UI. */
+    private void showJadeEndgameDialog(String title, String headline, String subtitle,
+            String timing, String details, String secondaryLabel, Runnable onSecondary) {
+        final android.app.Dialog dialog = new android.app.Dialog(this);
+        dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_jade_endgame);
+        ((TextView) dialog.findViewById(R.id.endgameDialogTitle)).setText(title);
+        ((TextView) dialog.findViewById(R.id.endgameDialogResult)).setText(headline);
+        ((TextView) dialog.findViewById(R.id.endgameDialogSubtitle)).setText(subtitle);
+
+        TextView timingView = dialog.findViewById(R.id.endgameDialogTiming);
+        timingView.setVisibility(timing == null ? View.GONE : View.VISIBLE);
+        if (timing != null) timingView.setText(timing);
+
+        TextView detailView = dialog.findViewById(R.id.endgameDialogDetails);
+        android.widget.ScrollView detailScroll = dialog.findViewById(
+                R.id.endgameDialogDetailsScroll);
+        boolean hasDetails = details != null && !details.isEmpty();
+        detailScroll.setVisibility(hasDetails ? View.VISIBLE : View.GONE);
+        if (hasDetails) {
+            detailView.setText(details);
+            // Prevent a long native diagnostic from pushing the buttons offscreen.
+            if (details.length() > 140) {
+                ViewGroup.LayoutParams params = detailScroll.getLayoutParams();
+                params.height = Math.round(134f * getResources().getDisplayMetrics().density);
+                detailScroll.setLayoutParams(params);
+            }
+        }
+
+        dialog.findViewById(R.id.endgameDialogClose).setOnClickListener(v -> dialog.dismiss());
+        Button secondary = dialog.findViewById(R.id.endgameDialogSecondary);
+        if (onSecondary == null) {
+            secondary.setVisibility(View.GONE);
+            View close = dialog.findViewById(R.id.endgameDialogClose);
+            android.widget.LinearLayout.LayoutParams params =
+                    (android.widget.LinearLayout.LayoutParams) close.getLayoutParams();
+            params.weight = 1f;
+            params.rightMargin = 0;
+            close.setLayoutParams(params);
+        } else {
+            secondary.setText(secondaryLabel);
+            secondary.setOnClickListener(v -> {
+                dialog.dismiss();
+                onSecondary.run();
+            });
+        }
+
+        dialog.show();
+        android.view.Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+            android.view.WindowManager.LayoutParams params = window.getAttributes();
+            params.dimAmount = 0.68f;
+            window.setAttributes(params);
+            int densityWidth = Math.round(420f * getResources().getDisplayMetrics().density);
+            int availableWidth = getResources().getDisplayMetrics().widthPixels
+                    - Math.round(32f * getResources().getDisplayMetrics().density);
+            window.setLayout(Math.min(densityWidth, availableWidth),
+                    android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        }
     }
 
     /** Optional legacy GTP final_score / final_status_list benchmark. Never alters the board. */
@@ -1213,14 +1487,19 @@ public class MainActivity extends AppCompatActivity {
             mainHandler.post(() -> {
                 evaluating = false;
                 if (board != snapshot || boardSize != size || board.getMoveCount() != moves) return;
-                String message = "后端：" + backend + "\\n总耗时：" + elapsed + " ms"
-                        + "\\nfinal_score：" + (finalScore == null ? "未返回（可能不支持）" : finalScore)
-                        + "\\n疑似死子：" + (finalDead == null ? "未返回（可能不支持）"
-                                : finalDead.isEmpty() ? "无" : finalDead)
-                        + (finalFailure == null ? "" : "\\n错误：" + finalFailure)
-                        + "\\n注意：后端名称不等于每一步都已确认在 NPU 上执行。";
-                new AlertDialog.Builder(this).setTitle("旧版 AI 终局判断 · 耗时对照")
-                        .setMessage(message).setPositiveButton("确定", null).show();
+                showJadeEndgameDialog(
+                        "慢速 AI 复核",
+                        "耗时 " + elapsed + " ms",
+                        "旧版终局判断 · 对照结果",
+                        null,
+                        "后端：" + backend
+                                + "\nfinal_score：" + (finalScore == null
+                                        ? "未返回（可能不支持）" : finalScore)
+                                + "\n疑似死子：" + (finalDead == null
+                                        ? "未返回（可能不支持）" : finalDead.isEmpty() ? "无" : finalDead)
+                                + (finalFailure == null ? "" : "\n错误：" + finalFailure)
+                                + "\n部分后端可能不支持旧版终局接口；后端名称不代表每一步都在 NPU 上执行。",
+                        null, null);
                 render(finalScoreText == null ? "旧版终局判断已完成" : finalScoreText);
             });
         });
@@ -1342,6 +1621,8 @@ public class MainActivity extends AppCompatActivity {
         StoneColor winner = outcome.startsWith("AI") ? playerColor : playerColor.opposite();
         float black = winner == StoneColor.BLACK ? 1f : 0f;
         recordWinRate(board, board.getMoveCount(), winRateEpoch, new KataGoEngine.WinRate(black, 1f - black));
+        // Save resignation outcome immediately, before asynchronous territory preview.
+        saveReplaySnapshot(true);
         finishEndgameTerritory();
     }
 
@@ -1398,7 +1679,7 @@ public class MainActivity extends AppCompatActivity {
         int suspectedDead = displayEndgameOwnership(result);
         Log.i(TAG,String.format(Locale.US,"NN empty territory B=%d W=%d uncertain=%d suspectedDead=%d",
                 blackTerritory,whiteTerritory,uncertainEmpty,suspectedDead));
-        return String.format(Locale.CHINA,"黑估空%d目\n白估空%d目",blackTerritory,whiteTerritory);
+        return String.format(Locale.CHINA,"黑估空%d目 · 白估空%d目",blackTerritory,whiteTerritory);
     }
 
     private void clearRecommendations() {
@@ -1617,172 +1898,296 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void showNewGameDialog() {
-        DebugLog.enter(TAG, "showNewGameDialog in, boardSize=" + boardSize + ", playerColor=" + playerColor);
-        View content = LayoutInflater.from(this).inflate(R.layout.dialog_new_game, null, false);
-        Spinner sizeSpinner = content.findViewById(R.id.sizeSpinner);
-        RadioGroup colorGroup = content.findViewById(R.id.colorGroup);
-        Spinner difficultySpinner = content.findViewById(R.id.difficultySpinner);
-        Spinner conditionSpinner = content.findViewById(R.id.conditionSpinner);
-        Spinner backendSpinner = content.findViewById(R.id.backendSpinner);
-        TextView deviceModelText = content.findViewById(R.id.deviceModelText);
-        TextView hardwareInfoText = content.findViewById(R.id.hardwareInfoText);
-        Button startButton = content.findViewById(R.id.startGameButton);
-        Button closeButton = content.findViewById(R.id.closeDialogButton);
+    /** Public entry used by the shared navigation component. */
+    public void openPlayTab() {
+        openPlayOrResume();
+    }
 
-        int[] boardSizes = BOARD_SIZES;
-        ArrayAdapter<String> sizeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{"9路", "11路", "13路", "15路", "19路"});
-        sizeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        sizeSpinner.setAdapter(sizeAdapter);
-        int selectedSize = 0;
-        for (int i = 0; i < boardSizes.length; i++) if (boardSizes[i] == boardSize) selectedSize = i;
-        sizeSpinner.setSelection(selectedSize);
-
-        ArrayAdapter<String> conditionAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item,
-                new String[]{"分先", "让先", "让2子", "让3子", "让4子", "让5子", "让6子", "让7子", "让8子", "让9子"});
-        conditionAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        conditionSpinner.setAdapter(conditionAdapter);
-        conditionSpinner.setSelection(gameCondition);
-
-        boolean gpuBundled = new File(getApplicationInfo().nativeLibraryDir, "libkatago_gpu.so").isFile();
-        boolean mtkBundled = KataGoEngine.supportsMediaTekGame(this, 9)
-                && KataGoEngine.supportsMediaTekGame(this, 13)
-                && KataGoEngine.supportsMediaTekGame(this, 19);
-        boolean npuBundled = mtkBundled || (KataGoEngine.supportsRknnHardware()
-                && new File(getApplicationInfo().nativeLibraryDir, "libkatago_npu.so").isFile()
-                && new File(getApplicationInfo().nativeLibraryDir, "librknnrt.so").isFile());
-        deviceModelText.setText(DeviceHardwareInfo.deviceName());
-        final String cpuName = DeviceHardwareInfo.cpuName();
-        final String npuInfo = DeviceHardwareInfo.npuDescription(npuBundled);
-        hardwareInfoText.setText("CPU：" + cpuName + "\nGPU：正在识别…\n" + npuInfo);
-        List<KataGoEngine.BackendPreference> backendChoices = new ArrayList<>();
-        List<String> backendNames = new ArrayList<>();
-        backendChoices.add(KataGoEngine.BackendPreference.CPU);
-        backendNames.add("CPU / Eigen · " + DeviceHardwareInfo.socName());
-        if (gpuBundled) {
-            backendChoices.add(KataGoEngine.BackendPreference.GPU);
-            backendNames.add("GPU / OpenCL · 识别中…");
+    /** PLAY resumes an unfinished game directly; explicit "new game" still opens setup. */
+    private void openPlayOrResume() {
+        if (restoringUnfinishedGame) return;
+        if (gameReady && board != null && !board.isGameOver()) {
+            showGamePage();
+            render(currentPlayer == playerColor ? "轮到你了" : "AI 思考中…");
+            return;
         }
-        final String npuLabel = mtkBundled ? "NPU / MediaTek LiteRT · " + DeviceHardwareInfo.socName()
-                : "NPU / RKNN · " + DeviceHardwareInfo.socName();
-        if (npuBundled && hasBundledNpuModel(boardSize)) {
-            backendChoices.add(KataGoEngine.BackendPreference.NPU);
-            backendNames.add(npuLabel);
+        if (engineStarting) {
+            resumeAfterEngineStartup = true;
+            return;
         }
-        ArrayAdapter<String> backendAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, backendNames);
-        backendAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        backendSpinner.setAdapter(backendAdapter);
-        int backendIndex = backendChoices.indexOf(selectedBackend);
-        backendSpinner.setSelection(Math.max(0, backendIndex));
-        backendSpinner.setEnabled(backendChoices.size() > 1 && !forceLegacyBackend);
-        // Offer NPU only when board-matched models and runtime are bundled.
-        // when switching to 11/15, rather than offering a false NPU choice.
-        sizeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                KataGoEngine.BackendPreference oldChoice = backendChoices.get(
-                        Math.max(0, Math.min(backendSpinner.getSelectedItemPosition(), backendChoices.size() - 1)));
-                boolean canUseNpu = npuBundled && hasBundledNpuModel(boardSizes[position]);
-                int index = backendChoices.indexOf(KataGoEngine.BackendPreference.NPU);
-                if (canUseNpu && index < 0) {
-                    backendChoices.add(KataGoEngine.BackendPreference.NPU);
-                    backendNames.add(npuLabel);
-                    backendAdapter.notifyDataSetChanged();
-                } else if (!canUseNpu && index >= 0) {
-                    backendChoices.remove(index);
-                    backendNames.remove(index);
-                    backendAdapter.notifyDataSetChanged();
+        UnfinishedGameStore.Pending pending = UnfinishedGameStore.load(this);
+        if (pending == null) {
+            showNewGameDialog();
+            return;
+        }
+        resumeUnfinishedGame(pending);
+    }
+
+    /**
+     * Restore BOTH GoBoard and the actual playing GTP engine. No input is
+     * enabled until the full SGF has been replayed and the rank restored.
+     */
+    private void resumeUnfinishedGame(UnfinishedGameStore.Pending pending) {
+        if (restoringUnfinishedGame || thinking || evaluating) return;
+        if (!engine.hasHumanModel()) {
+            Toast.makeText(this, "继续上局需要 Human SL 模型，请先准备模型",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+        int size = pending.sgf.size;
+        KataGoEngine.BackendPreference backend = "GPU".equals(pending.backend)
+                ? KataGoEngine.BackendPreference.GPU
+                : "NPU".equals(pending.backend) && !forceLegacyBackend && hasBundledNpuModel(size)
+                ? KataGoEngine.BackendPreference.NPU
+                : KataGoEngine.BackendPreference.CPU;
+        if (forceLegacyBackend) backend = KataGoEngine.BackendPreference.CPU;
+
+        restoringUnfinishedGame = true;
+        engineStarting = true;
+        gameReady = false;
+        engineReady = false;
+        thinking = false;
+        evaluating = false;
+        board = pending.position;
+        boardSize = size;
+        playerColor = pending.humanSide;
+        aiKyu = pending.rank;
+        gameCondition = pending.condition;
+        selectedBackend = backend;
+        currentPlayer = pending.sgf.moves.get(pending.sgf.moves.size() - 1).color.opposite();
+        Move last = pending.sgf.moves.get(pending.sgf.moves.size() - 1);
+        lastMove = last instanceof Move.Stone ? ((Move.Stone) last).point : null;
+        gameResultText = null;
+        finalScoreText = null;
+        endgameEvaluation = null;
+        lastAiMoveTimeMs = -1;
+        nnAreaScoreBoard = null;
+        nnAreaScoreMessage = null;
+        liveAnalysisShowing = false;
+        liveAnalysisHeadline = null;
+        boardView.setOwnership(null);
+        clearRecommendations();
+        winRateSession++;
+        winRateEpoch++;
+        blackWinHistory.clear();
+        whiteWinHistory.clear();
+        showGamePage();
+        render("正在恢复第 " + board.getMoveCount() + " 手…");
+
+        final long restoreEpoch = winRateEpoch;
+        final int moves = board.getMoveCount();
+        final StoneColor next = currentPlayer;
+        final KataGoEngine.BackendPreference requestedBackend = backend;
+        final float savedKomi = pending.sgf.komi;
+        final GoBoard snapshot = board;
+        final java.util.List<Move> history = new ArrayList<>(pending.sgf.moves);
+        final java.util.List<Point> setup = new ArrayList<>(pending.sgf.handicap);
+        final int rank = aiKyu;
+        final int visits = searchVisits;
+        final double seconds = searchTime;
+
+        if (!engine.canReuseHumanSession(requestedBackend, size))
+            showGpuStartupScreen(size, requestedBackend);
+        engineExecutor.execute(() -> {
+            String failure = null;
+            try {
+                engine.setStartupBoardSize(size);
+                engine.setBackendPreference(requestedBackend);
+                boolean reuse = engine.canReuseHumanSession(requestedBackend, size);
+                if (!reuse) {
+                    engine.prepareHumanModel(null);
+                    engine.stop();
+                    if (!engine.start(KataGoEngine.Model.HUMAN, true))
+                        throw new IllegalStateException("Human SL 引擎启动失败");
                 }
-                backendSpinner.setSelection(Math.max(0, backendChoices.indexOf(oldChoice)));
-                backendSpinner.setEnabled(backendChoices.size() > 1 && !forceLegacyBackend);
+                if (!engine.setBoardSize(size) || !engine.clearBoard()
+                        || !engine.setChineseRules() || !engine.setKomi(savedKomi))
+                    throw new IllegalStateException("棋盘与规则恢复失败");
+                if (!setup.isEmpty() && !engine.setHandicapStones(setup, size))
+                    throw new IllegalStateException("让子恢复失败");
+                for (int i = 0; i < history.size(); i++) {
+                    Move move = history.get(i);
+                    String vertex = move instanceof Move.Stone
+                            ? ((Move.Stone) move).point.toGtp(size) : "pass";
+                    if (!engine.playMove(move.color.toGtp(), vertex))
+                        throw new IllegalStateException("恢复第" + (i + 1) + "手失败");
+                }
+                if (!engine.setSearchLimits(visits, seconds) || !engine.setHumanRank(rank))
+                    throw new IllegalStateException("棋力设置恢复失败");
+            } catch (Exception error) {
+                failure = error.getMessage() == null ? error.toString() : error.getMessage();
+                Log.e(TAG, "RESUME_GAME restore failed", error);
             }
-            @Override public void onNothingSelected(AdapterView<?> parent) {}
-        });
-
-        colorGroup.check(playerColor == StoneColor.WHITE ? R.id.whiteRadio : R.id.blackRadio);
-        String[] kyuLabels = new String[18];
-        for (int i = 0; i < kyuLabels.length; i++) kyuLabels[i] = (18 - i) + "级";
-        ArrayAdapter<String> difficultyAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, kyuLabels);
-        difficultyAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        difficultySpinner.setAdapter(difficultyAdapter);
-        difficultySpinner.setSelection(18 - aiKyu);
-
-        AlertDialog dialog = new AlertDialog.Builder(this).setView(content).create();
-        closeButton.setOnClickListener(v -> dialog.dismiss());
-        startButton.setOnClickListener(v -> {
-            final int requestedBoardSize = boardSizes[sizeSpinner.getSelectedItemPosition()];
-
-            int colorId = colorGroup.getCheckedRadioButtonId();
-            if (colorId == R.id.whiteRadio) playerColor = StoneColor.WHITE;
-            else if (colorId == R.id.randomRadio) playerColor = (System.nanoTime() & 1L) == 0L ? StoneColor.BLACK : StoneColor.WHITE;
-            else playerColor = StoneColor.BLACK;
-
-            int selectedKyu = 18 - difficultySpinner.getSelectedItemPosition();
-            int selectedCondition = conditionSpinner.getSelectedItemPosition();
-            KataGoEngine.BackendPreference requested = backendChoices.get(backendSpinner.getSelectedItemPosition());
-            if (requested == KataGoEngine.BackendPreference.NPU && !hasBundledNpuModel(requestedBoardSize)) {
-                Toast.makeText(this, "NPU 未找到对应尺寸的模型或运行库；当前 " + requestedBoardSize
-                        + " 路请使用 CPU/GPU", Toast.LENGTH_LONG).show();
-                return;
-            }
-            Runnable begin = () -> {
-                boardSize = requestedBoardSize;
-                aiKyu = selectedKyu;
-                gameCondition = selectedCondition;
-                selectedBackend = requested;
+            final boolean ready = failure == null && engine.isReady();
+            final String message = failure;
+            mainHandler.post(() -> {
+                if (board != snapshot || winRateEpoch != restoreEpoch) return;
+                restoringUnfinishedGame = false;
+                engineStarting = false;
+                engineReady = engine.isReady();
+                gameReady = ready;
+                dismissGpuTuning(ready);
+                if (!ready) {
+                    render("续局失败：" + message);
+                    Toast.makeText(this, "旧棋谱保留，可重新点对弈重试", Toast.LENGTH_LONG).show();
+                    return;
+                }
                 getSharedPreferences("katago_settings", MODE_PRIVATE).edit()
-                        .putInt("board_size", boardSize).putString("backend", requested.name()).apply();
-                Log.i(TAG, "Saved new-game preference boardSize=" + boardSize + " backend=" + requested);
-                showGamePage();
-                startNewGame();
-                dialog.dismiss();
-            };
-
-            if (engine.hasHumanModel()) {
-                begin.run();
-            } else {
-                new AlertDialog.Builder(this)
-                        .setTitle("首次准备棋力模型")
-                        .setMessage("18级～1级需要 KataGo Human SL 模型，约 99 MB。首次需联网下载，下载后可离线对弈。现在下载吗？")
-                        .setPositiveButton("下载并开始", (confirm, which) -> begin.run())
-                        .setNegativeButton("取消", null)
-                        .show();
-            }
-        });
-        dialog.setOnShowListener(ignored -> {
-            if (dialog.getWindow() != null) {
-                dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-                int width = getResources().getDisplayMetrics().widthPixels;
-                int maxWidth = (int) (420 * getResources().getDisplayMetrics().density);
-                dialog.getWindow().setLayout(Math.min((int) (width * 0.88f), maxWidth), ViewGroup.LayoutParams.WRAP_CONTENT);
-            }
-        });
-        dialog.show();
-        // Do not create an EGL context on the UI thread: vendor driver startup
-        // can be slow. The GPU's OpenGL renderer identifies the chip, but does
-        // not imply the KataGo OpenCL backend is installed or functional.
-        new Thread(() -> {
-            String gpuName = DeviceHardwareInfo.queryGpuRenderer();
-            runOnUiThread(() -> {
-                if (!dialog.isShowing()) return;
-                hardwareInfoText.setText("CPU：" + cpuName + "\nGPU：" + gpuName
-                        + "（OpenGL 识别）\n" + npuInfo);
-                int gpuIndex = backendChoices.indexOf(KataGoEngine.BackendPreference.GPU);
-                if (gpuIndex >= 0) {
-                    String shortName = gpuName.length() > 40 ? gpuName.substring(0, 40) + "…" : gpuName;
-                    backendNames.set(gpuIndex, "GPU / OpenCL · " + shortName);
-                    backendAdapter.notifyDataSetChanged();
+                        .putInt("board_size", size)
+                        .putInt("ai_kyu", rank)
+                        .putInt("game_condition", gameCondition)
+                        .putString("player_color", playerColor.name())
+                        .putString("backend", requestedBackend.name()).apply();
+                // Persist old-version last_game.sgf as the new dedicated checkpoint.
+                saveReplaySnapshot(false);
+                initializeResumedWinRateAnalysis(snapshot, size, savedKomi,
+                        setup, history, next, moves, restoreEpoch);
+                Log.i(TAG, "RESUME_GAME_OK board=" + size + " moves=" + moves
+                        + " backend=" + engine.getBackendName() + " next=" + next);
+                if (next == playerColor) render("已恢复上局 · 轮到你了");
+                else {
+                    render("已恢复上局 · AI 接着下…");
+                    requestAiMove();
                 }
             });
-        }, "Badukai-GPU-Info").start();
+        });
+    }
+
+    /** Keep the independent win-rate GTP position synchronized with the resumed board. */
+    private void initializeResumedWinRateAnalysis(GoBoard snapshot, int size, float komi,
+            java.util.List<Point> setup, java.util.List<Move> history,
+            StoneColor next, int moves, long epoch) {
+        final long session = winRateSession;
+        if (engine.usesNpuBackend()) {
+            winRateExecutor.execute(() -> {
+                winRateSynchronized = false;
+                winRateEngine.stop();
+            });
+            queueNpuWinRateEvaluation(snapshot, moves, session, epoch);
+            return;
+        }
+        winRateExecutor.execute(() -> {
+            if (session != winRateSession || epoch != winRateEpoch) return;
+            winRateEngine.setStartupBoardSize(size);
+            boolean ok = winRateEngine.start(KataGoEngine.Model.HUMAN);
+            if (ok) ok = winRateEngine.setBoardSize(size);
+            if (ok) ok = winRateEngine.clearBoard();
+            if (ok) ok = winRateEngine.setChineseRules();
+            if (ok) ok = winRateEngine.setKomi(komi);
+            if (ok && !setup.isEmpty()) ok = winRateEngine.setHandicapStones(setup, size);
+            for (Move move : history) {
+                if (!ok) break;
+                String vertex = move instanceof Move.Stone
+                        ? ((Move.Stone) move).point.toGtp(size) : "pass";
+                ok = winRateEngine.playMove(move.color.toGtp(), vertex);
+            }
+            winRateSynchronized = ok;
+            if (!ok) {
+                Log.w(TAG, "Independent win-rate engine could not replay the saved SGF");
+                return;
+            }
+            KataGoEngine.WinRate rate = winRateEngine.evaluateWinRate(next.toGtp());
+            mainHandler.post(() -> recordWinRate(snapshot, moves, epoch, rate));
+        });
+    }
+
+    /** The game setup is a proper Activity. Keep the KataGo engine in this Activity. */
+    private void showNewGameDialog() {
+        android.content.Intent intent = new android.content.Intent(this, NewGameActivity.class);
+        intent.putExtra(NewGameActivity.EXTRA_SIZE, boardSize);
+        intent.putExtra(NewGameActivity.EXTRA_RANK, aiKyu);
+        intent.putExtra(NewGameActivity.EXTRA_COLOR, playerColor.name());
+        intent.putExtra(NewGameActivity.EXTRA_CONDITION, gameCondition);
+        intent.putExtra(NewGameActivity.EXTRA_BACKEND, selectedBackend.name());
+        intent.putExtra(NewGameActivity.EXTRA_FORCE_LEGACY, forceLegacyBackend);
+        startActivity(intent);
+        overridePendingTransition(0, 0);
+    }
+
+    /** Apply the result returned by the standalone new-game Activity. */
+    private void startSelectedGame(android.content.Intent intent) {
+        int requestedSize = intent.getIntExtra(NewGameActivity.EXTRA_SIZE, boardSize);
+        int requestedRank = intent.getIntExtra(NewGameActivity.EXTRA_RANK, aiKyu);
+        int requestedCondition = intent.getIntExtra(NewGameActivity.EXTRA_CONDITION, gameCondition);
+        String requestedColorName = intent.getStringExtra(NewGameActivity.EXTRA_COLOR);
+        String requestedBackendName = intent.getStringExtra(NewGameActivity.EXTRA_BACKEND);
+        if (!isSupportedBoardSize(requestedSize)
+                || requestedRank < 1 || requestedRank > 18
+                || requestedCondition < 0 || requestedCondition > 9) {
+            Toast.makeText(this, "对局参数无效，请重新选择", Toast.LENGTH_LONG).show();
+            showNewGameDialog();
+            return;
+        }
+        final StoneColor requestedColor = "WHITE".equals(requestedColorName)
+                ? StoneColor.WHITE : StoneColor.BLACK;
+        final KataGoEngine.BackendPreference requestedBackend =
+                "NPU".equals(requestedBackendName) ? KataGoEngine.BackendPreference.NPU
+                : "GPU".equals(requestedBackendName) ? KataGoEngine.BackendPreference.GPU
+                : KataGoEngine.BackendPreference.CPU;
+        if (requestedBackend == KataGoEngine.BackendPreference.NPU
+                && (forceLegacyBackend || !hasBundledNpuModel(requestedSize))) {
+            Toast.makeText(this, requestedSize + "路 NPU 模型不可用，请换路数或后端",
+                    Toast.LENGTH_LONG).show();
+            showNewGameDialog();
+            return;
+        }
+        Runnable beginGame = () -> {
+            boardSize = requestedSize;
+            aiKyu = requestedRank;
+            gameCondition = requestedCondition;
+            playerColor = requestedColor;
+            selectedBackend = requestedBackend;
+            getSharedPreferences("katago_settings", MODE_PRIVATE).edit()
+                    .putInt("board_size", boardSize)
+                    .putInt("ai_kyu", aiKyu)
+                    .putInt("game_condition", gameCondition)
+                    .putString("player_color", playerColor.name())
+                    .putString("backend", requestedBackend.name()).apply();
+            Log.i(TAG, "JADE_NEW_GAME_START size=" + boardSize + " kyu=" + aiKyu
+                    + " color=" + playerColor + " backend=" + selectedBackend
+                    + " condition=" + gameCondition);
+            showGamePage();
+            startNewGame();
+        };
+        if (engine.hasHumanModel()) beginGame.run();
+        else new AlertDialog.Builder(this)
+                .setTitle("首次准备棋力模型")
+                .setMessage("18级～1级需要 KataGo Human SL 模型，约 99 MB。首次需联网下载，下载后可离线对弈。现在下载吗？")
+                .setPositiveButton("下载并开始", (confirm, which) -> beginGame.run())
+                .setNegativeButton("取消", (confirm, which) -> showNewGameDialog())
+                .show();
     }
 
     private void saveReplaySnapshot(boolean archive) {
         if (board == null || board.getMoveCount() == 0) return;
         try {
+            String result = null;
+            String estimate = null;
+            if (board.isGameOver()) {
+                Move terminal = board.getLastMove();
+                if (terminal instanceof Move.Resign) {
+                    // RE[B+R]/RE[W+R] describes the winner, not the resigning side.
+                    result = (terminal.color == StoneColor.BLACK ? "W" : "B") + "+R";
+                } else if (endgameEvaluation != null
+                        && Double.isFinite(endgameEvaluation.whiteLead)) {
+                    // Fast NN ownership is a provisional score. Do NOT write RE.
+                    double lead = endgameEvaluation.whiteLead;
+                    estimate = Math.abs(lead) < 0.05 ? "0"
+                            : String.format(Locale.US, "%s+%.1f",
+                                    lead > 0 ? "W" : "B", Math.abs(lead));
+                }
+            }
             String sgf = GoSgf.encode(boardSize, komiFor(boardSize),
-                    board.getInitialHandicapSnapshot(), board.getMoveHistorySnapshot());
+                    board.getInitialHandicapSnapshot(), board.getMoveHistorySnapshot(),
+                    playerColor, result, estimate);
             java.nio.file.Files.write(new File(getFilesDir(), "last_game.sgf").toPath(),
                     sgf.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            if (board.isGameOver()) {
+                UnfinishedGameStore.clear(this);
+            } else {
+                UnfinishedGameStore.save(this, sgf, boardSize, board.getMoveCount(),
+                        playerColor, aiKyu, gameCondition, selectedBackend.name());
+            }
             if (archive) SgfArchive.save(this, sgf);
             Log.i(TAG, "SGF_SAVED moves=" + board.getMoveCount() + " board=" + boardSize);
         } catch (Exception ex) {
@@ -1790,14 +2195,37 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /** Navigate from independent Jade pages without recreating the game engine. */
+    @Override protected void onNewIntent(android.content.Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (intent != null && intent.getBooleanExtra(NewGameActivity.EXTRA_START, false)) {
+            openNewGameOnResume = false;
+            startSelectedGame(intent);
+        } else if (intent != null && intent.getBooleanExtra("navigate_home", false)) {
+            openNewGameOnResume = false;
+            showMainPage();
+        } else if (intent != null && (intent.getBooleanExtra("navigate_play", false)
+                || intent.getBooleanExtra("navigate_resume_game", false))) {
+            openNewGameOnResume = false;
+            openPlayOrResume();
+        } else if (intent != null && intent.getBooleanExtra("navigate_new_game", false)) {
+            openNewGameOnResume = true;
+        }
+    }
+
     private void openReplay() {
+        // The active board stays visible behind the chooser; do not briefly
+        // reveal Home or start a ReplayActivity until a choice is made.
         saveReplaySnapshot(true);
-        startActivity(new android.content.Intent(this, ReplayActivity.class));
+        com.badukai.ui.JadeNavigation.open(this,
+                com.badukai.ui.JadeBottomNavView.RECORDS);
     }
 
     private void openTsumego() {
         saveReplaySnapshot(true);
-        startActivity(new android.content.Intent(this, TsumegoActivity.class));
+        com.badukai.ui.JadeNavigation.open(this,
+                com.badukai.ui.JadeBottomNavView.TRAINING);
     }
 
     private void showMainPage() {
@@ -1805,13 +2233,55 @@ public class MainActivity extends AppCompatActivity {
         DebugLog.enter(TAG, "showMainPage in");
         mainPageContainer.setVisibility(View.VISIBLE);
         gamePageContainer.setVisibility(View.GONE);
+        ((com.badukai.ui.JadeBottomNavView)
+                findViewById(R.id.homeNavBarArtwork)).setSelectedTab(
+                com.badukai.ui.JadeBottomNavView.HOME);
+    }
+
+
+    /**
+     * Size the square board to the free height above the fixed bottom nav.
+     * Keep both button rows visible without scrolling on phone-size screens.
+     */
+    private void fitGameBoardToViewport() {
+        android.widget.ScrollView scroll = findViewById(R.id.gameContentScroll);
+        View frame = findViewById(R.id.boardFrame);
+        if (scroll == null || frame == null || scroll.getHeight() <= 0
+                || scroll.getChildCount() == 0) return;
+        View content = scroll.getChildAt(0);
+        if (content.getWidth() <= 0 || frame.getHeight() <= 0) return;
+
+        float density = getResources().getDisplayMetrics().density;
+        int remaining = scroll.getHeight() - (content.getHeight() - frame.getHeight());
+        int maxWidth = content.getWidth() - Math.round(18 * density);
+        int side = Math.min(maxWidth, remaining - Math.round(4 * density));
+        side = Math.min(maxWidth, Math.max(Math.round(180 * density), side));
+        if (side <= 0) return;
+
+        android.widget.LinearLayout.LayoutParams lp =
+                (android.widget.LinearLayout.LayoutParams) frame.getLayoutParams();
+        if (lp.width != side || lp.height != side
+                || lp.gravity != android.view.Gravity.CENTER_HORIZONTAL) {
+            lp.width = side;
+            lp.height = side;
+            lp.gravity = android.view.Gravity.CENTER_HORIZONTAL;
+            frame.setLayoutParams(lp);
+        }
+        if (scroll.getScrollY() != 0) scroll.scrollTo(0, 0);
     }
 
     private void showGamePage() {
         DebugLog.enter(TAG, "showGamePage in, boardSize=" + boardSize);
         mainPageContainer.setVisibility(View.GONE);
         gamePageContainer.setVisibility(View.VISIBLE);
-        gameTitleText.setText(gameResultText == null ? boardSize + "路　" + conditionName() + "　　第" + (board.getMoveCount() + 1) + "手" : gameResultText);
+        ((com.badukai.ui.JadeBottomNavView)
+                findViewById(R.id.gameSharedNav)).setSelectedTab(
+                com.badukai.ui.JadeBottomNavView.PLAY);
+        gameTitleText.setText(boardSize + "×" + boardSize);
+        gameModeSummaryText.setText("人机对弈");
+        gameRankSummaryText.setText(aiKyu + "级");
+        gameBackendSummaryText.setText(selectedBackend.name());
+        findViewById(R.id.gameContentScroll).post(this::fitGameBoardToViewport);
     }
 
     private void startNewGame() {
@@ -1835,6 +2305,8 @@ public class MainActivity extends AppCompatActivity {
         blackWinHistory.clear();
         whiteWinHistory.clear();
         board = new GoBoard(boardSize);
+        // A newly created empty match must not revive an older checkpoint.
+        UnfinishedGameStore.clear(this);
         final int handicapCount = gameCondition >= 2 ? gameCondition : 0;
         final List<Point> handicapPoints = handicapCount > 0
                 ? GoBoard.standardHandicapPoints(boardSize, handicapCount) : new ArrayList<>();
@@ -2027,16 +2499,26 @@ public class MainActivity extends AppCompatActivity {
 
     private void render(String message) {
         DebugLog.enter(TAG, "render in, message=" + message + ", engineReady=" + engineReady + ", thinking=" + thinking + ", currentPlayer=" + currentPlayer);
-        statusText.setText(message);
         if (nnAreaScoreBoard != board || nnAreaScoreMoves != board.getMoveCount()) {
             nnAreaScoreBoard = null;
             nnAreaScoreMessage = null;
+            liveAnalysisShowing = false;
+            liveAnalysisHeadline = null;
         }
-        nnAreaScoreText.setVisibility(nnAreaScoreMessage == null ? View.GONE : View.VISIBLE);
+        statusText.setText(liveAnalysisShowing && liveAnalysisHeadline != null
+                ? liveAnalysisHeadline : message);
+        // A finished match uses a single compact result line in statusText.
+        // Never re-show the old second NN row, including after onResume().
+        nnAreaScoreText.setVisibility(board.isGameOver() || liveAnalysisShowing
+                || nnAreaScoreMessage == null
+                || !getSharedPreferences("katago_settings", MODE_PRIVATE)
+                    .getBoolean("show_score_estimate", true)
+                ? View.GONE : View.VISIBLE);
         if (nnAreaScoreMessage != null) nnAreaScoreText.setText(nnAreaScoreMessage);
         aiMoveTimeText.setText(thinking ? "AI 思考中…" : lastAiMoveTimeMs < 0
                 ? "本手用时 --" : String.format(Locale.CHINA,"本手用时 %.2f 秒",lastAiMoveTimeMs/1000.0));
         updateWinRateLabels();
+        applyGameDisplaySettings();
         aiDifficultyText.setText(getDifficultyName() + " · Human SL · "
                 + (engineReady ? engine.getBackendName() : selectedBackend == KataGoEngine.BackendPreference.NPU ? "NPU 准备中" : selectedBackend == KataGoEngine.BackendPreference.GPU ? "GPU 准备中" : "CPU 准备中"));
         boardView.setBoard(board);
@@ -2044,8 +2526,8 @@ public class MainActivity extends AppCompatActivity {
         boardView.setInputEnabled(engineReady && gameReady && !engineStarting && !thinking
                 && !evaluating && currentPlayer == playerColor && !board.isGameOver());
         boolean detailedResult = boardView.hasRecommendations();
-        statusText.setMaxLines(detailedResult ? 3 : 2);
-        statusText.setTextSize(detailedResult ? 10f : 13f);
+        statusText.setMaxLines(1);
+        statusText.setTextSize(10f);
         boolean playerBlack = playerColor == StoneColor.BLACK;
         playerStoneView.setBackgroundResource(playerBlack ? R.drawable.txwq_black_stone : R.drawable.txwq_white_stone);
         aiStoneView.setBackgroundResource(playerBlack ? R.drawable.txwq_white_stone : R.drawable.txwq_black_stone);
@@ -2055,9 +2537,32 @@ public class MainActivity extends AppCompatActivity {
         int aiCaptures = playerBlack ? whiteCaptures : blackCaptures;
         playerCaptureText.setText(String.format(Locale.CHINA, "%s棋提子 %d", playerBlack ? "黑" : "白", playerCaptures));
         aiCaptureText.setText(String.format(Locale.CHINA, "%s棋提子 %d", playerBlack ? "白" : "黑", aiCaptures));
-        gameTitleText.setText(variationBoard != null ? "AI 推荐变化图 · 仅供预览"
-                : gameResultText == null ? boardSize + "路　" + conditionName() + "　　第" + (board.getMoveCount() + 1) + "手" : gameResultText);
+        gameTitleText.setText(boardSize + "×" + boardSize);
+        gameModeSummaryText.setText(variationBoard == null ? "人机对弈" : "变化预览");
+        gameRankSummaryText.setText(aiKyu + "级");
+        gameBackendSummaryText.setText(selectedBackend.name());
+        gameMoveCountText.setText("第 " + board.getMoveCount() + " 手");
         updateButtons();
+    }
+
+    private void showGameMoreMenu(View anchor) {
+        PopupMenu menu = new PopupMenu(this, anchor);
+        menu.getMenu().add(0, 1, 0, "新开一局")
+                .setEnabled(newRoundButton.isEnabled());
+        menu.getMenu().add(0, 2, 1, "认输")
+                .setEnabled(resignButton.isEnabled());
+        menu.getMenu().add(0, 3, 2, "智能裁判")
+                .setEnabled(countTerritoryButton.isEnabled());
+        menu.getMenu().add(0, 4, 3, "后续变化")
+                .setEnabled(variationButton.isEnabled());
+        menu.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == 1) return newRoundButton.performClick();
+            if (item.getItemId() == 2) return resignButton.performClick();
+            if (item.getItemId() == 3) return countTerritoryButton.performClick();
+            if (item.getItemId() == 4) return variationButton.performClick();
+            return false;
+        });
+        menu.show();
     }
 
     private void updateButtons() {
@@ -2086,6 +2591,35 @@ public class MainActivity extends AppCompatActivity {
         if (variationBoard != null) exitVariationPreview();
         else if (gamePageContainer.getVisibility() == View.VISIBLE) showMainPage();
         else super.onBackPressed();
+    }
+
+    private void applyGameDisplaySettings() {
+        boolean showWinrate = getSharedPreferences("katago_settings", MODE_PRIVATE)
+                .getBoolean("show_winrate", true);
+        int visibility = showWinrate ? View.VISIBLE : View.GONE;
+        playerWinRateText.setVisibility(visibility);
+        aiWinRateText.setVisibility(visibility);
+        winRateProgress.setVisibility(visibility);
+        if (board.isGameOver() || liveAnalysisShowing
+                || !getSharedPreferences("katago_settings", MODE_PRIVATE)
+                    .getBoolean("show_score_estimate", true))
+            nnAreaScoreText.setVisibility(View.GONE);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (playerWinRateText != null && nnAreaScoreText != null) {
+            applyGameDisplaySettings();
+            if (!board.isGameOver() && !liveAnalysisShowing
+                    && getSharedPreferences("katago_settings", MODE_PRIVATE)
+                            .getBoolean("show_score_estimate", true)
+                    && nnAreaScoreMessage != null) nnAreaScoreText.setVisibility(View.VISIBLE);
+        }
+        if (openNewGameOnResume) {
+            openNewGameOnResume = false;
+            showNewGameDialog();
+        }
     }
 
     @Override

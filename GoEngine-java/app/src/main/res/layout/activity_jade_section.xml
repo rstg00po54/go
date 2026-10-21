@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="#061E17">
+
+    <ImageView android:id="@+id/jadeSectionBackdrop"
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        android:scaleType="centerCrop" android:importantForAccessibility="no"/>
+    <View android:layout_width="match_parent" android:layout_height="match_parent"
+        android:background="@drawable/jade_forest_scrim"
+        android:importantForAccessibility="no"/>
+
+    <LinearLayout android:layout_width="match_parent"
+        android:layout_height="match_parent" android:orientation="vertical">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="66dp"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:paddingStart="12dp" android:paddingEnd="12dp">
+            <ImageButton android:id="@+id/jadeSectionBack"
+                android:layout_width="42dp" android:layout_height="42dp"
+                android:background="@drawable/btn_round_back"
+                android:contentDescription="返回上一页面"/>
+            <TextView android:id="@+id/jadeSectionTitle"
+                android:layout_width="0dp" android:layout_weight="1"
+                android:layout_marginStart="13dp" android:layout_marginEnd="13dp"
+                android:layout_height="48dp" android:gravity="center"
+                android:background="@drawable/jade_button_bg"
+                android:text="棋 谱 中 心" android:fontFamily="serif"
+                android:textStyle="bold" android:textColor="#173E31"
+                android:textSize="21sp"/>
+            <View android:layout_width="42dp" android:layout_height="42dp"/>
+        </LinearLayout>
+
+        <ScrollView android:layout_width="match_parent" android:layout_height="0dp"
+            android:layout_weight="1" android:fillViewport="false"
+            android:scrollbars="none" android:clipToPadding="false">
+            <LinearLayout android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:orientation="vertical"
+                android:paddingStart="16dp" android:paddingEnd="16dp"
+                android:paddingTop="6dp" android:paddingBottom="28dp">
+                <TextView android:id="@+id/jadeSectionSubtitle"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:gravity="center" android:text="围棋 · 本地学习"
+                    android:textColor="#E7D5A8" android:textSize="14sp"
+                    android:paddingTop="4dp" android:paddingBottom="14dp"/>
+                <LinearLayout android:id="@+id/jadeSectionCards"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical"/>
+            </LinearLayout>
+        </ScrollView>
+
+        <com.badukai.ui.JadeBottomNavView android:id="@+id/jadeSectionNav"
+            android:layout_width="match_parent" android:layout_height="96dp"
+            android:layout_marginStart="9dp" android:layout_marginEnd="9dp"
+            android:layout_marginBottom="0dp"/>
+    </LinearLayout>
+</FrameLayout>

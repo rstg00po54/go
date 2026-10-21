@@ -1,0 +1,23 @@
+name: Generate and inspect original jade tab states
+on:
+  push:
+    branches: [feature/jade-home-game-ui]
+    paths:
+      - '.github/workflows/jade_nav_assets_preview.yml'
+      - 'GoEngine-java/tools/make_jade_nav_states.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Generate five original jade nav states
+        run: |
+          python -m pip install --quiet "numpy<2" pillow opencv-python-headless
+          python GoEngine-java/tools/make_jade_nav_states.py --preview

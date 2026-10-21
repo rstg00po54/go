@@ -46,47 +46,31 @@ public class GoHomeTouchLayout extends FrameLayout {
     public void refreshPositions() { post(this::positionButtons); }
     private void positionButtons() {
         if (getWidth() == 0 || getHeight() == 0) return;
-        // The background is a full-screen scene, while controls are independently rendered.
-        place(com.badukai.R.id.homeTitle,.055f,.023f,.78f,.055f);
-        place(com.badukai.R.id.homeSubtitle,.06f,.082f,.65f,.032f);
-        place(com.badukai.R.id.homeSettingsButton,.865f,.018f,.115f,.066f);
+        // Layer a subtle tint behind the title, never behind the jade artwork.
+        place(com.badukai.R.id.homeTopShade, 0f, 0f, 1f, .25f);
+        place(com.badukai.R.id.homeTitle, .067f, .041f, .79f, .058f);
+        place(com.badukai.R.id.homeSubtitle, .072f, .104f, .82f, .035f);
+        place(com.badukai.R.id.homeLocalBadge, .07f, .155f, .57f, .040f);
+        place(com.badukai.R.id.homeSettingsButton, .855f, .025f, .125f, .065f);
         // Preserve each artwork's intrinsic aspect ratio and center around its original position.
-        placeArt(com.badukai.R.id.aiBattleButton, .067f, .678f, .866f, .112f);
-        placeArt(com.badukai.R.id.homeRecordButton, .052f, .8015f, .422f, .101f);
-        placeArt(com.badukai.R.id.homeTrainingButton, .526f, .8015f, .422f, .101f);
-        // Match the PNG's intrinsic aspect ratio. fitCenter inside a short box
-        // previously shrank the artwork to a tiny strip.
+        placeArt(com.badukai.R.id.aiBattleButton, .067f, .662f, .866f, .112f);
+        placeArt(com.badukai.R.id.homeRecordButton, .052f, .787f, .422f, .101f);
+        placeArt(com.badukai.R.id.homeTrainingButton, .526f, .787f, .422f, .101f);
+        // The shared real component replaces the old baked navbar PNG and
+        // its five invisible touch hotspots. It uses the same proportions on
+        // home as on replay/game/training.
         View nav = findViewById(com.badukai.R.id.homeNavBarArtwork);
-        android.graphics.drawable.Drawable image =
-                nav instanceof android.widget.ImageView
-                        ? ((android.widget.ImageView) nav).getDrawable() : null;
-        float ratio = image != null && image.getIntrinsicWidth() > 0
-                && image.getIntrinsicHeight() > 0
-                ? (float) image.getIntrinsicWidth() / image.getIntrinsicHeight() : 3.9f;
-        int width = Math.round(getWidth() * .94f);
-        int height = Math.round(width / ratio);
-        int maxHeight = Math.round(getHeight() * .155f);
-        if (height > maxHeight) {
-            height = maxHeight;
-            width = Math.round(height * ratio);
-        }
-        int left = (getWidth() - width) / 2;
-        int top = getHeight() - height - Math.round(getHeight() * .022f);
-        LayoutParams lp = new LayoutParams(width, height);
-        lp.leftMargin = left;
-        lp.topMargin = top;
+        // Match the game, replay, training and new-game footers exactly:
+        // 96dp high, 9dp on each side and 3dp above the window bottom.
+        // Do not use a fraction of screen height: it shifts with aspect ratio.
+        LayoutParams lp = new LayoutParams(
+                LayoutParams.MATCH_PARENT,
+                Math.round(96 * getResources().getDisplayMetrics().density),
+                android.view.Gravity.BOTTOM);
+        int side = Math.round(9 * getResources().getDisplayMetrics().density);
+        lp.leftMargin = side;
+        lp.rightMargin = side;
+        lp.bottomMargin = 0;
         nav.setLayoutParams(lp);
-        for (int i = 0; i < 5; i++) {
-            int[] ids = {com.badukai.R.id.homeTabButton,
-                    com.badukai.R.id.homeGameTabButton,
-                    com.badukai.R.id.homeRecordTabButton,
-                    com.badukai.R.id.homeTrainingTabButton,
-                    com.badukai.R.id.homeSettingsTabButton};
-            View tab = findViewById(ids[i]);
-            LayoutParams hit = new LayoutParams(width / 5, height);
-            hit.leftMargin = left + Math.round(i * width / 5f);
-            hit.topMargin = top;
-            tab.setLayoutParams(hit);
-        }
     }
 }

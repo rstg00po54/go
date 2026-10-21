@@ -1,6 +1,7 @@
 package com.badukai.ui;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -35,6 +36,11 @@ public class GoBoardView extends View {
         void onIntersectionClick(int x, int y);
     }
 
+    /** Taps on AI recommendation markers work even when normal board input is disabled. */
+    public interface OnRecommendationClickListener {
+        void onRecommendationClick(int rank);
+    }
+
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint stonePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint shadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -56,8 +62,28 @@ public class GoBoardView extends View {
     private Point[] previewMoves;
     private StoneColor[] previewColors;
     private int[] previewNumbers;
+    // Optional overlays used only by the integrated SGF/AI review screen.
+    private int[] analysisMoveNumbers;
+    private Point actualNextMove;
+    private OnRecommendationClickListener recommendationListener;
+    private float touchDownX, touchDownY;
     private OnIntersectionClickListener listener;
     private boolean inputEnabled = true;
+    private SharedPreferences visualPreferences;
+    private final SharedPreferences.OnSharedPreferenceChangeListener visualPreferenceListener =
+            (shared, key) -> {
+                if (key == null || key.equals("show_coordinates") || key.equals("show_last_move")
+                        || key.equals("last_move_style") || key.equals("hint_style")
+                        || key.equals("high_contrast") || key.equals("jade_theme")) {
+                    applyVisualPreferences();
+                }
+            };
+    private boolean showCoordinates = true;
+    private boolean showLastMove = true;
+    private boolean highContrast;
+    private int lastMoveStyle;
+    private int hintStyle;
+    private int boardTheme;
 
     private float padding;
     private float cellSize;
@@ -71,6 +97,32 @@ public class GoBoardView extends View {
         DebugLog.enter(TAG, "init in");
         setBackgroundColor(Color.rgb(222, 184, 135));
         setFocusable(true);
+        visualPreferences = getContext().getSharedPreferences("katago_settings", Context.MODE_PRIVATE);
+        applyVisualPreferences();
+    }
+
+    @Override protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        visualPreferences.registerOnSharedPreferenceChangeListener(visualPreferenceListener);
+        applyVisualPreferences();
+    }
+
+    @Override protected void onDetachedFromWindow() {
+        visualPreferences.unregisterOnSharedPreferenceChangeListener(visualPreferenceListener);
+        super.onDetachedFromWindow();
+    }
+
+    private void applyVisualPreferences() {
+        if (visualPreferences == null) return;
+        showCoordinates = visualPreferences.getBoolean("show_coordinates", true);
+        showLastMove = visualPreferences.getBoolean("show_last_move", true);
+        highContrast = visualPreferences.getBoolean("high_contrast", false);
+        lastMoveStyle = visualPreferences.getInt("last_move_style", 0);
+        hintStyle = visualPreferences.getInt("hint_style", 0);
+        boardTheme = visualPreferences.getInt("jade_theme", 0);
+        setBackgroundColor(boardTheme == 1 ? 0xFFAE9880
+                : boardTheme == 2 ? 0xFFF2E9D6 : Color.rgb(222, 184, 135));
+        invalidate();
     }
 
     public void setBoard(GoBoard board) {
@@ -125,6 +177,25 @@ public class GoBoardView extends View {
 
     public boolean hasRecommendations() { return recommendedPoints != null && recommendedPoints.length > 0; }
 
+    /** Every surviving stone can show the SGF move at which it was placed. */
+    public void setAnalysisMoveNumbers(int[] numbers) {
+        analysisMoveNumbers = numbers != null && board != null
+                && numbers.length == board.getSize() * board.getSize()
+                ? numbers.clone() : null;
+        invalidate();
+    }
+
+    /** Gold marker for the SGF's actual NEXT move, independent of AI suggestions. */
+    public void setActualNextMove(Point point) {
+        actualNextMove = point;
+        invalidate();
+    }
+
+    public void setOnRecommendationClickListener(OnRecommendationClickListener listener) {
+        recommendationListener = listener;
+        setClickable(listener != null || this.listener != null);
+    }
+
     /** Show KataGo's proposed sequence on an independent board; the live board is untouched. */
     public void setVariationPreview(GoBoard preview, Point[] moves, StoneColor[] colors, int[] numbers) {
         if (preview == null || board == null || preview.getSize() != board.getSize()
@@ -165,6 +236,7 @@ public class GoBoardView extends View {
     public void setOnIntersectionClickListener(OnIntersectionClickListener listener) {
         DebugLog.enter(TAG, "setOnIntersectionClickListener in, listener=" + listener);
         this.listener = listener;
+        setClickable(listener != null || recommendationListener != null);
     }
 
     @Override
@@ -187,25 +259,28 @@ public class GoBoardView extends View {
         // Reserve space for the entire stone shadow, not only the grid lines.
         // The shadow extends about 0.65 cell beyond an edge intersection.
         float outerInset = dp(2f);
-        float edgeCells = 0.68f;
+        float edgeCells = 0.88f; // room for coordinate labels outside the grid
         cellSize = n > 1 ? (size - 2f * outerInset) / (n - 1f + 2f * edgeCells) : size;
         padding = outerInset + edgeCells * cellSize;
         boardPixels = (n - 1f) * cellSize;
         drawGrid(canvas, n);
         drawStarPoints(canvas, n);
+        if (showCoordinates) drawCoordinates(canvas, n);
         if (previewBoard == null) drawOwnership(canvas, n);
-        drawStones(canvas, n, shown, previewBoard == null ? lastMove : null);
+        drawStones(canvas, n, shown, previewBoard == null && showLastMove ? lastMove : null);
         if (previewBoard == null) {
+            drawAnalysisMoveNumbers(canvas, n);
             drawDeadStoneMarks(canvas, n);
             drawTrainingTarget(canvas);
             drawRecommendations(canvas);
+            drawActualNextMove(canvas, n);
         } else drawPreviewMoveNumbers(canvas);
     }
 
     private void drawGrid(Canvas canvas, int n) {
         DebugLog.v(TAG, "drawGrid in, canvas=" + canvas + ", n=" + n);
-        paint.setColor(Color.rgb(45, 45, 45));
-        paint.setStrokeWidth(dp(1));
+        paint.setColor(highContrast ? Color.rgb(10, 10, 10) : Color.rgb(45, 45, 45));
+        paint.setStrokeWidth(dp(highContrast ? 1.25f : 1f));
         paint.setStyle(Paint.Style.STROKE);
         for (int i = 0; i < n; i++) {
             float p = padding + i * cellSize;
@@ -236,6 +311,33 @@ public class GoBoardView extends View {
     private int[][] grid3(int a, int b, int c) {
         DebugLog.v(TAG, "grid3 in, a=" + a + ", b=" + b + ", c=" + c);
         return new int[][]{{a,a},{b,a},{c,a},{a,b},{b,b},{c,b},{a,c},{b,c},{c,c}};
+    }
+
+    /** Board coordinates follow Go notation: A-H, J-T (skip I). */
+    private void drawCoordinates(Canvas canvas, int n) {
+        if (n < 2 || cellSize <= 0f) return;
+        paint.setShader(null);
+        paint.setColor(highContrast ? Color.BLACK : Color.rgb(74, 51, 28));
+        paint.setStyle(Paint.Style.FILL);
+        paint.setTypeface(Typeface.SERIF);
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setTextSize(Math.min(dp(12f), cellSize * 0.26f));
+        Paint.FontMetrics fm = paint.getFontMetrics();
+        float textMid = -(fm.ascent + fm.descent) * 0.5f;
+        float xOffset = cellSize * 0.57f;
+        float yOffset = cellSize * 0.58f;
+        for (int i = 0; i < n; i++) {
+            // Coordinate letters (top down) skip the letter I.
+            char letter = (char) ('A' + i + (i >= 8 ? 1 : 0));
+            float x = padding + i * cellSize;
+            float y = padding + i * cellSize;
+            canvas.drawText(Character.toString(letter), x,
+                    padding + (n - 1) * cellSize + yOffset + textMid, paint);
+            canvas.drawText(Integer.toString(n - i),
+                    padding - xOffset, y + textMid, paint);
+        }
+        paint.setTextAlign(Paint.Align.LEFT);
+        paint.setTypeface(Typeface.DEFAULT);
     }
 
     private void prepareStoneShaders(float radius) {
@@ -354,9 +456,17 @@ public class GoBoardView extends View {
                 if (markedMove != null && markedMove.x == x && markedMove.y == y) {
                     paint.setShader(null);
                     paint.setStyle(Paint.Style.STROKE);
-                    paint.setStrokeWidth(Math.max(dp(2), radius * 0.10f));
-                    paint.setColor(Color.rgb(220, 48, 48));
-                    canvas.drawCircle(cx, cy, radius * 0.30f, paint);
+                    // Highlight the most recent stone like the jade/gold mockup.
+                    paint.setStrokeWidth(Math.max(dp(1.5f), radius * 0.10f));
+                    paint.setColor(0xFFFFD878);
+                    if (lastMoveStyle == 1) {
+                        float marker = radius * 0.83f;
+                        canvas.drawRoundRect(cx - marker, cy - marker,
+                                cx + marker, cy + marker, dp(1.8f), dp(1.8f), paint);
+                    } else {
+                        canvas.drawCircle(cx, cy, radius * 1.04f, paint);
+                    }
+                    paint.setStyle(Paint.Style.FILL);
                 }
             }
         }
@@ -428,15 +538,18 @@ public class GoBoardView extends View {
             float cx = padding + p.x * cellSize;
             float cy = padding + p.y * cellSize;
             marker.setStyle(Paint.Style.FILL);
-            marker.setColor(i == 0 ? Color.rgb(245, 194, 87) : Color.rgb(44, 93, 66));
+            marker.setColor(i == 0 && hintStyle == 1
+                    ? Color.rgb(245, 194, 87) : Color.rgb(28, 193, 98));
             canvas.drawCircle(cx, cy, radius, marker);
             marker.setStyle(Paint.Style.STROKE);
             marker.setStrokeWidth(Math.max(dp(1), cellSize * 0.055f));
-            marker.setColor(i == 0 ? Color.rgb(93, 58, 22) : Color.rgb(231, 240, 217));
+            marker.setColor(i == 0 && hintStyle == 1
+                    ? Color.rgb(93, 58, 22) : Color.rgb(231, 240, 217));
             canvas.drawCircle(cx, cy, radius, marker);
             marker.setStyle(Paint.Style.FILL);
             marker.setTextSize(Math.min(cellSize * 0.48f, dp(17f)));
-            marker.setColor(i == 0 ? Color.rgb(39, 32, 22) : Color.WHITE);
+            marker.setColor(i == 0 && hintStyle == 1
+                    ? Color.rgb(39, 32, 22) : Color.WHITE);
             Paint.FontMetrics fm = marker.getFontMetrics();
             canvas.drawText(Integer.toString(i + 1), cx, cy - (fm.ascent + fm.descent) * 0.5f, marker);
         }
@@ -468,12 +581,96 @@ public class GoBoardView extends View {
         paint.setTextAlign(Paint.Align.LEFT);
     }
 
+    /** Only surviving stones are numbered; captured stones must not keep old labels. */
+    private void drawAnalysisMoveNumbers(Canvas canvas, int n) {
+        if (analysisMoveNumbers == null || analysisMoveNumbers.length != n * n) return;
+        paint.setShader(null);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setTypeface(Typeface.DEFAULT_BOLD);
+        for (int y = 0; y < n; y++) {
+            for (int x = 0; x < n; x++) {
+                int moveNumber = analysisMoveNumbers[y * n + x];
+                if (moveNumber <= 0) continue;
+                Intersection color = board.get(x, y);
+                if (color == Intersection.EMPTY) continue;
+                String number = Integer.toString(moveNumber);
+                float availableWidth = cellSize * 0.76f;
+                paint.setTextSize(Math.min(dp(16), cellSize * 0.45f));
+                // 100+ and 200+ move numbers must fit inside a 19-road stone.
+                if (paint.measureText(number) > availableWidth) {
+                    paint.setTextSize(paint.getTextSize() * availableWidth
+                            / paint.measureText(number));
+                }
+                paint.setColor(color == Intersection.BLACK ? Color.WHITE : 0xFF202820);
+                Paint.FontMetrics fm = paint.getFontMetrics();
+                canvas.drawText(number, padding + x * cellSize,
+                        padding + y * cellSize - (fm.ascent + fm.descent) * 0.5f, paint);
+            }
+        }
+        paint.setTextAlign(Paint.Align.LEFT);
+        paint.setTypeface(Typeface.DEFAULT);
+    }
+
+    /** The actual SGF next move has a gold marker, never mistaken for green AI ranks. */
+    private void drawActualNextMove(Canvas canvas, int n) {
+        Point point = actualNextMove;
+        if (point == null || !board.isInside(point.x, point.y)
+                || board.get(point) != Intersection.EMPTY) return;
+        float cx = padding + point.x * cellSize;
+        float cy = padding + point.y * cellSize;
+        float radius = cellSize * 0.44f;
+        boolean coincides = false;
+        if (recommendedPoints != null) {
+            for (Point recommended : recommendedPoints) {
+                if (point.equals(recommended)) { coincides = true; break; }
+            }
+        }
+        paint.setShader(null);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(Math.max(dp(1.5f), cellSize * 0.075f));
+        paint.setColor(0xFFFFC451);
+        canvas.drawCircle(cx, cy, radius, paint);
+        paint.setStyle(Paint.Style.FILL);
+        if (!coincides) {
+            paint.setColor(0xFFF2C768);
+            canvas.drawCircle(cx, cy, radius * 0.81f, paint);
+        } else {
+            // Keep the green rank legible while tagging a matching actual move.
+            paint.setColor(0xFF5D3216);
+            canvas.drawCircle(cx + radius * 0.71f, cy - radius * 0.72f,
+                    radius * 0.40f, paint);
+        }
+        paint.setTypeface(Typeface.DEFAULT_BOLD);
+        paint.setTextAlign(Paint.Align.CENTER);
+        paint.setTextSize(Math.min(dp(13), cellSize * (coincides ? 0.30f : 0.43f)));
+        paint.setColor(coincides ? Color.WHITE : 0xFF402B16);
+        Paint.FontMetrics fm = paint.getFontMetrics();
+        float tx = coincides ? cx + radius * 0.71f : cx;
+        float ty = coincides ? cy - radius * 0.72f : cy;
+        canvas.drawText("实", tx, ty - (fm.ascent + fm.descent) * 0.5f, paint);
+        paint.setTextAlign(Paint.Align.LEFT);
+        paint.setTypeface(Typeface.DEFAULT);
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        DebugLog.v(TAG, "onTouchEvent in, action=" + event.getAction() + ", x=" + event.getX() + ", y=" + event.getY() + ", inputEnabled=" + inputEnabled);
-        if (!inputEnabled || listener == null || board == null) return true;
-        if (event.getAction() != MotionEvent.ACTION_UP) return true;
-        if (cellSize <= 0) return true;
+        DebugLog.v(TAG, "onTouchEvent in, action=" + event.getAction()
+                + ", x=" + event.getX() + ", y=" + event.getY()
+                + ", inputEnabled=" + inputEnabled);
+        if (board == null || (recommendationListener == null
+                && (!inputEnabled || listener == null))) return true;
+        int action = event.getActionMasked();
+        if (action == MotionEvent.ACTION_DOWN) {
+            touchDownX = event.getX();
+            touchDownY = event.getY();
+            return true;
+        }
+        if (action != MotionEvent.ACTION_UP || cellSize <= 0) return true;
+        float dxSwipe = event.getX() - touchDownX;
+        float dySwipe = event.getY() - touchDownY;
+        if (dxSwipe * dxSwipe + dySwipe * dySwipe > cellSize * cellSize * 0.35f)
+            return true;
         int n = board.getSize();
         int x = Math.round((event.getX() - padding) / cellSize);
         int y = Math.round((event.getY() - padding) / cellSize);
@@ -482,9 +679,23 @@ public class GoBoardView extends View {
         float cy = padding + y * cellSize;
         float dx = event.getX() - cx;
         float dy = event.getY() - cy;
-        if (dx * dx + dy * dy > cellSize * cellSize * 0.45f) return true;
-        listener.onIntersectionClick(x, y);
-        performClick();
+        if (dx * dx + dy * dy > cellSize * cellSize * 0.28f) return true;
+
+        if (previewBoard == null && recommendationListener != null
+                && recommendedPoints != null) {
+            for (int i = 0; i < recommendedPoints.length; i++) {
+                Point p = recommendedPoints[i];
+                if (p != null && p.x == x && p.y == y) {
+                    recommendationListener.onRecommendationClick(i + 1);
+                    performClick();
+                    return true;
+                }
+            }
+        }
+        if (inputEnabled && listener != null) {
+            listener.onIntersectionClick(x, y);
+            performClick();
+        }
         return true;
     }
 

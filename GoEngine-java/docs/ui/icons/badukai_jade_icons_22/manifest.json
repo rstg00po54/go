@@ -1,0 +1,486 @@
+[
+  {
+    "name": "ic_back",
+    "file": "drawable-nodpi/ic_back.png",
+    "source": "奢华翡翠鎏金游戏图标套装.png",
+    "source_crop": [
+      0,
+      0,
+      482,
+      540
+    ],
+    "trim_bbox": [
+      49,
+      89,
+      457,
+      488
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 342574
+  },
+  {
+    "name": "ic_settings_round",
+    "file": "drawable-nodpi/ic_settings_round.png",
+    "source": "奢华翡翠鎏金游戏图标套装.png",
+    "source_crop": [
+      482,
+      0,
+      965,
+      540
+    ],
+    "trim_bbox": [
+      36,
+      89,
+      446,
+      489
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 352008
+  },
+  {
+    "name": "ic_home",
+    "file": "drawable-nodpi/ic_home.png",
+    "source": "奢华翡翠鎏金游戏图标套装.png",
+    "source_crop": [
+      965,
+      0,
+      1448,
+      540
+    ],
+    "trim_bbox": [
+      23,
+      89,
+      433,
+      489
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 348125
+  },
+  {
+    "name": "ic_records",
+    "file": "drawable-nodpi/ic_records.png",
+    "source": "奢华翡翠鎏金游戏图标套装.png",
+    "source_crop": [
+      0,
+      540,
+      724,
+      1086
+    ],
+    "trim_bbox": [
+      260,
+      38,
+      678,
+      443
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 338522
+  },
+  {
+    "name": "ic_training",
+    "file": "drawable-nodpi/ic_training.png",
+    "source": "奢华翡翠鎏金游戏图标套装.png",
+    "source_crop": [
+      724,
+      540,
+      1448,
+      1086
+    ],
+    "trim_bbox": [
+      36,
+      38,
+      453,
+      443
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 347995
+  },
+  {
+    "name": "ic_board_size",
+    "file": "drawable-nodpi/ic_board_size.png",
+    "source": "翡翠鎏金五款游戏图标集.png",
+    "source_crop": [
+      0,
+      0,
+      482,
+      540
+    ],
+    "trim_bbox": [
+      84,
+      113,
+      466,
+      474
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 293473
+  },
+  {
+    "name": "ic_player",
+    "file": "drawable-nodpi/ic_player.png",
+    "source": "翡翠鎏金五款游戏图标集.png",
+    "source_crop": [
+      482,
+      0,
+      965,
+      540
+    ],
+    "trim_bbox": [
+      51,
+      99,
+      434,
+      485
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 325733
+  },
+  {
+    "name": "ic_ai_level",
+    "file": "drawable-nodpi/ic_ai_level.png",
+    "source": "翡翠鎏金五款游戏图标集.png",
+    "source_crop": [
+      965,
+      0,
+      1448,
+      540
+    ],
+    "trim_bbox": [
+      18,
+      113,
+      401,
+      474
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 291225
+  },
+  {
+    "name": "ic_turn",
+    "file": "drawable-nodpi/ic_turn.png",
+    "source": "翡翠鎏金五款游戏图标集.png",
+    "source_crop": [
+      0,
+      540,
+      724,
+      1086
+    ],
+    "trim_bbox": [
+      294,
+      33,
+      677,
+      416
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 321668
+  },
+  {
+    "name": "ic_backend",
+    "file": "drawable-nodpi/ic_backend.png",
+    "source": "翡翠鎏金五款游戏图标集.png",
+    "source_crop": [
+      724,
+      540,
+      1448,
+      1086
+    ],
+    "trim_bbox": [
+      34,
+      38,
+      418,
+      405
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 303263
+  },
+  {
+    "name": "ic_mode_ai",
+    "file": "drawable-nodpi/ic_mode_ai.png",
+    "source": "翡翠鎏金棋类游戏图标套装.png",
+    "source_crop": [
+      0,
+      0,
+      482,
+      540
+    ],
+    "trim_bbox": [
+      44,
+      90,
+      467,
+      540
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 307002
+  },
+  {
+    "name": "ic_mode_human",
+    "file": "drawable-nodpi/ic_mode_human.png",
+    "source": "翡翠鎏金棋类游戏图标套装.png",
+    "source_crop": [
+      482,
+      0,
+      965,
+      540
+    ],
+    "trim_bbox": [
+      18,
+      160,
+      458,
+      530
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 303614
+  },
+  {
+    "name": "ic_import_sgf",
+    "file": "drawable-nodpi/ic_import_sgf.png",
+    "source": "翡翠鎏金棋类游戏图标套装.png",
+    "source_crop": [
+      965,
+      0,
+      1448,
+      540
+    ],
+    "trim_bbox": [
+      4,
+      160,
+      452,
+      532
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 285853
+  },
+  {
+    "name": "ic_black_stone",
+    "file": "drawable-nodpi/ic_black_stone.png",
+    "source": "翡翠鎏金棋类游戏图标套装.png",
+    "source_crop": [
+      0,
+      540,
+      482,
+      1086
+    ],
+    "trim_bbox": [
+      44,
+      62,
+      472,
+      439
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 310734
+  },
+  {
+    "name": "ic_white_stone",
+    "file": "drawable-nodpi/ic_white_stone.png",
+    "source": "翡翠鎏金棋类游戏图标套装.png",
+    "source_crop": [
+      482,
+      540,
+      965,
+      1086
+    ],
+    "trim_bbox": [
+      29,
+      63,
+      452,
+      438
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 286113
+  },
+  {
+    "name": "ic_random",
+    "file": "drawable-nodpi/ic_random.png",
+    "source": "翡翠鎏金棋类游戏图标套装.png",
+    "source_crop": [
+      965,
+      540,
+      1448,
+      1086
+    ],
+    "trim_bbox": [
+      14,
+      62,
+      439,
+      441
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 330707
+  },
+  {
+    "name": "ic_cpu",
+    "file": "drawable-nodpi/ic_cpu.png",
+    "source": "翡翠鎏金科技图标套装.png",
+    "source_crop": [
+      0,
+      0,
+      724,
+      543
+    ],
+    "trim_bbox": [
+      237,
+      84,
+      693,
+      535
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 308688
+  },
+  {
+    "name": "ic_gpu",
+    "file": "drawable-nodpi/ic_gpu.png",
+    "source": "翡翠鎏金科技图标套装.png",
+    "source_crop": [
+      724,
+      0,
+      1448,
+      543
+    ],
+    "trim_bbox": [
+      53,
+      105,
+      490,
+      537
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 370935
+  },
+  {
+    "name": "ic_npu",
+    "file": "drawable-nodpi/ic_npu.png",
+    "source": "翡翠鎏金科技图标套装.png",
+    "source_crop": [
+      0,
+      543,
+      724,
+      1086
+    ],
+    "trim_bbox": [
+      246,
+      36,
+      692,
+      466
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 354246
+  },
+  {
+    "name": "ic_confirm",
+    "file": "drawable-nodpi/ic_confirm.png",
+    "source": "翡翠鎏金科技图标套装.png",
+    "source_crop": [
+      724,
+      543,
+      1448,
+      1086
+    ],
+    "trim_bbox": [
+      78,
+      135,
+      492,
+      416
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 229350
+  },
+  {
+    "name": "ic_game_tab",
+    "file": "drawable-nodpi/ic_game_tab.png",
+    "source": "玉金华饰棋局与设置图标.png",
+    "source_crop": [
+      0,
+      0,
+      800,
+      1086
+    ],
+    "trim_bbox": [
+      70,
+      159,
+      764,
+      885
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 376291
+  },
+  {
+    "name": "ic_settings_tab",
+    "file": "drawable-nodpi/ic_settings_tab.png",
+    "source": "玉金华饰棋局与设置图标.png",
+    "source_crop": [
+      800,
+      0,
+      1448,
+      1086
+    ],
+    "trim_bbox": [
+      58,
+      234,
+      611,
+      829
+    ],
+    "size": [
+      512,
+      512
+    ],
+    "bytes": 322741
+  }
+]

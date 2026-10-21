@@ -12,9 +12,9 @@
     <application
         android:name=".BadukaiApplication"
         android:allowBackup="true"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/Theme.Badukai"
         android:extractNativeLibs="true"
@@ -32,7 +32,17 @@
             android:process=":katago_gpu"
             android:theme="@android:style/Theme.Material.NoActionBar" />
 
+        <activity android:name=".JadeSectionActivity" android:exported="false" />
+        <activity android:name=".SettingsActivity" android:exported="false"
+            android:theme="@style/Theme.Badukai" />
+        <activity android:name=".NewGameActivity" android:exported="false"
+            android:theme="@style/Theme.Badukai" />
         <activity android:name=".ReplayActivity" android:exported="false" />
+        <activity android:name=".AiAnalysisActivity" android:exported="false"
+            android:theme="@style/Theme.Badukai" />
+        <activity android:name=".SgfLibraryActivity" android:exported="false" />
+        <activity android:name=".TsumegoExplanationActivity" android:exported="false" />
+        <activity android:name=".TsumegoResultsActivity" android:exported="false" />
         <activity android:name=".TsumegoActivity" android:exported="false" />
 
         <activity

@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/endgameDialogRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp"
+    android:paddingTop="19dp"
+    android:paddingBottom="18dp"
+    android:orientation="vertical"
+    android:background="@drawable/jade_endgame_dialog_bg">
+
+    <TextView
+        android:id="@+id/endgameDialogTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="终局 · 快速 NN 估分"
+        android:fontFamily="serif"
+        android:textStyle="bold"
+        android:textSize="19sp"
+        android:textColor="#F2D58D" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="15dp"
+        android:background="#657B6755"/>
+
+    <TextView
+        android:id="@+id/endgameDialogResult"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="黑领先约11.4目"
+        android:textColor="#FCE39A"
+        android:textStyle="bold"
+        android:textSize="27sp"/>
+
+    <TextView
+        android:id="@+id/endgameDialogSubtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:gravity="center"
+        android:text="KataGo NN 预估 · 非正式计分"
+        android:textColor="#D1E4D2"
+        android:textSize="12sp"/>
+
+    <TextView
+        android:id="@+id/endgameDialogTiming"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:paddingTop="7dp"
+        android:paddingBottom="7dp"
+        android:gravity="center"
+        android:background="@drawable/jade_dark_card"
+        android:text="快速估分耗时 7 ms"
+        android:textColor="#F1D992"
+        android:textSize="12sp"/>
+
+    <ScrollView
+        android:id="@+id/endgameDialogDetailsScroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fillViewport="false"
+        android:scrollbars="none">
+        <TextView
+            android:id="@+id/endgameDialogDetails"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="11dp"
+            android:gravity="center"
+            android:lineSpacingExtra="3dp"
+            android:text="慢速 AI 复核仅用于比较结果和耗时。"
+            android:textColor="#BCD2C3"
+            android:textSize="12sp"/>
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="41dp"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <Button
+            android:id="@+id/endgameDialogClose"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginEnd="5dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingStart="2dp"
+            android:paddingEnd="2dp"
+            android:background="@drawable/jade_game_white_button"
+            android:text="关闭"
+            android:textAllCaps="false"
+            android:textColor="#164C3B"
+            android:textSize="14sp"/>
+
+        <Button
+            android:id="@+id/endgameDialogSecondary"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1.3"
+            android:layout_marginStart="5dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:paddingStart="2dp"
+            android:paddingEnd="2dp"
+            android:background="@drawable/jade_dark_action"
+            android:text="慢速 AI 复核"
+            android:textAllCaps="false"
+            android:textColor="#F8DEA0"
+            android:textSize="13sp"/>
+    </LinearLayout>
+</LinearLayout>
