@@ -393,7 +393,7 @@ public final class SgfTsumegoActivity extends Activity {
         responding = false;
         analyzing = false;
         credits.setEnabled(true);
-        credits.setText("AI分析");
+        refreshAiBackendButton();
         board.setInputEnabled(false);
         StringBuilder explanation = new StringBuilder();
         explanation.append("试下的第").append(originalWrongStep)
@@ -650,7 +650,7 @@ public final class SgfTsumegoActivity extends Activity {
                 board.setInputEnabled(!solved && !previewing && !responding
                         && !reviewingWrongMove);
                 credits.setEnabled(true);
-                credits.setText("AI分析");
+                refreshAiBackendButton();
                 if (best != null) {
                     board.setRecommendations(new Point[]{best}, new float[]{1f});
                     TsumegoSgf.Node authored = puzzle.nextCorrect(node);
@@ -710,6 +710,12 @@ public final class SgfTsumegoActivity extends Activity {
             }
         }
         return startAiSession(KataGoEngine.BackendPreference.CPU);
+    }
+
+    private void refreshAiBackendButton() {
+        KataGoEngine session = aiEngine;
+        credits.setText(session == null || !session.isReady() ? "AI分析"
+                : session.usesNpuBackend() ? "NPU分析" : "CPU分析");
     }
 
     private String actualAiBackend() {
