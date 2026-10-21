@@ -44,6 +44,7 @@
         <activity android:name=".TsumegoExplanationActivity" android:exported="false" />
         <activity android:name=".TsumegoResultsActivity" android:exported="false" />
         <activity android:name=".TsumegoActivity" android:exported="false" />
+        <activity android:name=".SgfTsumegoActivity" android:exported="false" />
 
         <activity
             android:name=".MainActivity"
