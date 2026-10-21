@@ -5,6 +5,9 @@ import hashlib
 from pathlib import Path
 import sys
 import zipfile
+import tempfile
+import shutil
+from pack_katago_models import restore_delta
 
 EXPECTED = {
     "katago_10b_9x9.tflite": (12020404, "eaf37768b48021e579e38f9bae0efbcb17f5c5a84d80d288430ee11784f1f039"),
@@ -32,24 +35,49 @@ def verify_apk(path, expected=None):
         seen = set(archive.namelist())
         for name, (length, digest) in expected.items():
             asset = "assets/engine/" + name
-            if asset not in seen:
-                raise ValueError("Missing model inside APK: " + asset +
-                                 " (build with -PvivoProbeApk=true)")
-            info = archive.getinfo(asset)
             # Only the known original manifests have a second accepted hash.
             accepted = [(length, digest)]
             if expected is EXPECTED and name in ALTERNATE_SCALE_AWARE_JSON:
                 accepted.append(ALTERNATE_SCALE_AWARE_JSON[name])
-            if info.file_size not in [item[0] for item in accepted]:
+            if asset in seen:
+                info = archive.getinfo(asset)
+                size = info.file_size
+                sha = hashlib.sha256()
+                with archive.open(info) as data:
+                    for chunk in iter(lambda: data.read(1024 * 1024), b""):
+                        sha.update(chunk)
+                actual = sha.hexdigest()
+            elif name.endswith(".tflite") and asset + ".kgdelta" in seen:
+                # Compact build: independently restore the original from its
+                # base, then verify against the exact same pinned digest.
+                # The suffix-based name works for both katago_10b and human.
+                base_asset = "assets/engine/" + name.rsplit("_", 1)[0] + "_19x19.tflite"
+                if base_asset not in seen:
+                    raise ValueError("Missing compact model base inside APK: " + base_asset)
+                with tempfile.TemporaryDirectory(prefix="verify_litert_") as tmp:
+                    base = Path(tmp) / "base.tflite"
+                    patch = Path(tmp) / "patch.kgdelta"
+                    restored = Path(tmp) / "restored.tflite"
+                    for archive_name, local in ((base_asset, base),
+                                                (asset + ".kgdelta", patch)):
+                        with archive.open(archive_name) as src, local.open("wb") as dst:
+                            shutil.copyfileobj(src, dst, 1024 * 1024)
+                    restore_delta(base, patch, restored)
+                    size = restored.stat().st_size
+                    sha = hashlib.sha256()
+                    with restored.open("rb") as data:
+                        for chunk in iter(lambda: data.read(1024 * 1024), b""):
+                            sha.update(chunk)
+                    actual = sha.hexdigest()
+            else:
+                raise ValueError("Missing model inside APK: " + asset +
+                                 " (build with -PvivoProbeApk=true)")
+            if size not in [item[0] for item in accepted]:
                 raise ValueError("Incorrect model length in APK: %s actual=%d accepted=%s" %
-                                 (asset, info.file_size, [item[0] for item in accepted]))
-            sha = hashlib.sha256()
-            with archive.open(info) as f:
-                for chunk in iter(lambda: f.read(1024 * 1024), b""):
-                    sha.update(chunk)
-            if (info.file_size, sha.hexdigest()) not in accepted:
+                                 (asset, size, [item[0] for item in accepted]))
+            if (size, actual) not in accepted:
                 raise ValueError("Incorrect model SHA256 in APK: " + asset)
-            print("APK_MODEL_OK %s bytes=%d" % (asset, info.file_size), flush=True)
+            print("APK_MODEL_OK %s bytes=%d" % (asset, size), flush=True)
         if any(name.endswith("/librknnrt.so") for name in seen):
             raise ValueError("Vivo APK contains Rockchip-only librknnrt.so")
     print("VIVO_LITERT_APK_PASS models=%d apk=%s" % (len(expected), path), flush=True)
