@@ -2,7 +2,6 @@
 """Offline, stdlib-only tests for compact KataGo model packaging."""
 import hashlib
 from pathlib import Path
-import random
 import tempfile
 import unittest
 
@@ -18,7 +17,7 @@ class CompactKataGoModelTests(unittest.TestCase):
         self.target = self.path / "target.bin"
         self.patch = self.path / "patch.bin"
         self.restored = self.path / "restored.bin"
-        source = random.Random(93).randbytes(1024 * 1024)
+        source = hashlib.shake_256(b"compact-model-synthetic-seed").digest(1024 * 1024)
         self.base.write_bytes(source)
         self.target.write_bytes(source[:12345] + b"EXTRA" + source[12345:600000] +
                                 b"REPLACEMENT" + source[600004:])
