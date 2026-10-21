@@ -26,20 +26,35 @@ public final class TsumegoExplanationActivity extends Activity {
         if (index < 0 || index >= puzzles.size()) index = 0;
         TsumegoLessons.Puzzle puzzle = puzzles.get(index);
         GoBoard position = puzzle.newBoard();
-        int removed = position.playMove(new Move.Stone(puzzle.answer, puzzle.toPlay)).size();
+        StringBuilder sequence = new StringBuilder();
+        int removed = 0;
+        for (int turn = 0; turn < puzzle.steps(); turn++) {
+            Point answer = puzzle.answerAt(turn);
+            removed += position.playMove(new Move.Stone(answer, puzzle.toPlay)).size();
+            if (sequence.length() > 0) sequence.append(" → ");
+            sequence.append(puzzle.toPlay == StoneColor.BLACK ? "黑" : "白")
+                    .append(coordinate(answer));
+            if (turn + 1 < puzzle.steps()) {
+                Point response = puzzle.replyAfter(turn);
+                position.playMove(new Move.Stone(response, puzzle.toPlay.opposite()));
+                sequence.append(" → ")
+                        .append(puzzle.toPlay == StoneColor.BLACK ? "白" : "黑")
+                        .append(coordinate(response));
+            }
+        }
 
         GoBoardView board = findViewById(R.id.explainBoard);
         board.setBoard(position);
         board.setInputEnabled(false);
         board.setTrainingTarget(null);
-        board.setLastMove(puzzle.answer);
+        board.setLastMove(puzzle.answerAt(puzzle.steps() - 1));
 
         ((TextView)findViewById(R.id.explainPuzzleTitle)).setText(puzzle.title);
         ((TextView)findViewById(R.id.explainSide)).setText(
                 (puzzle.toPlay == StoneColor.BLACK ? "黑先" : "白先")
-                + " · 一手提掉 " + removed + " 子");
+                + " · 你走 " + puzzle.steps() + " 手 · 共提 " + removed + " 子");
         ((TextView)findViewById(R.id.explainAnswer)).setText(
-                "正确落点：" + coordinate(puzzle.answer));
+                "解题顺序：" + sequence);
         ((TextView)findViewById(R.id.explainBody)).setText(
                 "题目：" + puzzle.instruction + "\n\n"
                 + "提示：" + puzzle.hint + "\n\n解析：" + puzzle.explanation);
