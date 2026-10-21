@@ -186,7 +186,7 @@ public final class SgfTsumegoActivity extends Activity {
     }
 
     private void showHint() {
-        if (puzzle == null || solved || responding || previewing) return;
+        if (puzzle == null || solved || responding || previewing || analyzing) return;
         TsumegoSgf.Node best = puzzle.nextCorrect(node);
         if (best == null || best.color != puzzle.toPlay || best.point == null) {
             message.setText("当前变化暂无线索，可点「重做」。");
@@ -608,6 +608,7 @@ public final class SgfTsumegoActivity extends Activity {
         final StoneColor side = puzzle.toPlay;
         final Rect area = new Rect(fightArea);
         analyzing = true;
+        board.setInputEnabled(false);
         credits.setEnabled(false);
         credits.setText("分析中");
         message.setTextColor(0xFFE4EADC);
@@ -640,6 +641,8 @@ public final class SgfTsumegoActivity extends Activity {
             handler.post(() -> {
                 if (destroyed || serial != aiSerial || expectedRound != round) return;
                 analyzing = false;
+                board.setInputEnabled(!solved && !previewing && !responding
+                        && !reviewingWrongMove);
                 credits.setEnabled(true);
                 credits.setText("AI分析");
                 if (best != null) {
