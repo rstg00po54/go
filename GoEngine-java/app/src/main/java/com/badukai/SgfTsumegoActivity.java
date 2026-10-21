@@ -619,16 +619,13 @@ public final class SgfTsumegoActivity extends Activity {
         message.setTextColor(0xFFE4EADC);
         message.setText("正在让 KataGo 10b 搜索当前题目的局部建议…");
         aiWorker.execute(() -> {
+            final long startedNs = System.nanoTime();
             Point suggestion = null;
             String error = null;
             try {
-                KataGoEngine engine = ensureAiEngine();
                 if (serial != aiSerial || destroyed) return;
-                if (!engine.setTrainingPosition(snapshot))
-                    throw new IllegalStateException("KataGo 未能同步当前棋形");
                 List<KataGoEngine.SearchRecommendation> recommendations =
-                        engine.searchLocalRecommendations(side.toGtp(), 96, 5.0,
-                                snapshot, area.left, area.top, area.right, area.bottom);
+                        searchAi(snapshot, side, 96, 5.0, area);
                 for (KataGoEngine.SearchRecommendation rec : recommendations) {
                     Point at = Point.fromGtp(rec.move, 19);
                     if (at != null && area.contains(at.x, at.y)
@@ -643,6 +640,10 @@ public final class SgfTsumegoActivity extends Activity {
             }
             final Point best = suggestion;
             final String failure = error;
+            final String backendInfo = actualAiBackend() + "，总耗时"
+                    + ((System.nanoTime() - startedNs) / 1000000L) + "ms";
+            android.util.Log.i("SgfTsumego", "TSUMEGO_AI_ANALYSIS type=hint "
+                    + backendInfo + " success=" + (best != null));
             handler.post(() -> {
                 if (destroyed || serial != aiSerial || expectedRound != round) return;
                 analyzing = false;
@@ -656,11 +657,13 @@ public final class SgfTsumegoActivity extends Activity {
                     message.setText("KataGo局部建议：" + vertex(best)
                             + (authored != null && authored.point != null
                                 ? "；原 SGF 正解候选：" + vertex(authored.point) : "")
-                            + "。AI建议不等于已证明的死活答案。");
+                            + "。AI建议不等于已证明的死活答案。"
+                            + " [" + backendInfo + "]");
                     message.setTextColor(0xFFF7D58E);
                 } else {
                     message.setText("AI没有返回可用的局部着法"
-                            + (failure == null ? "。" : "：" + failure));
+                            + (failure == null ? "。" : "：" + failure)
+                            + " [" + backendInfo + "]");
                     message.setTextColor(0xFFFFC18A);
                 }
             });
