@@ -42,6 +42,7 @@ public final class SgfTsumegoActivity extends Activity {
     private volatile boolean destroyed;
     private Rect fightArea = new Rect(10, 10, 19, 19);
     private boolean analyzing, aiVariation;
+    private String aiRunInfo = "";
     private volatile int aiSerial;
     private Point wrongAttempt;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -149,6 +150,7 @@ public final class SgfTsumegoActivity extends Activity {
             wrongNotes.setLength(0);
             wrongCaptured.setLength(0);
             wrongExplanation = "";
+            aiRunInfo = "";
             mistakes = hints = studentMoves = 0;
             board.setTrainingViewport(10, 10, 9);
             board.setVariationPreview(null, null, null, null);
@@ -405,6 +407,8 @@ public final class SgfTsumegoActivity extends Activity {
             explanation.append("\n棋盘实际发生的提子：").append(wrongCaptured);
         if (wrongNotes.length() > 0)
             explanation.append("\n").append(wrongNotes);
+        if (aiVariation && !aiRunInfo.isEmpty())
+            explanation.append("\n本次分析：").append(aiRunInfo);
         if (!qualifier.isEmpty())
             explanation.append("\n").append(qualifier);
         else if (wrongNotes.length() == 0)
@@ -443,6 +447,7 @@ public final class SgfTsumegoActivity extends Activity {
         wrongNotes.setLength(0);
         wrongCaptured.setLength(0);
         wrongExplanation = "";
+        aiRunInfo = "";
         aiVariation = false;
         credits.setEnabled(true);
         credits.setText("AI分析");
