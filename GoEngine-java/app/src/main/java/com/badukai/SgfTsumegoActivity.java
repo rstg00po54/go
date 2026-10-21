@@ -42,7 +42,8 @@ public final class SgfTsumegoActivity extends Activity {
     private volatile boolean destroyed;
     private Rect fightArea = new Rect(10, 10, 19, 19);
     private boolean analyzing, aiVariation;
-    private int aiSerial;
+    private volatile int aiSerial;
+    private Point wrongAttempt;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private SharedPreferences prefs;
     private int index, round, mistakes, hints, studentMoves;
@@ -143,6 +144,7 @@ public final class SgfTsumegoActivity extends Activity {
             fightArea = deriveFightArea(puzzle);
             solved = responding = previewing = reviewingWrongMove = aiVariation = false;
             beforeWrongMove = null;
+            wrongAttempt = null;
             wrongVariation.clear();
             wrongNotes.setLength(0);
             wrongCaptured.setLength(0);
@@ -297,6 +299,7 @@ public final class SgfTsumegoActivity extends Activity {
         mistakes++;
         beforeWrongMove = position.copyForPreview();
         beforeWrongNode = node;
+        wrongAttempt = at;
         beforeWrongStudentMoves = studentMoves;
         originalWrongStep = studentMoves + 1;
         reviewingWrongMove = true;
@@ -430,6 +433,7 @@ public final class SgfTsumegoActivity extends Activity {
         node = beforeWrongNode;
         studentMoves = beforeWrongStudentMoves;
         beforeWrongMove = null;
+        wrongAttempt = null;
         reviewingWrongMove = false;
         responding = false;
         wrongVariation.clear();
@@ -541,6 +545,250 @@ public final class SgfTsumegoActivity extends Activity {
         } catch (Exception e) {
             message.setText("原题正解回放失败：" + e.getMessage());
         }
+    }
+
+    /**
+     * Derive a restricted combat rectangle from the author's SGF principal
+     * sequence. The board remains a full 19x19 position; no UI crop is used
+     * to change capture or ko rules.
+     */
+    private static Rect deriveFightArea(TsumegoSgf.Puzzle problem) {
+        int minX = 19, minY = 19, maxX = -1, maxY = -1;
+        for (TsumegoSgf.Node move : problem.principalSolution()) {
+            if (move.point == null) continue;
+            minX = Math.min(minX, move.point.x);
+            minY = Math.min(minY, move.point.y);
+            maxX = Math.max(maxX, move.point.x);
+            maxY = Math.max(maxY, move.point.y);
+        }
+        if (maxX < minX || maxY < minY)
+            throw new IllegalArgumentException("原题缺少可用的正解变化");
+        return new Rect(Math.max(LOCAL_LEFT, minX - 2),
+                Math.max(LOCAL_TOP, minY - 2),
+                Math.min(19, maxX + 3), Math.min(19, maxY + 3));
+    }
+
+    private static TsumegoSgf.Node syntheticMove(Point point, StoneColor color) {
+        TsumegoSgf.Node move = new TsumegoSgf.Node();
+        move.point = point;
+        move.color = color;
+        return move;
+    }
+
+    /**
+     * Explicit AI help remains inside this same Activity. While reviewing an
+     * off-book first move, analyze THAT move from its actual starting board.
+     * Otherwise show a non-playing, locally searched hint for the next turn.
+     */
+    private void startAiInPlace() {
+        if (puzzle == null || analyzing) return;
+        if (previewing || solved) {
+            message.setText("先点「重做」回到题目，才可以请求 AI 提示。");
+            return;
+        }
+        if (reviewingWrongMove && wrongAttempt != null && beforeWrongMove != null) {
+            startAiWrongAnalysis(wrongAttempt);
+            return;
+        }
+        if (responding) {
+            message.setText("原 SGF 正在演示应手，请稍候或点「重做」。");
+            return;
+        }
+        final int serial = ++aiSerial;
+        final int expectedRound = round;
+        final GoBoard snapshot = position.copyForPreview();
+        final StoneColor side = puzzle.toPlay;
+        final Rect area = new Rect(fightArea);
+        analyzing = true;
+        credits.setEnabled(false);
+        credits.setText("分析中");
+        message.setTextColor(0xFFE4EADC);
+        message.setText("正在让 KataGo 10b 搜索当前题目的局部建议…");
+        aiWorker.execute(() -> {
+            Point suggestion = null;
+            String error = null;
+            try {
+                KataGoEngine engine = ensureAiEngine();
+                if (serial != aiSerial || destroyed) return;
+                if (!engine.setTrainingPosition(snapshot))
+                    throw new IllegalStateException("KataGo 未能同步当前棋形");
+                List<KataGoEngine.SearchRecommendation> recommendations =
+                        engine.searchLocalRecommendations(side.toGtp(), 96, 5.0,
+                                snapshot, area.left, area.top, area.right, area.bottom);
+                for (KataGoEngine.SearchRecommendation rec : recommendations) {
+                    Point at = Point.fromGtp(rec.move, 19);
+                    if (at != null && area.contains(at.x, at.y)
+                            && snapshot.isLegalMove(at, side)) {
+                        suggestion = at;
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+                error = e.getMessage();
+                android.util.Log.w("SgfTsumego", "Inline AI hint failed", e);
+            }
+            final Point best = suggestion;
+            final String failure = error;
+            handler.post(() -> {
+                if (destroyed || serial != aiSerial || expectedRound != round) return;
+                analyzing = false;
+                credits.setEnabled(true);
+                credits.setText("AI分析");
+                if (best != null) {
+                    board.setRecommendations(new Point[]{best}, new float[]{1f});
+                    TsumegoSgf.Node authored = puzzle.nextCorrect(node);
+                    message.setText("KataGo局部建议：" + vertex(best)
+                            + (authored != null && authored.point != null
+                                ? "；原 SGF 正解候选：" + vertex(authored.point) : "")
+                            + "。AI建议不等于已证明的死活答案。");
+                    message.setTextColor(0xFFF7D58E);
+                } else {
+                    message.setText("AI没有返回可用的局部着法"
+                            + (failure == null ? "。" : "：" + failure));
+                    message.setTextColor(0xFFFFC18A);
+                }
+            });
+        });
+    }
+
+    /** Lazily reuse one isolated CPU PIE GTP process only when AI is needed. */
+    private KataGoEngine ensureAiEngine() throws Exception {
+        if (aiEngine != null && aiEngine.isReady()) return aiEngine;
+        if (aiEngine != null) aiEngine.stop();
+        KataGoEngine session = new KataGoEngine(getApplicationContext(), "engine_tsumego_ai");
+        aiEngine = session;
+        session.setStartupBoardSize(19);
+        if (!session.start(KataGoEngine.Model.HUMAN)
+                || !session.setBoardSize(19)
+                || !session.setChineseRules()
+                || !session.setKomi(0f))
+            throw new IllegalStateException("KataGo 10b CPU 引擎启动失败");
+        return session;
+    }
+
+    /**
+     * The student's wrong move has ALREADY been placed on the board.
+     * Compare it with ONE KataGo continuation, max four additional plies.
+     * Never resume unrestricted sparring after displaying that continuation.
+     */
+    private void startAiWrongAnalysis(Point attempted) {
+        if (puzzle == null || beforeWrongMove == null || attempted == null) return;
+        round++;
+        handler.removeCallbacksAndMessages(null);
+        final int expectedRound = round;
+        final int serial = ++aiSerial;
+        final GoBoard snapshot = beforeWrongMove.copyForPreview();
+        final StoneColor human = puzzle.toPlay;
+        final StoneColor defender = human.opposite();
+        if (!snapshot.isLegalMove(attempted, human)) {
+            finishWrongVariation("该落点在当前局面已不合法，无法搜索反驳。");
+            return;
+        }
+        int captured = snapshot.playMove(new Move.Stone(attempted, human)).size();
+        final Rect area = new Rect(fightArea);
+        position = snapshot.copyForPreview();
+        node = beforeWrongNode;
+        reviewingWrongMove = true;
+        aiVariation = true;
+        responding = true;
+        analyzing = true;
+        wrongVariation.clear();
+        wrongVariation.add(syntheticMove(attempted, human));
+        wrongNotes.setLength(0);
+        wrongCaptured.setLength(0);
+        wrongExplanation = "";
+        if (captured > 0) appendCaptured(human, attempted, captured);
+        board.setVariationPreview(null, null, null, null);
+        board.setRecommendations(null, null);
+        board.setBoard(position);
+        board.setLastMove(attempted);
+        renderWrongNumbers();
+        board.setInputEnabled(false);
+        hint.setEnabled(false);
+        reset.setText("重试此手");
+        credits.setText("分析中");
+        credits.setEnabled(false);
+        message.setTextColor(0xFFF8D192);
+        message.setText("已保留试下的 " + vertex(attempted)
+                + "，KataGo 正在寻找局部反驳（最多演示后续4手）…");
+
+        // Do not encourage an unrelated corner fight when the attempted move
+        // itself lies outside the source problem's local fight.
+        if (!area.contains(attempted.x, attempted.y)) {
+            finishWrongVariation("这手位于原题核心攻防区之外。"
+                    + "程序不允许 AI 跑到远处编造反驳，请对照原 SGF 正解。");
+            return;
+        }
+        aiWorker.execute(() -> {
+            String failure = null;
+            List<Point> planned = new ArrayList<>();
+            List<StoneColor> sides = new ArrayList<>();
+            try {
+                KataGoEngine engine = ensureAiEngine();
+                if (destroyed || serial != aiSerial) return;
+                if (!engine.setTrainingPosition(snapshot))
+                    throw new IllegalStateException("KataGo 未能装载你的试下局面");
+                List<KataGoEngine.SearchRecommendation> options =
+                        engine.searchLocalRecommendations(defender.toGtp(), 112, 5.0,
+                                snapshot, area.left, area.top, area.right, area.bottom);
+                for (KataGoEngine.SearchRecommendation option : options) {
+                    GoBoard trial = snapshot.copyForPreview();
+                    List<String> pv = option.pvMoves;
+                    for (int i = 0; i < pv.size() && i < 4; i++) {
+                        Point point = Point.fromGtp(pv.get(i), 19);
+                        StoneColor turn = (i % 2 == 0) ? defender : human;
+                        if (point == null || !area.contains(point.x, point.y)
+                                || !trial.isLegalMove(point, turn)) break;
+                        trial.playMove(new Move.Stone(point, turn));
+                        planned.add(point);
+                        sides.add(turn);
+                    }
+                    if (!planned.isEmpty()) break;
+                }
+                if (planned.isEmpty())
+                    failure = "AI没有找到可用的局部反驳；不能据此判断该手必败。";
+            } catch (Exception e) {
+                failure = "AI搜索未完成：" + e.getMessage();
+                android.util.Log.w("SgfTsumego", "Inline AI refutation failed", e);
+            }
+            final String result = failure;
+            handler.post(() -> {
+                if (destroyed || serial != aiSerial || expectedRound != round) return;
+                if (planned.isEmpty()) {
+                    finishWrongVariation(result == null ? "AI没有返回合法应手。" : result);
+                } else {
+                    animateAiLine(expectedRound, serial, planned, sides, 0);
+                }
+            });
+        });
+    }
+
+    private void animateAiLine(int expectedRound, int serial, List<Point> moves,
+            List<StoneColor> colors, int step) {
+        if (destroyed || expectedRound != round || serial != aiSerial
+                || !reviewingWrongMove) return;
+        if (step >= moves.size()) {
+            finishWrongVariation("这只是 KataGo 10b 局部搜索的参考应手（非原 SGF 分支），"
+                    + "不代表已证明你的着法必死或必活。"
+                    + "如需查看详细结论，可点上方说明文字。");
+            return;
+        }
+        Point point = moves.get(step);
+        StoneColor color = colors.get(step);
+        if (!position.isLegalMove(point, color)) {
+            finishWrongVariation("AI演示到此停止：后续着法在当前棋盘不合法。");
+            return;
+        }
+        int captured = position.playMove(new Move.Stone(point, color)).size();
+        if (captured > 0) appendCaptured(color, point, captured);
+        wrongVariation.add(syntheticMove(point, color));
+        board.setBoard(position);
+        board.setLastMove(point);
+        renderWrongNumbers();
+        message.setText("KataGo参考变化：" + wrongSequence() + "…");
+        message.setTextColor(0xFFF8D192);
+        handler.postDelayed(() -> animateAiLine(expectedRound, serial,
+                moves, colors, step + 1), 500L);
     }
 
     private void showCredits() {
