@@ -417,6 +417,24 @@ tasks.configureEach {
         dependsOn(stageCompactKataGoModels)
 }
 
+// In addition to validating the source-stage deltas, inspect the FINAL APK.
+// This fails the build if Gradle accidentally merges any full duplicate graph
+// alongside its compact patch (e.g. from a stale source set or intermediates).
+val verifyCompactKataGoApk = tasks.register<Exec>("verifyCompactKataGoApk") {
+    group = "verification"
+    description = "Fail on duplicate full KataGo graphs and report APK size breakdown"
+    onlyIf { compactKataGoModels }
+    dependsOn(stageCompactKataGoModels)
+    workingDir(rootProject.projectDir)
+    commandLine("python3", "tools/verify_compact_katago_apk.py",
+        "app/build/outputs/apk/debug/app-debug.apk",
+        "app/build/generated/katagoCompactAssets")
+}
+tasks.configureEach {
+    if (compactKataGoModels && name == "assembleDebug")
+        finalizedBy(verifyCompactKataGoApk)
+}
+
 val verifyVivoLiteRtApk = tasks.register<Exec>("verifyVivoLiteRtApk") {
     group = "verification"
     description = "Reject APKs missing any of the six pinned Vivo LiteRT assets"
