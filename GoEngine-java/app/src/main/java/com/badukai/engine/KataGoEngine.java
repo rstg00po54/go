@@ -149,9 +149,19 @@ public class KataGoEngine {
     /** The actual backend, not merely the requested preference; false after CPU fallback. */
     public boolean usesNpuBackend() { return npuSession != null || mediaTekSession != null; }
 
-    private boolean hasAsset(String path) {
+    private boolean hasRawAsset(String path) {
         try (InputStream stream = context.getAssets().open(path)) { return stream.read() >= 0; }
         catch (IOException missing) { return false; }
+    }
+
+    // Compact builds replace size-specific models with .kgdelta, while all
+    // callers retain their existing logical .tflite/.rknn asset names.
+    private boolean hasAsset(String path) {
+        return hasRawAsset(path) || (isCompactableModel(path) && hasRawAsset(path + ".kgdelta"));
+    }
+
+    private static boolean isCompactableModel(String path) {
+        return path.matches("engine/katago_(human|10b)_(9x9|11x11|13x13|15x15)\\.(tflite|rknn)");
     }
 
     /** A MediaTek GTP session also needs a working, size-matched LiteRT model. */
@@ -1732,9 +1742,24 @@ public class KataGoEngine {
         File parent = dest.getParentFile();
         if (parent != null && !parent.exists()) parent.mkdirs();
 
-        // Preserve the extracted .bin model's mtime so native Winograd caches
-        // stay valid between launches of the same APK. Configs are still rewritten.
-        boolean modelAsset = assetPath.endsWith(".bin") || assetPath.endsWith(".rknn");
+        // Reconstruct the exact original graph the first time a board is used;
+        // later game sessions reuse the SHA-verified private cache. The same
+        // native backends, manifests, and hashes are used after restoration.
+        if (isCompactableModel(assetPath) && !hasRawAsset(assetPath)
+                && hasRawAsset(assetPath + ".kgdelta")) {
+            String baseAsset = assetPath.replaceFirst("_(?:9x9|11x11|13x13|15x15)\\.", "_19x19.");
+            if (baseAsset.equals(assetPath))
+                throw new IOException("Invalid compact model asset: " + assetPath);
+            File baseFile = new File(parent, baseAsset.substring(baseAsset.lastIndexOf('/') + 1));
+            copyAssetToFile(baseAsset, baseFile);
+            KataGoModelDelta.restore(context, baseFile, assetPath + ".kgdelta", dest);
+            return;
+        }
+
+        // Preserve cached full models between launches. Configs are still
+        // rewritten. Keeping .tflite bases is important for compact builds.
+        boolean modelAsset = assetPath.endsWith(".bin") || assetPath.endsWith(".rknn")
+                || assetPath.endsWith(".tflite");
         String cacheKey = "asset_install_" + assetPath + "_" + dest.getName();
         long apkUpdateTime = -1;
         android.content.SharedPreferences prefs = null;
