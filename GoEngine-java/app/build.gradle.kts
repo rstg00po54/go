@@ -95,8 +95,6 @@ android {
         }
     }
 
-    // Package the checked-in green home artwork from docs automatically.
-    sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/homeAssets"))
     // Compact APKs use a verified staging directory instead of directly
     // packaging each full-size duplicate from src/main/assets and generated
     // RKNN assets. Existing manifests, original BIN models and other assets
@@ -108,6 +106,11 @@ android {
     } else {
         sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/rk3588HumanAssets"))
     }
+    // Keep the separately generated original Jade/Chinese-style artwork in
+    // BOTH packaging modes. setSrcDirs() above intentionally replaces only
+    // model asset roots; forgetting to re-add this directory produces a blank
+    // green home screen while the compiled drawable navigation icons survive.
+    sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/homeAssets"))
 
     // Android 10+ does not allow executing binaries extracted under writable filesDir.
     // Package katago as libkatago_exec.so and extract native libs to nativeLibraryDir.
