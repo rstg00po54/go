@@ -1350,10 +1350,10 @@ public class MainActivity extends AppCompatActivity {
                 endgameEvaluation = result;
                 final int suspectedDeadStones = displayEndgameOwnership(result);
                 gameResultText = formatFastEndgameResult(result.whiteLead);
-                finalScoreText = String.format(Locale.CHINA, "快速 NN 预估\n%s",
-                        Math.abs(result.whiteLead) < 0.05 ? "接近平局"
-                        : String.format(Locale.CHINA, "%s领先约%.1f目",
-                                result.whiteLead > 0 ? "白" : "黑",Math.abs(result.whiteLead)));
+                finalScoreText = Math.abs(result.whiteLead) < 0.05
+                        ? "NN预估 · 接近平局"
+                        : String.format(Locale.CHINA, "NN预估 · %s领先%.1f目",
+                                result.whiteLead > 0 ? "白" : "黑", Math.abs(result.whiteLead));
                 try {
                     NnAreaScore area = NnAreaScore.estimate(result.whiteOwnership,size,komiFor(size),
                             gameCondition >= 2 ? gameCondition : 0);
