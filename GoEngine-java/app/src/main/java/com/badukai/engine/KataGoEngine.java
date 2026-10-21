@@ -169,10 +169,17 @@ public class KataGoEngine {
         if (!NpuHardware.canProbeMediaTekLiteRt() || (size != 9 && size != 11 && size != 13 && size != 15 && size != 19)) return false;
         if (!new File(context.getApplicationInfo().nativeLibraryDir, "libkatago_mtk.so").isFile()) return false;
         String stem = "engine/katago_10b_" + size + "x" + size;
-        try (InputStream graph = context.getAssets().open(stem + ".tflite");
-             InputStream manifest = context.getAssets().open(stem + ".json")) {
-            return graph.read() >= 0 && manifest.read() >= 0;
+        try (InputStream manifest = context.getAssets().open(stem + ".json")) {
+            if (manifest.read() < 0) return false;
+            for (String candidate : new String[]{stem + ".tflite", stem + ".tflite.kgdelta"}) {
+                try (InputStream graph = context.getAssets().open(candidate)) {
+                    if (graph.read() >= 0) return true;
+                } catch (IOException missing) {
+                    // Try the other representation. The restorer verifies exact bytes.
+                }
+            }
         } catch (IOException missing) { return false; }
+        return false;
     }
 
     /** Board size of the RKNN model loaded by the active native GTP session. */
