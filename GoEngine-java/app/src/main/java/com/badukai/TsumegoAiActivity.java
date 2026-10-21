@@ -50,6 +50,7 @@ public final class TsumegoAiActivity extends Activity {
     private volatile boolean ready;
     private boolean destroyed, thinking, ended, killing;
     private int index, ownMoves, aiMoves, selectedPuzzleId;
+    private int pendingTryX = -1, pendingTryY = -1, pendingTryIndex = -1;
     private TsumegoSgf.Puzzle puzzle;
     private GoBoard position;
     private GoBoardView board;
@@ -102,6 +103,9 @@ public final class TsumegoAiActivity extends Activity {
         SharedPreferences pref = getSharedPreferences("tsumego_sgf_progress", MODE_PRIVATE);
         int requested = getIntent().getIntExtra("sgf_puzzle_index", pref.getInt("last_index", 0));
         killing = getIntent().getBooleanExtra("tsumego_killing", false);
+        pendingTryX = getIntent().getIntExtra("tsumego_try_x", -1);
+        pendingTryY = getIntent().getIntExtra("tsumego_try_y", -1);
+        pendingTryIndex = requested;
         open(requested >= 0 && requested < IDS.length ? requested : 0);
         startEngine();
     }
@@ -235,6 +239,13 @@ public final class TsumegoAiActivity extends Activity {
                     hint.setEnabled(!ended);
                     message.setText("KataGo 10b 已就绪（独立CPU引擎）。"
                             + " 你可以试任意合法的局部着法，对方会持续应手。");
+                    if (pendingTryIndex == index && pendingTryX >= CORNER_START
+                            && pendingTryY >= CORNER_START && pendingTryX < 19
+                            && pendingTryY < 19) {
+                        int x = pendingTryX, y = pendingTryY;
+                        pendingTryX = pendingTryY = -1;
+                        onIntersection(x, y);
+                    }
                 });
             } catch (Exception e) {
                 android.util.Log.e("TsumegoAi", "Engine failed to start", e);
