@@ -3,6 +3,7 @@ package com.badukai;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.SharedPreferences;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -53,6 +54,8 @@ public final class TsumegoAiActivity extends Activity {
     private int pendingTryX = -1, pendingTryY = -1, pendingTryIndex = -1;
     private TsumegoSgf.Puzzle puzzle;
     private GoBoard position;
+    /** Full-board coordinates, exclusive right/bottom. Display remains 9x9. */
+    private Rect fightArea = new Rect(CORNER_START, CORNER_START, 19, 19);
     private GoBoardView board;
     private Point targetAnchor;
     private List<Point> watchedStones = new ArrayList<>();
@@ -139,6 +142,7 @@ public final class TsumegoAiActivity extends Activity {
             puzzle = TsumegoSgf.parse("ggg-easy-" + selectedPuzzleId,
                     readSgf(selectedPuzzleId));
             position = puzzle.newBoard();
+            fightArea = deriveFightArea(puzzle);
             board.setBoard(position);
             board.setTrainingViewport(CORNER_START, CORNER_START, CORNER_SIZE);
             board.setLastMove(null);
@@ -151,6 +155,7 @@ public final class TsumegoAiActivity extends Activity {
                     + "棋目标棋块" + (killing ? "被提掉。" : "活下来。")
                     + " 这是可切换的练习目标，并非原题标注。"
                     + " 点棋子可指定目标，点空点落子。"
+                    + " AI只在原题攻防区域应手：" + areaLabel(fightArea) + "。"
                     + (ready ? " AI已准备好。" : " 正在启动KataGo…"));
             message.setTextColor(0xFFE4EADC);
             board.setInputEnabled(ready);
@@ -170,6 +175,34 @@ public final class TsumegoAiActivity extends Activity {
                 + color + "先 · AI陪练 · " + (killing ? "杀棋" : "做活") + "（可切换）");
         progress.setText("AI局部对练 " + (index + 1) + "/" + IDS.length
                 + " · 你" + ownMoves + "手 AI" + aiMoves + "手");
+    }
+
+    /**
+     * A displayed 9x9 viewport contains many completely irrelevant moves.
+     * Bound AI play to the original SGF's principal correct variation, padded
+     * by two intersections for liberties, threats and alternative responses.
+     * Do not derive this from the user's wrong move: AI must not wander after it.
+     */
+    private static Rect deriveFightArea(TsumegoSgf.Puzzle source) {
+        int minX = 19, minY = 19, maxX = -1, maxY = -1;
+        for (TsumegoSgf.Node move : source.principalSolution()) {
+            if (move.point == null) continue;
+            minX = Math.min(minX, move.point.x);
+            minY = Math.min(minY, move.point.y);
+            maxX = Math.max(maxX, move.point.x);
+            maxY = Math.max(maxY, move.point.y);
+        }
+        if (maxX < minX || maxY < minY)
+            throw new IllegalArgumentException("原题没有完整正解，无法确定攻防区");
+        return new Rect(Math.max(CORNER_START, minX - 2),
+                Math.max(CORNER_START, minY - 2),
+                Math.min(19, maxX + 3), Math.min(19, maxY + 3));
+    }
+
+    private static String areaLabel(Rect region) {
+        Point upperLeft = new Point(region.left, region.top);
+        Point lowerRight = new Point(region.right - 1, region.bottom - 1);
+        return upperLeft.toGtp(19) + "～" + lowerRight.toGtp(19);
     }
 
     private void chooseDefaultTarget() {
@@ -239,7 +272,8 @@ public final class TsumegoAiActivity extends Activity {
                     board.setInputEnabled(!ended && !thinking);
                     hint.setEnabled(!ended);
                     message.setText("KataGo 10b 已就绪（独立CPU引擎）。"
-                            + " 你可以试任意合法的局部着法，对方会持续应手。");
+                            + " 你可以试任意合法着法，AI只在"
+                            + areaLabel(fightArea) + "攻防区域应手。");
                     if (pendingTryIndex == index && pendingTryX >= CORNER_START
                             && pendingTryY >= CORNER_START && pendingTryX < 19
                             && pendingTryY < 19) {
@@ -344,6 +378,7 @@ public final class TsumegoAiActivity extends Activity {
         message.setText("你的落子已保留，KataGo 正在搜索局部应手…");
         final int serial = generation.get();
         final GoBoard snapshot = position.copyForPreview();
+        final Rect limits = new Rect(fightArea);
         final StoneColor side = opponent();
         worker.execute(() -> {
             String error = null;
@@ -354,17 +389,19 @@ public final class TsumegoAiActivity extends Activity {
                     throw new IllegalStateException("无法向 KataGo 装载死活棋形");
                 List<KataGoEngine.SearchRecommendation> search =
                         engine.searchLocalRecommendations(side.toGtp(), 96, 5.0,
-                                snapshot, CORNER_START, CORNER_START, CORNER_SIZE);
+                                snapshot, limits.left, limits.top,
+                                limits.right, limits.bottom);
                 for (KataGoEngine.SearchRecommendation rec : search) {
                     Point candidate = Point.fromGtp(rec.move, 19);
-                    if (candidate != null
-                            && snapshot.isLegalMove(candidate, side)
-                            && candidate.x >= CORNER_START && candidate.y >= CORNER_START) {
+                    if (candidate != null && limits.contains(candidate.x, candidate.y)
+                            && snapshot.isLegalMove(candidate, side)) {
                         choice = candidate;
                         break;
                     }
                 }
-                if (choice == null) error = "AI没有找到合法的局部应手，不能据此断言死活。";
+                if (choice == null)
+                    error = "AI在原题攻防区" + areaLabel(limits)
+                            + "内未找到可搜索的合法应手，已拒绝到别处乱下。";
             } catch (Exception e) {
                 error = e.getMessage();
                 android.util.Log.e("TsumegoAi", "KataGo local search failed", e);
@@ -374,7 +411,8 @@ public final class TsumegoAiActivity extends Activity {
             ui.post(() -> {
                 if (destroyed || serial != generation.get() || puzzle == null) return;
                 thinking = false;
-                if (move == null || !position.isLegalMove(move, side)) {
+                if (move == null || !limits.contains(move.x, move.y)
+                        || !position.isLegalMove(move, side)) {
                     message.setTextColor(0xFFFFC18A);
                     message.setText("AI应手暂不可用：" + failure
                             + " 可重开题目重试。");
@@ -408,6 +446,7 @@ public final class TsumegoAiActivity extends Activity {
         message.setText("KataGo 正在搜索你的局部候选着法…");
         final int serial = generation.get();
         GoBoard snapshot = position.copyForPreview();
+        final Rect limits = new Rect(fightArea);
         StoneColor turn = player();
         worker.execute(() -> {
             Point best = null;
@@ -417,10 +456,12 @@ public final class TsumegoAiActivity extends Activity {
                     throw new IllegalStateException("死活局面同步失败");
                 List<KataGoEngine.SearchRecommendation> recs =
                         engine.searchLocalRecommendations(turn.toGtp(), 128, 6.0,
-                                snapshot, CORNER_START, CORNER_START, CORNER_SIZE);
+                                snapshot, limits.left, limits.top,
+                                limits.right, limits.bottom);
                 for (KataGoEngine.SearchRecommendation rec : recs) {
                     Point p = Point.fromGtp(rec.move, 19);
-                    if (p != null && snapshot.isLegalMove(p, turn)) {
+                    if (p != null && limits.contains(p.x, p.y)
+                            && snapshot.isLegalMove(p, turn)) {
                         best = p;
                         break;
                     }
@@ -432,7 +473,8 @@ public final class TsumegoAiActivity extends Activity {
             ui.post(() -> {
                 if (destroyed || serial != generation.get() || puzzle == null) return;
                 thinking = false;
-                if (suggestion != null) {
+                if (suggestion != null
+                        && limits.contains(suggestion.x, suggestion.y)) {
                     board.setRecommendations(new Point[]{suggestion}, new float[]{1f});
                     message.setText("AI建议尝试 " + suggestion.toGtp(19)
                             + "。这是局部搜索推荐，不代表已证明能做活/杀棋。");
@@ -452,6 +494,8 @@ public final class TsumegoAiActivity extends Activity {
                         + "\n许可：CC BY-NC-SA 4.0，仅限个人非商业使用。"
                         + "\n\n对手由独立 KataGo 10b CPU 搜索生成，不是原题作者的正解。"
                         + " AI受局部搜索和访问次数限制，因此它的判断不等同于数学证明。"
+                        + "\nAI落子限制在原题正解附近的局部攻防区；"
+                        + "如果局部没有合适着手，会停止而非跑去别处下。"
                         + "\n金圈标出当前追踪的目标棋块，点击同色棋子可重新选择。")
                 .setPositiveButton("知道了", null).show();
     }
