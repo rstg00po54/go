@@ -1384,8 +1384,13 @@ public class KataGoEngine {
             // Unlike genmove_analyze, kata-search_analyze does not play the chosen move.
             // It terminates automatically at the configured search limit.
             responseQueue.clear();
+            // The restricted problem search must not pad the results with
+            // 0-visit phantom candidates outside the allowed area. Ask for
+            // extra real alternatives in case one move is invalid in Java.
+            String moveOptions = options.isEmpty()
+                    ? " minmoves 3 maxmoves 3" : " minmoves 1 maxmoves 8";
             if (!sendCommandSync("kata-search_analyze " + player
-                    + " 50 minmoves 3 maxmoves 3" + options)) return Collections.emptyList();
+                    + " 50" + moveOptions + options)) return Collections.emptyList();
             String response = waitForResponse(45000);
             if (!response.startsWith("=")) {
                 Log.e(TAG, "kata-search_analyze failed: " + response.trim());
