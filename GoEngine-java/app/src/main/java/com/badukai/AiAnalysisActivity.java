@@ -23,6 +23,7 @@ import com.badukai.game.GoBoard;
 import com.badukai.game.GoSgf;
 import com.badukai.game.Intersection;
 import com.badukai.game.Move;
+import com.badukai.game.GoMoveQuality;
 import com.badukai.game.Point;
 import com.badukai.game.SgfArchive;
 import com.badukai.game.StoneColor;
@@ -67,6 +68,9 @@ public final class AiAnalysisActivity extends Activity {
     private int step;
     private float[] rates = new float[0];
     private StepAnalysis[] analyzed = new StepAnalysis[0];
+    private GoMoveQuality.Result moveQuality;
+    private boolean fullAnalysisCompleted;
+    private int detailTab = 1; // 0: chart, 1: candidates, 2: problem moves
     private GoSgf.Game game;
     private String currentSgf;
     // Null means the SGF does not identify which side belongs to the user.
@@ -85,8 +89,10 @@ public final class AiAnalysisActivity extends Activity {
     private ProgressBar winProgress;
     private SeekBar moveSeek;
     private Button fullButton, playButton;
-    private Button trendTabButton, movesTabButton;
-    private View trendPanel, movesPanel;
+    private Button trendTabButton, movesTabButton, problemsTabButton, problemsAnalyzeButton;
+    private View trendPanel, movesPanel, problemsPanel;
+    private LinearLayout problemList;
+    private TextView problemsSummary;
     private final Runnable autoplayTick = new Runnable() {
         @Override public void run() {
             if (!alive || !autoplay || game == null) return;
@@ -143,11 +149,18 @@ public final class AiAnalysisActivity extends Activity {
         moveLabel = findViewById(R.id.analysisMoveLabel);
         trendTabButton = findViewById(R.id.analysisTrendTab);
         movesTabButton = findViewById(R.id.analysisMovesTab);
+        problemsTabButton = findViewById(R.id.analysisProblemsTab);
         trendPanel = findViewById(R.id.analysisTrendPanel);
         movesPanel = findViewById(R.id.analysisMovesPanel);
-        trendTabButton.setOnClickListener(v -> selectDetailTab(true));
-        movesTabButton.setOnClickListener(v -> selectDetailTab(false));
-        selectDetailTab(false);
+        problemsPanel = findViewById(R.id.analysisProblemsPanel);
+        problemList = findViewById(R.id.analysisProblemList);
+        problemsSummary = findViewById(R.id.analysisProblemsSummary);
+        problemsAnalyzeButton = findViewById(R.id.analysisProblemsAnalyze);
+        trendTabButton.setOnClickListener(v -> selectDetailTab(0));
+        movesTabButton.setOnClickListener(v -> selectDetailTab(1));
+        problemsTabButton.setOnClickListener(v -> selectDetailTab(2));
+        problemsAnalyzeButton.setOnClickListener(v -> toggleFullAnalysis());
+        selectDetailTab(1);
         board.setBoard(new GoBoard(9));
 
         try (InputStream stream = getAssets().open("home/background.png")) {
@@ -206,14 +219,7 @@ public final class AiAnalysisActivity extends Activity {
         ((android.widget.Switch) findViewById(R.id.analysisFromStep))
                 .setOnCheckedChangeListener((button, enabled) ->
                         chart.setFromSelectedStep(enabled));
-        fullButton.setOnClickListener(v -> {
-            if (globalRunning) {
-                generation.incrementAndGet();
-                globalRunning = false;
-                fullButton.setText("分析全局");
-                status.setText("已停止逐手分析，已完成的胜率点仍然保留");
-            } else startFullAnalysis();
-        });
+        fullButton.setOnClickListener(v -> toggleFullAnalysis());
 
         try {
             String sgf = loadSource(getIntent());
@@ -226,6 +232,13 @@ public final class AiAnalysisActivity extends Activity {
             rates = new float[game.moves.size() + 1];
             Arrays.fill(rates, Float.NaN);
             analyzed = new StepAnalysis[rates.length];
+            float[] cached = GoReviewCache.read(this, currentSgf, rates.length);
+            if (cached != null) {
+                rates = cached;
+                fullAnalysisCompleted = true;
+                setFullControlText("重新分析");
+            }
+            refreshChart();
             moveSeek.setMax(game.moves.size());
             moveSeek.setEnabled(true);
             int initial = getIntent().getIntExtra(EXTRA_START_STEP, game.moves.size());
@@ -319,6 +332,20 @@ public final class AiAnalysisActivity extends Activity {
         autoplay = false;
         ui.removeCallbacks(autoplayTick);
         if (playButton != null) playButton.setText("▶ 自动播放");
+    }
+
+    private void setFullControlText(String text) {
+        fullButton.setText(text);
+        problemsAnalyzeButton.setText(text);
+    }
+
+    private void toggleFullAnalysis() {
+        if (globalRunning) {
+            generation.incrementAndGet();
+            globalRunning = false;
+            setFullControlText("分析全局");
+            status.setText("已停止逐手分析，已完成的胜率点仍然保留");
+        } else startFullAnalysis();
     }
 
     private void selectHumanSide() {
