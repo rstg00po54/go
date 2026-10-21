@@ -43,6 +43,7 @@ public final class SgfTsumegoActivity extends Activity {
     private int beforeWrongStudentMoves, originalWrongStep;
     private final List<TsumegoSgf.Node> wrongVariation = new ArrayList<>();
     private final StringBuilder wrongNotes = new StringBuilder();
+    private final StringBuilder wrongCaptured = new StringBuilder();
     private String wrongExplanation = "";
     private TsumegoSgf.Puzzle puzzle;
     private TsumegoSgf.Node node;
@@ -132,6 +133,7 @@ public final class SgfTsumegoActivity extends Activity {
             beforeWrongMove = null;
             wrongVariation.clear();
             wrongNotes.setLength(0);
+            wrongCaptured.setLength(0);
             wrongExplanation = "";
             mistakes = hints = studentMoves = 0;
             board.setTrainingViewport(10, 10, 9);
@@ -285,7 +287,9 @@ public final class SgfTsumegoActivity extends Activity {
         responding = true;
         wrongVariation.clear();
         wrongNotes.setLength(0);
-        position.playMove(new Move.Stone(at, player));
+        wrongCaptured.setLength(0);
+        int removedNow = position.playMove(new Move.Stone(at, player)).size();
+        if (removedNow > 0) appendCaptured(player, at, removedNow);
         board.setRecommendations(null, null);
         board.setLastMove(at);
         board.setBoard(position);
@@ -322,7 +326,8 @@ public final class SgfTsumegoActivity extends Activity {
             finishWrongVariation("");
             return;
         }
-        position.playMove(new Move.Stone(next.point, nextPlayer));
+        int removedNow = position.playMove(new Move.Stone(next.point, nextPlayer)).size();
+        if (removedNow > 0) appendCaptured(nextPlayer, next.point, removedNow);
         node = next;
         wrongVariation.add(next);
         addWrongNote(next.comment);
@@ -333,6 +338,14 @@ public final class SgfTsumegoActivity extends Activity {
         message.setTextColor(0xFFFFC18A);
         message.setText(msg);
         handler.postDelayed(() -> advanceWrongVariation(expectedRound, depth + 1), 600L);
+    }
+
+    private void appendCaptured(StoneColor player, Point at, int removed) {
+        if (wrongCaptured.length() > 0) wrongCaptured.append("\n");
+        wrongCaptured.append(player == StoneColor.BLACK ? "黑" : "白")
+                .append(vertex(at)).append(" 提掉 ")
+                .append(removed).append(" 颗")
+                .append(player == StoneColor.BLACK ? "白" : "黑").append("子。");
     }
 
     private String wrongSequence() {
@@ -363,6 +376,8 @@ public final class SgfTsumegoActivity extends Activity {
             explanation.append("\n原题实际收录的变化：")
                     .append(wrongSequence()).append("。");
         }
+        if (wrongCaptured.length() > 0)
+            explanation.append("\n棋盘实际发生的提子：").append(wrongCaptured);
         if (wrongNotes.length() > 0)
             explanation.append("\n").append(wrongNotes);
         if (!qualifier.isEmpty())
@@ -370,6 +385,10 @@ public final class SgfTsumegoActivity extends Activity {
         else if (wrongNotes.length() == 0)
             explanation.append("\n原作者没有对这条变化给出明确的文字解释。"
                     + "可以对照正解棋形，但不能只凭此变化断言必死或必活。");
+        TsumegoSgf.Node alternative = puzzle.nextCorrect(beforeWrongNode);
+        if (alternative != null && alternative.point != null)
+            explanation.append("\n同一局面原题的正解首手为：")
+                    .append(moveLabel(alternative)).append("（只是对照，不是对试下棋的独立证明）。");
         explanation.append("\n点击「重试此手」恢复刚才的局面。");
         wrongExplanation = explanation.toString();
         message.setTextColor(0xFFFFC18A);
@@ -391,6 +410,7 @@ public final class SgfTsumegoActivity extends Activity {
         responding = false;
         wrongVariation.clear();
         wrongNotes.setLength(0);
+        wrongCaptured.setLength(0);
         wrongExplanation = "";
         board.setVariationPreview(null, null, null, null);
         previewing = false;
