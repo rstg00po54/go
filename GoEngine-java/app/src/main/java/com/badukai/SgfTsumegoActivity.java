@@ -517,6 +517,13 @@ public final class SgfTsumegoActivity extends Activity {
         if (puzzle == null) return;
         android.content.Intent intent = new android.content.Intent(this, TsumegoAiActivity.class);
         intent.putExtra("sgf_puzzle_index", index);
+        // Preserve a just-tried first move when switching to AI free sparring.
+        if (reviewingWrongMove && originalWrongStep == 1
+                && !wrongVariation.isEmpty() && wrongVariation.get(0).point != null) {
+            Point tried = wrongVariation.get(0).point;
+            intent.putExtra("tsumego_try_x", tried.x);
+            intent.putExtra("tsumego_try_y", tried.y);
+        }
         startActivity(intent);
         overridePendingTransition(0, 0);
     }
