@@ -15,6 +15,7 @@ import com.badukai.game.GoBoard;
 import com.badukai.game.Intersection;
 import com.badukai.game.Move;
 import com.badukai.game.Point;
+import com.badukai.game.StoneColor;
 import com.badukai.game.TsumegoLessons;
 import com.badukai.ui.GoBoardView;
 
