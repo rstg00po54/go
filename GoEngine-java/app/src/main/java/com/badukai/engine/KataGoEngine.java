@@ -125,13 +125,16 @@ public class KataGoEngine {
     public KataGoEngine(Context context, String engineDirectoryName) { this(context, engineDirectoryName, false); }
 
     /**
-     * Prefer the in-process JNI engine for the main game, including Human SL.
-     * The separate winrate engine remains a PIE process until multi-session JNI is safe.
+     * Prefer in-process JNI for gameplay or the isolated tsumego process.
+     * Win-rate analysis still uses PIE. SgfTsumegoActivity MUST remain in
+     * its own Android process so a second native GTP session never shares
+     * the game's process-wide JNI state.
      */
     public KataGoEngine(Context context, String engineDirectoryName, boolean preferJni) {
         this.context = context.getApplicationContext();
         this.engineDirectoryName = engineDirectoryName;
-        this.preferJni = preferJni && "engine".equals(engineDirectoryName);
+        this.preferJni = preferJni && ("engine".equals(engineDirectoryName)
+                || "engine_tsumego_ai".equals(engineDirectoryName));
         // Independent PIE-based CPU workers: keep analysis and tsumego isolated
         // from the live game's GTP session and from each other.
         if (!"engine".equals(engineDirectoryName)
