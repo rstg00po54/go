@@ -93,6 +93,18 @@
             </LinearLayout>
         </HorizontalScrollView>
 
+        <Button
+            android:id="@+id/tsumegoTrainingButton"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:background="@drawable/txwq_green_button"
+            android:text="死活棋训练 · 9路入门（离线）"
+            android:textAllCaps="false"
+            android:textColor="#FFF3C7"
+            android:textSize="17sp" />
+
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"

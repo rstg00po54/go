@@ -32,6 +32,10 @@
             android:process=":katago_gpu"
             android:theme="@android:style/Theme.Material.NoActionBar" />
 
+        <activity android:name=".training.TsumegoTrainingActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Badukai" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

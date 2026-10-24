@@ -1,6 +1,7 @@
 package com.badukai;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -174,6 +175,8 @@ public class MainActivity extends AppCompatActivity {
         aiWinRateText.setOnClickListener(v -> showWinRateChart());
         playerWinRateText.setOnClickListener(v -> showWinRateChart());
         aiBattleButton.setOnClickListener(v -> showNewGameDialog());
+        findViewById(R.id.tsumegoTrainingButton).setOnClickListener(v ->
+                startActivity(new Intent(this, com.badukai.training.TsumegoTrainingActivity.class)));
         newGameButton.setOnClickListener(v -> showNewGameDialog());
         backButton.setOnClickListener(v -> showMainPage());
         undoButton.setOnClickListener(v -> undo());
